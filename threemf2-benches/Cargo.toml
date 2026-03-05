@@ -17,13 +17,22 @@ threemf2 = { path = "../threemf2", features = [
 [dev-dependencies]
 criterion = { version = "0.7.0", features = ["html_reports"] }
 
+[features]
+default = []
+fast-float = ["threemf2/memory-optimized-fast-float-read"]
+
 [[bench]]
 name = "reader"
 harness = false
 
 [[bench]]
-name = "threemf_reader"
+name = "threemf_reader_standard"
 harness = false
+
+[[bench]]
+name = "threemf_reader_fast_float"
+harness = false
+
 
 [[bench]]
 name = "threemf_writer"
