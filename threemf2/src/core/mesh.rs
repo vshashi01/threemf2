@@ -74,7 +74,13 @@ pub struct Vertices {
 ///
 /// A vertex is defined as a Point coordinate in 3D coordinate system.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(
+    all(
+        feature = "memory-optimized-read",
+        not(feature = "memory-optimized-fast-float-read")
+    ),
+    derive(FromXml)
+)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
@@ -102,6 +108,66 @@ pub struct Vertex {
         xml(attribute)
     )]
     pub z: f64,
+}
+
+#[cfg(feature = "memory-optimized-fast-float-read")]
+impl<'xml> FromXml<'xml> for Vertex {
+    #[inline]
+    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: "",
+            name: "vertex",
+        }
+    }
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _: &'static str,
+        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        use ::instant_xml::Error;
+        use ::instant_xml::de::Node;
+        let mut x: f64 = 0.0;
+        let mut y: f64 = 0.0;
+        let mut z: f64 = 0.0;
+        while let Some(node) = deserializer.next() {
+            let node = node?;
+            match node {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+                    // println!("Attr value: {:?}", attr.value);
+                    match id.name {
+                        "x" => {
+                            x = fast_float2::parse(attr.value.as_ref()).unwrap_or_default();
+                        }
+
+                        "y" => {
+                            y = fast_float2::parse(attr.value.as_ref()).unwrap_or_default();
+                        }
+                        "z" => {
+                            z = fast_float2::parse(attr.value.as_ref()).unwrap_or_default();
+                        }
+                        _ => {
+                            let mut nested =
+                                deserializer.for_node(Node::AttributeValue(attr.value));
+                            nested.ignore()?;
+                        }
+                    }
+                }
+                Node::Open(data) => {
+                    let mut nested = deserializer.nested(data);
+                    nested.ignore()?;
+                }
+                Node::Text(_) => {}
+                _ => {
+                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
+                }
+            }
+        }
+        *into = Some(Self { x, y, z });
+        Ok(())
+    }
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
 }
 
 /// Collection of Triangle
@@ -351,9 +417,182 @@ mod write_tests {
     }
 }
 
-#[cfg(feature = "memory-optimized-read")]
+#[cfg(all(
+    feature = "memory-optimized-read",
+    not(feature = "memory-optimized-fast-float-read")
+))]
 #[cfg(test)]
 mod memory_optimized_read_tests {
+    use instant_xml::from_str;
+    use pretty_assertions::assert_eq;
+
+    use crate::threemf_namespaces::CORE_NS;
+
+    use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
+
+    #[test]
+    pub fn fromxml_vertex_test() {
+        let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
+        let vertex = from_str::<Vertex>(&xml_string).unwrap();
+
+        assert_eq!(
+            vertex,
+            Vertex {
+                x: 100.5,
+                y: 100.0,
+                z: 0.0,
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_vertices_test() {
+        let xml_string = format!(
+            r#"<vertices xmlns="{}"><vertex x="100" y="110.5" z="0" /><vertex x="0.156" y="55.6896" z="-10" /></vertices>"#,
+            CORE_NS
+        );
+        let vertices = from_str::<Vertices>(&xml_string).unwrap();
+
+        assert_eq!(
+            vertices,
+            Vertices {
+                vertex: vec![
+                    Vertex {
+                        x: 100.,
+                        y: 110.5,
+                        z: 0.0,
+                    },
+                    Vertex {
+                        x: 0.156,
+                        y: 55.6896,
+                        z: -10.0,
+                    },
+                ],
+            }
+        )
+    }
+
+    #[test]
+    pub fn fromxml_required_fields_triangle_test() {
+        let xml_string = format!(r#"<triangle xmlns="{}" v1="1" v2="2" v3="3" />"#, CORE_NS);
+        let triangle = from_str::<Triangle>(&xml_string).unwrap();
+
+        assert_eq!(
+            triangle,
+            Triangle {
+                v1: 1,
+                v2: 2,
+                v3: 3,
+                p1: None,
+                p2: None,
+                p3: None,
+                pid: None,
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_triangles_test() {
+        let xml_string = format!(
+            r#"<triangles xmlns="{}"><triangle v1="1" v2="2" v3="3" /><triangle v1="2" v2="3" v3="4" /></triangles>"#,
+            CORE_NS
+        );
+        let triangles = from_str::<Triangles>(&xml_string).unwrap();
+
+        assert_eq!(
+            triangles,
+            Triangles {
+                triangle: vec![
+                    Triangle {
+                        v1: 1,
+                        v2: 2,
+                        v3: 3,
+                        p1: None,
+                        p2: None,
+                        p3: None,
+                        pid: None,
+                    },
+                    Triangle {
+                        v1: 2,
+                        v2: 3,
+                        v3: 4,
+                        p1: None,
+                        p2: None,
+                        p3: None,
+                        pid: None,
+                    },
+                ],
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_mesh_test() {
+        let xml_string = format!(
+            r##"<mesh xmlns="{}"><vertices><vertex x="-1" y="-1" z="0" /><vertex x="1" y="-1" z="0" /><vertex x="1" y="1" z="0" /><vertex x="-1" y="1" z="0" /></vertices><triangles><triangle v1="0" v2="1" v3="2" /><triangle v1="0" v2="2" v3="3" /></triangles></mesh>"##,
+            CORE_NS
+        );
+        let mesh = from_str::<Mesh>(&xml_string).unwrap();
+
+        assert_eq!(
+            mesh,
+            Mesh {
+                vertices: Vertices {
+                    vertex: vec![
+                        Vertex {
+                            x: -1.0,
+                            y: -1.0,
+                            z: 0.0
+                        },
+                        Vertex {
+                            x: 1.0,
+                            y: -1.0,
+                            z: 0.0
+                        },
+                        Vertex {
+                            x: 1.0,
+                            y: 1.0,
+                            z: 0.0
+                        },
+                        Vertex {
+                            x: -1.0,
+                            y: 1.0,
+                            z: 0.0
+                        }
+                    ]
+                },
+                triangles: Triangles {
+                    triangle: vec![
+                        Triangle {
+                            v1: 0,
+                            v2: 1,
+                            v3: 2,
+                            p1: None,
+                            p2: None,
+                            p3: None,
+                            pid: None,
+                        },
+                        Triangle {
+                            v1: 0,
+                            v2: 2,
+                            v3: 3,
+                            p1: None,
+                            p2: None,
+                            p3: None,
+                            pid: None,
+                        }
+                    ]
+                },
+                trianglesets: None,
+                beamlattice: None,
+            }
+        )
+    }
+}
+
+#[cfg(feature = "memory-optimized-fast-float-read")]
+#[cfg(test)]
+mod memory_optimized_fast_float_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
