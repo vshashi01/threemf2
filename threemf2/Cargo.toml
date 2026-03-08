@@ -28,7 +28,10 @@ io-write = ["dep:zip", "dep:thiserror", "write"]
 io-memory-optimized-read = ["dep:zip", "dep:thiserror", "memory-optimized-read"]
 io-speed-optimized-read = ["dep:zip", "dep:thiserror", "speed-optimized-read"]
 io-lazy-read = ["dep:once_cell", "io-memory-optimized-read"]
-memory-optimized-fast-float-read = ["memory-optimized-read"]
+memory-optimized-read-experimental = [
+    "memory-optimized-read",
+    "dep:lexical",
+] #to dump all experiments
 
 [dependencies]
 instant-xml = { version = "0.6.0", optional = true }
@@ -39,7 +42,7 @@ zip = { version = "6.0.0", default-features = false, features = [
 serde-roxmltree = { version = "0.10.0", optional = true }
 serde = { version = "1.0.228", optional = true, features = ["derive"] }
 once_cell = { version = "1.21.3", optional = true }
-fast-float2 = { version = "0.2.3", optional = true }
+lexical = { version = "7.0.5", optional = true }
 
 
 [dev-dependencies]

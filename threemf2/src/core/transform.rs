@@ -96,7 +96,7 @@ impl<'xml> FromXml<'xml> for Transform {
     const KIND: Kind = Kind::Scalar;
 }
 
-#[cfg(not(feature = "memory-optimized-fast-float-read"))]
+#[cfg(not(feature = "memory-optimized-read-experimental"))]
 impl From<String> for Transform {
     fn from(value: String) -> Self {
         let values = value
@@ -109,12 +109,12 @@ impl From<String> for Transform {
     }
 }
 
-#[cfg(feature = "memory-optimized-fast-float-read")]
+#[cfg(feature = "memory-optimized-read-experimental")]
 impl From<String> for Transform {
     fn from(value: String) -> Self {
         let values = value
             .split(" ")
-            .map(|v| fast_float2::parse(v).unwrap_or_default())
+            .map(|v| lexical::parse(v).unwrap_or_default())
             .collect::<Vec<f64>>();
 
         // write now it can always panic something to improve in the future
@@ -192,7 +192,7 @@ mod write_tests {
 
 #[cfg(all(
     feature = "memory-optimized-read",
-    not(feature = "memory-optimized-fast-float-read")
+    not(feature = "memory-optimized-read-experimental")
 ))]
 #[cfg(test)]
 mod memory_optimized_read_tests {
@@ -251,7 +251,7 @@ mod memory_optimized_read_tests {
     }
 }
 
-#[cfg(feature = "memory-optimized-fast-float-read")]
+#[cfg(feature = "memory-optimized-read-experimental")]
 #[cfg(test)]
 mod memory_optimized_fast_float_read_tests {
     use instant_xml::{FromXml, from_str};

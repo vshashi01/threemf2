@@ -16,23 +16,24 @@ threemf2 = { path = "../threemf2", features = [
 
 [dev-dependencies]
 criterion = { version = "0.7.0", features = ["html_reports"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dhat = "0.3.3"
 
 [features]
 default = []
-fast-float = ["threemf2/memory-optimized-fast-float-read"]
+memory-optimized-read-experimental = [
+    "threemf2/memory-optimized-read-experimental",
+]
+enable-alloc-check = []
 
 [[bench]]
 name = "reader"
 harness = false
 
 [[bench]]
-name = "threemf_reader_standard"
+name = "threemf_reader_multi"
 harness = false
-
-[[bench]]
-name = "threemf_reader_fast_float"
-harness = false
-
 
 [[bench]]
 name = "threemf_writer"

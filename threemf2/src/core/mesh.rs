@@ -12,12 +12,15 @@ use crate::core::triangle_set::TriangleSets;
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
 
+const MAX_VERTEX_BUFFER: usize = 250_000;
+const MAX_TRIANGLE_BUFFER: usize = 500_000;
+
 /// A triangle mesh
 ///
 /// It is expected that users of this library will use their own mesh type,
 /// and the simplicity of [`Mesh`] provides an easy target for conversion to and from.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(all(feature = "memory-optimized-read",), derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(any(feature = "write", feature = "memory-optimized-read"), xml(ns(CORE_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS), rename = "mesh"))]
@@ -58,7 +61,13 @@ pub struct Mesh {
 ///
 /// See [`Vertex`] for more details
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(
+    all(
+        feature = "memory-optimized-read",
+        not(feature = "memory-optimized-read-experimental")
+    ),
+    derive(FromXml)
+)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
@@ -70,6 +79,57 @@ pub struct Vertices {
     pub vertex: Vec<Vertex>,
 }
 
+#[cfg(feature = "memory-optimized-read-experimental")]
+impl<'xml> FromXml<'xml> for Vertices {
+    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: CORE_NS,
+            name: "vertices",
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if into.is_some() {
+            return Err(instant_xml::Error::DuplicateValue(field));
+        }
+
+        let mut vertices: Vec<Vertex> = Vec::with_capacity(MAX_VERTEX_BUFFER);
+
+        while let Some(node) = deserializer.next() {
+            if let Ok(n) = node
+                && let instant_xml::de::Node::Open(element) = n
+            {
+                //println!("This is element value {:?}", element);
+                let mut vertex_value: Option<Vertex> = None;
+                let mut nested = deserializer.nested(element);
+
+                if <Vertex as instant_xml::FromXml>::deserialize(
+                    &mut vertex_value,
+                    "vertex",
+                    &mut nested,
+                )
+                .is_ok()
+                    && let Some(vertex) = vertex_value
+                {
+                    vertices.push(vertex);
+                };
+            }
+        }
+
+        vertices.shrink_to_fit();
+        *into = Some(Vertices { vertex: vertices });
+
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: instant_xml::Kind = instant_xml::Kind::Scalar;
+}
+
 /// A vertex in a mesh
 ///
 /// A vertex is defined as a Point coordinate in 3D coordinate system.
@@ -77,7 +137,7 @@ pub struct Vertices {
 #[cfg_attr(
     all(
         feature = "memory-optimized-read",
-        not(feature = "memory-optimized-fast-float-read")
+        not(feature = "memory-optimized-read-experimental")
     ),
     derive(FromXml)
 )]
@@ -110,12 +170,12 @@ pub struct Vertex {
     pub z: f64,
 }
 
-#[cfg(feature = "memory-optimized-fast-float-read")]
+#[cfg(feature = "memory-optimized-read-experimental")]
 impl<'xml> FromXml<'xml> for Vertex {
     #[inline]
     fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
         id == ::instant_xml::Id {
-            ns: "",
+            ns: CORE_NS,
             name: "vertex",
         }
     }
@@ -129,29 +189,19 @@ impl<'xml> FromXml<'xml> for Vertex {
         let mut x: f64 = 0.0;
         let mut y: f64 = 0.0;
         let mut z: f64 = 0.0;
+
         while let Some(node) = deserializer.next() {
             let node = node?;
             match node {
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
-                    // println!("Attr value: {:?}", attr.value);
-                    match id.name {
-                        "x" => {
-                            x = fast_float2::parse(attr.value.as_ref()).unwrap_or_default();
-                        }
 
-                        "y" => {
-                            y = fast_float2::parse(attr.value.as_ref()).unwrap_or_default();
-                        }
-                        "z" => {
-                            z = fast_float2::parse(attr.value.as_ref()).unwrap_or_default();
-                        }
-                        _ => {
-                            let mut nested =
-                                deserializer.for_node(Node::AttributeValue(attr.value));
-                            nested.ignore()?;
-                        }
-                    }
+                    match id.name.as_bytes().first() {
+                        Some(b'x') => x = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        Some(b'y') => y = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        Some(b'z') => z = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        _ => {}
+                    };
                 }
                 Node::Open(data) => {
                     let mut nested = deserializer.nested(data);
@@ -163,9 +213,11 @@ impl<'xml> FromXml<'xml> for Vertex {
                 }
             }
         }
+
         *into = Some(Self { x, y, z });
         Ok(())
     }
+
     type Accumulator = Option<Self>;
     const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
 }
@@ -174,7 +226,13 @@ impl<'xml> FromXml<'xml> for Vertex {
 ///
 /// See [`Triangle`] for more details.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(
+    all(
+        feature = "memory-optimized-read",
+        not(feature = "memory-optimized-read-experimental")
+    ),
+    derive(FromXml)
+)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
@@ -186,6 +244,57 @@ pub struct Triangles {
     pub triangle: Vec<Triangle>,
 }
 
+#[cfg(feature = "memory-optimized-read-experimental")]
+impl<'xml> FromXml<'xml> for Triangles {
+    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: CORE_NS,
+            name: "triangles",
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if into.is_some() {
+            return Err(instant_xml::Error::DuplicateValue(field));
+        }
+
+        let mut triangles: Vec<Triangle> = Vec::with_capacity(MAX_TRIANGLE_BUFFER);
+        while let Some(node) = deserializer.next() {
+            if let Ok(n) = node
+                && let instant_xml::de::Node::Open(element) = n
+            {
+                let mut triangle_value: Option<Triangle> = None;
+                let mut nested = deserializer.nested(element);
+                if <Triangle as instant_xml::FromXml>::deserialize(
+                    &mut triangle_value,
+                    field,
+                    &mut nested,
+                )
+                .is_ok()
+                    && let Some(vertex) = triangle_value
+                {
+                    triangles.push(vertex);
+                }
+            }
+        }
+
+        triangles.shrink_to_fit();
+        *into = Some(Triangles {
+            triangle: triangles,
+        });
+
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+
+    const KIND: instant_xml::Kind = instant_xml::Kind::Element;
+}
+
 /// A triangle in Mesh
 ///
 /// The triangle consists of indices that refer to the vertices of the mesh.
@@ -193,7 +302,13 @@ pub struct Triangles {
 /// additional indices into other resources can be specified
 /// for each vertex of the triangle as well.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(
+    all(
+        feature = "memory-optimized-read",
+        not(feature = "memory-optimized-read-experimental")
+    ),
+    derive(FromXml)
+)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
@@ -249,6 +364,90 @@ pub struct Triangle {
         xml(attribute)
     )]
     pub pid: Option<usize>,
+}
+
+#[cfg(feature = "memory-optimized-read-experimental")]
+impl<'xml> FromXml<'xml> for Triangle {
+    #[inline]
+    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: CORE_NS,
+            name: "triangle",
+        }
+    }
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _: &'static str,
+        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        use ::instant_xml::Error;
+        use ::instant_xml::de::Node;
+        let mut v1: usize = 0;
+        let mut v2: usize = 0;
+        let mut v3: usize = 0;
+        let mut p1: Option<usize> = None;
+        let mut p2: Option<usize> = None;
+        let mut p3: Option<usize> = None;
+        let mut pid: Option<usize> = None;
+
+        while let Some(node) = deserializer.next() {
+            let node = node?;
+            match node {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+
+                    match id.name {
+                        "v1" => v1 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v2" => v2 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v3" => v3 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "p1" => {
+                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                                p1 = Some(value)
+                            }
+                        }
+                        "p2" => {
+                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                                p2 = Some(value)
+                            }
+                        }
+                        "p3" => {
+                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                                p3 = Some(value)
+                            }
+                        }
+                        "pid" => {
+                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                                pid = Some(value)
+                            }
+                        }
+                        _ => {}
+                    };
+                }
+                Node::Open(data) => {
+                    let mut nested = deserializer.nested(data);
+                    nested.ignore()?;
+                }
+                Node::Text(_) => {}
+                _ => {
+                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
+                }
+            }
+        }
+
+        *into = Some(Self {
+            v1,
+            v2,
+            v3,
+            p1,
+            p2,
+            p3,
+            pid,
+        });
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
 }
 
 #[cfg(feature = "write")]
@@ -419,7 +618,7 @@ mod write_tests {
 
 #[cfg(all(
     feature = "memory-optimized-read",
-    not(feature = "memory-optimized-fast-float-read")
+    not(feature = "memory-optimized-read-experimental")
 ))]
 #[cfg(test)]
 mod memory_optimized_read_tests {
@@ -590,7 +789,7 @@ mod memory_optimized_read_tests {
     }
 }
 
-#[cfg(feature = "memory-optimized-fast-float-read")]
+#[cfg(feature = "memory-optimized-read-experimental")]
 #[cfg(test)]
 mod memory_optimized_fast_float_read_tests {
     use instant_xml::from_str;

@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "path": "third-party/lfs/mgx-iron_giant_single.3mf",
+      "vertex_count": 150000
+    },
+    {
+      "path": "third-party/blender-suzanne.3mf",
+      "vertex_count": 5000
+    },
+    {
+      "path": "third-party/meshmixer-bunny.3mf",
+      "vertex_count": 80000
+    }
+  ]
+}
