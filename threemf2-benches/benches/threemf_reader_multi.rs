@@ -28,10 +28,6 @@ fn get_short_name(path: &str) -> String {
 }
 
 fn bench_memory_optimized(c: &mut Criterion) {
-    #[cfg(feature = "enable-alloc-check")]
-    let _dhat = dhat::Profiler::builder()
-        .file_name("target/dhat-memory-optimized.json")
-        .build();
     let config: Config = serde_json::from_str(CONFIG_JSON).unwrap();
     let mut group = c.benchmark_group("memory_optimized");
     group.sample_size(10);
@@ -42,6 +38,11 @@ fn bench_memory_optimized(c: &mut Criterion) {
             .canonicalize()
             .unwrap();
         let name = get_short_name(&file.path);
+
+        #[cfg(feature = "enable-alloc-check")]
+        let _dhat = dhat::Profiler::builder()
+            .file_name(format!("/target/dhat-memory-optimized-{name}.json"))
+            .build();
 
         group.bench_with_input(BenchmarkId::new("read", name), &path, |b, path| {
             b.iter(|| {
@@ -54,10 +55,6 @@ fn bench_memory_optimized(c: &mut Criterion) {
 }
 
 fn bench_speed_optimized(c: &mut Criterion) {
-    #[cfg(feature = "enable-alloc-check")]
-    let _dhat = dhat::Profiler::builder()
-        .file_name("target/dhat-speed-optimized.json")
-        .build();
     let config: Config = serde_json::from_str(CONFIG_JSON).unwrap();
     let mut group = c.benchmark_group("speed_optimized");
     group.sample_size(10);
@@ -69,6 +66,10 @@ fn bench_speed_optimized(c: &mut Criterion) {
             .unwrap();
         let name = get_short_name(&file.path);
 
+        #[cfg(feature = "enable-alloc-check")]
+        let _dhat = dhat::Profiler::builder()
+            .file_name(format!("/target/dhat-speed-optimized-{name}.json"))
+            .build();
         group.bench_with_input(BenchmarkId::new("read", name), &path, |b, path| {
             b.iter(|| {
                 let file = std::fs::File::open(path).unwrap();

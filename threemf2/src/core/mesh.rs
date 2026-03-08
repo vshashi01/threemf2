@@ -9,6 +9,7 @@ use serde::Deserialize;
 
 use crate::core::beamlattice::BeamLattice;
 use crate::core::triangle_set::TriangleSets;
+use crate::core::types::{OptionalResourceID, OptionalResourceIndex, ResourceIndex};
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
 
@@ -321,49 +322,49 @@ pub struct Triangle {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub v1: usize,
+    pub v1: ResourceIndex,
 
     /// Vertex 2
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub v2: usize,
+    pub v2: ResourceIndex,
 
     /// Vertex 3
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub v3: usize,
+    pub v3: ResourceIndex,
 
     /// Overrides the object level pindex for Vertex 1 of this [`Triangle`]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub p1: Option<usize>,
+    pub p1: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 2 of this [`Triangle`]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub p2: Option<usize>,
+    pub p2: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 3 of this [`Triangle`]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub p3: Option<usize>,
+    pub p3: OptionalResourceIndex,
 
     /// Overrides the object level pid for this [`Triangle`]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub pid: Option<usize>,
+    pub pid: OptionalResourceID,
 }
 
 #[cfg(feature = "memory-optimized-read-experimental")]
@@ -375,20 +376,20 @@ impl<'xml> FromXml<'xml> for Triangle {
             name: "triangle",
         }
     }
-    fn deserialize<'cx>(
+fn deserialize<'cx>(
         into: &mut Self::Accumulator,
         _: &'static str,
         deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
     ) -> ::std::result::Result<(), ::instant_xml::Error> {
         use ::instant_xml::Error;
         use ::instant_xml::de::Node;
-        let mut v1: usize = 0;
-        let mut v2: usize = 0;
-        let mut v3: usize = 0;
-        let mut p1: Option<usize> = None;
-        let mut p2: Option<usize> = None;
-        let mut p3: Option<usize> = None;
-        let mut pid: Option<usize> = None;
+        let mut v1: ResourceIndex = 0;
+        let mut v2: ResourceIndex = 0;
+        let mut v3: ResourceIndex = 0;
+        let mut p1: OptionalResourceIndex = None;
+        let mut p2: OptionalResourceIndex = None;
+        let mut p3: OptionalResourceIndex = None;
+        let mut pid: OptionalResourceID = None;
 
         while let Some(node) = deserializer.next() {
             let node = node?;
@@ -396,7 +397,7 @@ impl<'xml> FromXml<'xml> for Triangle {
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
 
-                    match id.name {
+match id.name {
                         "v1" => v1 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
                         "v2" => v2 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
                         "v3" => v3 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),

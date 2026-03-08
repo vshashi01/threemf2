@@ -27,3 +27,8 @@ pub mod triangle_set;
 
 /// Defines the type representing a Beam Lattice element and other elements and attributes related to it.
 pub mod beamlattice;
+
+/// Defines 3MF specification-compliant type aliases for IDs and indices.
+pub mod types;
+
+pub use types::{OptionalResourceID, OptionalResourceIndex, ResourceID, ResourceIndex, ResourceIDExt, ResourceIndexExt};

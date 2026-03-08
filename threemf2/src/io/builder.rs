@@ -110,6 +110,7 @@ use std::{
 pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
 pub use crate::core::model::Unit;
 pub use crate::core::object::ObjectType;
+use crate::core::types::ResourceIndex;
 
 /// Errors that can occur when building a [`Model`].
 ///
@@ -1333,9 +1334,9 @@ impl MeshBuilder {
     /// ```
     pub fn add_triangle(&mut self, indices: &[usize; 3]) -> &mut Self {
         self.triangles.push(Triangle {
-            v1: indices[0],
-            v2: indices[1],
-            v3: indices[2],
+            v1: indices[0] as ResourceIndex,
+            v2: indices[1] as ResourceIndex,
+            v3: indices[2] as ResourceIndex,
             p1: None,
             p2: None,
             p3: None,
@@ -1381,9 +1382,9 @@ impl MeshBuilder {
     pub fn add_triangles_flat(&mut self, triangles: &[usize]) -> &mut Self {
         for triangle in triangles.chunks_exact(3) {
             self.triangles.push(Triangle {
-                v1: triangle[0],
-                v2: triangle[1],
-                v3: triangle[2],
+                v1: triangle[0] as ResourceIndex,
+                v2: triangle[1] as ResourceIndex,
+                v3: triangle[2] as ResourceIndex,
                 p1: None,
                 p2: None,
                 p3: None,
