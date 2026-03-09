@@ -7,7 +7,7 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::threemf_namespaces::CORE_TRIANGLESET_NS;
+use crate::{core::types::ResourceIndex, threemf_namespaces::CORE_TRIANGLESET_NS};
 
 /// Collection of Triangle Set. See [`TriangleSet`] for more details.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -152,7 +152,7 @@ pub struct TriangleRef {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub index: usize,
+    pub index: ResourceIndex,
 }
 
 /// A reference to continous Range of Triangles in the Mesh.
@@ -170,14 +170,14 @@ pub struct TriangleRefRange {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub startindex: usize,
+    pub startindex: ResourceIndex,
 
     /// The end idnex of the range.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub endindex: usize,
+    pub endindex: ResourceIndex,
 }
 
 #[cfg(feature = "write")]
@@ -188,9 +188,9 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
+            OptionalResourceIndex,
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS,
@@ -335,9 +335,9 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
+            OptionalResourceIndex,
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
     };
@@ -484,9 +484,9 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
+            OptionalResourceIndex,
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
     };

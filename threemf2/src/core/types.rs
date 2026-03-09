@@ -16,7 +16,7 @@ use serde::Deserialize;
 /// 3MF Resource ID type
 /// XSD: ST_ResourceID (xs:positiveInteger, maxExclusive="2147483648")
 /// Used for: object IDs, property group IDs, material IDs
-pub type ResourceID = u32;
+pub type ResourceId = u32;
 
 /// 3MF Resource Index type
 /// XSD: ST_ResourceIndex (xs:nonNegativeInteger, maxExclusive="2147483648")
@@ -25,7 +25,7 @@ pub type ResourceIndex = u32;
 
 /// Optional Resource ID
 /// Used for optional pid attributes
-pub type OptionalResourceID = Option<ResourceID>;
+pub type OptionalResourceId = Option<ResourceId>;
 
 /// Sentinel value representing "None" for OptionalResourceIndex
 const OPTIONAL_RESOURCE_INDEX_NONE: u32 = u32::MAX;
@@ -130,7 +130,7 @@ impl<'xml> FromXml<'xml> for OptionalResourceIndex {
         let value = match deserializer.take_str()? {
             Some(value) => {
                 #[cfg(feature = "memory-optimized-read-experimental")]
-                let value: u32 = lexical::parse(value.as_bytes())
+                let value: u32 = lexical_core::parse(value.as_bytes())
                     .map_err(|_| Error::MissingValue("Failed to parse OptionalResourceIndex"))?;
 
                 #[cfg(all(
@@ -185,6 +185,21 @@ pub mod serde_impl {
             None => Ok(OptionalResourceIndex::none()),
             Some(v) => Ok(OptionalResourceIndex::new(v)),
         }
+    }
+}
+
+impl From<Option<u32>> for OptionalResourceIndex {
+    fn from(value: Option<u32>) -> Self {
+        match value {
+            Some(val) => Self::new(val),
+            None => Self::none(),
+        }
+    }
+}
+
+impl From<OptionalResourceIndex> for Option<u32> {
+    fn from(value: OptionalResourceIndex) -> Self {
+        if value.is_some() { value.get() } else { None }
     }
 }
 

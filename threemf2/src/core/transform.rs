@@ -114,7 +114,7 @@ impl From<String> for Transform {
     fn from(value: String) -> Self {
         let values = value
             .split(" ")
-            .map(|v| lexical::parse(v).unwrap_or_default())
+            .map(|v| lexical_core::parse(v.as_bytes()).unwrap_or_default())
             .collect::<Vec<f64>>();
 
         // write now it can always panic something to improve in the future

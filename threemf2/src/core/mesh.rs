@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use crate::core::beamlattice::BeamLattice;
 use crate::core::triangle_set::TriangleSets;
-use crate::core::types::{OptionalResourceID, OptionalResourceIndex, ResourceIndex};
+use crate::core::types::{OptionalResourceId, OptionalResourceIndex, ResourceIndex};
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
 
@@ -230,9 +230,15 @@ impl<'xml> FromXml<'xml> for Vertex {
                     let id = deserializer.attribute_id(&attr)?;
 
                     match id.name.as_bytes().first() {
-                        Some(b'x') => x = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        Some(b'y') => y = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        Some(b'z') => z = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        Some(b'x') => {
+                            x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
+                        Some(b'y') => {
+                            y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
+                        Some(b'z') => {
+                            z = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
                         _ => {}
                     };
                 }
@@ -471,7 +477,7 @@ pub struct Triangle {
         ),
         xml(attribute)
     )]
-    pub pid: OptionalResourceID,
+    pub pid: OptionalResourceId,
 }
 
 #[cfg(feature = "memory-optimized-read-experimental")]
@@ -496,7 +502,7 @@ impl<'xml> FromXml<'xml> for Triangle {
         let mut p1: OptionalResourceIndex = OptionalResourceIndex::none();
         let mut p2: OptionalResourceIndex = OptionalResourceIndex::none();
         let mut p3: OptionalResourceIndex = OptionalResourceIndex::none();
-        let mut pid: OptionalResourceID = None;
+        let mut pid: OptionalResourceId = None;
 
         while let Some(node) = deserializer.next() {
             let node = node?;
@@ -505,26 +511,26 @@ impl<'xml> FromXml<'xml> for Triangle {
                     let id = deserializer.attribute_id(&attr)?;
 
                     match id.name {
-                        "v1" => v1 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        "v2" => v2 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        "v3" => v3 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v1" => v1 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v2" => v2 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v3" => v3 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
                         "p1" => {
-                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
                                 p1 = OptionalResourceIndex::new(value);
                             }
                         }
                         "p2" => {
-                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
                                 p2 = OptionalResourceIndex::new(value);
                             }
                         }
                         "p3" => {
-                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
                                 p3 = OptionalResourceIndex::new(value);
                             }
                         }
                         "pid" => {
-                            if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
                                 pid = Some(value);
                             }
                         }

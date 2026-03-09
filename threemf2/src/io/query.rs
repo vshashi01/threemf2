@@ -258,7 +258,7 @@ pub struct ObjectRef<'a> {
 /// # See Also
 ///
 /// * [`get_objects()`] - Search across all models in a package
-pub fn get_object_from_model<'a>(object_id: usize, model: &'a Model) -> Option<ObjectRef<'a>> {
+pub fn get_object_from_model<'a>(object_id: u32, model: &'a Model) -> Option<ObjectRef<'a>> {
     model
         .resources
         .object
@@ -382,13 +382,13 @@ pub fn get_objects_from_model_ref<'a>(
 pub struct GenericObjectRef<'a, T> {
     /// The entity itself (e.g., Mesh, Components).
     entity: &'a T,
-    pub id: usize,
+    pub id: u32,
     pub object_type: ObjectType,
     pub thumbnail: Option<String>,
     pub part_number: Option<String>,
     pub name: Option<String>,
-    pub pid: Option<usize>,
-    pub pindex: Option<usize>,
+    pub pid: Option<u32>,
+    pub pindex: Option<u32>,
     pub uuid: Option<String>,
     /// Path to the originating model.
     pub origin_model_path: Option<&'a str>,
@@ -454,7 +454,7 @@ impl<'a> MeshObjectRef<'a> {
             part_number: o.object.partnumber.clone(),
             name: o.object.name.clone(),
             pid: o.object.pid,
-            pindex: o.object.pindex,
+            pindex: o.object.pindex.into(),
             uuid: o.object.uuid.clone(),
             origin_model_path: o.path,
         })
@@ -667,7 +667,7 @@ impl<'a> ComponentsObjectRef<'a> {
             part_number: o.object.partnumber.clone(),
             name: o.object.name.clone(),
             pid: o.object.pid,
-            pindex: o.object.pindex,
+            pindex: o.object.pindex.into(),
             uuid: o.object.uuid.clone(),
             origin_model_path: o.path,
         })
@@ -774,7 +774,7 @@ impl<'a> Deref for ComponentsObjectRef<'a> {
 /// * [`get_components_objects()`] - Find composed parts in a package
 pub struct ComponentRef {
     /// ID of the referenced object.
-    pub objectid: usize,
+    pub objectid: u32,
     /// Path to look for the object,
     /// if specified else it will be the parent Model where the object is originating from.
     pub path_to_look_for: Option<String>,
@@ -851,7 +851,7 @@ impl<'a> ItemRef<'a> {
     ///     println!("Item references object {}", item.objectid());
     /// }
     /// ```
-    pub fn objectid(&self) -> usize {
+    pub fn objectid(&self) -> u32 {
         self.item.objectid
     }
 
@@ -1213,7 +1213,7 @@ pub fn get_items_from_model_ref<'a>(model_ref: ModelRef<'a>) -> impl Iterator<It
 /// * [`get_objects()`] - Get all objects to find IDs to query
 pub fn get_items_by_objectid<'a>(
     package: &'a ThreemfPackage,
-    objectid: usize,
+    objectid: u32,
 ) -> impl Iterator<Item = ItemRef<'a>> {
     get_items(package).filter(move |item_ref| item_ref.item.objectid == objectid)
 }

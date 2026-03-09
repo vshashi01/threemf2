@@ -8,7 +8,7 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::transform::Transform,
+    core::{transform::Transform, types::ResourceId},
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
 
@@ -42,7 +42,7 @@ pub struct Component {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub objectid: usize,
+    pub objectid: ResourceId,
 
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),

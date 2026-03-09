@@ -19,9 +19,9 @@ mod tests {
             types::OptionalResourceIndex,
         },
         io::{
+            ThreemfPackage,
             content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
             relationship::{Relationship, RelationshipType, Relationships},
-            ThreemfPackage,
         },
     };
 
@@ -82,7 +82,7 @@ mod tests {
                         partnumber: None,
                         name: Some("Mesh".to_owned()),
                         pid: None,
-                        pindex: None,
+                        pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: Some(mesh.clone()),
                         components: None,

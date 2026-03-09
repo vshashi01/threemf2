@@ -36,7 +36,7 @@ fn main() {
                 partnumber: None,
                 name: None,
                 pid: None,
-                pindex: None,
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: Some(Mesh {
                     vertices: Vertices {

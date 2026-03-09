@@ -166,6 +166,7 @@ mod write_tests {
 
     use crate::{
         core::{
+            OptionalResourceIndex,
             build::{Build, Item},
             mesh::{Mesh, Triangles, Vertices},
             metadata::Metadata,
@@ -204,7 +205,7 @@ mod write_tests {
                     partnumber: None,
                     name: Some("test part".to_owned()),
                     pid: None,
-                    pindex: None,
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: None,
                     components: None,
@@ -264,7 +265,7 @@ mod write_tests {
                     partnumber: None,
                     name: None,
                     pid: None,
-                    pindex: None,
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: Some(Mesh {
                         vertices: Vertices { vertex: vec![] },
@@ -307,7 +308,7 @@ mod write_tests {
                     partnumber: None,
                     name: None,
                     pid: None,
-                    pindex: None,
+                    pindex: OptionalResourceIndex::none(),
                     uuid: Some("test-uuid".to_string()),
                     mesh: Some(Mesh {
                         vertices: Vertices { vertex: vec![] },
@@ -355,7 +356,7 @@ mod write_tests {
                     partnumber: None,
                     name: None,
                     pid: None,
-                    pindex: None,
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: Some(Mesh {
                         vertices: Vertices { vertex: vec![] },
@@ -370,7 +371,7 @@ mod write_tests {
                             clippingmesh: None,
                             representationmesh: None,
                             pid: None,
-                            pindex: None,
+                            pindex: OptionalResourceIndex::none(),
                             cap: None,
                             beams: crate::core::beamlattice::Beams { beam: vec![] },
                             balls: None,
@@ -417,7 +418,7 @@ mod write_tests {
                     partnumber: None,
                     name: None,
                     pid: None,
-                    pindex: None,
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: Some(Mesh {
                         vertices: Vertices { vertex: vec![] },
@@ -467,7 +468,7 @@ mod write_tests {
                     partnumber: None,
                     name: None,
                     pid: None,
-                    pindex: None,
+                    pindex: OptionalResourceIndex::none(),
                     uuid: Some("test-uuid".to_string()),
                     mesh: Some(Mesh {
                         vertices: Vertices { vertex: vec![] },
@@ -484,7 +485,7 @@ mod write_tests {
                             clippingmesh: None,
                             representationmesh: None,
                             pid: None,
-                            pindex: None,
+                            pindex: OptionalResourceIndex::none(),
                             cap: None,
                             beams: crate::core::beamlattice::Beams { beam: vec![] },
                             balls: None,
@@ -527,6 +528,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
+    use crate::core::OptionalResourceIndex;
     use crate::{
         core::{
             build::{Build, Item},
@@ -569,7 +571,7 @@ mod memory_optimized_read_tests {
                         partnumber: None,
                         name: Some("test part".to_owned()),
                         pid: None,
-                        pindex: None,
+                        pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: None,
                         components: None,
@@ -626,7 +628,7 @@ mod memory_optimized_read_tests {
                         partnumber: None,
                         name: Some("test part".to_owned()),
                         pid: None,
-                        pindex: None,
+                        pindex: OptionalResourceIndex::none(),
                         uuid: Some("someObjectUUID".to_owned()),
                         mesh: None,
                         components: Some(Components {
@@ -691,6 +693,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceIndex,
             build::{Build, Item},
             component::{Component, Components},
             metadata::Metadata,
@@ -732,7 +735,7 @@ mod speed_optimized_read_tests {
                         partnumber: None,
                         name: Some("test part".to_owned()),
                         pid: None,
-                        pindex: None,
+                        pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: None,
                         components: None,
@@ -789,7 +792,7 @@ mod speed_optimized_read_tests {
                         partnumber: None,
                         name: Some("test part".to_owned()),
                         pid: None,
-                        pindex: None,
+                        pindex: OptionalResourceIndex::none(),
                         uuid: Some("someObjectUUID".to_owned()),
                         mesh: None,
                         components: Some(Components {
