@@ -31,4 +31,4 @@ pub mod beamlattice;
 /// Defines 3MF specification-compliant type aliases for IDs and indices.
 pub mod types;
 
-pub use types::{OptionalResourceID, OptionalResourceIndex, ResourceID, ResourceIndex, ResourceIDExt, ResourceIndexExt};
+pub use types::{OptionalResourceID, OptionalResourceIndex, ResourceID, ResourceIndex};

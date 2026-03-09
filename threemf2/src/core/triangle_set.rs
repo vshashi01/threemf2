@@ -188,11 +188,8 @@ mod write_tests {
 
     use crate::{
         core::{
-            mesh::Mesh,
-            mesh::Triangle,
-            mesh::Triangles,
-            mesh::Vertex,
-            mesh::Vertices,
+            OptionalResourceIndex,
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
         threemf_namespaces::{
@@ -237,18 +234,18 @@ mod write_tests {
                         v1: 0,
                         v2: 1,
                         v3: 2,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                     Triangle {
                         v1: 0,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                 ],
@@ -338,11 +335,8 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            mesh::Mesh,
-            mesh::Triangle,
-            mesh::Triangles,
-            mesh::Vertex,
-            mesh::Vertices,
+            OptionalResourceIndex,
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
@@ -390,18 +384,18 @@ mod memory_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         }
                     ]
@@ -490,11 +484,8 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            mesh::Mesh,
-            mesh::Triangle,
-            mesh::Triangles,
-            mesh::Vertex,
-            mesh::Vertices,
+            OptionalResourceIndex,
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
@@ -542,18 +533,18 @@ mod speed_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         }
                     ]

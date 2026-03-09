@@ -110,7 +110,7 @@ use std::{
 pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
 pub use crate::core::model::Unit;
 pub use crate::core::object::ObjectType;
-use crate::core::types::ResourceIndex;
+use crate::core::types::{OptionalResourceIndex, ResourceIndex};
 
 /// Errors that can occur when building a [`Model`].
 ///
@@ -1337,9 +1337,9 @@ impl MeshBuilder {
             v1: indices[0] as ResourceIndex,
             v2: indices[1] as ResourceIndex,
             v3: indices[2] as ResourceIndex,
-            p1: None,
-            p2: None,
-            p3: None,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            p3: OptionalResourceIndex::none(),
             pid: None,
         });
         self
@@ -1385,9 +1385,9 @@ impl MeshBuilder {
                 v1: triangle[0] as ResourceIndex,
                 v2: triangle[1] as ResourceIndex,
                 v3: triangle[2] as ResourceIndex,
-                p1: None,
-                p2: None,
-                p3: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
                 pid: None,
             });
         }
@@ -2649,7 +2649,10 @@ mod tests {
         let obj = &model.resources.object[1];
         assert!(obj.components.is_some());
         let comp = &obj.components.as_ref().unwrap().component[0];
-        assert_eq!(comp.objectid, obj1_id.into());
+        assert_eq!(
+            comp.objectid,
+            <crate::io::builder::ObjectId as Into<usize>>::into(obj1_id)
+        );
     }
 
     #[test]

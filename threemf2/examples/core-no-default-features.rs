@@ -9,6 +9,7 @@ use threemf2::core::{
     model::{Model, Unit},
     object::{Object, ObjectType},
     resources::Resources,
+    types::OptionalResourceIndex,
 };
 
 use std::vec;
@@ -63,9 +64,9 @@ fn main() {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         }],
                     },

@@ -13,8 +13,10 @@ use crate::core::types::{OptionalResourceID, OptionalResourceIndex, ResourceInde
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
 
-const MAX_VERTEX_BUFFER: usize = 250_000;
-const MAX_TRIANGLE_BUFFER: usize = 500_000;
+#[cfg(feature = "memory-optimized-read-experimental")]
+const MAX_VERTEX_BUFFER: usize = 100_000;
+#[cfg(feature = "memory-optimized-read-experimental")]
+const MAX_TRIANGLE_BUFFER: usize = 200_000;
 
 /// A triangle mesh
 ///
@@ -72,7 +74,13 @@ pub struct Mesh {
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
+    any(
+        feature = "write",
+        all(
+            feature = "memory-optimized-read",
+            not(feature = "memory-optimized-read-experimental")
+        ),
+    ),
     xml(ns(CORE_NS), rename = "vertices")
 )]
 pub struct Vertices {
@@ -145,27 +153,51 @@ impl<'xml> FromXml<'xml> for Vertices {
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
+    any(
+        feature = "write",
+        all(
+            feature = "memory-optimized-read",
+            not(feature = "memory-optimized-read-experimental")
+        )
+    ),
     xml(ns(CORE_NS), rename = "vertex")
 )]
 pub struct Vertex {
     /// X position
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            )
+        ),
         xml(attribute)
     )]
     pub x: f64,
 
     /// Y position
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            )
+        ),
         xml(attribute)
     )]
     pub y: f64,
 
     /// Z position
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            )
+        ),
         xml(attribute)
     )]
     pub z: f64,
@@ -237,7 +269,13 @@ impl<'xml> FromXml<'xml> for Vertex {
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
+    any(
+        feature = "write",
+        all(
+            feature = "memory-optimized-read",
+            not(feature = "memory-optimized-read-experimental")
+        ),
+    ),
     xml(ns(CORE_NS), rename = "triangles")
 )]
 pub struct Triangles {
@@ -313,55 +351,124 @@ impl<'xml> FromXml<'xml> for Triangles {
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
+    any(
+        feature = "write",
+        all(
+            feature = "memory-optimized-read",
+            not(feature = "memory-optimized-read-experimental")
+        ),
+    ),
     xml(ns(CORE_NS), rename = "triangle")
 )]
 pub struct Triangle {
     /// Vertex 1
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            ),
+        ),
         xml(attribute)
     )]
     pub v1: ResourceIndex,
 
     /// Vertex 2
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            ),
+        ),
         xml(attribute)
     )]
     pub v2: ResourceIndex,
 
     /// Vertex 3
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            ),
+        ),
         xml(attribute)
     )]
     pub v3: ResourceIndex,
 
     /// Overrides the object level pindex for Vertex 1 of this [`Triangle`]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            ),
+        ),
         xml(attribute)
+    )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
     )]
     pub p1: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 2 of this [`Triangle`]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            ),
+        ),
         xml(attribute)
+    )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
     )]
     pub p2: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 3 of this [`Triangle`]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            ),
+        ),
         xml(attribute)
+    )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
     )]
     pub p3: OptionalResourceIndex,
 
     /// Overrides the object level pid for this [`Triangle`]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
+        any(
+            feature = "write",
+            all(
+                feature = "memory-optimized-read",
+                not(feature = "memory-optimized-read-experimental")
+            ),
+        ),
         xml(attribute)
     )]
     pub pid: OptionalResourceID,
@@ -376,7 +483,7 @@ impl<'xml> FromXml<'xml> for Triangle {
             name: "triangle",
         }
     }
-fn deserialize<'cx>(
+    fn deserialize<'cx>(
         into: &mut Self::Accumulator,
         _: &'static str,
         deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
@@ -386,9 +493,9 @@ fn deserialize<'cx>(
         let mut v1: ResourceIndex = 0;
         let mut v2: ResourceIndex = 0;
         let mut v3: ResourceIndex = 0;
-        let mut p1: OptionalResourceIndex = None;
-        let mut p2: OptionalResourceIndex = None;
-        let mut p3: OptionalResourceIndex = None;
+        let mut p1: OptionalResourceIndex = OptionalResourceIndex::none();
+        let mut p2: OptionalResourceIndex = OptionalResourceIndex::none();
+        let mut p3: OptionalResourceIndex = OptionalResourceIndex::none();
         let mut pid: OptionalResourceID = None;
 
         while let Some(node) = deserializer.next() {
@@ -397,28 +504,28 @@ fn deserialize<'cx>(
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
 
-match id.name {
+                    match id.name {
                         "v1" => v1 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
                         "v2" => v2 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
                         "v3" => v3 = lexical::parse(attr.value.as_bytes()).unwrap_or_default(),
                         "p1" => {
                             if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
-                                p1 = Some(value)
+                                p1 = OptionalResourceIndex::new(value);
                             }
                         }
                         "p2" => {
                             if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
-                                p2 = Some(value)
+                                p2 = OptionalResourceIndex::new(value);
                             }
                         }
                         "p3" => {
                             if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
-                                p3 = Some(value)
+                                p3 = OptionalResourceIndex::new(value);
                             }
                         }
                         "pid" => {
                             if let Ok(value) = lexical::parse(attr.value.as_bytes()) {
-                                pid = Some(value)
+                                pid = Some(value);
                             }
                         }
                         _ => {}
@@ -460,6 +567,8 @@ mod write_tests {
     use crate::threemf_namespaces::{
         BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX,
     };
+
+    use crate::core::types::OptionalResourceIndex;
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
@@ -508,9 +617,9 @@ mod write_tests {
             v1: 1,
             v2: 2,
             v3: 3,
-            p1: None,
-            p2: None,
-            p3: None,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            p3: OptionalResourceIndex::none(),
             pid: None,
         };
         let triangle_string = to_string(&triangle).unwrap();
@@ -530,18 +639,18 @@ mod write_tests {
                     v1: 1,
                     v2: 2,
                     v3: 3,
-                    p1: None,
-                    p2: None,
-                    p3: None,
+                    p1: OptionalResourceIndex::none(),
+                    p2: OptionalResourceIndex::none(),
+                    p3: OptionalResourceIndex::none(),
                     pid: None,
                 },
                 Triangle {
                     v1: 2,
                     v2: 3,
                     v3: 4,
-                    p1: None,
-                    p2: None,
-                    p3: None,
+                    p1: OptionalResourceIndex::none(),
+                    p2: OptionalResourceIndex::none(),
+                    p3: OptionalResourceIndex::none(),
                     pid: None,
                 },
             ],
@@ -592,18 +701,18 @@ mod write_tests {
                         v1: 0,
                         v2: 1,
                         v3: 2,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                     Triangle {
                         v1: 0,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                 ],
@@ -626,6 +735,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
+    use crate::core::types::OptionalResourceIndex;
     use crate::threemf_namespaces::CORE_NS;
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
@@ -683,9 +793,9 @@ mod memory_optimized_read_tests {
                 v1: 1,
                 v2: 2,
                 v3: 3,
-                p1: None,
-                p2: None,
-                p3: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
                 pid: None,
             }
         );
@@ -707,18 +817,18 @@ mod memory_optimized_read_tests {
                         v1: 1,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                     Triangle {
                         v1: 2,
                         v2: 3,
                         v3: 4,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                 ],
@@ -767,18 +877,18 @@ mod memory_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         }
                     ]
@@ -796,7 +906,7 @@ mod memory_optimized_fast_float_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::threemf_namespaces::CORE_NS;
+    use crate::{core::OptionalResourceIndex, threemf_namespaces::CORE_NS};
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
@@ -853,9 +963,9 @@ mod memory_optimized_fast_float_read_tests {
                 v1: 1,
                 v2: 2,
                 v3: 3,
-                p1: None,
-                p2: None,
-                p3: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
                 pid: None,
             }
         );
@@ -877,18 +987,18 @@ mod memory_optimized_fast_float_read_tests {
                         v1: 1,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                     Triangle {
                         v1: 2,
                         v2: 3,
                         v3: 4,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                 ],
@@ -937,18 +1047,18 @@ mod memory_optimized_fast_float_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         }
                     ]
@@ -966,7 +1076,7 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::threemf_namespaces::CORE_NS;
+    use crate::{core::OptionalResourceIndex, threemf_namespaces::CORE_NS};
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
@@ -1023,9 +1133,9 @@ mod speed_optimized_read_tests {
                 v1: 1,
                 v2: 2,
                 v3: 3,
-                p1: None,
-                p2: None,
-                p3: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
                 pid: None,
             }
         );
@@ -1047,18 +1157,18 @@ mod speed_optimized_read_tests {
                         v1: 1,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                     Triangle {
                         v1: 2,
                         v2: 3,
                         v3: 4,
-                        p1: None,
-                        p2: None,
-                        p3: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
                         pid: None,
                     },
                 ],
@@ -1107,18 +1217,18 @@ mod speed_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
                             pid: None,
                         }
                     ]

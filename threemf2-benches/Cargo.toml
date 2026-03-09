@@ -13,6 +13,8 @@ threemf2 = { path = "../threemf2", features = [
     "io-speed-optimized-read",
     "io-write",
 ] }
+lib3mf-core = { version = "0.4.0", features = ["parallel"] }
+zip = { version = "7.0.0", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
 criterion = { version = "0.7.0", features = ["html_reports"] }

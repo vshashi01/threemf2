@@ -16,11 +16,12 @@ mod tests {
             model::{Model, Unit},
             object::{Object, ObjectType},
             resources::Resources,
+            types::OptionalResourceIndex,
         },
         io::{
-            ThreemfPackage,
             content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
             relationship::{Relationship, RelationshipType, Relationships},
+            ThreemfPackage,
         },
     };
 
@@ -53,9 +54,9 @@ mod tests {
                 v1: 0,
                 v2: 1,
                 v3: 2,
-                p1: None,
-                p2: None,
-                p3: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
                 pid: None,
             }],
         };
