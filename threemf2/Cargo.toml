@@ -21,8 +21,8 @@ default = [
     "write",
     "memory-optimized-read",
 ]
-write = ["dep:instant-xml"]
-memory-optimized-read = ["dep:instant-xml"]
+write = ["dep:instant-xml", "dep:lexical-core"]
+memory-optimized-read = ["dep:instant-xml", "dep:lexical-core"]
 speed-optimized-read = ["dep:serde-roxmltree", "dep:serde"]
 io-write = ["dep:zip", "dep:thiserror", "write"]
 io-memory-optimized-read = ["dep:zip", "dep:thiserror", "memory-optimized-read"]
@@ -30,7 +30,6 @@ io-speed-optimized-read = ["dep:zip", "dep:thiserror", "speed-optimized-read"]
 io-lazy-read = ["dep:once_cell", "io-memory-optimized-read"]
 memory-optimized-read-experimental = [
     "memory-optimized-read",
-    "dep:lexical-core",
 ] #to dump all experiments
 
 [dependencies]

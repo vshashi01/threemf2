@@ -13,9 +13,9 @@ use crate::core::types::{OptionalResourceId, OptionalResourceIndex, ResourceInde
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
 
-#[cfg(feature = "memory-optimized-read-experimental")]
+#[cfg(feature = "memory-optimized-read")]
 const MAX_VERTEX_BUFFER: usize = 100_000;
-#[cfg(feature = "memory-optimized-read-experimental")]
+#[cfg(feature = "memory-optimized-read")]
 const MAX_TRIANGLE_BUFFER: usize = 200_000;
 
 /// A triangle mesh
@@ -64,31 +64,15 @@ pub struct Mesh {
 ///
 /// See [`Vertex`] for more details
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(
-    all(
-        feature = "memory-optimized-read",
-        not(feature = "memory-optimized-read-experimental")
-    ),
-    derive(FromXml)
-)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(
-        feature = "write",
-        all(
-            feature = "memory-optimized-read",
-            not(feature = "memory-optimized-read-experimental")
-        ),
-    ),
-    xml(ns(CORE_NS), rename = "vertices")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "vertices"))]
 pub struct Vertices {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub vertex: Vec<Vertex>,
 }
 
-#[cfg(feature = "memory-optimized-read-experimental")]
+#[cfg(feature = "memory-optimized-read")]
 impl<'xml> FromXml<'xml> for Vertices {
     fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
         id == ::instant_xml::Id {
@@ -265,31 +249,15 @@ impl<'xml> FromXml<'xml> for Vertex {
 ///
 /// See [`Triangle`] for more details.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(
-    all(
-        feature = "memory-optimized-read",
-        not(feature = "memory-optimized-read-experimental")
-    ),
-    derive(FromXml)
-)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(
-        feature = "write",
-        all(
-            feature = "memory-optimized-read",
-            not(feature = "memory-optimized-read-experimental")
-        ),
-    ),
-    xml(ns(CORE_NS), rename = "triangles")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "triangles"))]
 pub struct Triangles {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub triangle: Vec<Triangle>,
 }
 
-#[cfg(feature = "memory-optimized-read-experimental")]
+#[cfg(feature = "memory-optimized-read")]
 impl<'xml> FromXml<'xml> for Triangles {
     fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
         id == ::instant_xml::Id {

@@ -129,16 +129,7 @@ impl<'xml> FromXml<'xml> for OptionalResourceIndex {
 
         let value = match deserializer.take_str()? {
             Some(value) => {
-                #[cfg(feature = "memory-optimized-read-experimental")]
                 let value: u32 = lexical_core::parse(value.as_bytes())
-                    .map_err(|_| Error::MissingValue("Failed to parse OptionalResourceIndex"))?;
-
-                #[cfg(all(
-                    feature = "memory-optimized-read",
-                    not(feature = "memory-optimized-read-experimental")
-                ))]
-                let value: u32 = value
-                    .parse()
                     .map_err(|_| Error::MissingValue("Failed to parse OptionalResourceIndex"))?;
 
                 Self::new(value)
