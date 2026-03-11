@@ -24,46 +24,14 @@ fn main() {
     // Create vertices for a simple cube structure
     let vertices = Vertices {
         vertex: vec![
-            Vertex {
-                x: 45.0,
-                y: 55.0,
-                z: 55.0,
-            },
-            Vertex {
-                x: 45.0,
-                y: 45.0,
-                z: 55.0,
-            },
-            Vertex {
-                x: 45.0,
-                y: 55.0,
-                z: 45.0,
-            },
-            Vertex {
-                x: 45.0,
-                y: 45.0,
-                z: 45.0,
-            },
-            Vertex {
-                x: 55.0,
-                y: 55.0,
-                z: 45.0,
-            },
-            Vertex {
-                x: 55.0,
-                y: 55.0,
-                z: 55.0,
-            },
-            Vertex {
-                x: 55.0,
-                y: 45.0,
-                z: 55.0,
-            },
-            Vertex {
-                x: 55.0,
-                y: 45.0,
-                z: 45.0,
-            },
+            Vertex::new(45.0, 55.0, 55.0),
+            Vertex::new(45.0, 45.0, 55.0),
+            Vertex::new(45.0, 55.0, 45.0),
+            Vertex::new(45.0, 45.0, 45.0),
+            Vertex::new(55.0, 55.0, 45.0),
+            Vertex::new(55.0, 55.0, 55.0),
+            Vertex::new(55.0, 45.0, 55.0),
+            Vertex::new(55.0, 45.0, 45.0),
         ],
     };
 

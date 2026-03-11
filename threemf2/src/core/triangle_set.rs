@@ -188,9 +188,9 @@ mod write_tests {
 
     use crate::{
         core::{
+            OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
-            OptionalResourceIndex,
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS,
@@ -206,26 +206,10 @@ mod write_tests {
         let mesh = Mesh {
             vertices: Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: -1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: -1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
+                    Vertex::new(-1.0, -1.0, 0.0),
+                    Vertex::new(1.0, -1.0, 0.0),
+                    Vertex::new(1.0, 1.0, 0.0),
+                    Vertex::new(-1.0, 1.0, 0.0),
                 ],
             },
             triangles: Triangles {
@@ -335,9 +319,9 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
-            OptionalResourceIndex,
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
     };
@@ -356,26 +340,10 @@ mod memory_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {
@@ -484,9 +452,9 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
-            OptionalResourceIndex,
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
     };
@@ -505,26 +473,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {

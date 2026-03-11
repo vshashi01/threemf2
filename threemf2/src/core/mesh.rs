@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use crate::core::beamlattice::BeamLattice;
 use crate::core::triangle_set::TriangleSets;
-use crate::core::types::{OptionalResourceId, OptionalResourceIndex, ResourceIndex};
+use crate::core::types::{Double, OptionalResourceId, OptionalResourceIndex, ResourceIndex};
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
 
@@ -158,7 +158,7 @@ pub struct Vertex {
         ),
         xml(attribute)
     )]
-    pub x: f64,
+    pub x: Double,
 
     /// Y position
     #[cfg_attr(
@@ -171,7 +171,7 @@ pub struct Vertex {
         ),
         xml(attribute)
     )]
-    pub y: f64,
+    pub y: Double,
 
     /// Z position
     #[cfg_attr(
@@ -184,7 +184,17 @@ pub struct Vertex {
         ),
         xml(attribute)
     )]
-    pub z: f64,
+    pub z: Double,
+}
+
+impl Vertex {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Self {
+            x: Double::new(x),
+            y: Double::new(y),
+            z: Double::new(z),
+        }
+    }
 }
 
 #[cfg(feature = "memory-optimized-read-experimental")]
@@ -237,7 +247,11 @@ impl<'xml> FromXml<'xml> for Vertex {
             }
         }
 
-        *into = Some(Self { x, y, z });
+        *into = Some(Self {
+            x: Double::new(x),
+            y: Double::new(y),
+            z: Double::new(z),
+        });
         Ok(())
     }
 
@@ -549,11 +563,7 @@ mod write_tests {
     #[test]
     pub fn toxml_vertex_test() {
         let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
-        let vertex = Vertex {
-            x: 100.5,
-            y: 100.0,
-            z: 0.0,
-        };
+        let vertex = Vertex::new(100.5, 100.0, 0.0);
         let vertex_string = to_string(&vertex).unwrap();
 
         assert_eq!(vertex_string, xml_string);
@@ -567,16 +577,8 @@ mod write_tests {
         );
         let vertices = Vertices {
             vertex: vec![
-                Vertex {
-                    x: 100.,
-                    y: 110.5,
-                    z: 0.0,
-                },
-                Vertex {
-                    x: 0.156,
-                    y: 55.6896,
-                    z: -10.0,
-                },
+                Vertex::new(100., 110.5, 0.0),
+                Vertex::new(0.156, 55.6896, -10.0),
             ],
         };
         let vertices_string = to_string(&vertices).unwrap();
@@ -647,26 +649,10 @@ mod write_tests {
         let mesh = Mesh {
             vertices: Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: -1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: -1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
+                    Vertex::new(-1.0, -1.0, 0.0),
+                    Vertex::new(1.0, -1.0, 0.0),
+                    Vertex::new(1.0, 1.0, 0.0),
+                    Vertex::new(-1.0, 1.0, 0.0),
                 ],
             },
             triangles: Triangles {
@@ -719,14 +705,7 @@ mod memory_optimized_read_tests {
         let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
         let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
-        assert_eq!(
-            vertex,
-            Vertex {
-                x: 100.5,
-                y: 100.0,
-                z: 0.0,
-            }
-        );
+        assert_eq!(vertex, Vertex::new(100.5, 100.0, 0.0,));
     }
 
     #[test]
@@ -741,16 +720,8 @@ mod memory_optimized_read_tests {
             vertices,
             Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: 100.,
-                        y: 110.5,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 0.156,
-                        y: 55.6896,
-                        z: -10.0,
-                    },
+                    Vertex::new(100., 110.5, 0.0,),
+                    Vertex::new(0.156, 55.6896, -10.0,),
                 ],
             }
         )
@@ -823,26 +794,10 @@ mod memory_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {
@@ -889,14 +844,7 @@ mod memory_optimized_fast_float_read_tests {
         let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
         let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
-        assert_eq!(
-            vertex,
-            Vertex {
-                x: 100.5,
-                y: 100.0,
-                z: 0.0,
-            }
-        );
+        assert_eq!(vertex, Vertex::new(100.5, 100.0, 0.0,));
     }
 
     #[test]
@@ -911,16 +859,8 @@ mod memory_optimized_fast_float_read_tests {
             vertices,
             Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: 100.,
-                        y: 110.5,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 0.156,
-                        y: 55.6896,
-                        z: -10.0,
-                    },
+                    Vertex::new(100., 110.5, 0.0,),
+                    Vertex::new(0.156, 55.6896, -10.0,),
                 ],
             }
         )
@@ -993,26 +933,10 @@ mod memory_optimized_fast_float_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {
@@ -1059,14 +983,7 @@ mod speed_optimized_read_tests {
         let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
         let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
-        assert_eq!(
-            vertex,
-            Vertex {
-                x: 100.5,
-                y: 100.0,
-                z: 0.0,
-            }
-        );
+        assert_eq!(vertex, Vertex::new(100.5, 100.0, 0.0,));
     }
 
     #[test]
@@ -1081,16 +998,8 @@ mod speed_optimized_read_tests {
             vertices,
             Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: 100.,
-                        y: 110.5,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 0.156,
-                        y: 55.6896,
-                        z: -10.0,
-                    },
+                    Vertex::new(100., 110.5, 0.0,),
+                    Vertex::new(0.156, 55.6896, -10.0,),
                 ],
             }
         )
@@ -1163,26 +1072,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {

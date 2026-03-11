@@ -204,3 +204,77 @@ impl IntoIndex for u32 {
         self as usize
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize)]
+pub struct Double(f64);
+
+impl Double {
+    pub fn new(value: f64) -> Self {
+        Self(value)
+    }
+
+    pub fn value(&self) -> f64 {
+        self.0
+    }
+}
+
+#[cfg(feature = "write")]
+impl ToXml for Double {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<Id<'_>>,
+        serializer: &mut Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let value = self.0.to_string();
+        serializer.write_str(&value)?;
+
+        Ok(())
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Double {
+    #[inline]
+    fn matches(id: instant_xml::Id<'_>, field: Option<instant_xml::Id<'_>>) -> bool {
+        // Match if the attribute name matches the field name
+        if let Some(field_id) = field {
+            id == field_id
+        } else {
+            false
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), Error> {
+        if into.is_some() {
+            return Err(Error::DuplicateValue(field));
+        }
+
+        if let Some(value) = deserializer.take_str()? {
+            let value: f64 = lexical_core::parse(value.as_bytes())
+                .map_err(|_| Error::MissingValue("Failed to parse f64 value of field {}"))?;
+
+            *into = Some(Double(value));
+        }
+
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: Kind = instant_xml::Kind::Scalar;
+}
+
+impl From<f64> for Double {
+    fn from(value: f64) -> Self {
+        Double(value)
+    }
+}
+
+impl From<Double> for f64 {
+    fn from(value: Double) -> Self {
+        value.0
+    }
+}

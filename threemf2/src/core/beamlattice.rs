@@ -850,26 +850,10 @@ mod memory_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles { triangle: vec![] },
@@ -962,26 +946,10 @@ mod memory_optimized_read_tests {
                         mesh: Some(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
-                                    Vertex {
-                                        x: -1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: -1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    }
+                                    Vertex::new(-1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, 1.0, 0.0),
+                                    Vertex::new(-1.0, 1.0, 0.0),
                                 ]
                             },
                             triangles: Triangles { triangle: vec![] },
@@ -1258,26 +1226,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles { triangle: vec![] },
@@ -1355,26 +1307,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles { triangle: vec![] },
@@ -1474,26 +1410,10 @@ mod speed_optimized_read_tests {
                         mesh: Some(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
-                                    Vertex {
-                                        x: -1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: -1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    }
+                                    Vertex::new(-1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, 1.0, 0.0),
+                                    Vertex::new(-1.0, 1.0, 0.0),
                                 ]
                             },
                             triangles: Triangles { triangle: vec![] },

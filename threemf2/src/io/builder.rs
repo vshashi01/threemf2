@@ -1260,11 +1260,8 @@ impl MeshBuilder {
     ///    .add_vertex(&[0.0, 10.0, 0.0]);
     /// ```
     pub fn add_vertex(&mut self, coords: &[f64; 3]) -> &mut Self {
-        self.vertices.push(Vertex {
-            x: coords[0],
-            y: coords[1],
-            z: coords[2],
-        });
+        self.vertices
+            .push(Vertex::new(coords[0], coords[1], coords[2]));
         self
     }
 
@@ -1305,11 +1302,8 @@ impl MeshBuilder {
     /// ```
     pub fn add_vertices_flat(&mut self, vertices: &[f64]) -> &mut Self {
         for vertex in vertices.chunks_exact(3) {
-            self.vertices.push(Vertex {
-                x: vertex[0],
-                y: vertex[1],
-                z: vertex[2],
-            });
+            self.vertices
+                .push(Vertex::new(vertex[0], vertex[1], vertex[2]));
         }
 
         self

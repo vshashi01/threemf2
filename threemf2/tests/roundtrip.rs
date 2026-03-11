@@ -31,21 +31,9 @@ mod tests {
     fn roundtrip_threemfpackage_test() {
         let vertices = Vertices {
             vertex: vec![
-                Vertex {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-                Vertex {
-                    x: 0.0,
-                    y: 2.0,
-                    z: 0.0,
-                },
-                Vertex {
-                    x: 0.0,
-                    y: 1.0,
-                    z: 1.0,
-                },
+                Vertex::new(0.0, 0.0, 0.0),
+                Vertex::new(0.0, 2.0, 0.0),
+                Vertex::new(0.0, 1.0, 1.0),
             ],
         };
 
