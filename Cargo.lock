@@ -925,7 +925,7 @@ checksum = "3bf63baf9f5039dadc247375c29eb13706706cfde997d0330d05aa63a77d8820"
 
 [[package]]
 name = "threemf2"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "instant-xml",
  "lexical-core",

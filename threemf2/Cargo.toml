@@ -1,6 +1,6 @@
 [package]
 name = "threemf2"
-version = "0.1.2"
+version = "0.2.0"
 rust-version = "1.89"
 edition = "2024"
 license = "MIT or Apache-2.0"
