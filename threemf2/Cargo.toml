@@ -23,7 +23,7 @@ default = [
 ]
 write = ["dep:instant-xml", "dep:lexical-core"]
 memory-optimized-read = ["dep:instant-xml", "dep:lexical-core"]
-speed-optimized-read = ["dep:serde-roxmltree", "dep:serde"]
+speed-optimized-read = ["dep:serde-roxmltree", "dep:serde", "dep:lexical-core"]
 io-write = ["dep:zip", "dep:thiserror", "write"]
 io-memory-optimized-read = ["dep:zip", "dep:thiserror", "memory-optimized-read"]
 io-speed-optimized-read = ["dep:zip", "dep:thiserror", "speed-optimized-read"]

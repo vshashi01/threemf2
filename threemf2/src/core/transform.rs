@@ -96,7 +96,7 @@ impl<'xml> FromXml<'xml> for Transform {
     const KIND: Kind = Kind::Scalar;
 }
 
-#[cfg(feature = "memory-optimized-read")]
+#[cfg(any(feature = "memory-optimized-read", feature = "speed-optimized-read"))]
 impl From<String> for Transform {
     fn from(value: String) -> Self {
         let values = value
