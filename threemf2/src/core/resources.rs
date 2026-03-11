@@ -78,7 +78,7 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{OptionalResourceIndex, object::Object},
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
         threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX},
     };
 
@@ -97,7 +97,7 @@ mod write_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
@@ -178,7 +178,7 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{OptionalResourceIndex, object::Object},
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
         threemf_namespaces::CORE_NS,
     };
 
@@ -201,7 +201,7 @@ mod memory_optimized_read_tests {
                     thumbnail: None,
                     partnumber: None,
                     name: None,
-                    pid: None,
+                    pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: None,
@@ -286,7 +286,7 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{OptionalResourceIndex, object::Object},
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
         threemf_namespaces::CORE_NS,
     };
 
@@ -309,7 +309,7 @@ mod speed_optimized_read_tests {
                     thumbnail: None,
                     partnumber: None,
                     name: None,
-                    pid: None,
+                    pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: None,

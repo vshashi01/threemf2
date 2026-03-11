@@ -1,5 +1,6 @@
 use threemf2::{
     core::{
+        OptionalResourceId,
         build::{Build, Item},
         mesh::*,
         metadata::Metadata,
@@ -35,7 +36,7 @@ fn main() {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: Some(Mesh {
@@ -54,7 +55,7 @@ fn main() {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         }],
                     },
                     trianglesets: None,

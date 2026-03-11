@@ -4,6 +4,8 @@
 //! - ST_ResourceID: Object IDs, property group IDs (1 to 2^31-1)
 //! - ST_ResourceIndex: Vertex indices, property indices (0 to 2^31-1)
 
+use std::num::NonZeroU32;
+
 #[cfg(feature = "write")]
 use instant_xml::{Id, Serializer, ToXml};
 
@@ -23,9 +25,121 @@ pub type ResourceId = u32;
 /// Used for: vertex indices (v1, v2, v3), property indices (p1, p2, p3, pindex)
 pub type ResourceIndex = u32;
 
-/// Optional Resource ID
-/// Used for optional pid attributes
-pub type OptionalResourceId = Option<ResourceId>;
+/// Optional Resource ID type with memory optimization
+/// Uses Option<NonZeroU32> for 4-byte storage instead of 8-byte Option<u32>
+/// XSD: ST_ResourceID (xs:positiveInteger, maxExclusive="2147483648")
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
+pub struct OptionalResourceId(Option<NonZeroU32>);
+
+impl OptionalResourceId {
+    /// Create from u32 value
+    /// - 0 → None
+    /// - 1..=2_147_483_647 → Some(NonZeroU32)
+    /// - > 2_147_483_647 → panic
+    pub fn new(value: u32) -> Self {
+        if value == 0 {
+            Self::none()
+        } else {
+            assert!(
+                value <= 2_147_483_647,
+                "ResourceId {} exceeds 3MF spec limit (2,147,483,647)",
+                value
+            );
+            Self(Some(NonZeroU32::new(value).unwrap()))
+        }
+    }
+
+    pub const fn none() -> Self {
+        Self(None)
+    }
+    pub fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+    pub fn get(&self) -> Option<u32> {
+        self.0.map(|nz| nz.get())
+    }
+    pub fn unwrap_or(&self, default: u32) -> u32 {
+        self.get().unwrap_or(default)
+    }
+}
+
+impl Default for OptionalResourceId {
+    fn default() -> Self {
+        Self::none()
+    }
+}
+
+#[cfg(feature = "write")]
+impl ToXml for OptionalResourceId {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<Id<'_>>,
+        serializer: &mut Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        if let Some(id) = self.0 {
+            serializer.write_str(&id.get().to_string())?;
+        }
+        Ok(())
+    }
+
+    fn present(&self) -> bool {
+        self.is_some()
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for OptionalResourceId {
+    fn matches(id: instant_xml::Id<'_>, field: Option<instant_xml::Id<'_>>) -> bool {
+        if let Some(field_id) = field {
+            id == field_id
+        } else {
+            false
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), Error> {
+        if into.is_some() {
+            return Err(Error::DuplicateValue(field));
+        }
+
+        let value = match deserializer.take_str()? {
+            Some(value) => {
+                let value: u32 = lexical_core::parse(value.as_bytes())
+                    .map_err(|_| Error::MissingValue("Failed to parse OptionalResourceId"))?;
+
+                if value == 0 {
+                    return Err(Error::MissingValue("ResourceId cannot be 0"));
+                }
+                if value > 2_147_483_647 {
+                    return Err(Error::MissingValue("ResourceId exceeds spec limit"));
+                }
+                Self(Some(NonZeroU32::new(value).unwrap()))
+            }
+            None => Self::none(),
+        };
+
+        *into = value;
+        Ok(())
+    }
+
+    type Accumulator = Self;
+    const KIND: Kind = Kind::Scalar;
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl instant_xml::Accumulate<OptionalResourceId> for OptionalResourceId {
+    fn try_done(self, _: &'static str) -> Result<OptionalResourceId, Error> {
+        Ok(self)
+    }
+}
 
 /// Sentinel value representing "None" for OptionalResourceIndex
 const OPTIONAL_RESOURCE_INDEX_NONE: u32 = u32::MAX;
@@ -153,6 +267,34 @@ impl instant_xml::Accumulate<OptionalResourceIndex> for OptionalResourceIndex {
 }
 
 #[cfg(feature = "speed-optimized-read")]
+pub mod serde_optional_resource_id {
+    use super::OptionalResourceId;
+    use serde::{Deserialize, Deserializer};
+
+    pub fn default_none() -> OptionalResourceId {
+        OptionalResourceId::none()
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<OptionalResourceId, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let opt: Option<u32> = Option::deserialize(deserializer)?;
+
+        match opt {
+            None => Ok(OptionalResourceId::none()),
+            Some(0) => panic!("0 is an invalid value for Resource Id"),
+            Some(v) => {
+                if v > 2_147_483_647 {
+                    panic!("Resource Id exceeds the expected maximum 2147483647");
+                }
+                Ok(OptionalResourceId::new(v))
+            }
+        }
+    }
+}
+
+#[cfg(feature = "speed-optimized-read")]
 pub mod serde_impl {
     use super::OptionalResourceIndex;
     use serde::{Deserialize, Deserializer};
@@ -205,7 +347,8 @@ impl IntoIndex for u32 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "speed-optimized-read", derive(serde::Deserialize))]
 pub struct Double(f64);
 
 impl Double {

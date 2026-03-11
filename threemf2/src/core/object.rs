@@ -73,6 +73,13 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
     pub pid: OptionalResourceId,
 
     /// References a zero-based index into the properties
@@ -160,7 +167,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
         },
@@ -186,7 +193,7 @@ mod write_tests {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: None,
@@ -209,7 +216,7 @@ mod write_tests {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: Some("someUUID".to_owned()),
             mesh: None,
@@ -232,7 +239,7 @@ mod write_tests {
             thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
-            pid: None,
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: None,
@@ -255,7 +262,7 @@ mod write_tests {
             thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
-            pid: None,
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: Some(Mesh {
@@ -283,7 +290,7 @@ mod write_tests {
             thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
-            pid: None,
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: None,
@@ -340,7 +347,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
         },
@@ -366,7 +373,7 @@ mod memory_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
@@ -392,7 +399,7 @@ mod memory_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
                 mesh: None,
@@ -417,7 +424,7 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
+                pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
@@ -442,7 +449,7 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
+                pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
@@ -467,7 +474,7 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: Some(Mesh {
@@ -497,7 +504,7 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
@@ -555,7 +562,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
         },
@@ -581,7 +588,7 @@ mod speed_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
@@ -607,7 +614,7 @@ mod speed_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
                 mesh: None,
@@ -632,7 +639,7 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
+                pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
@@ -657,7 +664,7 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
+                pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
@@ -682,7 +689,7 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: Some(Mesh {
@@ -712,7 +719,7 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,

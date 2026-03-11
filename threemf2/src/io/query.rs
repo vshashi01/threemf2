@@ -161,6 +161,7 @@ use std::ops::Deref;
 
 use crate::{
     core::{
+        OptionalResourceId, OptionalResourceIndex,
         build::Item,
         component::Components,
         mesh::Mesh,
@@ -387,8 +388,8 @@ pub struct GenericObjectRef<'a, T> {
     pub thumbnail: Option<String>,
     pub part_number: Option<String>,
     pub name: Option<String>,
-    pub pid: Option<u32>,
-    pub pindex: Option<u32>,
+    pub pid: OptionalResourceId,
+    pub pindex: OptionalResourceIndex,
     pub uuid: Option<String>,
     /// Path to the originating model.
     pub origin_model_path: Option<&'a str>,
@@ -454,7 +455,7 @@ impl<'a> MeshObjectRef<'a> {
             part_number: o.object.partnumber.clone(),
             name: o.object.name.clone(),
             pid: o.object.pid,
-            pindex: o.object.pindex.into(),
+            pindex: o.object.pindex,
             uuid: o.object.uuid.clone(),
             origin_model_path: o.path,
         })
@@ -667,7 +668,7 @@ impl<'a> ComponentsObjectRef<'a> {
             part_number: o.object.partnumber.clone(),
             name: o.object.name.clone(),
             pid: o.object.pid,
-            pindex: o.object.pindex.into(),
+            pindex: o.object.pindex,
             uuid: o.object.uuid.clone(),
             origin_model_path: o.path,
         })

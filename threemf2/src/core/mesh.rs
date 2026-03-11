@@ -459,6 +459,13 @@ pub struct Triangle {
         ),
         xml(attribute)
     )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
     pub pid: OptionalResourceId,
 }
 
@@ -484,7 +491,7 @@ impl<'xml> FromXml<'xml> for Triangle {
         let mut p1: OptionalResourceIndex = OptionalResourceIndex::none();
         let mut p2: OptionalResourceIndex = OptionalResourceIndex::none();
         let mut p3: OptionalResourceIndex = OptionalResourceIndex::none();
-        let mut pid: OptionalResourceId = None;
+        let mut pid: OptionalResourceId = OptionalResourceId::none();
 
         while let Some(node) = deserializer.next() {
             let node = node?;
@@ -513,7 +520,7 @@ impl<'xml> FromXml<'xml> for Triangle {
                         }
                         "pid" => {
                             if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
-                                pid = Some(value);
+                                pid = OptionalResourceId::new(value);
                             }
                         }
                         _ => {}
@@ -552,6 +559,7 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
+    use crate::core::OptionalResourceId;
     use crate::threemf_namespaces::{
         BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX,
     };
@@ -596,7 +604,7 @@ mod write_tests {
             p1: OptionalResourceIndex::none(),
             p2: OptionalResourceIndex::none(),
             p3: OptionalResourceIndex::none(),
-            pid: None,
+            pid: OptionalResourceId::none(),
         };
         let triangle_string = to_string(&triangle).unwrap();
 
@@ -618,7 +626,7 @@ mod write_tests {
                     p1: OptionalResourceIndex::none(),
                     p2: OptionalResourceIndex::none(),
                     p3: OptionalResourceIndex::none(),
-                    pid: None,
+                    pid: OptionalResourceId::none(),
                 },
                 Triangle {
                     v1: 2,
@@ -627,7 +635,7 @@ mod write_tests {
                     p1: OptionalResourceIndex::none(),
                     p2: OptionalResourceIndex::none(),
                     p3: OptionalResourceIndex::none(),
-                    pid: None,
+                    pid: OptionalResourceId::none(),
                 },
             ],
         };
@@ -664,7 +672,7 @@ mod write_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 0,
@@ -673,7 +681,7 @@ mod write_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             },
@@ -695,7 +703,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::core::types::OptionalResourceIndex;
+    use crate::core::types::{OptionalResourceId, OptionalResourceIndex};
     use crate::threemf_namespaces::CORE_NS;
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
@@ -741,7 +749,7 @@ mod memory_optimized_read_tests {
                 p1: OptionalResourceIndex::none(),
                 p2: OptionalResourceIndex::none(),
                 p3: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -765,7 +773,7 @@ mod memory_optimized_read_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 2,
@@ -774,7 +782,7 @@ mod memory_optimized_read_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             }
@@ -809,7 +817,7 @@ mod memory_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
@@ -818,7 +826,7 @@ mod memory_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },
@@ -835,7 +843,10 @@ mod memory_optimized_fast_float_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::{core::OptionalResourceIndex, threemf_namespaces::CORE_NS};
+    use crate::{
+        core::{OptionalResourceId, OptionalResourceIndex},
+        threemf_namespaces::CORE_NS,
+    };
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
@@ -880,7 +891,7 @@ mod memory_optimized_fast_float_read_tests {
                 p1: OptionalResourceIndex::none(),
                 p2: OptionalResourceIndex::none(),
                 p3: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -904,7 +915,7 @@ mod memory_optimized_fast_float_read_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 2,
@@ -913,7 +924,7 @@ mod memory_optimized_fast_float_read_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             }
@@ -948,7 +959,7 @@ mod memory_optimized_fast_float_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
@@ -957,7 +968,7 @@ mod memory_optimized_fast_float_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },
@@ -974,7 +985,10 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::{core::OptionalResourceIndex, threemf_namespaces::CORE_NS};
+    use crate::{
+        core::{OptionalResourceId, OptionalResourceIndex},
+        threemf_namespaces::CORE_NS,
+    };
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
@@ -1019,7 +1033,7 @@ mod speed_optimized_read_tests {
                 p1: OptionalResourceIndex::none(),
                 p2: OptionalResourceIndex::none(),
                 p3: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -1043,7 +1057,7 @@ mod speed_optimized_read_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 2,
@@ -1052,7 +1066,7 @@ mod speed_optimized_read_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             }
@@ -1087,7 +1101,7 @@ mod speed_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
@@ -1096,7 +1110,7 @@ mod speed_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },

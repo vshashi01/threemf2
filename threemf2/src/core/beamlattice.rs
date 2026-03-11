@@ -67,6 +67,13 @@ pub struct BeamLattice {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
     pub clippingmesh: OptionalResourceId,
 
     /// References a mesh object that represents the intentional shape of the lattice geometry
@@ -74,12 +81,26 @@ pub struct BeamLattice {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
     pub representationmesh: OptionalResourceId,
 
     /// Overrides the object-level pid as default for all beams
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
+    )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
     )]
     pub pid: OptionalResourceId,
 
@@ -312,6 +333,13 @@ pub struct Beam {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
     pub pid: OptionalResourceId,
 
     /// Capping mode for the first end of the beam
@@ -386,6 +414,13 @@ pub struct Ball {
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
+    )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
     )]
     pub pid: OptionalResourceId,
 }
@@ -507,7 +542,7 @@ mod write_tests {
             r2: Some(1.6),
             p1: OptionalResourceIndex::none(),
             p2: OptionalResourceIndex::none(),
-            pid: None,
+            pid: OptionalResourceId::none(),
             cap1: None,
             cap2: None,
         };
@@ -526,7 +561,7 @@ mod write_tests {
             vindex: 0,
             r: Some(0.5),
             p: OptionalResourceIndex::none(),
-            pid: None,
+            pid: OptionalResourceId::none(),
         };
         let ball_string = to_string(&ball).unwrap();
 
@@ -545,9 +580,9 @@ mod write_tests {
             ballmode: None,
             ballradius: None,
             clippingmode: None,
-            clippingmesh: None,
-            representationmesh: None,
-            pid: None,
+            clippingmesh: OptionalResourceId::none(),
+            representationmesh: OptionalResourceId::none(),
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             cap: Some(CapMode::Sphere),
             beams: Beams {
@@ -558,7 +593,7 @@ mod write_tests {
                     r2: Some(1.6),
                     p1: OptionalResourceIndex::none(),
                     p2: OptionalResourceIndex::none(),
-                    pid: None,
+                    pid: OptionalResourceId::none(),
                     cap1: None,
                     cap2: None,
                 }],
@@ -589,9 +624,9 @@ mod write_tests {
             ballmode: Some(BallMode::Mixed),
             ballradius: Some(0.25),
             clippingmode: None,
-            clippingmesh: None,
-            representationmesh: None,
-            pid: None,
+            clippingmesh: OptionalResourceId::none(),
+            representationmesh: OptionalResourceId::none(),
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             cap: Some(CapMode::Sphere),
             beams: Beams {
@@ -602,7 +637,7 @@ mod write_tests {
                     r2: Some(1.6),
                     p1: OptionalResourceIndex::none(),
                     p2: OptionalResourceIndex::none(),
-                    pid: None,
+                    pid: OptionalResourceId::none(),
                     cap1: None,
                     cap2: None,
                 }],
@@ -612,7 +647,7 @@ mod write_tests {
                     vindex: 0,
                     r: Some(0.5),
                     p: OptionalResourceIndex::none(),
-                    pid: None,
+                    pid: OptionalResourceId::none(),
                 }],
             }),
             beamsets: None,
@@ -692,7 +727,7 @@ mod memory_optimized_read_tests {
                 r2: Some(1.6),
                 p1: OptionalResourceIndex::none(),
                 p2: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
                 cap1: None,
                 cap2: None,
             }
@@ -713,7 +748,7 @@ mod memory_optimized_read_tests {
                 vindex: 0,
                 r: Some(0.5),
                 p: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -734,9 +769,9 @@ mod memory_optimized_read_tests {
                 ballmode: None,
                 ballradius: None,
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
@@ -747,7 +782,7 @@ mod memory_optimized_read_tests {
                         r2: Some(1.6),
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -776,9 +811,9 @@ mod memory_optimized_read_tests {
                 ballmode: Some(BallMode::Mixed),
                 ballradius: Some(0.25),
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
@@ -789,7 +824,7 @@ mod memory_optimized_read_tests {
                         r2: Some(1.6),
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -799,7 +834,7 @@ mod memory_optimized_read_tests {
                         vindex: 0,
                         r: Some(0.5),
                         p: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     }],
                 }),
                 beamsets: None,
@@ -864,9 +899,9 @@ mod memory_optimized_read_tests {
                     ballmode: None,
                     ballradius: None,
                     clippingmode: None,
-                    clippingmesh: None,
-                    representationmesh: None,
-                    pid: None,
+                    clippingmesh: OptionalResourceId::none(),
+                    representationmesh: OptionalResourceId::none(),
+                    pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     cap: Some(CapMode::Hemisphere),
                     beams: Beams {
@@ -878,7 +913,7 @@ mod memory_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -889,7 +924,7 @@ mod memory_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -900,7 +935,7 @@ mod memory_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             }
@@ -940,7 +975,7 @@ mod memory_optimized_read_tests {
                         thumbnail: None,
                         partnumber: None,
                         name: None,
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: Some(Mesh {
@@ -960,9 +995,9 @@ mod memory_optimized_read_tests {
                                 ballmode: Some(BallMode::Mixed),
                                 ballradius: Some(0.25),
                                 clippingmode: None,
-                                clippingmesh: None,
-                                representationmesh: None,
-                                pid: None,
+                                clippingmesh: OptionalResourceId::none(),
+                                representationmesh: OptionalResourceId::none(),
+                                pid: OptionalResourceId::none(),
                                 pindex: OptionalResourceIndex::none(),
                                 cap: Some(CapMode::Hemisphere),
                                 beams: Beams {
@@ -974,7 +1009,7 @@ mod memory_optimized_read_tests {
                                             r2: None,
                                             p1: OptionalResourceIndex::none(),
                                             p2: OptionalResourceIndex::none(),
-                                            pid: None,
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -985,7 +1020,7 @@ mod memory_optimized_read_tests {
                                             r2: None,
                                             p1: OptionalResourceIndex::none(),
                                             p2: OptionalResourceIndex::none(),
-                                            pid: None,
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -996,7 +1031,7 @@ mod memory_optimized_read_tests {
                                             r2: None,
                                             p1: OptionalResourceIndex::none(),
                                             p2: OptionalResourceIndex::none(),
-                                            pid: None,
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         }
@@ -1007,7 +1042,7 @@ mod memory_optimized_read_tests {
                                         vindex: 0,
                                         r: Some(0.5),
                                         p: OptionalResourceIndex::none(),
-                                        pid: None
+                                        pid: OptionalResourceId::none()
                                     }]
                                 }),
                                 beamsets: None,
@@ -1066,7 +1101,7 @@ mod speed_optimized_read_tests {
                 r2: Some(1.6),
                 p1: OptionalResourceIndex::none(),
                 p2: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
                 cap1: None,
                 cap2: None,
             }
@@ -1087,7 +1122,7 @@ mod speed_optimized_read_tests {
                 vindex: 0,
                 r: Some(0.5),
                 p: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -1108,9 +1143,9 @@ mod speed_optimized_read_tests {
                 ballmode: None,
                 ballradius: None,
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
@@ -1121,7 +1156,7 @@ mod speed_optimized_read_tests {
                         r2: Some(1.6),
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -1155,9 +1190,9 @@ mod speed_optimized_read_tests {
                 ballmode: Some(BallMode::Mixed),
                 ballradius: Some(0.25),
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
@@ -1168,7 +1203,7 @@ mod speed_optimized_read_tests {
                         r2: Some(1.6),
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -1178,7 +1213,7 @@ mod speed_optimized_read_tests {
                         vindex: 0,
                         r: Some(0.5),
                         p: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     }],
                 }),
                 beamsets: None,
@@ -1240,9 +1275,9 @@ mod speed_optimized_read_tests {
                     ballmode: None,
                     ballradius: None,
                     clippingmode: None,
-                    clippingmesh: None,
-                    representationmesh: None,
-                    pid: None,
+                    clippingmesh: OptionalResourceId::none(),
+                    representationmesh: OptionalResourceId::none(),
+                    pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     cap: Some(CapMode::Hemisphere),
                     beams: Beams {
@@ -1254,7 +1289,7 @@ mod speed_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1265,7 +1300,7 @@ mod speed_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1276,7 +1311,7 @@ mod speed_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             }
@@ -1321,9 +1356,9 @@ mod speed_optimized_read_tests {
                     ballmode: Some(BallMode::Mixed),
                     ballradius: Some(0.25),
                     clippingmode: None,
-                    clippingmesh: None,
-                    representationmesh: None,
-                    pid: None,
+                    clippingmesh: OptionalResourceId::none(),
+                    representationmesh: OptionalResourceId::none(),
+                    pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     cap: Some(CapMode::Hemisphere),
                     beams: Beams {
@@ -1335,7 +1370,7 @@ mod speed_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1346,7 +1381,7 @@ mod speed_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1357,7 +1392,7 @@ mod speed_optimized_read_tests {
                                 r2: None,
                                 p1: OptionalResourceIndex::none(),
                                 p2: OptionalResourceIndex::none(),
-                                pid: None,
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             }
@@ -1368,7 +1403,7 @@ mod speed_optimized_read_tests {
                             vindex: 0,
                             r: Some(0.5),
                             p: OptionalResourceIndex::none(),
-                            pid: None
+                            pid: OptionalResourceId::none()
                         }]
                     }),
                     beamsets: None,
@@ -1404,7 +1439,7 @@ mod speed_optimized_read_tests {
                         thumbnail: None,
                         partnumber: None,
                         name: None,
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: Some(Mesh {
@@ -1424,9 +1459,9 @@ mod speed_optimized_read_tests {
                                 ballmode: Some(BallMode::Mixed),
                                 ballradius: Some(0.25),
                                 clippingmode: None,
-                                clippingmesh: None,
-                                representationmesh: None,
-                                pid: None,
+                                clippingmesh: OptionalResourceId::none(),
+                                representationmesh: OptionalResourceId::none(),
+                                pid: OptionalResourceId::none(),
                                 pindex: OptionalResourceIndex::none(),
                                 cap: Some(CapMode::Hemisphere),
                                 beams: Beams {
@@ -1438,7 +1473,7 @@ mod speed_optimized_read_tests {
                                             r2: None,
                                             p1: OptionalResourceIndex::none(),
                                             p2: OptionalResourceIndex::none(),
-                                            pid: None,
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -1449,7 +1484,7 @@ mod speed_optimized_read_tests {
                                             r2: None,
                                             p1: OptionalResourceIndex::none(),
                                             p2: OptionalResourceIndex::none(),
-                                            pid: None,
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -1460,7 +1495,7 @@ mod speed_optimized_read_tests {
                                             r2: None,
                                             p1: OptionalResourceIndex::none(),
                                             p2: OptionalResourceIndex::none(),
-                                            pid: None,
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         }
@@ -1471,7 +1506,7 @@ mod speed_optimized_read_tests {
                                         vindex: 0,
                                         r: Some(0.5),
                                         p: OptionalResourceIndex::none(),
-                                        pid: None
+                                        pid: OptionalResourceId::none()
                                     }]
                                 }),
                                 beamsets: None,

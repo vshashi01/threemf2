@@ -1177,7 +1177,7 @@ impl MeshObjectBuilder {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
             is_production_ext_required,
@@ -1334,7 +1334,7 @@ impl MeshBuilder {
             p1: OptionalResourceIndex::none(),
             p2: OptionalResourceIndex::none(),
             p3: OptionalResourceIndex::none(),
-            pid: None,
+            pid: OptionalResourceId::none(),
         });
         self
     }
@@ -1382,7 +1382,7 @@ impl MeshBuilder {
                 p1: OptionalResourceIndex::none(),
                 p2: OptionalResourceIndex::none(),
                 p3: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
             });
         }
 
@@ -1555,7 +1555,7 @@ impl ComponentsObjectBuilder {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
             is_production_ext_required,
@@ -1865,9 +1865,9 @@ impl BeamLatticeBuilder {
             ballmode: None,
             ballradius: None,
             clippingmode: None,
-            clippingmesh: None,
-            representationmesh: None,
-            pid: None,
+            clippingmesh: OptionalResourceId::none(),
+            representationmesh: OptionalResourceId::none(),
+            pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             cap: None,
             beams: Vec::new(),
@@ -1920,7 +1920,7 @@ impl BeamLatticeBuilder {
     ///
     /// The lattice will be clipped to the bounds of this mesh based on the clipping mode.
     pub fn clippingmesh(&mut self, object_id: ObjectId) -> &mut Self {
-        self.clippingmesh = Some(object_id.0);
+        self.clippingmesh = OptionalResourceId::new(object_id.0);
         self
     }
 
@@ -1928,13 +1928,13 @@ impl BeamLatticeBuilder {
     ///
     /// This mesh can be used as a simplified representation of the lattice.
     pub fn representationmesh(&mut self, object_id: ObjectId) -> &mut Self {
-        self.representationmesh = Some(object_id.0);
+        self.representationmesh = OptionalResourceId::new(object_id.0);
         self
     }
 
     /// Set the property ID for the lattice.
     pub fn pid(&mut self, pid: ResourceId) -> &mut Self {
-        self.pid = Some(pid);
+        self.pid = OptionalResourceId::new(pid);
         self
     }
 
@@ -2113,7 +2113,7 @@ impl BeamBuilder {
             r2: None,
             p1: OptionalResourceIndex::none(),
             p2: OptionalResourceIndex::none(),
-            pid: None,
+            pid: OptionalResourceId::none(),
             cap1: None,
             cap2: None,
         }
@@ -2145,7 +2145,7 @@ impl BeamBuilder {
 
     /// Set the property ID for the beam
     pub fn pid(mut self, pid: ResourceId) -> Self {
-        self.pid = Some(pid);
+        self.pid = OptionalResourceId::new(pid);
         self
     }
 
@@ -2191,7 +2191,7 @@ impl BallBuilder {
             vindex,
             r: None,
             p: OptionalResourceIndex::none(),
-            pid: None,
+            pid: OptionalResourceId::none(),
         }
     }
 
@@ -2209,7 +2209,7 @@ impl BallBuilder {
 
     /// Set the property ID for the ball
     pub fn pid(mut self, pid: ResourceIndex) -> Self {
-        self.pid = Some(pid);
+        self.pid = OptionalResourceId::new(pid);
         self
     }
 
@@ -2823,7 +2823,7 @@ mod tests {
         assert_eq!(beam.r2, None);
         assert_eq!(beam.p1, OptionalResourceIndex::none());
         assert_eq!(beam.p2, OptionalResourceIndex::none());
-        assert_eq!(beam.pid, None);
+        assert_eq!(beam.pid, OptionalResourceId::none());
         assert_eq!(beam.cap1, None);
         assert_eq!(beam.cap2, None);
     }
@@ -2846,7 +2846,7 @@ mod tests {
         assert_eq!(beam.r2, Some(2.0));
         assert_eq!(beam.p1, OptionalResourceIndex::new(10));
         assert_eq!(beam.p2, OptionalResourceIndex::new(20));
-        assert_eq!(beam.pid, Some(5));
+        assert_eq!(beam.pid, OptionalResourceId::new(5));
         assert_eq!(beam.cap1, Some(CapMode::Hemisphere));
         assert_eq!(beam.cap2, Some(CapMode::Butt));
     }
@@ -2860,7 +2860,7 @@ mod tests {
         assert_eq!(ball.vindex, 5);
         assert_eq!(ball.r, None);
         assert_eq!(ball.p, OptionalResourceIndex::none());
-        assert_eq!(ball.pid, None);
+        assert_eq!(ball.pid, OptionalResourceId::none());
     }
 
     #[test]
@@ -2874,7 +2874,7 @@ mod tests {
         assert_eq!(ball.vindex, 5);
         assert_eq!(ball.r, Some(0.75));
         assert_eq!(ball.p, OptionalResourceIndex::new(15));
-        assert_eq!(ball.pid, Some(3));
+        assert_eq!(ball.pid, OptionalResourceId::new(3));
     }
 
     // ========== BeamSetBuilder Tests ==========
@@ -3000,9 +3000,9 @@ mod tests {
         assert_eq!(beamlattice.ballmode, Some(BallMode::All));
         assert_eq!(beamlattice.ballradius, Some(1.0));
         assert_eq!(beamlattice.clippingmode, Some(ClippingMode::Inside));
-        assert_eq!(beamlattice.clippingmesh, Some(10));
-        assert_eq!(beamlattice.representationmesh, Some(20));
-        assert_eq!(beamlattice.pid, Some(5));
+        assert_eq!(beamlattice.clippingmesh, OptionalResourceId::new(10));
+        assert_eq!(beamlattice.representationmesh, OptionalResourceId::new(20));
+        assert_eq!(beamlattice.pid, OptionalResourceId::new(5));
         assert_eq!(beamlattice.pindex, OptionalResourceIndex::new(10));
         assert_eq!(beamlattice.cap, Some(CapMode::Sphere));
     }

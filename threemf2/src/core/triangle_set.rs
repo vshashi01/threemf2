@@ -188,7 +188,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
@@ -221,7 +221,7 @@ mod write_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 0,
@@ -230,7 +230,7 @@ mod write_tests {
                         p1: OptionalResourceIndex::none(),
                         p2: OptionalResourceIndex::none(),
                         p3: OptionalResourceIndex::none(),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             },
@@ -319,7 +319,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
@@ -355,7 +355,7 @@ mod memory_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
@@ -364,7 +364,7 @@ mod memory_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },
@@ -452,7 +452,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex,
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
@@ -488,7 +488,7 @@ mod speed_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
@@ -497,7 +497,7 @@ mod speed_optimized_read_tests {
                             p1: OptionalResourceIndex::none(),
                             p2: OptionalResourceIndex::none(),
                             p3: OptionalResourceIndex::none(),
-                            pid: None,
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },

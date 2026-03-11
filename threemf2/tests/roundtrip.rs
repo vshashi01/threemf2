@@ -11,6 +11,7 @@ mod tests {
 
     use threemf2::{
         core::{
+            OptionalResourceId,
             build::{Build, Item},
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             model::{Model, Unit},
@@ -45,7 +46,7 @@ mod tests {
                 p1: OptionalResourceIndex::none(),
                 p2: OptionalResourceIndex::none(),
                 p3: OptionalResourceIndex::none(),
-                pid: None,
+                pid: OptionalResourceId::none(),
             }],
         };
 
@@ -69,7 +70,7 @@ mod tests {
                         thumbnail: None,
                         partnumber: None,
                         name: Some("Mesh".to_owned()),
-                        pid: None,
+                        pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: Some(mesh.clone()),
