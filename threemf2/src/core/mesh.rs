@@ -9,15 +9,21 @@ use serde::Deserialize;
 
 use crate::core::beamlattice::BeamLattice;
 use crate::core::triangle_set::TriangleSets;
+use crate::core::types::{Double, OptionalResourceId, OptionalResourceIndex, ResourceIndex};
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
+
+#[cfg(feature = "memory-optimized-read")]
+const MAX_VERTEX_BUFFER: usize = 100_000;
+#[cfg(feature = "memory-optimized-read")]
+const MAX_TRIANGLE_BUFFER: usize = 200_000;
 
 /// A triangle mesh
 ///
 /// It is expected that users of this library will use their own mesh type,
 /// and the simplicity of [`Mesh`] provides an easy target for conversion to and from.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(all(feature = "memory-optimized-read",), derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(any(feature = "write", feature = "memory-optimized-read"), xml(ns(CORE_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS), rename = "mesh"))]
@@ -58,66 +64,219 @@ pub struct Mesh {
 ///
 /// See [`Vertex`] for more details
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_NS), rename = "vertices")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "vertices"))]
 pub struct Vertices {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub vertex: Vec<Vertex>,
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Vertices {
+    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: CORE_NS,
+            name: "vertices",
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if into.is_some() {
+            return Err(instant_xml::Error::DuplicateValue(field));
+        }
+
+        let mut vertices: Vec<Vertex> = Vec::with_capacity(MAX_VERTEX_BUFFER);
+
+        while let Some(node) = deserializer.next() {
+            if let Ok(n) = node
+                && let instant_xml::de::Node::Open(element) = n
+            {
+                //println!("This is element value {:?}", element);
+                let mut vertex_value: Option<Vertex> = None;
+                let mut nested = deserializer.nested(element);
+
+                if <Vertex as instant_xml::FromXml>::deserialize(
+                    &mut vertex_value,
+                    "vertex",
+                    &mut nested,
+                )
+                .is_ok()
+                    && let Some(vertex) = vertex_value
+                {
+                    vertices.push(vertex);
+                };
+            }
+        }
+
+        vertices.shrink_to_fit();
+        *into = Some(Vertices { vertex: vertices });
+
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: instant_xml::Kind = instant_xml::Kind::Scalar;
 }
 
 /// A vertex in a mesh
 ///
 /// A vertex is defined as a Point coordinate in 3D coordinate system.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_NS), rename = "vertex")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "vertex"))]
 pub struct Vertex {
     /// X position
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub x: f64,
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub x: Double,
 
     /// Y position
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub y: f64,
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub y: Double,
 
     /// Z position
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub z: f64,
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub z: Double,
+}
+
+impl Vertex {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Self {
+            x: Double::new(x),
+            y: Double::new(y),
+            z: Double::new(z),
+        }
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Vertex {
+    #[inline]
+    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: CORE_NS,
+            name: "vertex",
+        }
+    }
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _: &'static str,
+        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        use ::instant_xml::Error;
+        use ::instant_xml::de::Node;
+        let mut x: f64 = 0.0;
+        let mut y: f64 = 0.0;
+        let mut z: f64 = 0.0;
+
+        while let Some(node) = deserializer.next() {
+            let node = node?;
+            match node {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+
+                    match id.name.as_bytes().first() {
+                        Some(b'x') => {
+                            x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
+                        Some(b'y') => {
+                            y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
+                        Some(b'z') => {
+                            z = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
+                        _ => {}
+                    };
+                }
+                Node::Open(data) => {
+                    let mut nested = deserializer.nested(data);
+                    nested.ignore()?;
+                }
+                Node::Text(_) => {}
+                _ => {
+                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
+                }
+            }
+        }
+
+        *into = Some(Self {
+            x: Double::new(x),
+            y: Double::new(y),
+            z: Double::new(z),
+        });
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
 }
 
 /// Collection of Triangle
 ///
 /// See [`Triangle`] for more details.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_NS), rename = "triangles")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "triangles"))]
 pub struct Triangles {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub triangle: Vec<Triangle>,
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Triangles {
+    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: CORE_NS,
+            name: "triangles",
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if into.is_some() {
+            return Err(instant_xml::Error::DuplicateValue(field));
+        }
+
+        let mut triangles: Vec<Triangle> = Vec::with_capacity(MAX_TRIANGLE_BUFFER);
+        while let Some(node) = deserializer.next() {
+            if let Ok(n) = node
+                && let instant_xml::de::Node::Open(element) = n
+            {
+                let mut triangle_value: Option<Triangle> = None;
+                let mut nested = deserializer.nested(element);
+                if <Triangle as instant_xml::FromXml>::deserialize(
+                    &mut triangle_value,
+                    field,
+                    &mut nested,
+                )
+                .is_ok()
+                    && let Some(vertex) = triangle_value
+                {
+                    triangles.push(vertex);
+                }
+            }
+        }
+
+        triangles.shrink_to_fit();
+        *into = Some(Triangles {
+            triangle: triangles,
+        });
+
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+
+    const KIND: instant_xml::Kind = instant_xml::Kind::Element;
 }
 
 /// A triangle in Mesh
@@ -127,62 +286,149 @@ pub struct Triangles {
 /// additional indices into other resources can be specified
 /// for each vertex of the triangle as well.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_NS), rename = "triangle")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "triangle"))]
 pub struct Triangle {
     /// Vertex 1
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub v1: usize,
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub v1: ResourceIndex,
 
     /// Vertex 2
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub v2: usize,
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub v2: ResourceIndex,
 
     /// Vertex 3
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub v3: usize,
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub v3: ResourceIndex,
 
     /// Overrides the object level pindex for Vertex 1 of this [`Triangle`]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
     )]
-    pub p1: Option<usize>,
+    pub p1: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 2 of this [`Triangle`]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
     )]
-    pub p2: Option<usize>,
+    pub p2: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 3 of this [`Triangle`]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
     )]
-    pub p3: Option<usize>,
+    pub p3: OptionalResourceIndex,
 
     /// Overrides the object level pid for this [`Triangle`]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
     )]
-    pub pid: Option<usize>,
+    pub pid: OptionalResourceId,
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Triangle {
+    #[inline]
+    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: CORE_NS,
+            name: "triangle",
+        }
+    }
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _: &'static str,
+        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        use ::instant_xml::Error;
+        use ::instant_xml::de::Node;
+        let mut v1: ResourceIndex = 0;
+        let mut v2: ResourceIndex = 0;
+        let mut v3: ResourceIndex = 0;
+        let mut p1: OptionalResourceIndex = OptionalResourceIndex::none();
+        let mut p2: OptionalResourceIndex = OptionalResourceIndex::none();
+        let mut p3: OptionalResourceIndex = OptionalResourceIndex::none();
+        let mut pid: OptionalResourceId = OptionalResourceId::none();
+
+        while let Some(node) = deserializer.next() {
+            let node = node?;
+            match node {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+
+                    match id.name {
+                        "v1" => v1 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v2" => v2 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v3" => v3 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "p1" => {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
+                                p1 = OptionalResourceIndex::new(value);
+                            }
+                        }
+                        "p2" => {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
+                                p2 = OptionalResourceIndex::new(value);
+                            }
+                        }
+                        "p3" => {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
+                                p3 = OptionalResourceIndex::new(value);
+                            }
+                        }
+                        "pid" => {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
+                                pid = OptionalResourceId::new(value);
+                            }
+                        }
+                        _ => {}
+                    };
+                }
+                Node::Open(data) => {
+                    let mut nested = deserializer.nested(data);
+                    nested.ignore()?;
+                }
+                Node::Text(_) => {}
+                _ => {
+                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
+                }
+            }
+        }
+
+        *into = Some(Self {
+            v1,
+            v2,
+            v3,
+            p1,
+            p2,
+            p3,
+            pid,
+        });
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
 }
 
 #[cfg(feature = "write")]
@@ -191,20 +437,19 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
+    use crate::core::OptionalResourceId;
     use crate::threemf_namespaces::{
         BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX,
     };
+
+    use crate::core::types::OptionalResourceIndex;
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
     #[test]
     pub fn toxml_vertex_test() {
         let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
-        let vertex = Vertex {
-            x: 100.5,
-            y: 100.0,
-            z: 0.0,
-        };
+        let vertex = Vertex::new(100.5, 100.0, 0.0);
         let vertex_string = to_string(&vertex).unwrap();
 
         assert_eq!(vertex_string, xml_string);
@@ -218,16 +463,8 @@ mod write_tests {
         );
         let vertices = Vertices {
             vertex: vec![
-                Vertex {
-                    x: 100.,
-                    y: 110.5,
-                    z: 0.0,
-                },
-                Vertex {
-                    x: 0.156,
-                    y: 55.6896,
-                    z: -10.0,
-                },
+                Vertex::new(100., 110.5, 0.0),
+                Vertex::new(0.156, 55.6896, -10.0),
             ],
         };
         let vertices_string = to_string(&vertices).unwrap();
@@ -242,10 +479,10 @@ mod write_tests {
             v1: 1,
             v2: 2,
             v3: 3,
-            p1: None,
-            p2: None,
-            p3: None,
-            pid: None,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            p3: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
         };
         let triangle_string = to_string(&triangle).unwrap();
 
@@ -264,19 +501,19 @@ mod write_tests {
                     v1: 1,
                     v2: 2,
                     v3: 3,
-                    p1: None,
-                    p2: None,
-                    p3: None,
-                    pid: None,
+                    p1: OptionalResourceIndex::none(),
+                    p2: OptionalResourceIndex::none(),
+                    p3: OptionalResourceIndex::none(),
+                    pid: OptionalResourceId::none(),
                 },
                 Triangle {
                     v1: 2,
                     v2: 3,
                     v3: 4,
-                    p1: None,
-                    p2: None,
-                    p3: None,
-                    pid: None,
+                    p1: OptionalResourceIndex::none(),
+                    p2: OptionalResourceIndex::none(),
+                    p3: OptionalResourceIndex::none(),
+                    pid: OptionalResourceId::none(),
                 },
             ],
         };
@@ -298,26 +535,10 @@ mod write_tests {
         let mesh = Mesh {
             vertices: Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: -1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: -1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
+                    Vertex::new(-1.0, -1.0, 0.0),
+                    Vertex::new(1.0, -1.0, 0.0),
+                    Vertex::new(1.0, 1.0, 0.0),
+                    Vertex::new(-1.0, 1.0, 0.0),
                 ],
             },
             triangles: Triangles {
@@ -326,19 +547,19 @@ mod write_tests {
                         v1: 0,
                         v2: 1,
                         v3: 2,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 0,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             },
@@ -357,6 +578,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
+    use crate::core::types::{OptionalResourceId, OptionalResourceIndex};
     use crate::threemf_namespaces::CORE_NS;
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
@@ -366,14 +588,7 @@ mod memory_optimized_read_tests {
         let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
         let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
-        assert_eq!(
-            vertex,
-            Vertex {
-                x: 100.5,
-                y: 100.0,
-                z: 0.0,
-            }
-        );
+        assert_eq!(vertex, Vertex::new(100.5, 100.0, 0.0,));
     }
 
     #[test]
@@ -388,16 +603,8 @@ mod memory_optimized_read_tests {
             vertices,
             Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: 100.,
-                        y: 110.5,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 0.156,
-                        y: 55.6896,
-                        z: -10.0,
-                    },
+                    Vertex::new(100., 110.5, 0.0,),
+                    Vertex::new(0.156, 55.6896, -10.0,),
                 ],
             }
         )
@@ -414,10 +621,10 @@ mod memory_optimized_read_tests {
                 v1: 1,
                 v2: 2,
                 v3: 3,
-                p1: None,
-                p2: None,
-                p3: None,
-                pid: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -438,19 +645,19 @@ mod memory_optimized_read_tests {
                         v1: 1,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 2,
                         v2: 3,
                         v3: 4,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             }
@@ -470,26 +677,10 @@ mod memory_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {
@@ -498,19 +689,19 @@ mod memory_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },
@@ -527,7 +718,10 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::threemf_namespaces::CORE_NS;
+    use crate::{
+        core::{OptionalResourceId, OptionalResourceIndex},
+        threemf_namespaces::CORE_NS,
+    };
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
@@ -536,14 +730,7 @@ mod speed_optimized_read_tests {
         let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
         let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
-        assert_eq!(
-            vertex,
-            Vertex {
-                x: 100.5,
-                y: 100.0,
-                z: 0.0,
-            }
-        );
+        assert_eq!(vertex, Vertex::new(100.5, 100.0, 0.0,));
     }
 
     #[test]
@@ -558,16 +745,8 @@ mod speed_optimized_read_tests {
             vertices,
             Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: 100.,
-                        y: 110.5,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 0.156,
-                        y: 55.6896,
-                        z: -10.0,
-                    },
+                    Vertex::new(100., 110.5, 0.0,),
+                    Vertex::new(0.156, 55.6896, -10.0,),
                 ],
             }
         )
@@ -584,10 +763,10 @@ mod speed_optimized_read_tests {
                 v1: 1,
                 v2: 2,
                 v3: 3,
-                p1: None,
-                p2: None,
-                p3: None,
-                pid: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -608,19 +787,19 @@ mod speed_optimized_read_tests {
                         v1: 1,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 2,
                         v2: 3,
                         v3: 4,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             }
@@ -640,26 +819,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {
@@ -668,19 +831,19 @@ mod speed_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },

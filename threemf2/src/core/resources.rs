@@ -7,7 +7,10 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::{core::object::Object, threemf_namespaces::CORE_NS};
+use crate::{
+    core::{object::Object, types::ResourceId},
+    threemf_namespaces::CORE_NS,
+};
 
 /// A collection of Objects and other properties that are referenced by other elements.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -63,7 +66,7 @@ pub struct BaseMaterials {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub id: usize,
+    pub id: ResourceId,
 
     pub base: Vec<Base>,
 }
@@ -75,7 +78,7 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::object::Object,
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
         threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX},
     };
 
@@ -94,8 +97,8 @@ mod write_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
                 components: None,
@@ -174,7 +177,10 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::{core::object::Object, threemf_namespaces::CORE_NS};
+    use crate::{
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
+        threemf_namespaces::CORE_NS,
+    };
 
     use super::{Base, BaseMaterials, Resources};
 
@@ -195,8 +201,8 @@ mod memory_optimized_read_tests {
                     thumbnail: None,
                     partnumber: None,
                     name: None,
-                    pid: None,
-                    pindex: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: None,
                     components: None,
@@ -279,7 +285,10 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::{core::object::Object, threemf_namespaces::CORE_NS};
+    use crate::{
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
+        threemf_namespaces::CORE_NS,
+    };
 
     use super::{Base, BaseMaterials, Resources};
 
@@ -300,8 +309,8 @@ mod speed_optimized_read_tests {
                     thumbnail: None,
                     partnumber: None,
                     name: None,
-                    pid: None,
-                    pindex: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     mesh: None,
                     components: None,

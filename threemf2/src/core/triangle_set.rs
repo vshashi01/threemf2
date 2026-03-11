@@ -7,7 +7,7 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::threemf_namespaces::CORE_TRIANGLESET_NS;
+use crate::{core::types::ResourceIndex, threemf_namespaces::CORE_TRIANGLESET_NS};
 
 /// Collection of Triangle Set. See [`TriangleSet`] for more details.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -152,7 +152,7 @@ pub struct TriangleRef {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub index: usize,
+    pub index: ResourceIndex,
 }
 
 /// A reference to continous Range of Triangles in the Mesh.
@@ -170,14 +170,14 @@ pub struct TriangleRefRange {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub startindex: usize,
+    pub startindex: ResourceIndex,
 
     /// The end idnex of the range.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub endindex: usize,
+    pub endindex: ResourceIndex,
 }
 
 #[cfg(feature = "write")]
@@ -188,11 +188,8 @@ mod write_tests {
 
     use crate::{
         core::{
-            mesh::Mesh,
-            mesh::Triangle,
-            mesh::Triangles,
-            mesh::Vertex,
-            mesh::Vertices,
+            OptionalResourceId, OptionalResourceIndex,
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
         threemf_namespaces::{
@@ -209,26 +206,10 @@ mod write_tests {
         let mesh = Mesh {
             vertices: Vertices {
                 vertex: vec![
-                    Vertex {
-                        x: -1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: -1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: 1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
-                    Vertex {
-                        x: -1.0,
-                        y: 1.0,
-                        z: 0.0,
-                    },
+                    Vertex::new(-1.0, -1.0, 0.0),
+                    Vertex::new(1.0, -1.0, 0.0),
+                    Vertex::new(1.0, 1.0, 0.0),
+                    Vertex::new(-1.0, 1.0, 0.0),
                 ],
             },
             triangles: Triangles {
@@ -237,19 +218,19 @@ mod write_tests {
                         v1: 0,
                         v2: 1,
                         v3: 2,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                     Triangle {
                         v1: 0,
                         v2: 2,
                         v3: 3,
-                        p1: None,
-                        p2: None,
-                        p3: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        p3: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             },
@@ -338,11 +319,8 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            mesh::Mesh,
-            mesh::Triangle,
-            mesh::Triangles,
-            mesh::Vertex,
-            mesh::Vertices,
+            OptionalResourceId, OptionalResourceIndex,
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
@@ -362,26 +340,10 @@ mod memory_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {
@@ -390,19 +352,19 @@ mod memory_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },
@@ -490,11 +452,8 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            mesh::Mesh,
-            mesh::Triangle,
-            mesh::Triangles,
-            mesh::Vertex,
-            mesh::Vertices,
+            OptionalResourceId, OptionalResourceIndex,
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
@@ -514,26 +473,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles {
@@ -542,19 +485,19 @@ mod speed_optimized_read_tests {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         },
                         Triangle {
                             v1: 0,
                             v2: 2,
                             v3: 3,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         }
                     ]
                 },

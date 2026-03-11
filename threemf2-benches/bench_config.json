@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "path": "third-party/lfs/mgx-iron_giant_single.3mf",
+      "vertex_count": 150000,
+      "motivation": "Medium to Large part"
+    },
+    {
+      "path": "third-party/blender-suzanne.3mf",
+      "vertex_count": 5000,
+      "motivation": "Small to Medium part"
+    },
+    {
+      "path": "third-party/meshmixer-bunny.3mf",
+      "vertex_count": 80000,
+      "motivation": "Small to Medium part"
+    },
+    {
+      "path": "third-party/mgx-2995-box-items.3mf",
+      "vertex_count": 8,
+      "motivation": "Very small mesh but many many build items"
+    },
+    {
+      "path": "third-party/mgx-999-box-objects.3mf",
+      "vertex_count": 8,
+      "motivation": "Very small mesh many many objects"
+    }
+  ]
+}

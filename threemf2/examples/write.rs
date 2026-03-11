@@ -1,11 +1,13 @@
 use threemf2::{
     core::{
+        OptionalResourceId,
         build::{Build, Item},
         mesh::*,
         metadata::Metadata,
         model::{Model, Unit},
         object::{Object, ObjectType},
         resources::Resources,
+        types::OptionalResourceIndex,
     },
     io::ThreemfPackage,
 };
@@ -34,27 +36,15 @@ fn main() {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: Some(Mesh {
                     vertices: Vertices {
                         vertex: vec![
-                            Vertex {
-                                x: 0.0,
-                                y: 0.0,
-                                z: 0.0,
-                            },
-                            Vertex {
-                                x: -1.0,
-                                y: 0.0,
-                                z: 0.0,
-                            },
-                            Vertex {
-                                x: -1.0,
-                                y: 1.0,
-                                z: 0.0,
-                            },
+                            Vertex::new(0.0, 0.0, 0.0),
+                            Vertex::new(-1.0, 0.0, 0.0),
+                            Vertex::new(-1.0, 1.0, 0.0),
                         ],
                     },
                     triangles: Triangles {
@@ -62,10 +52,10 @@ fn main() {
                             v1: 0,
                             v2: 1,
                             v3: 2,
-                            p1: None,
-                            p2: None,
-                            p3: None,
-                            pid: None,
+                            p1: OptionalResourceIndex::none(),
+                            p2: OptionalResourceIndex::none(),
+                            p3: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none(),
                         }],
                     },
                     trianglesets: None,

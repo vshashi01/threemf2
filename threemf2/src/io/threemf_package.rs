@@ -655,6 +655,8 @@ mod tests {
     #[test]
     pub fn write_root_model_test() {
         let bytes = {
+            use crate::core::{OptionalResourceId, OptionalResourceIndex};
+
             let bytes = Vec::<u8>::new();
             let mut writer = Cursor::new(bytes);
             let threemf = ThreemfPackage::new(
@@ -670,8 +672,8 @@ mod tests {
                             thumbnail: None,
                             partnumber: None,
                             name: Some("Some object".to_owned()),
-                            pid: None,
-                            pindex: None,
+                            pid: OptionalResourceId::none(),
+                            pindex: OptionalResourceIndex::none(),
                             uuid: Some("uuid".to_owned()),
                             mesh: None,
                             components: None,

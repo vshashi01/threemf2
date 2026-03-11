@@ -143,13 +143,14 @@ pub(crate) fn discover_relationship_files<R: Read + Seek>(
             && path.extension() == Some(OsStr::new(rels_ext))
             && path != Path::new(root_rels_filename)
         {
-            if let Some(path_str) = path.to_str() {
-                rel_files.push(format!("/{path_str}"));
-            } else {
-                return Err(Error::ReadError(
-                    "Failed to read relationship file path".to_owned(),
-                ));
-            }
+            let zip_name = path
+                .components()
+                .map(|c| c.as_os_str().to_string_lossy())
+                .collect::<Vec<_>>()
+                .join("/");
+            let final_path = format!("/{zip_name}");
+
+            rel_files.push(final_path);
         }
     }
 

@@ -8,7 +8,12 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{component::Components, mesh::Mesh},
+    core::{
+        OptionalResourceId,
+        component::Components,
+        mesh::Mesh,
+        types::{OptionalResourceIndex, ResourceId},
+    },
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
 
@@ -27,7 +32,7 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub id: usize,
+    pub id: ResourceId,
 
     /// Optionally defines the intend of this object. If not defined, the
     /// consumer of the file is safe to assume the object is meant to be a [`ObjectType::Model`]
@@ -68,7 +73,14 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub pid: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
+    pub pid: OptionalResourceId,
 
     /// References a zero-based index into the properties
     /// group specified by pid. This property is used to build the object.
@@ -76,7 +88,14 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub pindex: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
+    )]
+    pub pindex: OptionalResourceIndex,
 
     /// Optional UUID as a string.
     ///
@@ -148,10 +167,9 @@ mod write_tests {
 
     use crate::{
         core::{
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
-            mesh::Mesh,
-            mesh::Triangles,
-            mesh::Vertices,
+            mesh::{Mesh, Triangles, Vertices},
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS,
@@ -175,8 +193,8 @@ mod write_tests {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
-            pindex: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: None,
             components: None,
@@ -198,8 +216,8 @@ mod write_tests {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
-            pindex: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: Some("someUUID".to_owned()),
             mesh: None,
             components: None,
@@ -221,8 +239,8 @@ mod write_tests {
             thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
-            pid: None,
-            pindex: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: None,
             components: None,
@@ -244,8 +262,8 @@ mod write_tests {
             thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
-            pid: None,
-            pindex: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: Some(Mesh {
                 vertices: Vertices { vertex: vec![] },
@@ -272,8 +290,8 @@ mod write_tests {
             thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
-            pid: None,
-            pindex: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             mesh: None,
             components: Some(Components {
@@ -329,10 +347,9 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
-            mesh::Mesh,
-            mesh::Triangles,
-            mesh::Vertices,
+            mesh::{Mesh, Triangles, Vertices},
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
@@ -356,8 +373,8 @@ mod memory_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
                 components: None,
@@ -382,8 +399,8 @@ mod memory_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
                 mesh: None,
                 components: None,
@@ -407,8 +424,8 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
-                pindex: Some(123),
+                pid: OptionalResourceId::new(123),
+                pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
                 components: None,
@@ -432,8 +449,8 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
-                pindex: Some(123),
+                pid: OptionalResourceId::new(123),
+                pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
                 components: None,
@@ -457,8 +474,8 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: Some(Mesh {
                     vertices: Vertices { vertex: vec![] },
@@ -487,8 +504,8 @@ mod memory_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
                 components: Some(Components {
@@ -545,10 +562,9 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
-            mesh::Mesh,
-            mesh::Triangles,
-            mesh::Vertices,
+            mesh::{Mesh, Triangles, Vertices},
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
@@ -572,8 +588,8 @@ mod speed_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
                 components: None,
@@ -598,8 +614,8 @@ mod speed_optimized_read_tests {
                 thumbnail: None,
                 partnumber: None,
                 name: None,
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
                 mesh: None,
                 components: None,
@@ -623,8 +639,8 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
-                pindex: Some(123),
+                pid: OptionalResourceId::new(123),
+                pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
                 components: None,
@@ -648,8 +664,8 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: Some(123),
-                pindex: Some(123),
+                pid: OptionalResourceId::new(123),
+                pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 mesh: None,
                 components: None,
@@ -673,8 +689,8 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: Some(Mesh {
                     vertices: Vertices { vertex: vec![] },
@@ -703,8 +719,8 @@ mod speed_optimized_read_tests {
                 thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
-                pid: None,
-                pindex: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 mesh: None,
                 components: Some(Components {

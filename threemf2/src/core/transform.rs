@@ -96,18 +96,14 @@ impl<'xml> FromXml<'xml> for Transform {
     const KIND: Kind = Kind::Scalar;
 }
 
+#[cfg(feature = "memory-optimized-read")]
 impl From<String> for Transform {
     fn from(value: String) -> Self {
         let values = value
             .split(" ")
-            .map(|v| {
-                let parsed = v.parse::<f64>();
-                match parsed {
-                    Ok(val) => val,
-                    Err(_) => f64::MIN_POSITIVE,
-                }
-            })
+            .map(|v| lexical_core::parse(v.as_bytes()).unwrap_or_default())
             .collect::<Vec<f64>>();
+        //ToDo: Consider parallelizing this
 
         // write now it can always panic something to improve in the future
         Self(values.try_into().unwrap())

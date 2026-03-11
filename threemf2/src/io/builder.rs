@@ -110,6 +110,7 @@ use std::{
 pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
 pub use crate::core::model::Unit;
 pub use crate::core::object::ObjectType;
+use crate::core::types::{OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIndex};
 
 /// Errors that can occur when building a [`Model`].
 ///
@@ -1055,16 +1056,16 @@ impl ItemBuilder {
 
 /// Type-safe wrapper for object IDs to prevent mix-ups
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ObjectId(usize);
+pub struct ObjectId(pub ResourceId);
 
-impl From<usize> for ObjectId {
-    fn from(id: usize) -> Self {
+impl From<ResourceId> for ObjectId {
+    fn from(id: ResourceId) -> Self {
         ObjectId(id)
     }
 }
 
-impl From<ObjectId> for usize {
-    fn from(id: ObjectId) -> usize {
+impl From<ObjectId> for ResourceId {
+    fn from(id: ObjectId) -> ResourceId {
         id.0
     }
 }
@@ -1077,8 +1078,8 @@ pub struct ObjectBuilder<T> {
     thumbnail: Option<String>,
     partnumber: Option<String>,
     name: Option<String>,
-    pid: Option<usize>,
-    pindex: Option<usize>,
+    pid: OptionalResourceId,
+    pindex: OptionalResourceIndex,
     uuid: Option<String>,
 
     // sets if the production ext is required.
@@ -1176,8 +1177,8 @@ impl MeshObjectBuilder {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
-            pindex: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             is_production_ext_required,
         }
@@ -1259,11 +1260,8 @@ impl MeshBuilder {
     ///    .add_vertex(&[0.0, 10.0, 0.0]);
     /// ```
     pub fn add_vertex(&mut self, coords: &[f64; 3]) -> &mut Self {
-        self.vertices.push(Vertex {
-            x: coords[0],
-            y: coords[1],
-            z: coords[2],
-        });
+        self.vertices
+            .push(Vertex::new(coords[0], coords[1], coords[2]));
         self
     }
 
@@ -1304,11 +1302,8 @@ impl MeshBuilder {
     /// ```
     pub fn add_vertices_flat(&mut self, vertices: &[f64]) -> &mut Self {
         for vertex in vertices.chunks_exact(3) {
-            self.vertices.push(Vertex {
-                x: vertex[0],
-                y: vertex[1],
-                z: vertex[2],
-            });
+            self.vertices
+                .push(Vertex::new(vertex[0], vertex[1], vertex[2]));
         }
 
         self
@@ -1333,13 +1328,13 @@ impl MeshBuilder {
     /// ```
     pub fn add_triangle(&mut self, indices: &[usize; 3]) -> &mut Self {
         self.triangles.push(Triangle {
-            v1: indices[0],
-            v2: indices[1],
-            v3: indices[2],
-            p1: None,
-            p2: None,
-            p3: None,
-            pid: None,
+            v1: indices[0] as ResourceIndex,
+            v2: indices[1] as ResourceIndex,
+            v3: indices[2] as ResourceIndex,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            p3: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
         });
         self
     }
@@ -1381,13 +1376,13 @@ impl MeshBuilder {
     pub fn add_triangles_flat(&mut self, triangles: &[usize]) -> &mut Self {
         for triangle in triangles.chunks_exact(3) {
             self.triangles.push(Triangle {
-                v1: triangle[0],
-                v2: triangle[1],
-                v3: triangle[2],
-                p1: None,
-                p2: None,
-                p3: None,
-                pid: None,
+                v1: triangle[0] as ResourceIndex,
+                v2: triangle[1] as ResourceIndex,
+                v3: triangle[2] as ResourceIndex,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
             });
         }
 
@@ -1560,8 +1555,8 @@ impl ComponentsObjectBuilder {
             thumbnail: None,
             partnumber: None,
             name: None,
-            pid: None,
-            pindex: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             is_production_ext_required,
         }
@@ -1696,7 +1691,7 @@ impl ComponentsBuilder {
 /// Components reference existing objects and can have their own transform,
 /// UUID, and path attributes.
 pub struct ComponentBuilder {
-    objectid: usize,
+    objectid: u32,
     transform: Option<Transform>,
     path: Option<String>,
     uuid: Option<String>,
@@ -1803,8 +1798,8 @@ impl TriangleSetsBuilder {
         &mut self,
         name: &str,
         identifier: &str,
-        refs: &[usize],
-        ranges: &[(usize, usize)],
+        refs: &[u32],
+        ranges: &[(u32, u32)],
     ) -> &mut Self {
         use crate::core::triangle_set::{TriangleRef, TriangleRefRange, TriangleSet};
 
@@ -1852,10 +1847,10 @@ pub struct BeamLatticeBuilder {
     ballmode: Option<BallMode>,
     ballradius: Option<f64>,
     clippingmode: Option<ClippingMode>,
-    clippingmesh: Option<usize>,
-    representationmesh: Option<usize>,
-    pid: Option<usize>,
-    pindex: Option<usize>,
+    clippingmesh: OptionalResourceId,
+    representationmesh: OptionalResourceId,
+    pid: OptionalResourceId,
+    pindex: OptionalResourceIndex,
     cap: Option<CapMode>,
     beams: Vec<Beam>,
     balls: Vec<Ball>,
@@ -1870,10 +1865,10 @@ impl BeamLatticeBuilder {
             ballmode: None,
             ballradius: None,
             clippingmode: None,
-            clippingmesh: None,
-            representationmesh: None,
-            pid: None,
-            pindex: None,
+            clippingmesh: OptionalResourceId::none(),
+            representationmesh: OptionalResourceId::none(),
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             cap: None,
             beams: Vec::new(),
             balls: Vec::new(),
@@ -1925,7 +1920,7 @@ impl BeamLatticeBuilder {
     ///
     /// The lattice will be clipped to the bounds of this mesh based on the clipping mode.
     pub fn clippingmesh(&mut self, object_id: ObjectId) -> &mut Self {
-        self.clippingmesh = Some(object_id.0);
+        self.clippingmesh = OptionalResourceId::new(object_id.0);
         self
     }
 
@@ -1933,19 +1928,19 @@ impl BeamLatticeBuilder {
     ///
     /// This mesh can be used as a simplified representation of the lattice.
     pub fn representationmesh(&mut self, object_id: ObjectId) -> &mut Self {
-        self.representationmesh = Some(object_id.0);
+        self.representationmesh = OptionalResourceId::new(object_id.0);
         self
     }
 
     /// Set the property ID for the lattice.
-    pub fn pid(&mut self, pid: usize) -> &mut Self {
-        self.pid = Some(pid);
+    pub fn pid(&mut self, pid: ResourceId) -> &mut Self {
+        self.pid = OptionalResourceId::new(pid);
         self
     }
 
     /// Set the property index for the lattice.
-    pub fn pindex(&mut self, pindex: usize) -> &mut Self {
-        self.pindex = Some(pindex);
+    pub fn pindex(&mut self, pindex: ResourceIndex) -> &mut Self {
+        self.pindex = Some(pindex).into();
         self
     }
 
@@ -1965,7 +1960,7 @@ impl BeamLatticeBuilder {
     ///
     /// - `v1`: Index of the first vertex
     /// - `v2`: Index of the second vertex
-    pub fn add_beam(&mut self, v1: usize, v2: usize) -> &mut Self {
+    pub fn add_beam(&mut self, v1: ResourceIndex, v2: ResourceIndex) -> &mut Self {
         let beam = BeamBuilder::new(v1, v2).build();
         self.beams.push(beam);
         self
@@ -1980,7 +1975,7 @@ impl BeamLatticeBuilder {
     /// - `v1`: Index of the first vertex
     /// - `v2`: Index of the second vertex
     /// - `f`: A closure that configures the [`BeamBuilder`]
-    pub fn add_beam_advanced<F>(&mut self, v1: usize, v2: usize, f: F) -> &mut Self
+    pub fn add_beam_advanced<F>(&mut self, v1: ResourceIndex, v2: ResourceIndex, f: F) -> &mut Self
     where
         F: FnOnce(BeamBuilder) -> BeamBuilder,
     {
@@ -1995,7 +1990,7 @@ impl BeamLatticeBuilder {
     /// # Parameters
     ///
     /// - `vertex_pairs`: Slice of `(v1, v2)` vertex index pairs
-    pub fn add_beams(&mut self, vertex_pairs: &[(usize, usize)]) -> &mut Self {
+    pub fn add_beams(&mut self, vertex_pairs: &[(ResourceIndex, ResourceIndex)]) -> &mut Self {
         for &(v1, v2) in vertex_pairs {
             self.add_beam(v1, v2);
         }
@@ -2009,7 +2004,7 @@ impl BeamLatticeBuilder {
     /// # Parameters
     ///
     /// - `vindex`: Index of the vertex where the ball is located
-    pub fn add_ball(&mut self, vindex: usize) -> &mut Self {
+    pub fn add_ball(&mut self, vindex: ResourceIndex) -> &mut Self {
         let ball = BallBuilder::new(vindex).build();
         self.balls.push(ball);
         self
@@ -2023,7 +2018,7 @@ impl BeamLatticeBuilder {
     ///
     /// - `vindex`: Index of the vertex where the ball is located
     /// - `f`: A closure that configures the [`BallBuilder`]
-    pub fn add_ball_advanced<F>(&mut self, vindex: usize, f: F) -> &mut Self
+    pub fn add_ball_advanced<F>(&mut self, vindex: ResourceIndex, f: F) -> &mut Self
     where
         F: FnOnce(BallBuilder) -> BallBuilder,
     {
@@ -2038,7 +2033,7 @@ impl BeamLatticeBuilder {
     /// # Parameters
     ///
     /// - `vindices`: Slice of vertex indices where balls should be placed
-    pub fn add_balls(&mut self, vindices: &[usize]) -> &mut Self {
+    pub fn add_balls(&mut self, vindices: &[ResourceIndex]) -> &mut Self {
         for &vindex in vindices {
             self.add_ball(vindex);
         }
@@ -2097,28 +2092,28 @@ impl BeamLatticeBuilder {
 
 /// Builder for individual beams in a beam lattice
 pub struct BeamBuilder {
-    v1: usize,
-    v2: usize,
+    v1: ResourceIndex,
+    v2: ResourceIndex,
     r1: Option<f64>,
     r2: Option<f64>,
-    p1: Option<usize>,
-    p2: Option<usize>,
-    pid: Option<usize>,
+    p1: OptionalResourceIndex,
+    p2: OptionalResourceIndex,
+    pid: OptionalResourceId,
     cap1: Option<CapMode>,
     cap2: Option<CapMode>,
 }
 
 impl BeamBuilder {
     /// Create a new beam with the specified vertex indices
-    pub fn new(v1: usize, v2: usize) -> Self {
+    pub fn new(v1: ResourceIndex, v2: ResourceIndex) -> Self {
         Self {
             v1,
             v2,
             r1: None,
             r2: None,
-            p1: None,
-            p2: None,
-            pid: None,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
             cap1: None,
             cap2: None,
         }
@@ -2137,20 +2132,20 @@ impl BeamBuilder {
     }
 
     /// Set the property index for the first vertex
-    pub fn pindex_1(mut self, pindex: usize) -> Self {
-        self.p1 = Some(pindex);
+    pub fn pindex_1(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p1 = pindex;
         self
     }
 
     /// Set the property index for the second vertex
-    pub fn pindex_2(mut self, pindex: usize) -> Self {
-        self.p2 = Some(pindex);
+    pub fn pindex_2(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p2 = pindex;
         self
     }
 
     /// Set the property ID for the beam
-    pub fn pid(mut self, pid: usize) -> Self {
-        self.pid = Some(pid);
+    pub fn pid(mut self, pid: ResourceId) -> Self {
+        self.pid = OptionalResourceId::new(pid);
         self
     }
 
@@ -2183,20 +2178,20 @@ impl BeamBuilder {
 
 /// Builder for balls in a beam lattice
 pub struct BallBuilder {
-    vindex: usize,
+    vindex: ResourceIndex,
     r: Option<f64>,
-    p: Option<usize>,
-    pid: Option<usize>,
+    p: OptionalResourceIndex,
+    pid: OptionalResourceId,
 }
 
 impl BallBuilder {
     /// Create a new ball at the specified vertex index
-    pub fn new(vindex: usize) -> Self {
+    pub fn new(vindex: ResourceIndex) -> Self {
         Self {
             vindex,
             r: None,
-            p: None,
-            pid: None,
+            p: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
         }
     }
 
@@ -2207,14 +2202,14 @@ impl BallBuilder {
     }
 
     /// Set the property index for the ball
-    pub fn pindex(mut self, pindex: usize) -> Self {
-        self.p = Some(pindex);
+    pub fn pindex(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p = pindex;
         self
     }
 
     /// Set the property ID for the ball
-    pub fn pid(mut self, pid: usize) -> Self {
-        self.pid = Some(pid);
+    pub fn pid(mut self, pid: ResourceIndex) -> Self {
+        self.pid = OptionalResourceId::new(pid);
         self
     }
 
@@ -2232,8 +2227,8 @@ impl BallBuilder {
 pub struct BeamSetBuilder {
     name: Option<String>,
     identifier: Option<String>,
-    beam_refs: Vec<usize>,
-    ball_refs: Vec<usize>,
+    beam_refs: Vec<ResourceIndex>,
+    ball_refs: Vec<ResourceIndex>,
 }
 
 impl BeamSetBuilder {
@@ -2259,25 +2254,25 @@ impl BeamSetBuilder {
     }
 
     /// Add a reference to a beam by index
-    pub fn add_beam_ref(&mut self, index: usize) -> &mut Self {
+    pub fn add_beam_ref(&mut self, index: ResourceIndex) -> &mut Self {
         self.beam_refs.push(index);
         self
     }
 
     /// Add multiple beam references
-    pub fn add_beam_refs(&mut self, indices: &[usize]) -> &mut Self {
+    pub fn add_beam_refs(&mut self, indices: &[ResourceIndex]) -> &mut Self {
         self.beam_refs.extend_from_slice(indices);
         self
     }
 
     /// Add a reference to a ball by index
-    pub fn add_ball_ref(&mut self, index: usize) -> &mut Self {
+    pub fn add_ball_ref(&mut self, index: ResourceIndex) -> &mut Self {
         self.ball_refs.push(index);
         self
     }
 
     /// Add multiple ball references
-    pub fn add_ball_refs(&mut self, indices: &[usize]) -> &mut Self {
+    pub fn add_ball_refs(&mut self, indices: &[ResourceIndex]) -> &mut Self {
         self.ball_refs.extend_from_slice(indices);
         self
     }
@@ -2648,7 +2643,7 @@ mod tests {
         let obj = &model.resources.object[1];
         assert!(obj.components.is_some());
         let comp = &obj.components.as_ref().unwrap().component[0];
-        assert_eq!(comp.objectid, obj1_id.into());
+        assert_eq!(comp.objectid, obj1_id.0);
     }
 
     #[test]
@@ -2814,8 +2809,6 @@ mod tests {
     fn test_object_id_tests() {
         let id: ObjectId = 42.into();
         assert_eq!(id.0, 42);
-        let usize_id: usize = id.into();
-        assert_eq!(usize_id, 42);
     }
 
     // ========== BeamBuilder Tests ==========
@@ -2828,9 +2821,9 @@ mod tests {
         assert_eq!(beam.v2, 1);
         assert_eq!(beam.r1, None);
         assert_eq!(beam.r2, None);
-        assert_eq!(beam.p1, None);
-        assert_eq!(beam.p2, None);
-        assert_eq!(beam.pid, None);
+        assert_eq!(beam.p1, OptionalResourceIndex::none());
+        assert_eq!(beam.p2, OptionalResourceIndex::none());
+        assert_eq!(beam.pid, OptionalResourceId::none());
         assert_eq!(beam.cap1, None);
         assert_eq!(beam.cap2, None);
     }
@@ -2840,8 +2833,8 @@ mod tests {
         let beam = BeamBuilder::new(0, 1)
             .radius_1(1.5)
             .radius_2(2.0)
-            .pindex_1(10)
-            .pindex_2(20)
+            .pindex_1(OptionalResourceIndex::new(10))
+            .pindex_2(OptionalResourceIndex::new(20))
             .pid(5)
             .cap_1(CapMode::Hemisphere)
             .cap_2(CapMode::Butt)
@@ -2851,9 +2844,9 @@ mod tests {
         assert_eq!(beam.v2, 1);
         assert_eq!(beam.r1, Some(1.5));
         assert_eq!(beam.r2, Some(2.0));
-        assert_eq!(beam.p1, Some(10));
-        assert_eq!(beam.p2, Some(20));
-        assert_eq!(beam.pid, Some(5));
+        assert_eq!(beam.p1, OptionalResourceIndex::new(10));
+        assert_eq!(beam.p2, OptionalResourceIndex::new(20));
+        assert_eq!(beam.pid, OptionalResourceId::new(5));
         assert_eq!(beam.cap1, Some(CapMode::Hemisphere));
         assert_eq!(beam.cap2, Some(CapMode::Butt));
     }
@@ -2866,18 +2859,22 @@ mod tests {
 
         assert_eq!(ball.vindex, 5);
         assert_eq!(ball.r, None);
-        assert_eq!(ball.p, None);
-        assert_eq!(ball.pid, None);
+        assert_eq!(ball.p, OptionalResourceIndex::none());
+        assert_eq!(ball.pid, OptionalResourceId::none());
     }
 
     #[test]
     fn test_ball_builder_with_options() {
-        let ball = BallBuilder::new(5).radius(0.75).pindex(15).pid(3).build();
+        let ball = BallBuilder::new(5)
+            .radius(0.75)
+            .pindex(OptionalResourceIndex::new(15))
+            .pid(3)
+            .build();
 
         assert_eq!(ball.vindex, 5);
         assert_eq!(ball.r, Some(0.75));
-        assert_eq!(ball.p, Some(15));
-        assert_eq!(ball.pid, Some(3));
+        assert_eq!(ball.p, OptionalResourceIndex::new(15));
+        assert_eq!(ball.pid, OptionalResourceId::new(3));
     }
 
     // ========== BeamSetBuilder Tests ==========
@@ -3003,10 +3000,10 @@ mod tests {
         assert_eq!(beamlattice.ballmode, Some(BallMode::All));
         assert_eq!(beamlattice.ballradius, Some(1.0));
         assert_eq!(beamlattice.clippingmode, Some(ClippingMode::Inside));
-        assert_eq!(beamlattice.clippingmesh, Some(10));
-        assert_eq!(beamlattice.representationmesh, Some(20));
-        assert_eq!(beamlattice.pid, Some(5));
-        assert_eq!(beamlattice.pindex, Some(10));
+        assert_eq!(beamlattice.clippingmesh, OptionalResourceId::new(10));
+        assert_eq!(beamlattice.representationmesh, OptionalResourceId::new(20));
+        assert_eq!(beamlattice.pid, OptionalResourceId::new(5));
+        assert_eq!(beamlattice.pindex, OptionalResourceIndex::new(10));
         assert_eq!(beamlattice.cap, Some(CapMode::Sphere));
     }
 

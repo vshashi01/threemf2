@@ -1,4 +1,7 @@
-use crate::threemf_namespaces::{BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_NS};
+use crate::{
+    core::{OptionalResourceId, OptionalResourceIndex, ResourceIndex},
+    threemf_namespaces::{BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_NS},
+};
 
 #[cfg(feature = "write")]
 use instant_xml::ToXml;
@@ -64,28 +67,56 @@ pub struct BeamLattice {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub clippingmesh: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
+    pub clippingmesh: OptionalResourceId,
 
     /// References a mesh object that represents the intentional shape of the lattice geometry
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub representationmesh: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
+    pub representationmesh: OptionalResourceId,
 
     /// Overrides the object-level pid as default for all beams
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub pid: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
+    pub pid: OptionalResourceId,
 
     /// Overrides the object-level pindex as default for all beams
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub pindex: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
+    )]
+    pub pindex: OptionalResourceIndex,
 
     /// Default capping mode for beam ends
     ///
@@ -246,14 +277,14 @@ pub struct Beam {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub v1: usize,
+    pub v1: ResourceIndex,
 
     /// References a zero-based index into the vertices of this mesh. Defines the second vertex of the beam.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub v2: usize,
+    pub v2: ResourceIndex,
 
     /// Defines the radius of the first vertex of beam. If not given, defaults to beamlattice radius.
     #[cfg_attr(
@@ -274,21 +305,42 @@ pub struct Beam {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub p1: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
+    )]
+    pub p1: OptionalResourceIndex,
 
     /// Overrides the beamlattice-level pindex for the second vertex of the beam
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub p2: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
+    )]
+    pub p2: OptionalResourceIndex,
 
     /// Overrides the beamlattice-level pid for the beam
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub pid: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
+    pub pid: OptionalResourceId,
 
     /// Capping mode for the first end of the beam
     #[cfg_attr(
@@ -335,7 +387,7 @@ pub struct Ball {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub vindex: usize,
+    pub vindex: ResourceIndex,
 
     /// The radius of this ball. If not given, uses default ballradius of the enclosing beamlattice.
     #[cfg_attr(
@@ -349,14 +401,28 @@ pub struct Ball {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub p: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_impl::default_none",
+            deserialize_with = "crate::core::types::serde_impl::deserialize"
+        )
+    )]
+    pub p: OptionalResourceIndex,
 
     /// Overrides the beamlattice-level pid for this ball
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub pid: Option<usize>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
+    pub pid: OptionalResourceId,
 }
 
 /// A container for beam sets
@@ -430,7 +496,7 @@ pub struct BeamRef {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub index: usize,
+    pub index: ResourceIndex,
 }
 
 /// A reference to a ball element
@@ -448,7 +514,7 @@ pub struct BallRef {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub index: usize,
+    pub index: ResourceIndex,
 }
 
 #[cfg(feature = "write")]
@@ -474,9 +540,9 @@ mod write_tests {
             v2: 1,
             r1: Some(1.5),
             r2: Some(1.6),
-            p1: None,
-            p2: None,
-            pid: None,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
             cap1: None,
             cap2: None,
         };
@@ -494,8 +560,8 @@ mod write_tests {
         let ball = Ball {
             vindex: 0,
             r: Some(0.5),
-            p: None,
-            pid: None,
+            p: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
         };
         let ball_string = to_string(&ball).unwrap();
 
@@ -514,10 +580,10 @@ mod write_tests {
             ballmode: None,
             ballradius: None,
             clippingmode: None,
-            clippingmesh: None,
-            representationmesh: None,
-            pid: None,
-            pindex: None,
+            clippingmesh: OptionalResourceId::none(),
+            representationmesh: OptionalResourceId::none(),
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             cap: Some(CapMode::Sphere),
             beams: Beams {
                 beam: vec![Beam {
@@ -525,9 +591,9 @@ mod write_tests {
                     v2: 1,
                     r1: Some(1.5),
                     r2: Some(1.6),
-                    p1: None,
-                    p2: None,
-                    pid: None,
+                    p1: OptionalResourceIndex::none(),
+                    p2: OptionalResourceIndex::none(),
+                    pid: OptionalResourceId::none(),
                     cap1: None,
                     cap2: None,
                 }],
@@ -558,10 +624,10 @@ mod write_tests {
             ballmode: Some(BallMode::Mixed),
             ballradius: Some(0.25),
             clippingmode: None,
-            clippingmesh: None,
-            representationmesh: None,
-            pid: None,
-            pindex: None,
+            clippingmesh: OptionalResourceId::none(),
+            representationmesh: OptionalResourceId::none(),
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
             cap: Some(CapMode::Sphere),
             beams: Beams {
                 beam: vec![Beam {
@@ -569,9 +635,9 @@ mod write_tests {
                     v2: 1,
                     r1: Some(1.5),
                     r2: Some(1.6),
-                    p1: None,
-                    p2: None,
-                    pid: None,
+                    p1: OptionalResourceIndex::none(),
+                    p2: OptionalResourceIndex::none(),
+                    pid: OptionalResourceId::none(),
                     cap1: None,
                     cap2: None,
                 }],
@@ -580,8 +646,8 @@ mod write_tests {
                 ball: vec![Ball {
                     vindex: 0,
                     r: Some(0.5),
-                    p: None,
-                    pid: None,
+                    p: OptionalResourceIndex::none(),
+                    pid: OptionalResourceId::none(),
                 }],
             }),
             beamsets: None,
@@ -629,6 +695,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceIndex,
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::Model,
@@ -658,9 +725,9 @@ mod memory_optimized_read_tests {
                 v2: 1,
                 r1: Some(1.5),
                 r2: Some(1.6),
-                p1: None,
-                p2: None,
-                pid: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
                 cap1: None,
                 cap2: None,
             }
@@ -680,8 +747,8 @@ mod memory_optimized_read_tests {
             Ball {
                 vindex: 0,
                 r: Some(0.5),
-                p: None,
-                pid: None,
+                p: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -702,10 +769,10 @@ mod memory_optimized_read_tests {
                 ballmode: None,
                 ballradius: None,
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
-                pindex: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
                     beam: vec![Beam {
@@ -713,9 +780,9 @@ mod memory_optimized_read_tests {
                         v2: 1,
                         r1: Some(1.5),
                         r2: Some(1.6),
-                        p1: None,
-                        p2: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -744,10 +811,10 @@ mod memory_optimized_read_tests {
                 ballmode: Some(BallMode::Mixed),
                 ballradius: Some(0.25),
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
-                pindex: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
                     beam: vec![Beam {
@@ -755,9 +822,9 @@ mod memory_optimized_read_tests {
                         v2: 1,
                         r1: Some(1.5),
                         r2: Some(1.6),
-                        p1: None,
-                        p2: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -766,8 +833,8 @@ mod memory_optimized_read_tests {
                     ball: vec![Ball {
                         vindex: 0,
                         r: Some(0.5),
-                        p: None,
-                        pid: None,
+                        p: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     }],
                 }),
                 beamsets: None,
@@ -818,26 +885,10 @@ mod memory_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles { triangle: vec![] },
@@ -848,10 +899,10 @@ mod memory_optimized_read_tests {
                     ballmode: None,
                     ballradius: None,
                     clippingmode: None,
-                    clippingmesh: None,
-                    representationmesh: None,
-                    pid: None,
-                    pindex: None,
+                    clippingmesh: OptionalResourceId::none(),
+                    representationmesh: OptionalResourceId::none(),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     cap: Some(CapMode::Hemisphere),
                     beams: Beams {
                         beam: vec![
@@ -860,9 +911,9 @@ mod memory_optimized_read_tests {
                                 v2: 1,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -871,9 +922,9 @@ mod memory_optimized_read_tests {
                                 v2: 2,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -882,9 +933,9 @@ mod memory_optimized_read_tests {
                                 v2: 2,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             }
@@ -924,32 +975,16 @@ mod memory_optimized_read_tests {
                         thumbnail: None,
                         partnumber: None,
                         name: None,
-                        pid: None,
-                        pindex: None,
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: Some(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
-                                    Vertex {
-                                        x: -1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: -1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    }
+                                    Vertex::new(-1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, 1.0, 0.0),
+                                    Vertex::new(-1.0, 1.0, 0.0),
                                 ]
                             },
                             triangles: Triangles { triangle: vec![] },
@@ -960,10 +995,10 @@ mod memory_optimized_read_tests {
                                 ballmode: Some(BallMode::Mixed),
                                 ballradius: Some(0.25),
                                 clippingmode: None,
-                                clippingmesh: None,
-                                representationmesh: None,
-                                pid: None,
-                                pindex: None,
+                                clippingmesh: OptionalResourceId::none(),
+                                representationmesh: OptionalResourceId::none(),
+                                pid: OptionalResourceId::none(),
+                                pindex: OptionalResourceIndex::none(),
                                 cap: Some(CapMode::Hemisphere),
                                 beams: Beams {
                                     beam: vec![
@@ -972,9 +1007,9 @@ mod memory_optimized_read_tests {
                                             v2: 1,
                                             r1: None,
                                             r2: None,
-                                            p1: None,
-                                            p2: None,
-                                            pid: None,
+                                            p1: OptionalResourceIndex::none(),
+                                            p2: OptionalResourceIndex::none(),
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -983,9 +1018,9 @@ mod memory_optimized_read_tests {
                                             v2: 2,
                                             r1: None,
                                             r2: None,
-                                            p1: None,
-                                            p2: None,
-                                            pid: None,
+                                            p1: OptionalResourceIndex::none(),
+                                            p2: OptionalResourceIndex::none(),
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -994,9 +1029,9 @@ mod memory_optimized_read_tests {
                                             v2: 2,
                                             r1: None,
                                             r2: None,
-                                            p1: None,
-                                            p2: None,
-                                            pid: None,
+                                            p1: OptionalResourceIndex::none(),
+                                            p2: OptionalResourceIndex::none(),
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         }
@@ -1006,8 +1041,8 @@ mod memory_optimized_read_tests {
                                     ball: vec![Ball {
                                         vindex: 0,
                                         r: Some(0.5),
-                                        p: None,
-                                        pid: None
+                                        p: OptionalResourceIndex::none(),
+                                        pid: OptionalResourceId::none()
                                     }]
                                 }),
                                 beamsets: None,
@@ -1034,6 +1069,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceIndex,
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::Model,
@@ -1063,9 +1099,9 @@ mod speed_optimized_read_tests {
                 v2: 1,
                 r1: Some(1.5),
                 r2: Some(1.6),
-                p1: None,
-                p2: None,
-                pid: None,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
                 cap1: None,
                 cap2: None,
             }
@@ -1085,8 +1121,8 @@ mod speed_optimized_read_tests {
             Ball {
                 vindex: 0,
                 r: Some(0.5),
-                p: None,
-                pid: None,
+                p: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
             }
         );
     }
@@ -1107,10 +1143,10 @@ mod speed_optimized_read_tests {
                 ballmode: None,
                 ballradius: None,
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
-                pindex: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
                     beam: vec![Beam {
@@ -1118,9 +1154,9 @@ mod speed_optimized_read_tests {
                         v2: 1,
                         r1: Some(1.5),
                         r2: Some(1.6),
-                        p1: None,
-                        p2: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -1154,10 +1190,10 @@ mod speed_optimized_read_tests {
                 ballmode: Some(BallMode::Mixed),
                 ballradius: Some(0.25),
                 clippingmode: None,
-                clippingmesh: None,
-                representationmesh: None,
-                pid: None,
-                pindex: None,
+                clippingmesh: OptionalResourceId::none(),
+                representationmesh: OptionalResourceId::none(),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 cap: Some(CapMode::Sphere),
                 beams: Beams {
                     beam: vec![Beam {
@@ -1165,9 +1201,9 @@ mod speed_optimized_read_tests {
                         v2: 1,
                         r1: Some(1.5),
                         r2: Some(1.6),
-                        p1: None,
-                        p2: None,
-                        pid: None,
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                         cap1: None,
                         cap2: None,
                     }],
@@ -1176,8 +1212,8 @@ mod speed_optimized_read_tests {
                     ball: vec![Ball {
                         vindex: 0,
                         r: Some(0.5),
-                        p: None,
-                        pid: None,
+                        p: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     }],
                 }),
                 beamsets: None,
@@ -1225,26 +1261,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles { triangle: vec![] },
@@ -1255,10 +1275,10 @@ mod speed_optimized_read_tests {
                     ballmode: None,
                     ballradius: None,
                     clippingmode: None,
-                    clippingmesh: None,
-                    representationmesh: None,
-                    pid: None,
-                    pindex: None,
+                    clippingmesh: OptionalResourceId::none(),
+                    representationmesh: OptionalResourceId::none(),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     cap: Some(CapMode::Hemisphere),
                     beams: Beams {
                         beam: vec![
@@ -1267,9 +1287,9 @@ mod speed_optimized_read_tests {
                                 v2: 1,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1278,9 +1298,9 @@ mod speed_optimized_read_tests {
                                 v2: 2,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1289,9 +1309,9 @@ mod speed_optimized_read_tests {
                                 v2: 2,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             }
@@ -1322,26 +1342,10 @@ mod speed_optimized_read_tests {
             Mesh {
                 vertices: Vertices {
                     vertex: vec![
-                        Vertex {
-                            x: -1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: -1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: 1.0,
-                            y: 1.0,
-                            z: 0.0
-                        },
-                        Vertex {
-                            x: -1.0,
-                            y: 1.0,
-                            z: 0.0
-                        }
+                        Vertex::new(-1.0, -1.0, 0.0),
+                        Vertex::new(1.0, -1.0, 0.0),
+                        Vertex::new(1.0, 1.0, 0.0),
+                        Vertex::new(-1.0, 1.0, 0.0),
                     ]
                 },
                 triangles: Triangles { triangle: vec![] },
@@ -1352,10 +1356,10 @@ mod speed_optimized_read_tests {
                     ballmode: Some(BallMode::Mixed),
                     ballradius: Some(0.25),
                     clippingmode: None,
-                    clippingmesh: None,
-                    representationmesh: None,
-                    pid: None,
-                    pindex: None,
+                    clippingmesh: OptionalResourceId::none(),
+                    representationmesh: OptionalResourceId::none(),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     cap: Some(CapMode::Hemisphere),
                     beams: Beams {
                         beam: vec![
@@ -1364,9 +1368,9 @@ mod speed_optimized_read_tests {
                                 v2: 1,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1375,9 +1379,9 @@ mod speed_optimized_read_tests {
                                 v2: 2,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             },
@@ -1386,9 +1390,9 @@ mod speed_optimized_read_tests {
                                 v2: 2,
                                 r1: None,
                                 r2: None,
-                                p1: None,
-                                p2: None,
-                                pid: None,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
                                 cap1: None,
                                 cap2: None
                             }
@@ -1398,8 +1402,8 @@ mod speed_optimized_read_tests {
                         ball: vec![Ball {
                             vindex: 0,
                             r: Some(0.5),
-                            p: None,
-                            pid: None
+                            p: OptionalResourceIndex::none(),
+                            pid: OptionalResourceId::none()
                         }]
                     }),
                     beamsets: None,
@@ -1435,32 +1439,16 @@ mod speed_optimized_read_tests {
                         thumbnail: None,
                         partnumber: None,
                         name: None,
-                        pid: None,
-                        pindex: None,
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         mesh: Some(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
-                                    Vertex {
-                                        x: -1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: -1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: 1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    },
-                                    Vertex {
-                                        x: -1.0,
-                                        y: 1.0,
-                                        z: 0.0
-                                    }
+                                    Vertex::new(-1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, -1.0, 0.0),
+                                    Vertex::new(1.0, 1.0, 0.0),
+                                    Vertex::new(-1.0, 1.0, 0.0),
                                 ]
                             },
                             triangles: Triangles { triangle: vec![] },
@@ -1471,10 +1459,10 @@ mod speed_optimized_read_tests {
                                 ballmode: Some(BallMode::Mixed),
                                 ballradius: Some(0.25),
                                 clippingmode: None,
-                                clippingmesh: None,
-                                representationmesh: None,
-                                pid: None,
-                                pindex: None,
+                                clippingmesh: OptionalResourceId::none(),
+                                representationmesh: OptionalResourceId::none(),
+                                pid: OptionalResourceId::none(),
+                                pindex: OptionalResourceIndex::none(),
                                 cap: Some(CapMode::Hemisphere),
                                 beams: Beams {
                                     beam: vec![
@@ -1483,9 +1471,9 @@ mod speed_optimized_read_tests {
                                             v2: 1,
                                             r1: None,
                                             r2: None,
-                                            p1: None,
-                                            p2: None,
-                                            pid: None,
+                                            p1: OptionalResourceIndex::none(),
+                                            p2: OptionalResourceIndex::none(),
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -1494,9 +1482,9 @@ mod speed_optimized_read_tests {
                                             v2: 2,
                                             r1: None,
                                             r2: None,
-                                            p1: None,
-                                            p2: None,
-                                            pid: None,
+                                            p1: OptionalResourceIndex::none(),
+                                            p2: OptionalResourceIndex::none(),
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         },
@@ -1505,9 +1493,9 @@ mod speed_optimized_read_tests {
                                             v2: 2,
                                             r1: None,
                                             r2: None,
-                                            p1: None,
-                                            p2: None,
-                                            pid: None,
+                                            p1: OptionalResourceIndex::none(),
+                                            p2: OptionalResourceIndex::none(),
+                                            pid: OptionalResourceId::none(),
                                             cap1: None,
                                             cap2: None
                                         }
@@ -1517,8 +1505,8 @@ mod speed_optimized_read_tests {
                                     ball: vec![Ball {
                                         vindex: 0,
                                         r: Some(0.5),
-                                        p: None,
-                                        pid: None
+                                        p: OptionalResourceIndex::none(),
+                                        pid: OptionalResourceId::none()
                                     }]
                                 }),
                                 beamsets: None,
