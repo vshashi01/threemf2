@@ -9,23 +9,28 @@ use serde::Deserialize;
 
 use crate::{
     core::{
-        OptionalResourceId,
+        boolean::BooleanShape,
         component::Components,
         mesh::Mesh,
         types::{OptionalResourceIndex, ResourceId},
+        OptionalResourceId,
     },
-    threemf_namespaces::{CORE_NS, PROD_NS},
+    threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS},
 };
 
-/// Represents a 3D object in a 3MF model, either a mesh or a component assembly.
+/// Represents a 3D object in a 3MF model, either a mesh, component assembly, or boolean shape.
 ///
-/// Objects are the primary building blocks of 3MF models. They can contain triangle mesh
-/// geometry directly or reference other objects through components with transforms.
+/// Objects are the primary building blocks of 3MF models. They can contain:
+/// - Triangle mesh geometry directly ([`Object::mesh`])
+/// - References to other objects through components ([`Object::components`])
+/// - Boolean operations defining a shape ([`Object::booleanshape`])
+///
+/// These three options are mutually exclusive - an object can only have one of them set.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Debug, Clone)]
-#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS), rename="object"))]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS, bo=BOOLEAN_NS), rename="object"))]
 pub struct Object {
     /// A unique identifier for this object
     #[cfg_attr(
@@ -114,8 +119,17 @@ pub struct Object {
 
     /// The Components contained in this object.
     ///
-    /// This field is mutually exclusive with [`Object::mesh`]
+    /// This field is mutually exclusive with [`Object::mesh`] and [`Object::booleanshape`]
     pub components: Option<Components>,
+
+    /// The BooleanShape defining boolean operations for this object.
+    ///
+    /// This field is mutually exclusive with [`Object::mesh`] and [`Object::components`]
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(ns(BOOLEAN_NS))
+    )]
+    pub booleanshape: Option<BooleanShape>,
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -162,18 +176,18 @@ impl From<String> for ObjectType {
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod write_tests {
-    use instant_xml::{ToXml, to_string};
+    use instant_xml::{to_string, ToXml};
     use pretty_assertions::assert_eq;
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
+            OptionalResourceId, OptionalResourceIndex,
         },
         threemf_namespaces::{
-            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS,
-            CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
+            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
         },
     };
 
@@ -184,8 +198,8 @@ mod write_tests {
     #[test]
     pub fn toxml_simple_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" id="4"></object>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
         );
         let object = Object {
             id: 4,
@@ -198,6 +212,7 @@ mod write_tests {
             uuid: None,
             mesh: None,
             components: None,
+            booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -207,8 +222,8 @@ mod write_tests {
     #[test]
     pub fn toxml_production_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" id="4" {}:UUID="someUUID"></object>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" {}:UUID="someUUID"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX
         );
         let object = Object {
             id: 4,
@@ -221,6 +236,7 @@ mod write_tests {
             uuid: Some("someUUID".to_owned()),
             mesh: None,
             components: None,
+            booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -230,8 +246,8 @@ mod write_tests {
     #[test]
     pub fn toxml_intermediate_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
         );
         let object = Object {
             id: 4,
@@ -244,6 +260,7 @@ mod write_tests {
             uuid: None,
             mesh: None,
             components: None,
+            booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
         println!("{}", object_string);
@@ -254,7 +271,7 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{CORE_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            r##"<object xmlns="{CORE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
         );
         let object = Object {
             id: 4,
@@ -272,6 +289,7 @@ mod write_tests {
                 beamlattice: None,
             }),
             components: None,
+            booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -281,8 +299,8 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_component_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
-            CORE_NS, PROD_PREFIX, PROD_NS
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
         );
         let object = Object {
             id: 4,
@@ -302,6 +320,7 @@ mod write_tests {
                     uuid: None,
                 }],
             }),
+            booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -342,14 +361,14 @@ mod write_tests {
 #[cfg(feature = "memory-optimized-read")]
 #[cfg(test)]
 mod memory_optimized_read_tests {
-    use instant_xml::{FromXml, from_str};
+    use instant_xml::{from_str, FromXml};
     use pretty_assertions::assert_eq;
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
+            OptionalResourceId, OptionalResourceIndex,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
@@ -378,6 +397,7 @@ mod memory_optimized_read_tests {
                 uuid: None,
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -404,6 +424,7 @@ mod memory_optimized_read_tests {
                 uuid: Some("someUUID".to_owned()),
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -429,6 +450,7 @@ mod memory_optimized_read_tests {
                 uuid: None,
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -454,6 +476,7 @@ mod memory_optimized_read_tests {
                 uuid: None,
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -484,6 +507,7 @@ mod memory_optimized_read_tests {
                     beamlattice: None,
                 }),
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -516,6 +540,7 @@ mod memory_optimized_read_tests {
                         uuid: None,
                     }],
                 }),
+                booleanshape: None,
             }
         );
     }
@@ -562,9 +587,9 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
+            OptionalResourceId, OptionalResourceIndex,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
@@ -593,6 +618,7 @@ mod speed_optimized_read_tests {
                 uuid: None,
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -619,6 +645,7 @@ mod speed_optimized_read_tests {
                 uuid: Some("someUUID".to_owned()),
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -644,6 +671,7 @@ mod speed_optimized_read_tests {
                 uuid: None,
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -669,6 +697,7 @@ mod speed_optimized_read_tests {
                 uuid: None,
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -699,6 +728,7 @@ mod speed_optimized_read_tests {
                     beamlattice: None,
                 }),
                 components: None,
+                booleanshape: None,
             }
         );
     }
@@ -731,6 +761,7 @@ mod speed_optimized_read_tests {
                         uuid: None,
                     }],
                 }),
+                booleanshape: None,
             }
         );
     }

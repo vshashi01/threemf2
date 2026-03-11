@@ -11,6 +11,7 @@
 //! - [`ModelBuilder`] - Main entry point for creating 3MF models (root or sub-models)
 //! - [`MeshObjectBuilder`] - Creates objects with triangle mesh geometry
 //! - [`ComponentsObjectBuilder`] - Creates assembly objects that reference other objects
+//! - [`BooleanObjectBuilder`] - Creates boolean shape objects for CSG operations
 //! - [`BeamLatticeBuilder`] - Adds beam lattice structures to meshes
 //! - [`BuildBuilder`] - Configures the build section (what gets printed)
 //! - [`TriangleSetsBuilder`] - Organizes triangles into named groups
@@ -50,6 +51,40 @@
 //! let model = builder.build()?;
 //! ```
 //!
+//! # Boolean Operations Example
+//!
+//! ```rust,ignore
+//! use threemf2::io::builder::{ModelBuilder, Unit, BooleanOperation};
+//!
+//! let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+//! builder.add_build(None)?;
+//!
+//! // Create base mesh (cube)
+//! let cube_id = builder.add_mesh_object(|obj| {
+//!     obj.name("Cube");
+//!     // ... add cube geometry
+//!     Ok(())
+//! })?;
+//!
+//! // Create sphere mesh
+//! let sphere_id = builder.add_mesh_object(|obj| {
+//!     obj.name("Sphere");
+//!     // ... add sphere geometry
+//!     Ok(())
+//! })?;
+//!
+//! // Create a boolean shape (cube minus sphere)
+//! let result_id = builder.add_booleanshape_object(|obj| {
+//!     obj.name("CubeMinusSphere");
+//!     obj.base_object(cube_id, BooleanOperation::Difference);
+//!     obj.add_boolean(sphere_id);
+//!     Ok(())
+//! })?;
+//!
+//! builder.add_build_item(result_id)?;
+//! let model = builder.build()?;
+//! ```
+//!
 //! # Root vs Sub-Models
 //!
 //! 3MF models can be either root models or sub-models:
@@ -71,6 +106,7 @@
 //!
 //! - Beam lattice extension when beams are added
 //! - Beam lattice balls extension when balls are used
+//! - Boolean operations extension when boolean shapes are added
 //! - Production extension when enabled
 //! - Triangle sets as recommended extension
 //!
@@ -86,6 +122,7 @@ use thiserror::Error;
 use crate::{
     core::{
         beamlattice::{Ball, BallRef, Balls, Beam, BeamLattice, BeamRef, BeamSet, BeamSets, Beams},
+        boolean::{Boolean as BooleanOp, BooleanOperation, BooleanShape},
         build::{Build, Item},
         component::{Component, Components},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
@@ -98,7 +135,7 @@ use crate::{
     io::XmlNamespace,
     threemf_namespaces::{
         self, BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS,
-        BEAM_LATTICE_PREFIX, PROD_NS, PROD_PREFIX,
+        BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, PROD_NS, PROD_PREFIX,
     },
 };
 
@@ -595,6 +632,83 @@ impl ModelBuilder {
         Ok(id)
     }
 
+    /// Add a boolean shape object to the model using a builder closure.
+    ///
+    /// Boolean shape objects define CSG (Constructive Solid Geometry) operations between
+    /// a base object and one or more operand objects. The supported operations are:
+    /// - **Union**: Merges shapes together
+    /// - **Difference**: Subtracts operands from the base
+    /// - **Intersection**: Keeps only the overlapping volume
+    ///
+    /// The object is automatically assigned a unique [`ObjectId`] which is returned.
+    /// The boolean operations extension is automatically marked as required.
+    ///
+    /// # Parameters
+    ///
+    /// - `f`: A closure that configures the [`BooleanObjectBuilder`]
+    ///
+    /// # Returns
+    ///
+    /// The auto-assigned [`ObjectId`] for the created object.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BooleanShapeError`] if validation fails (e.g., missing base object,
+    /// no operands, or missing UUID when Production extension is enabled).
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// // First create base and operand mesh objects
+    /// let cube_id = builder.add_mesh_object(|obj| {
+    ///     obj.name("Cube");
+    ///     // ... add cube geometry
+    ///     Ok(())
+    /// })?;
+    ///
+    /// let sphere_id = builder.add_mesh_object(|obj| {
+    ///     obj.name("Sphere");
+    ///     // ... add sphere geometry  
+    ///     Ok(())
+    /// })?;
+    ///
+    /// // Create boolean shape: cube minus sphere
+    /// let result_id = builder.add_booleanshape_object(|obj| {
+    ///     obj.name("CubeMinusSphere");
+    ///     obj.base_object(cube_id, BooleanOperation::Difference);
+    ///     obj.add_boolean(sphere_id);
+    ///     Ok(())
+    /// })?;
+    /// ```
+    pub fn add_booleanshape_object<F>(&mut self, f: F) -> Result<ObjectId, BooleanShapeError>
+    where
+        F: FnOnce(&mut BooleanObjectBuilder) -> Result<(), BooleanShapeError>,
+    {
+        let id = self.next_object_id;
+
+        let mut obj_builder = BooleanObjectBuilder::new(id, self.is_production_ext_required);
+        f(&mut obj_builder)?;
+
+        self.add_booleanshape_object_from_builder(obj_builder)
+    }
+
+    /// Add a boolean shape object from a pre-configured [`BooleanObjectBuilder`].
+    ///
+    /// This is an advanced method for cases where you need to construct the builder
+    /// separately. Most users should use [`add_booleanshape_object()`](ModelBuilder::add_booleanshape_object) instead.
+    pub fn add_booleanshape_object_from_builder(
+        &mut self,
+        builder: BooleanObjectBuilder,
+    ) -> Result<ObjectId, BooleanShapeError> {
+        let id = builder.object_id;
+        let object = builder.build()?;
+
+        self.resources.objects.push(object);
+        self.next_object_id = ObjectId(id.0 + 1);
+
+        Ok(id)
+    }
+
     /// Add a Build section to the model.
     ///
     /// The Build section specifies which objects should be manufactured (printed).
@@ -818,6 +932,23 @@ impl ModelBuilder {
                         uri: BEAM_LATTICE_BALLS_NS.to_owned(),
                     });
                 }
+            }
+        }
+
+        // Detect boolean operations extension
+        let is_boolean_required = self
+            .resources
+            .objects
+            .iter()
+            .any(|obj| obj.booleanshape.is_some());
+
+        if is_boolean_required {
+            let is_boolean_ext_set = required_extensions.iter().find(|ns| ns.uri == BOOLEAN_NS);
+            if is_boolean_ext_set.is_none() {
+                required_extensions.push(XmlNamespace {
+                    prefix: Some(BOOLEAN_PREFIX.to_owned()),
+                    uri: BOOLEAN_NS.to_owned(),
+                });
             }
         }
 
@@ -1202,6 +1333,7 @@ impl MeshObjectBuilder {
             uuid: self.uuid,
             mesh: Some(mesh),
             components: None,
+            booleanshape: None,
         })
     }
 }
@@ -1582,6 +1714,7 @@ impl ComponentsObjectBuilder {
             uuid: self.uuid,
             mesh: None,
             components: Some(components),
+            booleanshape: None,
         })
     }
 }
@@ -1735,6 +1868,266 @@ impl ComponentBuilder {
             transform: self.transform,
             path: self.path,
             uuid: self.uuid,
+        }
+    }
+}
+
+/// Errors that can occur when building a boolean shape object.
+#[derive(Debug, Error, Clone, Copy, PartialEq)]
+pub enum BooleanShapeError {
+    /// Base object ID is not set.
+    ///
+    /// Call [`BooleanShapeBuilder::base_object()`] before building.
+    #[error("Base object ID is not set")]
+    BaseObjectNotSet,
+
+    /// No boolean operands were added.
+    ///
+    /// At least one boolean operand must be added via [`BooleanShapeBuilder::add_boolean()`].
+    #[error("At least one boolean operand is required")]
+    NoBooleanOperands,
+
+    /// Object is missing a UUID when Production extension is required.
+    ///
+    /// Call [`BooleanObjectBuilder::uuid()`] to set the UUID.
+    #[error("Production extension is enabled but Uuid is not set")]
+    ObjectUuidNotSet,
+}
+
+/// Builder for creating boolean shape objects for CSG operations.
+///
+/// `BooleanObjectBuilder` creates objects that define boolean operations (union, difference,
+/// intersection) between a base object and one or more operand objects. This is useful for
+/// creating complex shapes through constructive solid geometry (CSG).
+///
+/// Access boolean operation configuration methods directly via [`Deref`] to [`BooleanShapeBuilder`].
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// // First create base mesh and operand meshes
+/// let cube_id = builder.add_mesh_object(|obj| {
+///     obj.name("Cube");
+///     // ... add cube geometry
+///     Ok(())
+/// })?;
+///
+/// let sphere_id = builder.add_mesh_object(|obj| {
+///     obj.name("Sphere");
+///     // ... add sphere geometry
+///     Ok(())
+/// })?;
+///
+/// // Create boolean shape: cube minus sphere
+/// let result_id = builder.add_booleanshape_object(|obj| {
+///     obj.name("CubeMinusSphere");
+///     obj.base_object(cube_id, BooleanOperation::Difference);
+///     obj.add_boolean(sphere_id);
+///     Ok(())
+/// })?;
+/// ```
+pub type BooleanObjectBuilder = ObjectBuilder<BooleanShapeBuilder>;
+
+impl BooleanObjectBuilder {
+    fn new(object_id: ObjectId, is_production_ext_required: bool) -> Self {
+        Self {
+            entity: BooleanShapeBuilder::new(),
+            object_id,
+            objecttype: Some(ObjectType::Model),
+            thumbnail: None,
+            partnumber: None,
+            name: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
+            uuid: None,
+            is_production_ext_required,
+        }
+    }
+
+    fn build(self) -> Result<Object, BooleanShapeError> {
+        let boolean_shape = self.entity.build_boolean_shape()?;
+
+        if self.is_production_ext_required && self.uuid.is_none() {
+            return Err(BooleanShapeError::ObjectUuidNotSet);
+        }
+
+        Ok(Object {
+            id: self.object_id.0,
+            objecttype: self.objecttype,
+            thumbnail: self.thumbnail,
+            partnumber: self.partnumber,
+            name: self.name,
+            pid: self.pid,
+            pindex: self.pindex,
+            uuid: self.uuid,
+            mesh: None,
+            components: None,
+            booleanshape: Some(boolean_shape),
+        })
+    }
+}
+
+/// Builder for configuring boolean operations in a boolean shape object.
+///
+/// `BooleanShapeBuilder` manages the base object reference, boolean operation type,
+/// and the list of operand objects for CSG operations.
+pub struct BooleanShapeBuilder {
+    base_object_id: Option<ObjectId>,
+    operation: BooleanOperation,
+    base_transform: Option<Transform>,
+    base_path: Option<String>,
+    booleans: Vec<BooleanOp>,
+}
+
+impl BooleanShapeBuilder {
+    fn new() -> Self {
+        Self {
+            base_object_id: None,
+            operation: BooleanOperation::Union,
+            base_transform: None,
+            base_path: None,
+            booleans: Vec::new(),
+        }
+    }
+
+    /// Set the base object and boolean operation type.
+    ///
+    /// The base object is the primary object to which boolean operations are applied.
+    /// The operation type determines how operands are combined with the base.
+    ///
+    /// # Parameters
+    ///
+    /// - `object_id`: The ID of the base object
+    /// - `operation`: The boolean operation (Union, Difference, or Intersection)
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// obj.base_object(cube_id, BooleanOperation::Difference);
+    /// ```
+    pub fn base_object(&mut self, object_id: ObjectId, operation: BooleanOperation) -> &mut Self {
+        self.base_object_id = Some(object_id);
+        self.operation = operation;
+        self
+    }
+
+    /// Set a transform to apply to the base object.
+    ///
+    /// # Parameters
+    ///
+    /// - `transform`: A 4x3 transformation matrix
+    pub fn base_transform(&mut self, transform: Transform) -> &mut Self {
+        self.base_transform = Some(transform);
+        self
+    }
+
+    /// Set a path for the base object (Production extension).
+    ///
+    /// Only valid when used with the Production extension in root model files.
+    ///
+    /// # Parameters
+    ///
+    /// - `path`: Path to the model file containing the base object
+    pub fn base_path(&mut self, path: &str) -> &mut Self {
+        self.base_path = Some(path.to_owned());
+        self
+    }
+
+    /// Add a boolean operand with the default configuration.
+    ///
+    /// This is a convenience method that adds an operand with no transform.
+    ///
+    /// # Parameters
+    ///
+    /// - `object_id`: The ID of the operand object
+    pub fn add_boolean(&mut self, object_id: ObjectId) -> &mut Self {
+        self.add_boolean_advanced(object_id, |_| {});
+        self
+    }
+
+    /// Add a boolean operand with advanced configuration.
+    ///
+    /// This method allows you to configure transform and path for the operand
+    /// using a closure.
+    ///
+    /// # Parameters
+    ///
+    /// - `object_id`: The ID of the operand object
+    /// - `f`: A closure that configures the [`BooleanBuilder`]
+    pub fn add_boolean_advanced<F>(&mut self, object_id: ObjectId, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut BooleanBuilder),
+    {
+        let mut builder = BooleanBuilder::new(object_id);
+        f(&mut builder);
+        self.booleans.push(builder.build());
+        self
+    }
+
+    fn build_boolean_shape(self) -> Result<BooleanShape, BooleanShapeError> {
+        let base_object_id = self
+            .base_object_id
+            .ok_or(BooleanShapeError::BaseObjectNotSet)?;
+
+        if self.booleans.is_empty() {
+            return Err(BooleanShapeError::NoBooleanOperands);
+        }
+
+        Ok(BooleanShape {
+            objectid: base_object_id.0,
+            operation: self.operation,
+            transform: self.base_transform,
+            path: self.base_path,
+            booleans: self.booleans,
+        })
+    }
+}
+
+/// Builder for configuring individual boolean operands.
+///
+/// `BooleanBuilder` allows you to set transforms and paths for boolean operands.
+pub struct BooleanBuilder {
+    objectid: ObjectId,
+    transform: Option<Transform>,
+    path: Option<String>,
+}
+
+impl BooleanBuilder {
+    fn new(objectid: ObjectId) -> Self {
+        Self {
+            objectid,
+            transform: None,
+            path: None,
+        }
+    }
+
+    /// Set a transform to apply to this operand.
+    ///
+    /// # Parameters
+    ///
+    /// - `transform`: A 4x3 transformation matrix
+    pub fn transform(&mut self, transform: Transform) -> &mut Self {
+        self.transform = Some(transform);
+        self
+    }
+
+    /// Set a path for this operand (Production extension).
+    ///
+    /// Only valid when used with the Production extension in root model files.
+    ///
+    /// # Parameters
+    ///
+    /// - `path`: Path to the model file containing the operand object
+    pub fn path(&mut self, path: &str) -> &mut Self {
+        self.path = Some(path.to_owned());
+        self
+    }
+
+    fn build(self) -> BooleanOp {
+        BooleanOp {
+            objectid: self.objectid.0,
+            transform: self.transform,
+            path: self.path,
         }
     }
 }
