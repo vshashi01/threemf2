@@ -5,9 +5,13 @@ pub const CORE_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/core/201
 pub const CORE_TRIANGLESET_NS: &str =
     "http://schemas.microsoft.com/3dmanufacturing/trianglesets/2021/07";
 pub const CORE_TRIANGLESET_PREFIX: &str = "t";
-/////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////
+/// Namespaces & Prefixes related to the Boolean operations extension
+pub const BOOLEAN_NS: &str = "http://schemas.3mf.io/3dmanufacturing/booleanoperations/2023/07";
+pub const BOOLEAN_PREFIX: &str = "bo";
+
+//////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Production extension
 pub const PROD_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/production/2015/06";
 pub const PROD_PREFIX: &str = "p";
@@ -28,6 +32,9 @@ pub enum ThreemfNamespace {
     /// Core 3MF
     Core,
 
+    /// Boolean operations extension specification
+    Boolean,
+
     /// Production extension specification
     Prod,
 
@@ -43,6 +50,7 @@ impl ThreemfNamespace {
     pub fn uri(&self) -> &'static str {
         match self {
             Self::Core => CORE_NS,
+            Self::Boolean => BOOLEAN_NS,
             Self::Prod => PROD_NS,
             Self::BeamLattice => BEAM_LATTICE_NS,
             Self::CoreTriangleSet => CORE_TRIANGLESET_NS,
@@ -55,6 +63,7 @@ impl ThreemfNamespace {
     pub fn prefix(&self) -> Option<&'static str> {
         match self {
             Self::Core => None, // default namespace
+            Self::Boolean => Some(BOOLEAN_PREFIX),
             Self::Prod => Some(PROD_PREFIX),
             Self::BeamLattice => Some(BEAM_LATTICE_PREFIX),
             Self::CoreTriangleSet => Some(CORE_TRIANGLESET_PREFIX),

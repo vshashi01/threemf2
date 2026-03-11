@@ -79,7 +79,7 @@ mod write_tests {
 
     use crate::{
         core::{OptionalResourceId, OptionalResourceIndex, object::Object},
-        threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX},
+        threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX},
     };
 
     use super::{Base, BaseMaterials, Resources};
@@ -87,8 +87,8 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_object_test() {
         let xml_string = format!(
-            r#"<resources xmlns="{}"><object xmlns:{}="{}" id="1"></object></resources>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS
+            r#"<resources xmlns="{}"><object xmlns:{}="{}" xmlns:{}="{}" id="1"></object></resources>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
         );
         let resources = Resources {
             object: vec![Object {
@@ -102,6 +102,7 @@ mod write_tests {
                 uuid: None,
                 mesh: None,
                 components: None,
+                booleanshape: None,
             }],
             basematerials: vec![],
         };
@@ -206,6 +207,7 @@ mod memory_optimized_read_tests {
                     uuid: None,
                     mesh: None,
                     components: None,
+                    booleanshape: None,
                 }],
                 basematerials: vec![],
             }
@@ -314,6 +316,7 @@ mod speed_optimized_read_tests {
                     uuid: None,
                     mesh: None,
                     components: None,
+                    booleanshape: None,
                 }],
                 basematerials: vec![],
             }

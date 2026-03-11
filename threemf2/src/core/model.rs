@@ -10,7 +10,7 @@ use serde::Deserialize;
 use crate::{
     core::{build::Build, metadata::Metadata, resources::Resources},
     threemf_namespaces::{
-        BEAM_LATTICE_NS, CORE_NS, CORE_TRIANGLESET_NS, PROD_NS, ThreemfNamespace,
+        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, PROD_NS, ThreemfNamespace,
     },
 };
 
@@ -23,7 +23,7 @@ use crate::{
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS), rename = "model"))]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS), rename = "model"))]
 pub struct Model {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
@@ -103,6 +103,10 @@ impl Model {
             used.push(ThreemfNamespace::CoreTriangleSet);
         }
 
+        if self.uses_boolean_ns() {
+            used.push(ThreemfNamespace::Boolean);
+        }
+
         used
     }
 
@@ -156,6 +160,16 @@ impl Model {
 
         false
     }
+
+    fn uses_boolean_ns(&self) -> bool {
+        for obj in &self.resources.object {
+            if obj.booleanshape.is_some() {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 #[cfg(feature = "write")]
@@ -174,8 +188,8 @@ mod write_tests {
             resources::Resources,
         },
         threemf_namespaces::{
-            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS,
-            CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, ThreemfNamespace,
+            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, ThreemfNamespace,
         },
     };
 
@@ -184,7 +198,7 @@ mod write_tests {
     #[test]
     pub fn toxml_simple_model_test() {
         let xml_string = format!(
-            r#"<model xmlns="{CORE_NS}" xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            r#"<model xmlns="{CORE_NS}" xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
         );
         let model = Model {
             // xmlns: None,
@@ -209,6 +223,7 @@ mod write_tests {
                     uuid: None,
                     mesh: None,
                     components: None,
+                    booleanshape: None,
                 }],
             },
             build: Build {
@@ -274,6 +289,7 @@ mod write_tests {
                         beamlattice: None,
                     }),
                     components: None,
+                    booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -317,6 +333,7 @@ mod write_tests {
                         beamlattice: None,
                     }),
                     components: None,
+                    booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -379,6 +396,7 @@ mod write_tests {
                         }),
                     }),
                     components: None,
+                    booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -429,6 +447,7 @@ mod write_tests {
                         beamlattice: None,
                     }),
                     components: None,
+                    booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -493,6 +512,7 @@ mod write_tests {
                         }),
                     }),
                     components: None,
+                    booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -576,6 +596,7 @@ mod memory_optimized_read_tests {
                         uuid: None,
                         mesh: None,
                         components: None,
+                        booleanshape: None,
                     }],
                 },
                 build: Build {
@@ -640,6 +661,7 @@ mod memory_optimized_read_tests {
                                 uuid: Some("someComponentUUID".to_owned()),
                             }]
                         }),
+                        booleanshape: None,
                     }],
                 },
                 build: Build {
@@ -740,6 +762,7 @@ mod speed_optimized_read_tests {
                         uuid: None,
                         mesh: None,
                         components: None,
+                        booleanshape: None,
                     }],
                 },
                 build: Build {
@@ -804,6 +827,7 @@ mod speed_optimized_read_tests {
                                 uuid: Some("someComponentUUID".to_owned()),
                             }]
                         }),
+                        booleanshape: None,
                     }],
                 },
                 build: Build {

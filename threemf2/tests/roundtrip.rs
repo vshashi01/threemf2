@@ -75,6 +75,7 @@ mod tests {
                         uuid: None,
                         mesh: Some(mesh.clone()),
                         components: None,
+                        booleanshape: None,
                     }],
                     basematerials: vec![],
                 },
