@@ -10,6 +10,9 @@ pub mod resources;
 /// Defines the type representing a  Object and other elements and atrributes related to it.
 pub mod object;
 
+/// Defines the kinds of objects
+pub mod object_kind;
+
 /// Defines the type representing a Mesh object and other elements and attributes related to it.
 pub mod mesh;
 

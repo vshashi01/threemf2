@@ -316,9 +316,14 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::boolean::{Boolean, BooleanOperation, BooleanShape},
-        core::transform::Transform,
-        threemf_namespaces::BOOLEAN_NS,
+        core::{
+            OptionalResourceId, OptionalResourceIndex, ResourceId,
+            boolean::{Boolean, BooleanOperation, BooleanShape},
+            mesh::Mesh,
+            object::Object,
+            transform::Transform,
+        },
+        threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
     };
 
     #[test]
@@ -455,6 +460,50 @@ mod memory_optimized_read_tests {
                 ],
             }
         );
+    }
+
+    #[test]
+    pub fn fromxml_obj_with_beam_lattice_test() {
+        let xml_string = format!(
+            r##"<object xmlns="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><bo:boolean objectid="66" /><bo:boolean objectid="213" /></bo:booleanshape></object>"##,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS,
+        );
+
+        let obj = from_str::<Object>(&xml_string).unwrap();
+
+        assert_eq!(
+            obj,
+            Object {
+                id: 100,
+                objecttype: None,
+                thumbnail: None,
+                partnumber: None,
+                name: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
+                uuid: None,
+                mesh: None,
+                components: None,
+                booleanshape: Some(BooleanShape {
+                    objectid: 95,
+                    operation: BooleanOperation::Difference,
+                    transform: None,
+                    path: None,
+                    booleans: vec![
+                        Boolean {
+                            objectid: 66,
+                            transform: None,
+                            path: None,
+                        },
+                        Boolean {
+                            objectid: 213,
+                            transform: None,
+                            path: None
+                        }
+                    ]
+                })
+            }
+        )
     }
 }
 
