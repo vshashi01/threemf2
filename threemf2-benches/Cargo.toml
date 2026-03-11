@@ -24,9 +24,9 @@ dhat = "0.3.3"
 
 [features]
 default = []
-memory-optimized-read-experimental = [
-    "threemf2/memory-optimized-read-experimental",
-]
+# memory-optimized-read-experimental = [
+#     "threemf2/memory-optimized-read-experimental",
+# ]
 enable-alloc-check = []
 
 [[bench]]

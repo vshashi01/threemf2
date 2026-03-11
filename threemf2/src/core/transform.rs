@@ -96,26 +96,14 @@ impl<'xml> FromXml<'xml> for Transform {
     const KIND: Kind = Kind::Scalar;
 }
 
-#[cfg(not(feature = "memory-optimized-read-experimental"))]
-impl From<String> for Transform {
-    fn from(value: String) -> Self {
-        let values = value
-            .split(" ")
-            .map(|v| v.parse::<f64>().unwrap_or_default())
-            .collect::<Vec<f64>>();
-
-        // write now it can always panic something to improve in the future
-        Self(values.try_into().unwrap())
-    }
-}
-
-#[cfg(feature = "memory-optimized-read-experimental")]
+#[cfg(feature = "memory-optimized-read")]
 impl From<String> for Transform {
     fn from(value: String) -> Self {
         let values = value
             .split(" ")
             .map(|v| lexical_core::parse(v.as_bytes()).unwrap_or_default())
             .collect::<Vec<f64>>();
+        //ToDo: Consider parallelizing this
 
         // write now it can always panic something to improve in the future
         Self(values.try_into().unwrap())
@@ -190,70 +178,9 @@ mod write_tests {
     }
 }
 
-#[cfg(all(
-    feature = "memory-optimized-read",
-    not(feature = "memory-optimized-read-experimental")
-))]
+#[cfg(feature = "memory-optimized-read")]
 #[cfg(test)]
 mod memory_optimized_read_tests {
-    use instant_xml::{FromXml, from_str};
-    use pretty_assertions::assert_eq;
-
-    use super::Transform;
-
-    // Transform is a transparent tuple struct, it can only be properly write/read to/from XML when
-    //placed in a separate struct
-    #[derive(FromXml, PartialEq, Debug)]
-    struct TestTransform {
-        transform: Transform,
-    }
-
-    #[test]
-    #[rustfmt::skip]
-    fn fromxml_test_transform() {
-        let xml_string = "<TestTransform><transform>3.665893 -2718.281828 1618.033988 707.106781 -1414.213562 2236.067977 1442.249570 -866.025403 0.693556 1732.050807 -523.598775 577.215664</transform></TestTransform>";
-        let test_transform = from_str::<TestTransform>(xml_string).unwrap();
-
-        assert_eq!(
-            test_transform.transform,
-            Transform([
-            3.665893, -2718.281828, 1618.033988,
-            707.106781, -1414.213562, 2236.067977,
-            1442.249570, -866.025403, 0.693556,
-            1732.050807, -523.598775, 577.215664,
-        ]));
-    }
-
-    // Transform rename
-    #[derive(FromXml, PartialEq, Debug)]
-    #[xml(rename = "rename")]
-    struct TestTransformRename {
-        #[xml(rename = "transform-matrix")]
-        transform: Transform,
-    }
-
-    #[test]
-    #[rustfmt::skip]
-    fn fromxml_test_transform_rename() {
-        let xml_string =
-            "<rename><transform-matrix>4.141592 -2718.281828 1618.033988 707.106781 -1414.213562 2236.067977 1442.249570 -866.025403 0.793147 1732.050807 -523.598775 577.215664</transform-matrix></rename>";
-        let test_transform = from_str::<TestTransformRename>(xml_string).unwrap();
-
-        assert_eq!(
-            test_transform.transform,
-           Transform([
-                4.141592, -2718.281828, 1618.033988,
-                707.106781, -1414.213562, 2236.067977,
-                1442.249570, -866.025403, 0.793147,
-                1732.050807, -523.598775, 577.215664,
-            ]) 
-        );
-    }
-}
-
-#[cfg(feature = "memory-optimized-read-experimental")]
-#[cfg(test)]
-mod memory_optimized_fast_float_read_tests {
     use instant_xml::{FromXml, from_str};
     use pretty_assertions::assert_eq;
 

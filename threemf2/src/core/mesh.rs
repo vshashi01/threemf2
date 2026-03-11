@@ -127,63 +127,20 @@ impl<'xml> FromXml<'xml> for Vertices {
 ///
 /// A vertex is defined as a Point coordinate in 3D coordinate system.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(
-    all(
-        feature = "memory-optimized-read",
-        not(feature = "memory-optimized-read-experimental")
-    ),
-    derive(FromXml)
-)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(
-        feature = "write",
-        all(
-            feature = "memory-optimized-read",
-            not(feature = "memory-optimized-read-experimental")
-        )
-    ),
-    xml(ns(CORE_NS), rename = "vertex")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "vertex"))]
 pub struct Vertex {
     /// X position
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            )
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub x: Double,
 
     /// Y position
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            )
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub y: Double,
 
     /// Z position
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            )
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub z: Double,
 }
 
@@ -197,7 +154,7 @@ impl Vertex {
     }
 }
 
-#[cfg(feature = "memory-optimized-read-experimental")]
+#[cfg(feature = "memory-optimized-read")]
 impl<'xml> FromXml<'xml> for Vertex {
     #[inline]
     fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
@@ -329,76 +286,24 @@ impl<'xml> FromXml<'xml> for Triangles {
 /// additional indices into other resources can be specified
 /// for each vertex of the triangle as well.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(
-    all(
-        feature = "memory-optimized-read",
-        not(feature = "memory-optimized-read-experimental")
-    ),
-    derive(FromXml)
-)]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Clone, Debug)]
-#[cfg_attr(
-    any(
-        feature = "write",
-        all(
-            feature = "memory-optimized-read",
-            not(feature = "memory-optimized-read-experimental")
-        ),
-    ),
-    xml(ns(CORE_NS), rename = "triangle")
-)]
+#[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "triangle"))]
 pub struct Triangle {
     /// Vertex 1
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            ),
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub v1: ResourceIndex,
 
     /// Vertex 2
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            ),
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub v2: ResourceIndex,
 
     /// Vertex 3
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            ),
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub v3: ResourceIndex,
 
     /// Overrides the object level pindex for Vertex 1 of this [`Triangle`]
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            ),
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
@@ -409,16 +314,7 @@ pub struct Triangle {
     pub p1: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 2 of this [`Triangle`]
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            ),
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
@@ -429,16 +325,7 @@ pub struct Triangle {
     pub p2: OptionalResourceIndex,
 
     /// Overrides the object level pindex for Vertex 3 of this [`Triangle`]
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            ),
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
@@ -449,16 +336,7 @@ pub struct Triangle {
     pub p3: OptionalResourceIndex,
 
     /// Overrides the object level pid for this [`Triangle`]
-    #[cfg_attr(
-        any(
-            feature = "write",
-            all(
-                feature = "memory-optimized-read",
-                not(feature = "memory-optimized-read-experimental")
-            ),
-        ),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
@@ -469,7 +347,7 @@ pub struct Triangle {
     pub pid: OptionalResourceId,
 }
 
-#[cfg(feature = "memory-optimized-read-experimental")]
+#[cfg(feature = "memory-optimized-read")]
 impl<'xml> FromXml<'xml> for Triangle {
     #[inline]
     fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
@@ -694,10 +572,7 @@ mod write_tests {
     }
 }
 
-#[cfg(all(
-    feature = "memory-optimized-read",
-    not(feature = "memory-optimized-read-experimental")
-))]
+#[cfg(feature = "memory-optimized-read")]
 #[cfg(test)]
 mod memory_optimized_read_tests {
     use instant_xml::from_str;
@@ -705,148 +580,6 @@ mod memory_optimized_read_tests {
 
     use crate::core::types::{OptionalResourceId, OptionalResourceIndex};
     use crate::threemf_namespaces::CORE_NS;
-
-    use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
-
-    #[test]
-    pub fn fromxml_vertex_test() {
-        let xml_string = format!(r#"<vertex xmlns="{}" x="100.5" y="100" z="0" />"#, CORE_NS);
-        let vertex = from_str::<Vertex>(&xml_string).unwrap();
-
-        assert_eq!(vertex, Vertex::new(100.5, 100.0, 0.0,));
-    }
-
-    #[test]
-    pub fn fromxml_vertices_test() {
-        let xml_string = format!(
-            r#"<vertices xmlns="{}"><vertex x="100" y="110.5" z="0" /><vertex x="0.156" y="55.6896" z="-10" /></vertices>"#,
-            CORE_NS
-        );
-        let vertices = from_str::<Vertices>(&xml_string).unwrap();
-
-        assert_eq!(
-            vertices,
-            Vertices {
-                vertex: vec![
-                    Vertex::new(100., 110.5, 0.0,),
-                    Vertex::new(0.156, 55.6896, -10.0,),
-                ],
-            }
-        )
-    }
-
-    #[test]
-    pub fn fromxml_required_fields_triangle_test() {
-        let xml_string = format!(r#"<triangle xmlns="{}" v1="1" v2="2" v3="3" />"#, CORE_NS);
-        let triangle = from_str::<Triangle>(&xml_string).unwrap();
-
-        assert_eq!(
-            triangle,
-            Triangle {
-                v1: 1,
-                v2: 2,
-                v3: 3,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                p3: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            }
-        );
-    }
-
-    #[test]
-    pub fn fromxml_triangles_test() {
-        let xml_string = format!(
-            r#"<triangles xmlns="{}"><triangle v1="1" v2="2" v3="3" /><triangle v1="2" v2="3" v3="4" /></triangles>"#,
-            CORE_NS
-        );
-        let triangles = from_str::<Triangles>(&xml_string).unwrap();
-
-        assert_eq!(
-            triangles,
-            Triangles {
-                triangle: vec![
-                    Triangle {
-                        v1: 1,
-                        v2: 2,
-                        v3: 3,
-                        p1: OptionalResourceIndex::none(),
-                        p2: OptionalResourceIndex::none(),
-                        p3: OptionalResourceIndex::none(),
-                        pid: OptionalResourceId::none(),
-                    },
-                    Triangle {
-                        v1: 2,
-                        v2: 3,
-                        v3: 4,
-                        p1: OptionalResourceIndex::none(),
-                        p2: OptionalResourceIndex::none(),
-                        p3: OptionalResourceIndex::none(),
-                        pid: OptionalResourceId::none(),
-                    },
-                ],
-            }
-        );
-    }
-
-    #[test]
-    pub fn fromxml_mesh_test() {
-        let xml_string = format!(
-            r##"<mesh xmlns="{}"><vertices><vertex x="-1" y="-1" z="0" /><vertex x="1" y="-1" z="0" /><vertex x="1" y="1" z="0" /><vertex x="-1" y="1" z="0" /></vertices><triangles><triangle v1="0" v2="1" v3="2" /><triangle v1="0" v2="2" v3="3" /></triangles></mesh>"##,
-            CORE_NS
-        );
-        let mesh = from_str::<Mesh>(&xml_string).unwrap();
-
-        assert_eq!(
-            mesh,
-            Mesh {
-                vertices: Vertices {
-                    vertex: vec![
-                        Vertex::new(-1.0, -1.0, 0.0),
-                        Vertex::new(1.0, -1.0, 0.0),
-                        Vertex::new(1.0, 1.0, 0.0),
-                        Vertex::new(-1.0, 1.0, 0.0),
-                    ]
-                },
-                triangles: Triangles {
-                    triangle: vec![
-                        Triangle {
-                            v1: 0,
-                            v2: 1,
-                            v3: 2,
-                            p1: OptionalResourceIndex::none(),
-                            p2: OptionalResourceIndex::none(),
-                            p3: OptionalResourceIndex::none(),
-                            pid: OptionalResourceId::none(),
-                        },
-                        Triangle {
-                            v1: 0,
-                            v2: 2,
-                            v3: 3,
-                            p1: OptionalResourceIndex::none(),
-                            p2: OptionalResourceIndex::none(),
-                            p3: OptionalResourceIndex::none(),
-                            pid: OptionalResourceId::none(),
-                        }
-                    ]
-                },
-                trianglesets: None,
-                beamlattice: None,
-            }
-        )
-    }
-}
-
-#[cfg(feature = "memory-optimized-read-experimental")]
-#[cfg(test)]
-mod memory_optimized_fast_float_read_tests {
-    use instant_xml::from_str;
-    use pretty_assertions::assert_eq;
-
-    use crate::{
-        core::{OptionalResourceId, OptionalResourceIndex},
-        threemf_namespaces::CORE_NS,
-    };
 
     use super::{Mesh, Triangle, Triangles, Vertex, Vertices};
 
