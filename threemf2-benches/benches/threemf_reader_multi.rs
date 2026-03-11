@@ -112,10 +112,15 @@ fn bench_lib3mf_rs(c: &mut Criterion) {
     group.finish();
 }
 
+#[cfg(feature = "benchmark-all")]
 criterion_group!(
     benches,
     bench_memory_optimized,
     bench_speed_optimized,
     bench_lib3mf_rs
 );
+
+#[cfg(not(feature = "benchmark-all"))]
+criterion_group!(benches, bench_memory_optimized,);
+
 criterion_main!(benches);

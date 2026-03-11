@@ -28,6 +28,7 @@ default = []
 #     "threemf2/memory-optimized-read-experimental",
 # ]
 enable-alloc-check = []
+benchmark-all = []
 
 [[bench]]
 name = "reader"
