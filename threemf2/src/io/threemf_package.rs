@@ -246,11 +246,11 @@ impl ThreemfPackage {
                 if keep_uris.contains(ns.uri.as_str()) {
                     new_tag.push(' ');
                     let attr_name = if let Some(prefix) = &ns.prefix {
-                        prefix
+                        format!("xmlns:{}", prefix)
                     } else {
-                        "xmlns"
+                        "xmlns".to_string()
                     };
-                    new_tag.push_str(attr_name);
+                    new_tag.push_str(&attr_name);
                     new_tag.push_str("=\"");
                     new_tag.push_str(&ns.uri);
                     new_tag.push('"');
@@ -715,7 +715,7 @@ mod tests {
             writer
         };
 
-        assert_eq!(bytes.into_inner().len(), 942);
+        assert_eq!(bytes.into_inner().len(), 944);
     }
 
     #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
