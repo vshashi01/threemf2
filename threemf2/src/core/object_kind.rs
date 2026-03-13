@@ -26,12 +26,13 @@ pub struct TestMesh {
 #[derive(PartialEq, Debug, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(BOOLEAN_NS), rename = "booleanshape")
+    xml(ns(BOOLEAN_NS, bo = BOOLEAN_NS), rename = "booleanshape")
 )]
 pub struct TestBooleanShape {
     #[xml(attribute)]
     pub objectid: u32,
 
+    #[xml(ns(BOOLEAN_NS))]
     pub booleans: Vec<TestBoolean>,
 }
 
@@ -40,7 +41,7 @@ pub struct TestBooleanShape {
 #[derive(PartialEq, Debug, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(BOOLEAN_NS), rename = "boolean")
+    xml(ns(BOOLEAN_NS, bo=BOOLEAN_NS), rename = "boolean")
 )]
 pub struct TestBoolean {
     #[xml(attribute)]
@@ -99,7 +100,7 @@ fn test_boolean_shape_serialization() {
     let xml = instant_xml::to_string(&obj).unwrap();
     println!("{xml}");
     // Expected: <object xmlns="..." xmlns:bo="..." id="1"><bo:booleanshape bo:objectid="2" /></object>
-    assert!(xml.contains("<bo:booleanshape"));
+    assert!(xml.contains("</bo:booleanshape>"));
     assert!(xml.contains("objectid=\"2\""));
 }
 
