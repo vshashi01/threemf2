@@ -51,16 +51,17 @@ impl ToXml for Metadata {
 
         let (name, ns) = match field {
             Some(field) => (field.name, field.ns),
-            None => {
-                let _ = serializer.push(instant_xml::ser::Context {
-                    default_ns: CORE_NS,
-                    prefixes: [],
-                });
-                ("metadata", CORE_NS)
-            }
+            None => ("metadata", CORE_NS),
         };
 
         let _ = serializer.write_start(name, ns)?;
+
+        if field.is_none() {
+            let _ = serializer.push(instant_xml::ser::Context {
+                default_ns: CORE_NS,
+                prefixes: [],
+            });
+        }
 
         serializer.write_attr("name", ns, &self.name)?;
         if let Some(preserve) = &self.preserve {
