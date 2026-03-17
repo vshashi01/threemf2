@@ -19,28 +19,60 @@ use crate::threemf_namespaces::CORE_NS;
 /// description, or custom properties.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
+// #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone, Eq)]
 #[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
+    any(feature = "memory-optimized-read"),
     xml(ns(CORE_NS), rename = "metadata")
 )]
 pub struct Metadata {
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
+    #[cfg_attr(any(feature = "memory-optimized-read"), xml(attribute))]
     pub name: String,
 
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
+    #[cfg_attr(any(feature = "memory-optimized-read"), xml(attribute))]
     pub preserve: Option<Preserve>,
 
-    #[cfg_attr(any(feature = "write", feature = "memory-optimized-read"), xml(direct))]
+    #[cfg_attr(any(feature = "memory-optimized-read"), xml(direct))]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "#content"))]
     pub value: Option<String>,
+}
+
+#[cfg(feature = "write")]
+impl ToXml for Metadata {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), Error> {
+        // Determine element ID
+        let id = field.unwrap_or(instant_xml::Id {
+            name: "metadata",
+            ns: CORE_NS,
+        });
+
+        // Write start element with namespace
+        let _ = serializer.write_start(id.name, id.ns)?;
+
+        // Write attributes
+        serializer.write_attr("name", "", &self.name)?;
+        if let Some(preserve) = &self.preserve {
+            serializer.write_attr("preserve", "", &preserve.0)?;
+        }
+
+        // End start tag
+
+        // Write value as text content if present
+        if let Some(value) = &self.value {
+            serializer.end_start()?;
+            serializer.write_str(value)?;
+            // Close element
+            serializer.write_close(None, id.name)?;
+        } else {
+            serializer.end_empty()?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Group of metadata entries.
@@ -105,7 +137,7 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
-    use crate::threemf_namespaces::CORE_NS;
+    use crate::{core::metadata::Preserve, threemf_namespaces::CORE_NS};
 
     use super::{Metadata, MetadataGroup};
 
@@ -132,6 +164,22 @@ mod write_tests {
             name: "From Test".to_string(),
             preserve: None,
             value: None,
+        };
+        let metadata_string = to_string(&metadata).unwrap();
+
+        assert_eq!(metadata_string, xml_string);
+    }
+
+    #[test]
+    pub fn toxml_advanced_metadata_test() {
+        let xml_string = format!(
+            r#"<metadata xmlns="{}" name="From Test" preserve="true">This is a metadata</metadata>"#,
+            CORE_NS
+        );
+        let metadata = Metadata {
+            name: "From Test".to_string(),
+            preserve: Some(Preserve(true)),
+            value: Some("This is a metadata".to_string()),
         };
         let metadata_string = to_string(&metadata).unwrap();
 
