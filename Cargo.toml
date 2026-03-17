@@ -1,4 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["threemf2", "threemf2-benches", "threemf2-tests"]
+members = [
+    "threemf2",
+    "threemf2-benches",
+    "threemf2-tests",
+    "threemf2-xsd-validation",
+]
 package.readme = "README.md"
