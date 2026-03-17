@@ -44,29 +44,34 @@ impl ToXml for Metadata {
         field: Option<instant_xml::Id<'_>>,
         serializer: &mut instant_xml::Serializer<W>,
     ) -> Result<(), Error> {
-        // Determine element ID
-        let id = field.unwrap_or(instant_xml::Id {
-            name: "metadata",
-            ns: CORE_NS,
-        });
+        // let id = field.unwrap_or(instant_xml::Id {
+        //     name: "metadata",
+        //     ns: CORE_NS,
+        // });
 
-        // Write start element with namespace
-        let _ = serializer.write_start(id.name, id.ns)?;
+        let (name, ns) = match field {
+            Some(field) => (field.name, field.ns),
+            None => {
+                let _ = serializer.push(instant_xml::ser::Context {
+                    default_ns: CORE_NS,
+                    prefixes: [],
+                });
+                ("metadata", CORE_NS)
+            }
+        };
 
-        // Write attributes
-        serializer.write_attr("name", "", &self.name)?;
+        let _ = serializer.write_start(name, ns)?;
+
+        serializer.write_attr("name", ns, &self.name)?;
         if let Some(preserve) = &self.preserve {
-            serializer.write_attr("preserve", "", &preserve.0)?;
+            serializer.write_attr("preserve", ns, &preserve.0)?;
         }
-
-        // End start tag
 
         // Write value as text content if present
         if let Some(value) = &self.value {
             serializer.end_start()?;
             serializer.write_str(value)?;
-            // Close element
-            serializer.write_close(None, id.name)?;
+            serializer.write_close(None, name)?;
         } else {
             serializer.end_empty()?;
         }
