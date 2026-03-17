@@ -1,0 +1,18 @@
+[package]
+name = "threemf2-xsd-validation"
+version = "0.1.0"
+rust-version = "1.89"
+edition = "2024"
+license = "MIT or Apache-2.0"
+description = "XSD validation tests for threemf2 generated 3MF files"
+
+[dependencies]
+threemf2 = { path = "../threemf2", features = [
+    "io-write",
+    "io-memory-optimized-read",
+] }
+
+[dev-dependencies]
+fastxml = { version = "0.8.0", features = ["ureq"] }
+pretty_assertions = { version = "1.4.1" }
+zip = { version = "8.2.0", default-features = false, features = ["deflate"] }

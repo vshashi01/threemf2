@@ -61,7 +61,7 @@ pub struct MetadataGroup {
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "preserve"))]
-pub struct Preserve(bool);
+pub struct Preserve(pub bool);
 
 #[cfg(feature = "memory-optimized-read")]
 impl<'xml> FromXml<'xml> for Preserve {
