@@ -64,9 +64,9 @@ impl ValidationResult {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ValidationScope {
     /// Can run on a single model (no cross-model references needed).
-    Model,
+    ModelOrPackage,
     /// Needs access to the full package (cross-model references).
-    Package,
+    PackageOnly,
 }
 
 /// Validation rules that can be applied to 3MF packages or models.
@@ -87,10 +87,10 @@ impl ValidationRule {
     /// Returns the scope required to run this validation rule.
     pub fn scope(&self) -> ValidationScope {
         match self {
-            ValidationRule::ObjectIdReference => ValidationScope::Model,
-            ValidationRule::ResourceIdReference => ValidationScope::Model,
-            ValidationRule::BuildItemReference => ValidationScope::Package,
-            ValidationRule::ComponentReference => ValidationScope::Package,
+            ValidationRule::ObjectIdReference => ValidationScope::ModelOrPackage,
+            ValidationRule::ResourceIdReference => ValidationScope::ModelOrPackage,
+            ValidationRule::BuildItemReference => ValidationScope::ModelOrPackage,
+            ValidationRule::ComponentReference => ValidationScope::ModelOrPackage,
         }
     }
 }
@@ -154,8 +154,8 @@ impl Validator {
         let mut issues = Vec::new();
 
         for rule in &self.rules {
-            if rule.scope() == ValidationScope::Model {
-                let rule_issues = crate::io::validator_rules::run_rule(rule, model);
+            if rule.scope() == ValidationScope::ModelOrPackage {
+                let rule_issues = crate::io::validator_rules::run_rule_for_model(rule, model);
                 issues.extend(rule_issues);
             }
         }
@@ -175,31 +175,10 @@ impl Validator {
     pub fn validate_package(&self, package: &ThreemfPackage) -> ValidationResult {
         let mut issues = Vec::new();
 
-        // Run Model-scope rules on root model
         for rule in &self.rules {
-            if rule.scope() == ValidationScope::Model {
-                let rule_issues = crate::io::validator_rules::run_rule(rule, &package.root);
-                issues.extend(rule_issues);
-            }
+            let rule_issues = crate::io::validator_rules::run_rule_for_package(&rule, package);
+            issues.extend(rule_issues);
         }
-
-        // Run Model-scope rules on each sub-model
-        for (_path, model) in &package.sub_models {
-            for rule in &self.rules {
-                if rule.scope() == ValidationScope::Model {
-                    let rule_issues = crate::io::validator_rules::run_rule(rule, model);
-                    issues.extend(rule_issues);
-                }
-            }
-        }
-
-        // TODO: Run Package-scope rules when they are implemented
-        // for rule in &self.rules {
-        //     if rule.scope() == ValidationScope::Package {
-        //         let rule_issues = crate::io::validator_rules::run_package_rule(rule, package);
-        //         issues.extend(rule_issues);
-        //     }
-        // }
 
         ValidationResult::new(issues)
     }
@@ -263,11 +242,11 @@ mod tests {
     fn test_rule_scopes() {
         assert_eq!(
             ValidationRule::ObjectIdReference.scope(),
-            ValidationScope::Model
+            ValidationScope::ModelOrPackage
         );
         assert_eq!(
             ValidationRule::ResourceIdReference.scope(),
-            ValidationScope::Model
+            ValidationScope::ModelOrPackage
         );
     }
 }

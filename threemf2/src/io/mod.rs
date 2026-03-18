@@ -9,7 +9,7 @@ pub use utils::parse_xmlns_attributes;
 
 pub mod thumbnail_handle;
 
-mod validator;
+pub mod validator;
 mod validator_rules;
 
 /// Represents an XML namespace declaration with its prefix and URI
