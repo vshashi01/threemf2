@@ -176,7 +176,7 @@ impl Validator {
         let mut issues = Vec::new();
 
         for rule in &self.rules {
-            let rule_issues = crate::io::validator_rules::run_rule_for_package(&rule, package);
+            let rule_issues = crate::io::validator_rules::run_rule_for_package(rule, package);
             issues.extend(rule_issues);
         }
 
