@@ -8,13 +8,13 @@ use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
-use rusterix::Assets;
 use rusterix::batch::batch3d::Batch3D;
 use rusterix::batch::{CullMode, PrimitiveMode};
 use rusterix::camera::D3Camera;
 use rusterix::camera::d3orbit::D3OrbitCamera;
 use rusterix::rasterizer::Rasterizer;
 use rusterix::scene::Scene;
+use rusterix::{Assets, Material, Shader, VGrayGradientShader};
 use vek::mat::repr_c::column_major::mat4::Mat4;
 use vek::vec::repr_c::vec2::Vec2;
 use vek::vec::repr_c::vec3::Vec3;
@@ -156,7 +156,8 @@ impl ThumbnailGenerator {
         let camera = self.setup_camera(center, size);
 
         // Create scene
-        let mut scene = Scene::from_static(vec![], batches);
+        let mut scene =
+            Scene::from_static(vec![], batches).background(Box::new(VGrayGradientShader::new()));
 
         // Render the scene
         let mut pixels = vec![0u8; (self.config.width * self.config.height * 4) as usize];
@@ -314,11 +315,16 @@ impl ThumbnailGenerator {
         let uvs: Vec<[f32; 2]> = vec![[0.0, 0.0]; vertices.len()];
 
         // Create the batch
-        let mut batch = Batch3D::new(vertices, indices, uvs)
+        let batch = Batch3D::new(vertices, indices, uvs)
             .mode(PrimitiveMode::Triangles)
-            .cull_mode(CullMode::Back);
-
-        batch.compute_vertex_normals();
+            .cull_mode(CullMode::Off)
+            .material(Material::new(
+                rusterix::MaterialRole::Metallic,
+                rusterix::MaterialModifier::None,
+                0.6,
+                0.0,
+            ))
+            .with_computed_normals();
 
         Ok(batch)
     }
@@ -413,6 +419,7 @@ impl Default for ThumbnailGenerator {
 #[cfg(test)]
 mod tests {
     use std::fs::File;
+    use std::io::Write;
     use std::path::PathBuf;
 
     use super::*;
@@ -586,6 +593,9 @@ mod tests {
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
         let generator = ThumbnailGenerator::default();
         let thumbnail = generator.generate(&package.root).unwrap();
+
+        let mut file = File::create("output.png").unwrap();
+        file.write_all(&thumbnail.data).unwrap();
 
         assert_eq!(thumbnail.format, ImageFormat::Png);
         assert!(!thumbnail.data.is_empty());
