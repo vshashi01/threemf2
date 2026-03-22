@@ -6,19 +6,14 @@ use crate::core::types::ResourceId;
 use crate::io::error::Error;
 use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
+use euc::buffer::Buffer2d;
+use euc::rasterizer::{BackfaceCullingDisabled, Triangles};
+use euc::{Pipeline, Rasterizer};
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
-use rusterix::batch::batch3d::Batch3D;
-use rusterix::batch::{CullMode, PrimitiveMode};
-use rusterix::camera::D3Camera;
-use rusterix::camera::d3orbit::D3OrbitCamera;
-use rusterix::rasterizer::Rasterizer;
-use rusterix::scene::Scene;
-use rusterix::{Assets, Material, Shader, VGrayGradientShader};
-use vek::mat::repr_c::column_major::mat4::Mat4;
-use vek::vec::repr_c::vec2::Vec2;
-use vek::vec::repr_c::vec3::Vec3;
-use vek::vec::repr_c::vec4::Vec4;
+use vek_old::mat::repr_c::column_major::mat4::Mat4;
+use vek_old::vec::repr_c::vec3::Vec3;
+use vek_old::vec::repr_c::vec4::Vec4;
 
 const DEFAULT_WIDTH: u32 = 256;
 const DEFAULT_HEIGHT: u32 = 256;
@@ -26,9 +21,6 @@ const DEFAULT_PADDING: f32 = 0.1; // 10% padding
 const DEFAULT_CAMERA_FOV: f32 = 75.0;
 const DEFAULT_CAMERA_NEAR: f32 = 0.1;
 const DEFAULT_CAMERA_FAR: f32 = 1000.0;
-const DEFAULT_CAMERA_AZIMUTH: f32 = 45.0_f32.to_radians();
-const DEFAULT_CAMERA_ELEVATION: f32 = 30.0_f32.to_radians();
-const DEFAULT_TILE_SIZE: usize = 64;
 
 /// Configuration for thumbnail generation
 #[derive(Debug, Clone, Copy)]
@@ -57,8 +49,8 @@ impl Default for ThumbnailConfig {
             width: DEFAULT_WIDTH,
             height: DEFAULT_HEIGHT,
             padding: DEFAULT_PADDING,
-            background_color: [240, 240, 240, 255], // Light gray
-            mesh_color: [100, 149, 237, 255],       // Cornflower blue
+            background_color: [255, 0, 0, 255], // Red
+            mesh_color: [100, 149, 237, 255],   // Cornflower blue
             camera_azimuth: 45.0,
             camera_elevation: 30.0,
             camera_fov: DEFAULT_CAMERA_FOV,
@@ -123,11 +115,6 @@ impl ThumbnailGenerator {
         Self { config }
     }
 
-    /// Creates a new thumbnail generator with default configuration
-    pub fn default() -> Self {
-        Self::new(ThumbnailConfig::default())
-    }
-
     /// Generates a thumbnail from a 3MF model
     ///
     /// # Arguments
@@ -147,36 +134,78 @@ impl ThumbnailGenerator {
 
         // Calculate bounding box of all transformed vertices
         let bounding_box = self.calculate_bounding_box(&meshes_with_transforms);
-        let (center, size) = self.get_bounding_box_info(&bounding_box);
-
-        // Create rusterix batches from the meshes
-        let batches = self.create_batches(&meshes_with_transforms)?;
+        let (center, size) = self.get_bounding_box_size(&bounding_box);
 
         // Setup camera with auto-fit
-        let camera = self.setup_camera(center, size);
+        let camera_matrix = self.setup_camera_matrix(center, size);
 
-        // Create scene
-        let mut scene =
-            Scene::from_static(vec![], batches).background(Box::new(VGrayGradientShader::new()));
+        // Create render buffers
+        let width = self.config.width as usize;
+        let height = self.config.height as usize;
+        let mut color_buffer = Buffer2d::new([width, height], self.config.background_color);
+        let mut depth_buffer = Buffer2d::new([width, height], 1.0f32);
 
-        // Render the scene
-        let mut pixels = vec![0u8; (self.config.width * self.config.height * 4) as usize];
-        let view_matrix = camera.view_matrix();
-        let projection_matrix =
-            camera.projection_matrix(self.config.width as f32, self.config.height as f32);
+        // Create rendering pipeline
+        let pipeline = ThumbnailPipeline {
+            mvp_matrix: camera_matrix,
+            mesh_color: self.config.mesh_color,
+        };
 
-        let mut rasterizer = Rasterizer::setup(None, view_matrix, projection_matrix);
-        rasterizer.rasterize(
-            &mut scene,
-            &mut pixels,
-            self.config.width as usize,
-            self.config.height as usize,
-            DEFAULT_TILE_SIZE,
-            &Assets::default(),
+        // Collect all vertices and indices from all meshes
+        let mut all_vertices: Vec<[f32; 3]> = Vec::new();
+        let mut all_indices: Vec<[usize; 3]> = Vec::new();
+        let mut vertex_offset = 0;
+
+        for (mesh, transform) in meshes_with_transforms {
+            all_vertices.reserve_exact(mesh.vertices.vertex.len());
+            // Add vertices
+            for vertex in &mesh.vertices.vertex {
+                let pos = Vec4::new(
+                    vertex.x.value() as f32,
+                    vertex.y.value() as f32,
+                    vertex.z.value() as f32,
+                    1.0,
+                );
+                let transformed = transform * pos;
+                all_vertices.push([transformed.x, transformed.y, transformed.z]);
+            }
+
+            // Add indices (with offset)
+            all_indices.reserve_exact(mesh.triangles.triangle.len());
+            for triangle in &mesh.triangles.triangle {
+                all_indices.push([
+                    triangle.v1 as usize + vertex_offset,
+                    triangle.v2 as usize + vertex_offset,
+                    triangle.v3 as usize + vertex_offset,
+                ]);
+            }
+
+            vertex_offset += mesh.vertices.vertex.len();
+        }
+
+        // Render each triangle using euc
+        // Each triangle is 3 consecutive vertices
+        let vertices: Vec<[f32; 3]> = all_vertices;
+
+        // euc expects vertices in a flat array where each group of 3 is a triangle
+        // We need to expand our indexed triangles into a flat vertex array
+        let mut triangle_vertices: Vec<[f32; 3]> = Vec::with_capacity(all_indices.len() * 3);
+        for triangle_indices in &all_indices {
+            triangle_vertices.push(vertices[triangle_indices[0]]);
+            triangle_vertices.push(vertices[triangle_indices[1]]);
+            triangle_vertices.push(vertices[triangle_indices[2]]);
+        }
+
+        // Use the Triangles rasterizer to draw
+        Triangles::<_, BackfaceCullingDisabled>::draw(
+            &pipeline,
+            &triangle_vertices,
+            &mut color_buffer,
+            Some(&mut depth_buffer),
         );
 
         // Encode as PNG
-        let png_data = self.encode_png(&pixels)?;
+        let png_data = self.encode_png(color_buffer.as_ref())?;
 
         Ok(ThumbnailHandle {
             data: png_data,
@@ -185,7 +214,7 @@ impl ThumbnailGenerator {
     }
 
     /// Collects all meshes from the model, applying transforms
-    fn collect_meshes(&self, model: &Model) -> Result<Vec<(Mesh, Mat4<f32>)>, Error> {
+    fn collect_meshes<'b>(&self, model: &'b Model) -> Result<Vec<(&'b Mesh, Mat4<f32>)>, Error> {
         let mut meshes = Vec::new();
 
         // Process each build item
@@ -204,12 +233,12 @@ impl ThumbnailGenerator {
     }
 
     /// Recursively collects meshes from an object and its components
-    fn collect_object_meshes(
+    fn collect_object_meshes<'b>(
         &self,
-        resources: &Resources,
+        resources: &'b Resources,
         object_id: ResourceId,
         transform: Mat4<f32>,
-        meshes: &mut Vec<(Mesh, Mat4<f32>)>,
+        meshes: &mut Vec<(&'b Mesh, Mat4<f32>)>,
     ) -> Result<(), Error> {
         let object = resources
             .object
@@ -221,7 +250,7 @@ impl ThumbnailGenerator {
 
         // If the object has a mesh, add it
         if let Some(mesh) = &object.mesh {
-            meshes.push((mesh.clone(), transform));
+            meshes.push((mesh, transform));
         }
 
         // If the object has components, recursively process them
@@ -246,7 +275,7 @@ impl ThumbnailGenerator {
         Ok(())
     }
 
-    /// Converts a 3MF Transform to a rusterix Mat4
+    /// Converts a 3MF Transform to a Mat4
     fn transform_to_mat4(&self, transform: &Transform) -> Mat4<f32> {
         let m = &transform.0;
         Mat4::new(
@@ -269,68 +298,8 @@ impl ThumbnailGenerator {
         )
     }
 
-    /// Creates rusterix batches from meshes
-    fn create_batches(
-        &self,
-        meshes_with_transforms: &[(Mesh, Mat4<f32>)],
-    ) -> Result<Vec<Batch3D>, Error> {
-        let mut all_batches = Vec::new();
-
-        for (mesh, transform) in meshes_with_transforms {
-            let batch = self.mesh_to_batch(mesh, *transform)?;
-            all_batches.push(batch);
-        }
-
-        Ok(all_batches)
-    }
-
-    /// Converts a single mesh to a rusterix batch
-    fn mesh_to_batch(&self, mesh: &Mesh, transform: Mat4<f32>) -> Result<Batch3D, Error> {
-        // Convert vertices to [f32; 4] and apply transform
-        let vertices: Vec<[f32; 4]> = mesh
-            .vertices
-            .vertex
-            .iter()
-            .map(|v| {
-                let pos = Vec4::new(
-                    v.x.value() as f32,
-                    v.y.value() as f32,
-                    v.z.value() as f32,
-                    1.0,
-                );
-                let transformed = transform * pos;
-                [transformed.x, transformed.y, transformed.z, transformed.w]
-            })
-            .collect();
-
-        // Create triangle indices
-        let indices: Vec<(usize, usize, usize)> = mesh
-            .triangles
-            .triangle
-            .iter()
-            .map(|t| (t.v1 as usize, t.v2 as usize, t.v3 as usize))
-            .collect();
-
-        // Create UVs (simple default UVs since we don't have texture info)
-        let uvs: Vec<[f32; 2]> = vec![[0.0, 0.0]; vertices.len()];
-
-        // Create the batch
-        let batch = Batch3D::new(vertices, indices, uvs)
-            .mode(PrimitiveMode::Triangles)
-            .cull_mode(CullMode::Off)
-            .material(Material::new(
-                rusterix::MaterialRole::Metallic,
-                rusterix::MaterialModifier::None,
-                0.6,
-                0.0,
-            ))
-            .with_computed_normals();
-
-        Ok(batch)
-    }
-
     /// Calculates the bounding box of all vertices
-    fn calculate_bounding_box(&self, meshes: &[(Mesh, Mat4<f32>)]) -> (Vec3<f32>, Vec3<f32>) {
+    fn calculate_bounding_box(&self, meshes: &[(&Mesh, Mat4<f32>)]) -> (Vec3<f32>, Vec3<f32>) {
         let mut min = Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
         let mut max = Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
 
@@ -358,7 +327,7 @@ impl ThumbnailGenerator {
     }
 
     /// Gets the center and size from a bounding box
-    fn get_bounding_box_info(&self, bbox: &(Vec3<f32>, Vec3<f32>)) -> (Vec3<f32>, Vec3<f32>) {
+    fn get_bounding_box_size(&self, bbox: &(Vec3<f32>, Vec3<f32>)) -> (Vec3<f32>, Vec3<f32>) {
         let min = bbox.0;
         let max = bbox.1;
 
@@ -373,33 +342,50 @@ impl ThumbnailGenerator {
         (center, size)
     }
 
-    /// Sets up the camera with auto-fit to the model
-    fn setup_camera(&self, target: Vec3<f32>, size: Vec3<f32>) -> D3OrbitCamera {
+    /// Sets up the camera matrix with auto-fit to the model
+    fn setup_camera_matrix(&self, target: Vec3<f32>, size: Vec3<f32>) -> Mat4<f32> {
         let max_size = size.x.max(size.y).max(size.z);
         let padding_factor = 1.0 + self.config.padding;
         let distance =
-            max_size * padding_factor / (self.config.camera_fov.to_radians() / 2.0).tan();
+            (max_size / 1.75) * padding_factor / (self.config.camera_fov.to_radians() / 2.0).tan();
 
-        D3OrbitCamera {
-            center: target,
-            distance: distance.max(1.0), // Ensure minimum distance
-            azimuth: self.config.camera_azimuth.to_radians(),
-            elevation: self.config.camera_elevation.to_radians(),
-            up: Vec3::new(0.0, 1.0, 0.0),
-            fov: self.config.camera_fov,
-            near: DEFAULT_CAMERA_NEAR,
-            far: DEFAULT_CAMERA_FAR,
-        }
+        // Calculate camera position using spherical coordinates
+        let azimuth = self.config.camera_azimuth.to_radians();
+        let elevation = self.config.camera_elevation.to_radians();
+        let distance = distance.max(1.0);
+
+        let cam_x = target.x + distance * azimuth.cos() * elevation.cos();
+        let cam_y = target.y + distance * elevation.sin();
+        let cam_z = target.z + distance * azimuth.sin() * elevation.cos();
+        let camera_pos = Vec3::new(cam_x, cam_y, cam_z);
+
+        // View matrix
+        let view_matrix = Mat4::look_at_rh(camera_pos, target, Vec3::new(0.0, 1.0, 0.0));
+
+        // Projection matrix
+        let aspect_ratio = self.config.width as f32 / self.config.height as f32;
+        let projection_matrix = Mat4::perspective_rh_zo(
+            self.config.camera_fov.to_radians(),
+            aspect_ratio,
+            DEFAULT_CAMERA_NEAR,
+            DEFAULT_CAMERA_FAR,
+        );
+
+        // Return MVP matrix
+        projection_matrix * view_matrix
     }
 
     /// Encodes the pixel buffer as a PNG image
-    fn encode_png(&self, pixels: &[u8]) -> Result<Vec<u8>, Error> {
+    fn encode_png(&self, pixels: &[[u8; 4]]) -> Result<Vec<u8>, Error> {
         let mut output = Vec::new();
         let encoder = PngEncoder::new(&mut output);
 
+        // Flatten the pixel array
+        let flattened: Vec<u8> = pixels.iter().flat_map(|p| p.iter().copied()).collect();
+
         encoder
             .write_image(
-                pixels,
+                &flattened,
                 self.config.width,
                 self.config.height,
                 image::ExtendedColorType::Rgba8,
@@ -416,122 +402,45 @@ impl Default for ThumbnailGenerator {
     }
 }
 
+/// euc Pipeline for rendering thumbnails
+struct ThumbnailPipeline {
+    mvp_matrix: Mat4<f32>,
+    mesh_color: [u8; 4],
+}
+
+impl Pipeline for ThumbnailPipeline {
+    type Vertex = [f32; 3]; // x, y, z
+    type VsOut = (); // No data passed from vertex to fragment
+    type Pixel = [u8; 4]; // RGBA
+
+    // Vertex shader: transform vertices to clip space
+    fn vert(&self, pos: &Self::Vertex) -> ([f32; 4], Self::VsOut) {
+        let pos_vec = Vec4::new(pos[0], pos[1], pos[2], 1.0);
+        let transformed = self.mvp_matrix * pos_vec;
+        (
+            [transformed.x, transformed.y, transformed.z, transformed.w],
+            (),
+        )
+    }
+
+    // Fragment shader: output flat color
+    fn frag(&self, _: &Self::VsOut) -> Self::Pixel {
+        self.mesh_color
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
-    use std::io::Write;
-    use std::path::PathBuf;
+    use pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::core::build::{Build, Item};
-    use crate::core::mesh::{Mesh, Triangle, Triangles, Vertex, Vertices};
-    use crate::core::object::Object;
+    use crate::core::build::Build;
     use crate::core::resources::Resources;
-    use crate::core::types::{OptionalResourceId, OptionalResourceIndex};
     use crate::io::ThreemfPackage;
 
-    fn create_simple_cube_model() -> Model {
-        let vertices = Vertices {
-            vertex: vec![
-                Vertex::new(-1.0, -1.0, -1.0), // 0
-                Vertex::new(1.0, -1.0, -1.0),  // 1
-                Vertex::new(1.0, 1.0, -1.0),   // 2
-                Vertex::new(-1.0, 1.0, -1.0),  // 3
-                Vertex::new(-1.0, -1.0, 1.0),  // 4
-                Vertex::new(1.0, -1.0, 1.0),   // 5
-                Vertex::new(1.0, 1.0, 1.0),    // 6
-                Vertex::new(-1.0, 1.0, 1.0),   // 7
-            ],
-        };
-
-        let triangles = Triangles {
-            triangle: vec![
-                // Front face
-                Triangle {
-                    v1: 0,
-                    v2: 1,
-                    v3: 2,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 2,
-                    v3: 3,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                // Back face
-                Triangle {
-                    v1: 5,
-                    v2: 4,
-                    v3: 7,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 5,
-                    v2: 7,
-                    v3: 6,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-            ],
-        };
-
-        let mesh = Mesh {
-            vertices,
-            triangles,
-            trianglesets: None,
-            beamlattice: None,
-        };
-
-        let object = Object {
-            id: 1,
-            mesh: Some(mesh),
-            components: None,
-            name: Some("Cube".to_string()),
-            pid: OptionalResourceId::none(),
-            pindex: OptionalResourceIndex::none(),
-            thumbnail: None,
-            partnumber: None,
-            uuid: None,
-            objecttype: None,
-        };
-
-        let resources = Resources {
-            object: vec![object],
-            basematerials: vec![],
-        };
-
-        let build = Build {
-            uuid: None,
-            item: vec![Item {
-                objectid: 1,
-                transform: None,
-                partnumber: None,
-                uuid: None,
-                path: None,
-            }],
-        };
-
-        Model {
-            unit: None,
-            metadata: vec![],
-            resources,
-            build,
-            recommendedextensions: None,
-            requiredextensions: None,
-        }
-    }
+    use std::cmp::Ordering;
+    use std::fs::File;
+    use std::path::PathBuf;
 
     #[test]
     fn test_thumbnail_config_default() {
@@ -556,36 +465,38 @@ mod tests {
 
     #[test]
     fn test_collect_meshes() {
-        let model = create_simple_cube_model();
-        let generator = ThumbnailGenerator::default();
-        let meshes = generator.collect_meshes(&model).unwrap();
+        let path = PathBuf::from("./tests/data/mesh-composedpart.3mf");
+        let reader = File::open(path).unwrap();
 
-        assert_eq!(meshes.len(), 1);
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
+        let generator = ThumbnailGenerator::default();
+        let meshes = generator.collect_meshes(&package.root).unwrap();
+
+        // 2 torus and 1 pyramid
+        assert_eq!(meshes.len(), 3);
     }
 
     #[test]
     fn test_calculate_bounding_box() {
-        let model = create_simple_cube_model();
+        let path = PathBuf::from("./tests/data/mesh-composedpart.3mf");
+        let reader = File::open(path).unwrap();
+
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
         let generator = ThumbnailGenerator::default();
-        let meshes = generator.collect_meshes(&model).unwrap();
+        let meshes = generator.collect_meshes(&package.root).unwrap();
         let bbox = generator.calculate_bounding_box(&meshes);
 
-        let (center, size) = generator.get_bounding_box_info(&bbox);
+        let (center, size) = generator.get_bounding_box_size(&bbox);
 
         // Cube from -1 to 1 in all axes, so center should be at origin
-        assert!((center.x).abs() < 0.01);
-        assert!((center.y).abs() < 0.01);
-        assert!((center.z).abs() < 0.01);
-
-        // Size should be approximately 2 in each dimension
-        assert!((size.x - 2.0).abs() < 0.01);
-        assert!((size.y - 2.0).abs() < 0.01);
-        assert!((size.z - 2.0).abs() < 0.01);
+        assert_eq!(Vec3::new(0.0, 0.0, 0.0), center);
+        assert_eq!(Vec3::new(88.2515, 69.67, 53.5856), size);
     }
 
     #[test]
     fn test_generate_thumbnail() {
-        // let model = create_simple_cube_model();
         let path = PathBuf::from("./tests/data/mesh-composedpart.3mf");
         let reader = File::open(path).unwrap();
 
@@ -594,14 +505,34 @@ mod tests {
         let generator = ThumbnailGenerator::default();
         let thumbnail = generator.generate(&package.root).unwrap();
 
-        let mut file = File::create("output.png").unwrap();
-        file.write_all(&thumbnail.data).unwrap();
+        // Decode the generated PNG thumbnail to raw RGB data
+        let generated_image =
+            image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
+                .expect("Failed to decode generated PNG");
 
-        assert_eq!(thumbnail.format, ImageFormat::Png);
-        assert!(!thumbnail.data.is_empty());
+        // generated_image
+        //     .save("tests/data/golden_files/thumbnails/components-object_new.png")
+        //     .unwrap();
+        let generated_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &generated_image.to_rgb8(),
+        );
 
-        // Verify it's a valid PNG by checking the PNG magic bytes
-        assert_eq!(&thumbnail.data[0..4], &[0x89, 0x50, 0x4E, 0x47]);
+        let ref_image =
+            image::open("tests/data/golden_files/thumbnails/components-object.png").unwrap();
+        let ref_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &ref_image.to_rgb8(),
+        );
+
+        let flip_result = nv_flip::flip(ref_image, generated_image, 0.01);
+        let pool = nv_flip::FlipPool::from_image(&flip_result);
+        if let Some(Ordering::Greater) = pool.mean().partial_cmp(&0.01) {
+            println!("Mean error {}", pool.mean());
+            panic!("Something is wrong with thumbnail")
+        }
     }
 
     #[test]
@@ -617,8 +548,8 @@ mod tests {
                 uuid: None,
                 item: vec![],
             },
-            recommendedextensions: None,
             requiredextensions: None,
+            recommendedextensions: None,
         };
 
         let generator = ThumbnailGenerator::default();
