@@ -201,69 +201,69 @@ impl ThreemfPackage {
     #[cfg(feature = "thumbnail-generation")]
     pub fn generate_thumbnail(
         &mut self,
-        config: crate::io::thumbnail_generator::ThumbnailConfig,
+        config: crate::thumbnail::ThumbnailConfig,
         thumbnail_path: &str,
     ) -> Result<(), Error> {
-        use crate::io::content_types::{DefaultContentTypeEnum, DefaultContentTypes};
-        use crate::io::relationship::{Relationship, RelationshipType};
-        use crate::io::thumbnail_generator::ThumbnailGenerator;
-        use crate::io::thumbnail_handle::ImageFormat;
+        // use crate::io::content_types::{DefaultContentTypeEnum, DefaultContentTypes};
+        // use crate::io::relationship::{Relationship, RelationshipType};
+        // use crate::io::thumbnail_generator::ThumbnailGenerator;
+        // use crate::io::thumbnail_handle::ImageFormat;
 
-        // Generate the thumbnail
-        let generator = ThumbnailGenerator::new(config);
-        let thumbnail = generator.generate(&self.root)?;
+        // // Generate the thumbnail
+        // let generator = ThumbnailGenerator::new(config);
+        // let thumbnail = generator.generate(&self.root)?;
 
-        // Verify it's a PNG
-        if thumbnail.format != ImageFormat::Png {
-            return Err(Error::ThumbnailError(
-                "Only PNG format is supported for thumbnails".to_string(),
-            ));
-        }
+        // // Verify it's a PNG
+        // if thumbnail.format != ImageFormat::Png {
+        //     return Err(Error::ThumbnailError(
+        //         "Only PNG format is supported for thumbnails".to_string(),
+        //     ));
+        // }
 
-        // Add thumbnail to the package
-        self.thumbnails
-            .insert(thumbnail_path.to_string(), thumbnail);
+        // // Add thumbnail to the package
+        // self.thumbnails
+        //     .insert(thumbnail_path.to_string(), thumbnail);
 
-        // Add or update the content type for PNG files
-        let png_content_type_exists = self
-            .content_types
-            .defaults
-            .iter()
-            .any(|ct| ct.content_type == DefaultContentTypeEnum::ImagePng);
+        // // Add or update the content type for PNG files
+        // let png_content_type_exists = self
+        //     .content_types
+        //     .defaults
+        //     .iter()
+        //     .any(|ct| ct.content_type == DefaultContentTypeEnum::ImagePng);
 
-        if !png_content_type_exists {
-            self.content_types.defaults.push(DefaultContentTypes {
-                extension: "png".to_string(),
-                content_type: DefaultContentTypeEnum::ImagePng,
-            });
-        }
+        // if !png_content_type_exists {
+        //     self.content_types.defaults.push(DefaultContentTypes {
+        //         extension: "png".to_string(),
+        //         content_type: DefaultContentTypeEnum::ImagePng,
+        //     });
+        // }
 
-        // Add thumbnail relationship to the root relationships
-        let root_rels = self
-            .relationships
-            .get_mut("_rels/.rels")
-            .ok_or_else(|| Error::WriteError("Root relationships not found".to_string()))?;
+        // // Add thumbnail relationship to the root relationships
+        // let root_rels = self
+        //     .relationships
+        //     .get_mut("_rels/.rels")
+        //     .ok_or_else(|| Error::WriteError("Root relationships not found".to_string()))?;
 
-        // Check if a thumbnail relationship already exists
-        let existing_thumbnail_rel = root_rels
-            .relationships
-            .iter()
-            .position(|rel| rel.relationship_type == RelationshipType::Thumbnail);
+        // // Check if a thumbnail relationship already exists
+        // let existing_thumbnail_rel = root_rels
+        //     .relationships
+        //     .iter()
+        //     .position(|rel| rel.relationship_type == RelationshipType::Thumbnail);
 
-        if let Some(index) = existing_thumbnail_rel {
-            // Update existing relationship
-            root_rels.relationships[index].target = thumbnail_path.to_string();
-        } else {
-            // Generate a unique relationship ID
-            let rel_id = format!("thumbnail_rel_{}", root_rels.relationships.len());
+        // if let Some(index) = existing_thumbnail_rel {
+        //     // Update existing relationship
+        //     root_rels.relationships[index].target = thumbnail_path.to_string();
+        // } else {
+        //     // Generate a unique relationship ID
+        //     let rel_id = format!("thumbnail_rel_{}", root_rels.relationships.len());
 
-            // Add new thumbnail relationship
-            root_rels.relationships.push(Relationship {
-                id: rel_id,
-                target: thumbnail_path.to_string(),
-                relationship_type: RelationshipType::Thumbnail,
-            });
-        }
+        //     // Add new thumbnail relationship
+        //     root_rels.relationships.push(Relationship {
+        //         id: rel_id,
+        //         target: thumbnail_path.to_string(),
+        //         relationship_type: RelationshipType::Thumbnail,
+        //     });
+        // }
 
         Ok(())
     }

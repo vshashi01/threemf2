@@ -3,12 +3,13 @@ use crate::core::model::Model;
 use crate::core::resources::Resources;
 use crate::core::transform::Transform;
 use crate::core::types::ResourceId;
-use crate::io::error::Error;
+use crate::io::Error;
 use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
+use crate::thumbnail::mesh_pipeline::ColoredMeshPipeline;
 
+use euc::Rasterizer;
 use euc::buffer::Buffer2d;
 use euc::rasterizer::{BackfaceCullingDisabled, Triangles};
-use euc::{Pipeline, Rasterizer};
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
 use vek_old::mat::repr_c::column_major::mat4::Mat4;
@@ -146,7 +147,7 @@ impl ThumbnailGenerator {
         let mut depth_buffer = Buffer2d::new([width, height], 1.0f32);
 
         // Create rendering pipeline
-        let pipeline = ThumbnailPipeline {
+        let pipeline = ColoredMeshPipeline {
             mvp_matrix: camera_matrix,
             mesh_color: self.config.mesh_color,
         };
@@ -399,33 +400,6 @@ impl ThumbnailGenerator {
 impl Default for ThumbnailGenerator {
     fn default() -> Self {
         Self::new(ThumbnailConfig::default())
-    }
-}
-
-/// euc Pipeline for rendering thumbnails
-struct ThumbnailPipeline {
-    mvp_matrix: Mat4<f32>,
-    mesh_color: [u8; 4],
-}
-
-impl Pipeline for ThumbnailPipeline {
-    type Vertex = [f32; 3]; // x, y, z
-    type VsOut = (); // No data passed from vertex to fragment
-    type Pixel = [u8; 4]; // RGBA
-
-    // Vertex shader: transform vertices to clip space
-    fn vert(&self, pos: &Self::Vertex) -> ([f32; 4], Self::VsOut) {
-        let pos_vec = Vec4::new(pos[0], pos[1], pos[2], 1.0);
-        let transformed = self.mvp_matrix * pos_vec;
-        (
-            [transformed.x, transformed.y, transformed.z, transformed.w],
-            (),
-        )
-    }
-
-    // Fragment shader: output flat color
-    fn frag(&self, _: &Self::VsOut) -> Self::Pixel {
-        self.mesh_color
     }
 }
 

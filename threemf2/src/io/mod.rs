@@ -73,8 +73,3 @@ pub use threemf_package_lazy_reader::{CachePolicy, ThreemfPackageLazyReader};
 mod builder;
 #[cfg(feature = "io-write")]
 pub use builder::*;
-
-#[cfg(feature = "thumbnail-generation")]
-mod thumbnail_generator;
-#[cfg(feature = "thumbnail-generation")]
-pub use thumbnail_generator::{ThumbnailConfig, ThumbnailGenerator};

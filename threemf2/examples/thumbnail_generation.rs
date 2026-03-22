@@ -7,7 +7,7 @@
 
 use threemf2::{
     core::model::Model,
-    io::{ThumbnailConfig, ThumbnailGenerator},
+    thumbnail::{ThumbnailConfig, ThumbnailGenerator},
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
