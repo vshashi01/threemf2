@@ -6,7 +6,7 @@
 //! Run with: cargo run --example thumbnail_generation --features thumbnail-generation
 
 use threemf2::core::model::Model;
-use threemf2_thumbnail::thumbnail::{ThumbnailConfig, ThumbnailGenerator};
+use threemf2_thumbnail::{ThumbnailConfig, ThumbnailGenerator};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a simple cube model for demonstration

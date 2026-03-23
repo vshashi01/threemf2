@@ -7,7 +7,7 @@ use threemf2::io::Error;
 use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
 use crate::bbox::BoundingBox;
-use crate::thumbnail::mesh_pipeline::ColoredMeshPipeline;
+use crate::mesh_pipeline::ColoredMeshPipeline;
 
 use euc::Rasterizer;
 use euc::buffer::Buffer2d;

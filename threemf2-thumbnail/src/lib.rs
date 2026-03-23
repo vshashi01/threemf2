@@ -1,3 +1,5 @@
-pub mod thumbnail;
+mod thumbnail_generator;
+pub use thumbnail_generator::{ThumbnailConfig, ThumbnailGenerator};
 
 mod bbox;
+mod mesh_pipeline;
