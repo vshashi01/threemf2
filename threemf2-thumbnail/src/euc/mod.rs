@@ -38,13 +38,6 @@
 //! }
 //! ```
 
-// #![no_std]
-
-// extern crate alloc;
-
-// #[cfg(any(feature = "par", not(feature = "micromath")))]
-// extern crate std;
-
 /// N-dimensional buffers that may be used as textures and render targets.
 pub mod buffer;
 /// Index buffer features.

@@ -1,6 +1,11 @@
 use glam::Vec3;
 
-use crate::euc::{math::WeightedSum, pipeline::Pipeline, primitives::TriangleList};
+use crate::euc::{
+    self,
+    math::WeightedSum,
+    pipeline::{AaMode, Pipeline},
+    primitives::{LineTriangleList, TriangleList},
+};
 
 #[derive(Debug)]
 pub struct InputVertexData {
@@ -101,5 +106,62 @@ impl<'r> Pipeline<'r> for ColoredMesh {
 
     fn blend(&self, _old: Self::Pixel, new: Self::Fragment) -> Self::Pixel {
         new
+    }
+
+    fn aa_mode(&self) -> crate::euc::pipeline::AaMode {
+        AaMode::Msaa { level: 2 }
+    }
+
+    fn coordinate_mode(&self) -> euc::pipeline::CoordinateMode {
+        euc::pipeline::CoordinateMode::OPENGL
+    }
+}
+
+pub struct WireframeMesh {
+    pub wireframe_color: Rgba,
+    // camera_pos: glam::Vec3,
+    // view: glam::Mat4,
+    // projection: glam::Mat4,
+    pub mvp_matrix: glam::Mat4,
+}
+
+impl<'r> Pipeline<'r> for WireframeMesh {
+    type Vertex = InputVertexData;
+
+    type VertexData = MeshVertexData;
+
+    type Primitives = LineTriangleList;
+
+    type Fragment = Rgba;
+
+    type Pixel = Rgba;
+
+    fn vertex(&self, vertex: &Self::Vertex) -> ([f32; 4], Self::VertexData) {
+        let pos_vec = glam::Vec4::new(vertex.pos[0], vertex.pos[1], vertex.pos[2], 1.0);
+        let transformed = self.mvp_matrix * pos_vec;
+        (
+            [transformed.x, transformed.y, transformed.z, transformed.w],
+            MeshVertexData {
+                clip_pos: glam::Vec3::new(transformed.x, transformed.y, transformed.z),
+                world_pos: glam::Vec3::new(transformed.x, transformed.y, transformed.z),
+                vertex_color: self.wireframe_color,
+            },
+        )
+    }
+
+    fn fragment(&self, vs_out: Self::VertexData) -> Self::Fragment {
+        vs_out.vertex_color
+    }
+
+    fn blend(&self, _old: Self::Pixel, new: Self::Fragment) -> Self::Pixel {
+        new
+    }
+
+    fn aa_mode(&self) -> crate::euc::pipeline::AaMode {
+        AaMode::Msaa { level: 2 }
+    }
+
+    fn coordinate_mode(&self) -> crate::euc::pipeline::CoordinateMode {
+        euc::pipeline::CoordinateMode::OPENGL
     }
 }

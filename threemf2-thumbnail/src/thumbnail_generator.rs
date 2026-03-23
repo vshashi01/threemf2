@@ -7,19 +7,17 @@ use threemf2::io::Error;
 use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
 use crate::bbox::BoundingBox;
+use crate::camera::OrthographicCamera;
 use crate::euc::buffer::Buffer2d;
 use crate::euc::pipeline::Pipeline;
-use crate::mesh_pipeline::{ColoredMesh, InputVertexData, Rgba};
+use crate::mesh_pipeline::{ColoredMesh, InputVertexData, Rgba, WireframeMesh};
 
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
 
 const DEFAULT_WIDTH: u32 = 256;
 const DEFAULT_HEIGHT: u32 = 256;
-const DEFAULT_PADDING: f32 = 0.1; // 10% padding
-const DEFAULT_CAMERA_FOV: f32 = 75.0;
-const DEFAULT_CAMERA_NEAR: f32 = 0.1;
-const DEFAULT_CAMERA_FAR: f32 = 1000.0;
+const DEFAULT_PADDING: f32 = 0.001; // 1% padding
 
 /// Configuration for thumbnail generation
 #[derive(Debug, Clone, Copy)]
@@ -28,18 +26,22 @@ pub struct ThumbnailConfig {
     pub width: u32,
     /// Height of the thumbnail in pixels
     pub height: u32,
-    /// Padding around the model as a fraction of the model size (0.0 to 1.0)
+    /// Padding around the model as a fraction of the model size (0.0 to 0.1)
     pub padding: f32,
     /// Background color as RGBA
     pub background_color: [u8; 4],
     /// Mesh color as RGBA (used for flat shading)
     pub mesh_color: [u8; 4],
-    /// Camera azimuth angle in degrees (horizontal rotation)
-    pub camera_azimuth: f32,
-    /// Camera elevation angle in degrees (vertical rotation)
-    pub camera_elevation: f32,
-    /// Camera field of view in degrees
-    pub camera_fov: f32,
+    /// Camera yaw angle in degrees (about the Z axis)
+    pub yaw_angle: f32,
+    /// Camera patch angle in degrees (about the XY plane)
+    pub pitch_angle: f32,
+    /// Aspect ratio of the camera
+    pub aspect_ratio: f32,
+    /// Draws the wireframe of the mesh
+    pub enable_wireframe: bool,
+    /// Draws the surface of the mesh
+    pub enable_surface: bool,
 }
 
 impl Default for ThumbnailConfig {
@@ -50,9 +52,11 @@ impl Default for ThumbnailConfig {
             padding: DEFAULT_PADDING,
             background_color: [255, 0, 0, 255], // Red
             mesh_color: [100, 149, 237, 255],   // Cornflower blue
-            camera_azimuth: 45.0,
-            camera_elevation: 30.0,
-            camera_fov: DEFAULT_CAMERA_FOV,
+            yaw_angle: 0.0,
+            pitch_angle: 0.0,
+            aspect_ratio: 1.0,
+            enable_wireframe: false,
+            enable_surface: true,
         }
     }
 }
@@ -89,15 +93,25 @@ impl ThumbnailConfig {
     }
 
     /// Sets the camera angles
-    pub fn with_camera_angles(mut self, azimuth: f32, elevation: f32) -> Self {
-        self.camera_azimuth = azimuth;
-        self.camera_elevation = elevation;
+    pub fn with_camera_angles(mut self, yaw_deg: f32, pitch_deg: f32) -> Self {
+        self.yaw_angle = yaw_deg;
+        self.pitch_angle = pitch_deg;
         self
     }
 
     /// Sets the camera field of view
-    pub fn with_camera_fov(mut self, fov: f32) -> Self {
-        self.camera_fov = fov;
+    pub fn with_aspect_ratio(mut self, ratio: f32) -> Self {
+        self.aspect_ratio = ratio;
+        self
+    }
+
+    pub fn with_wireframe(mut self, enable: bool) -> Self {
+        self.enable_wireframe = enable;
+        self
+    }
+
+    pub fn with_surface(mut self, enable: bool) -> Self {
+        self.enable_surface = enable;
         self
     }
 }
@@ -136,7 +150,13 @@ impl ThumbnailGenerator {
         let (center, size) = self.get_bounding_box_size(&bounding_box);
 
         // Setup camera with auto-fit
-        let camera_matrix = self.setup_camera_matrix(center, size);
+        // let camera_matrix = self.setup_camera_matrix(center, size);
+        let mut camera = OrthographicCamera::looking_at(center)
+            .with_angles(self.config.yaw_angle, self.config.pitch_angle)
+            .with_aspect_ratio(self.config.aspect_ratio);
+
+        camera.fit_to_bounds(size, self.config.padding);
+        let camera_matrix = camera.view_projection_matrix();
 
         // Create render buffers
         let width = self.config.width as usize;
@@ -195,11 +215,21 @@ impl ThumbnailGenerator {
             });
         }
 
-        ColoredMesh {
-            mesh_color: Rgba(self.config.mesh_color),
-            mvp_matrix: camera_matrix,
+        if self.config.enable_surface {
+            ColoredMesh {
+                mesh_color: Rgba(self.config.mesh_color),
+                mvp_matrix: camera_matrix,
+            }
+            .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
         }
-        .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
+
+        if self.config.enable_wireframe {
+            WireframeMesh {
+                wireframe_color: Rgba([0, 0, 0, 255]),
+                mvp_matrix: camera_matrix,
+            }
+            .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
+        }
 
         // Encode as PNG
         let png_data = self.encode_png(color_buffer.raw())?;
@@ -327,39 +357,38 @@ impl ThumbnailGenerator {
         (bbox.center(), bbox.delta())
     }
 
-    /// Sets up the camera matrix with auto-fit to the model
-    fn setup_camera_matrix(&self, target: glam::Vec3, size: glam::Vec3) -> glam::Mat4 {
-        let max_size = size.x.max(size.y).max(size.z);
-        let padding_factor = 1.0 + self.config.padding;
-        let distance =
-            (max_size / 1.75) * padding_factor / (self.config.camera_fov.to_radians() / 2.0).tan();
+    // fn setup_camera_matrix(&self, target: glam::Vec3, size: glam::Vec3) -> glam::Mat4 {
+    //     let max_size = size.x.max(size.y).max(size.z);
+    //     let padding_factor = 1.0 + self.config.padding;
+    //     let distance = (max_size / 1.75) * padding_factor
+    //         / (self.config.aspect_ratio.to_radians() / 2.0).tan();
 
-        // Calculate camera position using spherical coordinates
-        let azimuth = self.config.camera_azimuth.to_radians();
-        let elevation = self.config.camera_elevation.to_radians();
-        let distance = distance.max(1.0);
+    //     // Calculate camera position using spherical coordinates
+    //     let azimuth = self.config.yaw_angle.to_radians();
+    //     let elevation = self.config.pitch_angle.to_radians();
+    //     let distance = distance.max(1.0);
 
-        let cam_x = target.x + distance * azimuth.cos() * elevation.cos();
-        let cam_y = target.y + distance * elevation.sin();
-        let cam_z = target.z + distance * azimuth.sin() * elevation.cos();
-        let camera_pos = glam::Vec3::new(cam_x, cam_y, cam_z);
+    //     let cam_x = target.x + distance * azimuth.cos() * elevation.cos();
+    //     let cam_y = target.y + distance * elevation.sin();
+    //     let cam_z = target.z + distance * azimuth.sin() * elevation.cos();
+    //     let camera_pos = glam::Vec3::new(cam_x, cam_y, cam_z);
 
-        // View matrix
-        let view_matrix =
-            glam::Mat4::look_at_rh(camera_pos, target, glam::Vec3::new(0.0, 1.0, 0.0));
+    //     // View matrix
+    //     let view_matrix =
+    //         glam::Mat4::look_at_rh(camera_pos, target, glam::Vec3::new(0.0, 0.0, 1.0));
 
-        // Projection matrix
-        let aspect_ratio = self.config.width as f32 / self.config.height as f32;
-        let projection_matrix = glam::Mat4::perspective_rh(
-            self.config.camera_fov.to_radians(),
-            aspect_ratio,
-            DEFAULT_CAMERA_NEAR,
-            DEFAULT_CAMERA_FAR,
-        );
+    //     // Projection matrix
+    //     let aspect_ratio = self.config.width as f32 / self.config.height as f32;
+    //     let projection_matrix = glam::Mat4::perspective_rh(
+    //         self.config.aspect_ratio.to_radians(),
+    //         aspect_ratio,
+    //         DEFAULT_CAMERA_NEAR,
+    //         DEFAULT_CAMERA_FAR,
+    //     );
 
-        // Return MVP matrix
-        projection_matrix * view_matrix
-    }
+    //     // Return MVP matrix
+    //     projection_matrix * view_matrix
+    // }
 
     /// Encodes the pixel buffer as a PNG image
     fn encode_png(&self, pixels: &[Rgba]) -> Result<Vec<u8>, Error> {
@@ -454,13 +483,58 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_thumbnail() {
+    fn test_generate_thumbnail_surface_only() {
         let path = PathBuf::from("../threemf2/tests/data/mesh-composedpart.3mf");
         let reader = File::open(path).unwrap();
 
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
-        let generator = ThumbnailGenerator::default();
+        let config = ThumbnailConfig::default()
+            .with_wireframe(false)
+            .with_surface(true);
+        let generator = ThumbnailGenerator::new(config);
+        let thumbnail = generator.generate(&package.root).unwrap();
+
+        // Decode the generated PNG thumbnail to raw RGB data
+        let generated_image =
+            image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
+                .expect("Failed to decode generated PNG");
+
+        generated_image
+            .save("tests/data/golden_files/components-object_new.png")
+            .unwrap();
+        let generated_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &generated_image.to_rgb8(),
+        );
+
+        let ref_image = image::open("tests/data/golden_files/components-object.png").unwrap();
+        let ref_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &ref_image.to_rgb8(),
+        );
+
+        let flip_result = nv_flip::flip(ref_image, generated_image, 0.01);
+        let pool = nv_flip::FlipPool::from_image(&flip_result);
+        if let Some(Ordering::Greater) = pool.mean().partial_cmp(&0.01) {
+            println!("Mean error {}", pool.mean());
+            panic!("Something is wrong with thumbnail")
+        }
+    }
+
+    #[test]
+    fn test_generate_thumbnail_wireframe_only() {
+        let path = PathBuf::from("../threemf2/tests/data/mesh-composedpart.3mf");
+        let reader = File::open(path).unwrap();
+
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
+        let config = ThumbnailConfig::default()
+            .with_wireframe(true)
+            .with_surface(false);
+        let generator = ThumbnailGenerator::new(config);
         let thumbnail = generator.generate(&package.root).unwrap();
 
         // Decode the generated PNG thumbnail to raw RGB data
@@ -469,7 +543,7 @@ mod tests {
                 .expect("Failed to decode generated PNG");
 
         // generated_image
-        //     .save("tests/data/golden_files/components-object_new.png")
+        //     .save("tests/data/golden_files/components-object_new_wireframe_only.png")
         //     .unwrap();
         let generated_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
@@ -477,7 +551,8 @@ mod tests {
             &generated_image.to_rgb8(),
         );
 
-        let ref_image = image::open("tests/data/golden_files/components-object.png").unwrap();
+        let ref_image =
+            image::open("tests/data/golden_files/components-object_wireframe_only.png").unwrap();
         let ref_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,

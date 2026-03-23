@@ -295,79 +295,77 @@ pub trait Pipeline<'r>: Sized {
             AaMode::Msaa { level } => level.clamp(0, 6) as usize,
         };
 
-        #[cfg(not(feature = "par"))]
         render_seq(self, fetch_vertex, target_size, pixel, depth, msaa_level);
-        #[cfg(feature = "par")]
-        render_par(self, fetch_vertex, target_size, pixel, depth, msaa_level);
+        //ToDo: Explore parallel rendering
+        // render_par(self, fetch_vertex, target_size, pixel, depth, msaa_level);
     }
 }
 
-#[cfg(feature = "par")]
-fn render_par<'r, Pipe, S, P, D>(
-    pipeline: &Pipe,
-    fetch_vertex: S,
-    tgt_size: [usize; 2],
-    pixel: &mut P,
-    depth: &mut D,
-    msaa_level: usize,
-) where
-    Pipe: Pipeline<'r> + Send + Sync,
-    S: Iterator<Item = ([f32; 4], Pipe::VertexData)>,
-    P: Target<Texel = Pipe::Pixel> + Send + Sync,
-    D: Target<Texel = f32> + Send + Sync,
-{
-    use alloc::vec::Vec;
-    use core::sync::atomic::{AtomicUsize, Ordering};
-    use std::thread;
+// ToDo: Explore parallel rendering
+// fn render_par<'r, Pipe, S, P, D>(
+//     pipeline: &Pipe,
+//     fetch_vertex: S,
+//     tgt_size: [usize; 2],
+//     pixel: &mut P,
+//     depth: &mut D,
+//     msaa_level: usize,
+// ) where
+//     Pipe: Pipeline<'r> + Send + Sync,
+//     S: Iterator<Item = ([f32; 4], Pipe::VertexData)>,
+//     P: Target<Texel = Pipe::Pixel> + Send + Sync,
+//     D: Target<Texel = f32> + Send + Sync,
+// {
+//     use alloc::vec::Vec;
+//     use core::sync::atomic::{AtomicUsize, Ordering};
+//     use std::thread;
 
-    // TODO: Don't pull all vertices at once
-    let vertices = fetch_vertex.collect::<Vec<_>>();
-    let threads = std::thread::available_parallelism()
-        .map(|cpu| cpu.into())
-        .unwrap_or(1usize);
-    let row = AtomicUsize::new(0);
+//     // TODO: Don't pull all vertices at once
+//     let vertices = fetch_vertex.collect::<Vec<_>>();
+//     let threads = std::thread::available_parallelism()
+//         .map(|cpu| cpu.into())
+//         .unwrap_or(1usize);
+//     let row = AtomicUsize::new(0);
 
-    const FRAGMENTS_PER_GROUP: usize = 20_000; // Magic number, maybe make this configurable?
-    let group_rows = FRAGMENTS_PER_GROUP * (1 << msaa_level) / tgt_size[0].max(1);
-    let needed_threads = (tgt_size[1] / group_rows).min(threads);
+//     const FRAGMENTS_PER_GROUP: usize = 20_000; // Magic number, maybe make this configurable?
+//     let group_rows = FRAGMENTS_PER_GROUP * (1 << msaa_level) / tgt_size[0].max(1);
+//     let needed_threads = (tgt_size[1] / group_rows).min(threads);
 
-    let vertices = &vertices;
-    let pixel = &*pixel;
-    let depth = &*depth;
+//     let vertices = &vertices;
+//     let pixel = &*pixel;
+//     let depth = &*depth;
 
-    thread::scope(|s| {
-        for _ in 0..needed_threads {
-            // TODO: Respawning them each time is dumb
-            s.spawn(|| {
-                loop {
-                    let row_start = row.fetch_add(group_rows, Ordering::Relaxed);
-                    let row_end = if row_start >= tgt_size[1] {
-                        break;
-                    } else {
-                        (row_start + group_rows).min(tgt_size[1])
-                    };
+//     thread::scope(|s| {
+//         for _ in 0..needed_threads {
+//             // TODO: Respawning them each time is dumb
+//             s.spawn(|| {
+//                 loop {
+//                     let row_start = row.fetch_add(group_rows, Ordering::Relaxed);
+//                     let row_end = if row_start >= tgt_size[1] {
+//                         break;
+//                     } else {
+//                         (row_start + group_rows).min(tgt_size[1])
+//                     };
 
-                    let tgt_min = [0, row_start];
-                    let tgt_max = [tgt_size[0], row_end];
-                    // Safety: we have exclusive access to our specific regions of `pixel` and `depth`
-                    unsafe {
-                        render_inner(
-                            pipeline,
-                            vertices.iter().cloned(),
-                            (tgt_min, tgt_max),
-                            tgt_size,
-                            pixel,
-                            depth,
-                            msaa_level,
-                        )
-                    }
-                }
-            });
-        }
-    });
-}
+//                     let tgt_min = [0, row_start];
+//                     let tgt_max = [tgt_size[0], row_end];
+//                     // Safety: we have exclusive access to our specific regions of `pixel` and `depth`
+//                     unsafe {
+//                         render_inner(
+//                             pipeline,
+//                             vertices.iter().cloned(),
+//                             (tgt_min, tgt_max),
+//                             tgt_size,
+//                             pixel,
+//                             depth,
+//                             msaa_level,
+//                         )
+//                     }
+//                 }
+//             });
+//         }
+//     });
+// }
 
-#[cfg(not(feature = "par"))]
 fn render_seq<'r, Pipe, S, P, D>(
     pipeline: &Pipe,
     fetch_vertex: S,
