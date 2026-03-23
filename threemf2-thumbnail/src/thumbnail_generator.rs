@@ -7,11 +7,10 @@ use threemf2::io::Error;
 use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
 use crate::bbox::BoundingBox;
-use crate::mesh_pipeline::ColoredMeshPipeline;
+use crate::euc::buffer::Buffer2d;
+use crate::euc::pipeline::Pipeline;
+use crate::mesh_pipeline::{ColoredMesh, InputVertexData, Rgba};
 
-use euc::Rasterizer;
-use euc::buffer::Buffer2d;
-use euc::rasterizer::{BackfaceCullingDisabled, Triangles};
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
 
@@ -142,14 +141,8 @@ impl ThumbnailGenerator {
         // Create render buffers
         let width = self.config.width as usize;
         let height = self.config.height as usize;
-        let mut color_buffer = Buffer2d::new([width, height], self.config.background_color);
-        let mut depth_buffer = Buffer2d::new([width, height], 1.0f32);
-
-        // Create rendering pipeline
-        let pipeline = ColoredMeshPipeline {
-            mvp_matrix: camera_matrix,
-            mesh_color: self.config.mesh_color,
-        };
+        let mut color_buffer = Buffer2d::fill([width, height], Rgba(self.config.background_color));
+        let mut depth_buffer = Buffer2d::fill([width, height], 1.0);
 
         // Collect all vertices and indices from all meshes
         let mut all_vertices: Vec<[f32; 3]> = Vec::new();
@@ -189,23 +182,27 @@ impl ThumbnailGenerator {
 
         // euc expects vertices in a flat array where each group of 3 is a triangle
         // We need to expand our indexed triangles into a flat vertex array
-        let mut triangle_vertices: Vec<[f32; 3]> = Vec::with_capacity(all_indices.len() * 3);
+        let mut triangle_vertices: Vec<InputVertexData> = Vec::with_capacity(all_indices.len() * 3);
         for triangle_indices in &all_indices {
-            triangle_vertices.push(vertices[triangle_indices[0]]);
-            triangle_vertices.push(vertices[triangle_indices[1]]);
-            triangle_vertices.push(vertices[triangle_indices[2]]);
+            triangle_vertices.push(InputVertexData {
+                pos: vertices[triangle_indices[0]],
+            });
+            triangle_vertices.push(InputVertexData {
+                pos: vertices[triangle_indices[1]],
+            });
+            triangle_vertices.push(InputVertexData {
+                pos: vertices[triangle_indices[2]],
+            });
         }
 
-        // Use the Triangles rasterizer to draw
-        Triangles::<_, BackfaceCullingDisabled>::draw(
-            &pipeline,
-            &triangle_vertices,
-            &mut color_buffer,
-            Some(&mut depth_buffer),
-        );
+        ColoredMesh {
+            mesh_color: Rgba(self.config.mesh_color),
+            mvp_matrix: camera_matrix,
+        }
+        .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
 
         // Encode as PNG
-        let png_data = self.encode_png(color_buffer.as_ref())?;
+        let png_data = self.encode_png(color_buffer.raw())?;
 
         Ok(ThumbnailHandle {
             data: png_data,
@@ -365,12 +362,12 @@ impl ThumbnailGenerator {
     }
 
     /// Encodes the pixel buffer as a PNG image
-    fn encode_png(&self, pixels: &[[u8; 4]]) -> Result<Vec<u8>, Error> {
+    fn encode_png(&self, pixels: &[Rgba]) -> Result<Vec<u8>, Error> {
         let mut output = Vec::new();
         let encoder = PngEncoder::new(&mut output);
 
         // Flatten the pixel array
-        let flattened: Vec<u8> = pixels.iter().flat_map(|p| p.iter().copied()).collect();
+        let flattened: Vec<u8> = pixels.iter().flat_map(|p| p.0.iter().copied()).collect();
 
         encoder
             .write_image(

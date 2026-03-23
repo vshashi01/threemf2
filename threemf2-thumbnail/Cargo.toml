@@ -15,9 +15,9 @@ readme.workspace = true
 
 [dependencies]
 threemf2 = { path = "../threemf2", features = ["io-write"] }
-euc = { version = "0.5.3" }
 glam = { version = "0.32.1" }
 image = { version = "0.25", default-features = false, features = ["png"] }
+clipline = { version = "0.2.0" }
 
 
 [dev-dependencies]
