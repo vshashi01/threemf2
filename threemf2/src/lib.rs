@@ -40,6 +40,3 @@ pub mod threemf_namespaces;
     feature = "io-lazy-read"
 ))]
 pub mod io;
-
-#[cfg(all(feature = "io-write", feature = "thumbnail-generation"))]
-pub mod thumbnail;

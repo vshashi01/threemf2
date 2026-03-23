@@ -1,0 +1,25 @@
+[package]
+name = "threemf2-thumbnail"
+version = "0.1.0"
+rust-version = "1.89"
+edition = "2024"
+license = "MIT or Apache-2.0"
+
+description = "Thumbnail generation for 3MF File format as an add-on to threemf2 library"
+keywords = ["3MF", "CAD", "slicer", "triangle", "mesh"]
+categories = ["encoding", "rendering::data-formats"]
+
+homepage = "https://github.com/vshashi01/threemf2"
+repository = "https://github.com/vshashi01/threemf2"
+readme.workspace = true
+
+[dependencies]
+threemf2 = { path = "../threemf2", features = ["io-write"] }
+euc = { version = "0.5.3" }
+glam = { version = "0.32.1" }
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+
+[dev-dependencies]
+pretty_assertions = { version = "1.4.1" }
+nv-flip = { version = "0.1.2" }

@@ -1,10 +1,11 @@
-use crate::core::mesh::Mesh;
-use crate::core::model::Model;
-use crate::core::resources::Resources;
-use crate::core::transform::Transform;
-use crate::core::types::ResourceId;
-use crate::io::Error;
-use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
+use threemf2::core::mesh::Mesh;
+use threemf2::core::model::Model;
+use threemf2::core::resources::Resources;
+use threemf2::core::transform::Transform;
+use threemf2::core::types::ResourceId;
+use threemf2::io::Error;
+use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
+
 use crate::thumbnail::mesh_pipeline::ColoredMeshPipeline;
 
 use euc::Rasterizer;
@@ -12,9 +13,9 @@ use euc::buffer::Buffer2d;
 use euc::rasterizer::{BackfaceCullingDisabled, Triangles};
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
-use vek_old::mat::repr_c::column_major::mat4::Mat4;
-use vek_old::vec::repr_c::vec3::Vec3;
-use vek_old::vec::repr_c::vec4::Vec4;
+// use vek_old::mat::repr_c::column_major::mat4::Mat4;
+// use vek_old::vec::repr_c::vec3::Vec3;
+// use vek_old::vec::repr_c::vec4::Vec4;
 
 const DEFAULT_WIDTH: u32 = 256;
 const DEFAULT_HEIGHT: u32 = 256;
@@ -161,13 +162,20 @@ impl ThumbnailGenerator {
             all_vertices.reserve_exact(mesh.vertices.vertex.len());
             // Add vertices
             for vertex in &mesh.vertices.vertex {
-                let pos = Vec4::new(
+                // let pos = Vec4::new(
+                //     vertex.x.value() as f32,
+                //     vertex.y.value() as f32,
+                //     vertex.z.value() as f32,
+                //     1.0,
+                // );
+
+                let pos = glam::Vec3::new(
                     vertex.x.value() as f32,
                     vertex.y.value() as f32,
                     vertex.z.value() as f32,
-                    1.0,
                 );
-                let transformed = transform * pos;
+
+                let transformed = transform.transform_point3(pos);
                 all_vertices.push([transformed.x, transformed.y, transformed.z]);
             }
 
@@ -215,7 +223,7 @@ impl ThumbnailGenerator {
     }
 
     /// Collects all meshes from the model, applying transforms
-    fn collect_meshes<'b>(&self, model: &'b Model) -> Result<Vec<(&'b Mesh, Mat4<f32>)>, Error> {
+    fn collect_meshes<'b>(&self, model: &'b Model) -> Result<Vec<(&'b Mesh, glam::Mat4)>, Error> {
         let mut meshes = Vec::new();
 
         // Process each build item
@@ -225,7 +233,7 @@ impl ThumbnailGenerator {
                 .transform
                 .as_ref()
                 .map(|t| self.transform_to_mat4(t))
-                .unwrap_or_else(Mat4::identity);
+                .unwrap_or_else(|| glam::Mat4::IDENTITY);
 
             self.collect_object_meshes(&model.resources, object_id, base_transform, &mut meshes)?;
         }
@@ -238,8 +246,8 @@ impl ThumbnailGenerator {
         &self,
         resources: &'b Resources,
         object_id: ResourceId,
-        transform: Mat4<f32>,
-        meshes: &mut Vec<(&'b Mesh, Mat4<f32>)>,
+        transform: glam::Mat4,
+        meshes: &mut Vec<(&'b Mesh, glam::Mat4)>,
     ) -> Result<(), Error> {
         let object = resources
             .object
@@ -261,7 +269,7 @@ impl ThumbnailGenerator {
                     .transform
                     .as_ref()
                     .map(|t| self.transform_to_mat4(t))
-                    .unwrap_or_else(Mat4::identity);
+                    .unwrap_or_else(|| glam::Mat4::IDENTITY);
                 let combined_transform = transform * component_transform;
 
                 self.collect_object_meshes(
@@ -277,50 +285,87 @@ impl ThumbnailGenerator {
     }
 
     /// Converts a 3MF Transform to a Mat4
-    fn transform_to_mat4(&self, transform: &Transform) -> Mat4<f32> {
-        let m = &transform.0;
-        Mat4::new(
-            m[0] as f32,
-            m[1] as f32,
-            m[2] as f32,
-            0.0,
-            m[3] as f32,
-            m[4] as f32,
-            m[5] as f32,
-            0.0,
-            m[6] as f32,
-            m[7] as f32,
-            m[8] as f32,
-            0.0,
-            m[9] as f32,
-            m[10] as f32,
-            m[11] as f32,
-            1.0,
-        )
+    fn transform_to_mat4(&self, transform: &Transform) -> glam::Mat4 {
+        glam::Mat4::from_cols_array_2d(&[
+            [
+                transform.0[0] as f32,
+                transform.0[1] as f32,
+                transform.0[2] as f32,
+                0.0,
+            ],
+            [
+                transform.0[3] as f32,
+                transform.0[4] as f32,
+                transform.0[5] as f32,
+                0.0,
+            ],
+            [
+                transform.0[6] as f32,
+                transform.0[7] as f32,
+                transform.0[8] as f32,
+                0.0,
+            ],
+            [
+                transform.0[9] as f32,
+                transform.0[10] as f32,
+                transform.0[11] as f32,
+                1.0,
+            ],
+        ])
+
+        // let m =&transform.0;
+        // Mat4::new(
+        //     m[0] as f32,
+        //     m[1] as f32,
+        //     m[2] as f32,
+        //     0.0,
+        //     m[3] as f32,
+        //     m[4] as f32,
+        //     m[5] as f32,
+        //     0.0,
+        //     m[6] as f32,
+        //     m[7] as f32,
+        //     m[8] as f32,
+        //     0.0,
+        //     m[9] as f32,
+        //     m[10] as f32,
+        //     m[11] as f32,
+        //     1.0,
+        // )
     }
 
     /// Calculates the bounding box of all vertices
-    fn calculate_bounding_box(&self, meshes: &[(&Mesh, Mat4<f32>)]) -> (Vec3<f32>, Vec3<f32>) {
-        let mut min = Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
-        let mut max = Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
+    fn calculate_bounding_box(&self, meshes: &[(&Mesh, glam::Mat4)]) -> (glam::Vec3, glam::Vec3) {
+        let mut min = glam::Vec3::splat(f32::INFINITY);
+        let mut max = glam::Vec3::splat(f32::NEG_INFINITY);
 
         for (mesh, transform) in meshes {
             for vertex in &mesh.vertices.vertex {
-                let pos = Vec4::new(
+                let pos = glam::Vec3::new(
                     vertex.x.value() as f32,
                     vertex.y.value() as f32,
                     vertex.z.value() as f32,
-                    1.0,
                 );
-                let transformed = *transform * pos;
 
-                min.x = min.x.min(transformed.x);
-                min.y = min.y.min(transformed.y);
-                min.z = min.z.min(transformed.z);
+                let transformed = transform.transform_point3(pos);
 
-                max.x = max.x.max(transformed.x);
-                max.y = max.y.max(transformed.y);
-                max.z = max.z.max(transformed.z);
+                min = min.min(transformed);
+                max = max.max(transformed);
+                // let pos = Vec4::new(
+                //     vertex.x.value() as f32,
+                //     vertex.y.value() as f32,
+                //     vertex.z.value() as f32,
+                //     1.0,
+                // );
+                // let transformed = *transform * pos;
+
+                // min.x = min.x.min(transformed.x);
+                // min.y = min.y.min(transformed.y);
+                // min.z = min.z.min(transformed.z);
+
+                // max.x = max.x.max(transformed.x);
+                // max.y = max.y.max(transformed.y);
+                // max.z = max.z.max(transformed.z);
             }
         }
 
@@ -328,23 +373,23 @@ impl ThumbnailGenerator {
     }
 
     /// Gets the center and size from a bounding box
-    fn get_bounding_box_size(&self, bbox: &(Vec3<f32>, Vec3<f32>)) -> (Vec3<f32>, Vec3<f32>) {
+    fn get_bounding_box_size(&self, bbox: &(glam::Vec3, glam::Vec3)) -> (glam::Vec3, glam::Vec3) {
         let min = bbox.0;
         let max = bbox.1;
 
-        let center = Vec3::new(
+        let center = glam::Vec3::new(
             (min.x + max.x) / 2.0,
             (min.y + max.y) / 2.0,
             (min.z + max.z) / 2.0,
         );
 
-        let size = Vec3::new(max.x - min.x, max.y - min.y, max.z - min.z);
+        let size = glam::Vec3::new(max.x - min.x, max.y - min.y, max.z - min.z);
 
         (center, size)
     }
 
     /// Sets up the camera matrix with auto-fit to the model
-    fn setup_camera_matrix(&self, target: Vec3<f32>, size: Vec3<f32>) -> Mat4<f32> {
+    fn setup_camera_matrix(&self, target: glam::Vec3, size: glam::Vec3) -> glam::Mat4 {
         let max_size = size.x.max(size.y).max(size.z);
         let padding_factor = 1.0 + self.config.padding;
         let distance =
@@ -358,14 +403,22 @@ impl ThumbnailGenerator {
         let cam_x = target.x + distance * azimuth.cos() * elevation.cos();
         let cam_y = target.y + distance * elevation.sin();
         let cam_z = target.z + distance * azimuth.sin() * elevation.cos();
-        let camera_pos = Vec3::new(cam_x, cam_y, cam_z);
+        let camera_pos = glam::Vec3::new(cam_x, cam_y, cam_z);
 
         // View matrix
-        let view_matrix = Mat4::look_at_rh(camera_pos, target, Vec3::new(0.0, 1.0, 0.0));
+        let view_matrix =
+            glam::Mat4::look_at_rh(camera_pos, target, glam::Vec3::new(0.0, 1.0, 0.0));
 
         // Projection matrix
         let aspect_ratio = self.config.width as f32 / self.config.height as f32;
-        let projection_matrix = Mat4::perspective_rh_zo(
+        // let projection_matrix = glam::Mat4::perspective_rh_zo(
+        //     self.config.camera_fov.to_radians(),
+        //     aspect_ratio,
+        //     DEFAULT_CAMERA_NEAR,
+        //     DEFAULT_CAMERA_FAR,
+        // );
+
+        let projection_matrix = glam::Mat4::perspective_rh(
             self.config.camera_fov.to_radians(),
             aspect_ratio,
             DEFAULT_CAMERA_NEAR,
@@ -408,9 +461,9 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::core::build::Build;
-    use crate::core::resources::Resources;
-    use crate::io::ThreemfPackage;
+    use threemf2::core::build::Build;
+    use threemf2::core::resources::Resources;
+    use threemf2::io::ThreemfPackage;
 
     use std::cmp::Ordering;
     use std::fs::File;
@@ -439,7 +492,7 @@ mod tests {
 
     #[test]
     fn test_collect_meshes() {
-        let path = PathBuf::from("./tests/data/mesh-composedpart.3mf");
+        let path = PathBuf::from("../threemf2/tests/data/mesh-composedpart.3mf");
         let reader = File::open(path).unwrap();
 
         let package =
@@ -453,7 +506,7 @@ mod tests {
 
     #[test]
     fn test_calculate_bounding_box() {
-        let path = PathBuf::from("./tests/data/mesh-composedpart.3mf");
+        let path = PathBuf::from("../threemf2/tests/data/mesh-composedpart.3mf");
         let reader = File::open(path).unwrap();
 
         let package =
@@ -464,14 +517,13 @@ mod tests {
 
         let (center, size) = generator.get_bounding_box_size(&bbox);
 
-        // Cube from -1 to 1 in all axes, so center should be at origin
-        assert_eq!(Vec3::new(0.0, 0.0, 0.0), center);
-        assert_eq!(Vec3::new(88.2515, 69.67, 53.5856), size);
+        assert_eq!(glam::Vec3::new(125.000046, 133.29489, 36.7928), center);
+        assert_eq!(glam::Vec3::new(88.251495, 69.66521, 53.5856), size);
     }
 
     #[test]
     fn test_generate_thumbnail() {
-        let path = PathBuf::from("./tests/data/mesh-composedpart.3mf");
+        let path = PathBuf::from("../threemf2/tests/data/mesh-composedpart.3mf");
         let reader = File::open(path).unwrap();
 
         let package =
@@ -485,7 +537,7 @@ mod tests {
                 .expect("Failed to decode generated PNG");
 
         // generated_image
-        //     .save("tests/data/golden_files/thumbnails/components-object_new.png")
+        //     .save("tests/data/golden_files/components-object_new.png")
         //     .unwrap();
         let generated_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
@@ -493,8 +545,7 @@ mod tests {
             &generated_image.to_rgb8(),
         );
 
-        let ref_image =
-            image::open("tests/data/golden_files/thumbnails/components-object.png").unwrap();
+        let ref_image = image::open("tests/data/golden_files/components-object.png").unwrap();
         let ref_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,

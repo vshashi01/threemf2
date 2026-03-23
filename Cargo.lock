@@ -570,6 +570,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.32.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f70749695b063ecbf6b62949ccccde2e733ec3ecbbd71d467dca4e5c6c97cca0"
+
+[[package]]
 name = "half"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -870,7 +876,7 @@ checksum = "b661d1dc73fcc9acdf0634543f73bfd5ebf6c634227b8c249106dc5dbaa3ad04"
 dependencies = [
  "anyhow",
  "byteorder",
- "glam",
+ "glam 0.31.1",
  "lexical-core",
  "quick-xml",
  "rayon",
@@ -1521,18 +1527,14 @@ checksum = "3bf63baf9f5039dadc247375c29eb13706706cfde997d0330d05aa63a77d8820"
 name = "threemf2"
 version = "0.2.0"
 dependencies = [
- "euc",
- "image",
  "instant-xml",
  "lexical-core",
- "nv-flip",
  "once_cell",
  "pretty_assertions",
  "serde",
  "serde-roxmltree",
  "serde_json",
  "thiserror",
- "vek",
  "zip 8.2.0",
 ]
 
@@ -1560,6 +1562,18 @@ dependencies = [
  "serde",
  "serde-roxmltree",
  "serde_json",
+ "threemf2",
+]
+
+[[package]]
+name = "threemf2-thumbnail"
+version = "0.1.0"
+dependencies = [
+ "euc",
+ "glam 0.32.1",
+ "image",
+ "nv-flip",
+ "pretty_assertions",
  "threemf2",
 ]
 
