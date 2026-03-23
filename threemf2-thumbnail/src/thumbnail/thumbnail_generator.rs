@@ -6,6 +6,7 @@ use threemf2::core::types::ResourceId;
 use threemf2::io::Error;
 use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
+use crate::bbox::BoundingBox;
 use crate::thumbnail::mesh_pipeline::ColoredMeshPipeline;
 
 use euc::Rasterizer;
@@ -13,9 +14,6 @@ use euc::buffer::Buffer2d;
 use euc::rasterizer::{BackfaceCullingDisabled, Triangles};
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
-// use vek_old::mat::repr_c::column_major::mat4::Mat4;
-// use vek_old::vec::repr_c::vec3::Vec3;
-// use vek_old::vec::repr_c::vec4::Vec4;
 
 const DEFAULT_WIDTH: u32 = 256;
 const DEFAULT_HEIGHT: u32 = 256;
@@ -162,13 +160,6 @@ impl ThumbnailGenerator {
             all_vertices.reserve_exact(mesh.vertices.vertex.len());
             // Add vertices
             for vertex in &mesh.vertices.vertex {
-                // let pos = Vec4::new(
-                //     vertex.x.value() as f32,
-                //     vertex.y.value() as f32,
-                //     vertex.z.value() as f32,
-                //     1.0,
-                // );
-
                 let pos = glam::Vec3::new(
                     vertex.x.value() as f32,
                     vertex.y.value() as f32,
@@ -312,32 +303,11 @@ impl ThumbnailGenerator {
                 1.0,
             ],
         ])
-
-        // let m =&transform.0;
-        // Mat4::new(
-        //     m[0] as f32,
-        //     m[1] as f32,
-        //     m[2] as f32,
-        //     0.0,
-        //     m[3] as f32,
-        //     m[4] as f32,
-        //     m[5] as f32,
-        //     0.0,
-        //     m[6] as f32,
-        //     m[7] as f32,
-        //     m[8] as f32,
-        //     0.0,
-        //     m[9] as f32,
-        //     m[10] as f32,
-        //     m[11] as f32,
-        //     1.0,
-        // )
     }
 
     /// Calculates the bounding box of all vertices
-    fn calculate_bounding_box(&self, meshes: &[(&Mesh, glam::Mat4)]) -> (glam::Vec3, glam::Vec3) {
-        let mut min = glam::Vec3::splat(f32::INFINITY);
-        let mut max = glam::Vec3::splat(f32::NEG_INFINITY);
+    fn calculate_bounding_box(&self, meshes: &[(&Mesh, glam::Mat4)]) -> BoundingBox {
+        let mut total_bbox = BoundingBox::default();
 
         for (mesh, transform) in meshes {
             for vertex in &mesh.vertices.vertex {
@@ -348,44 +318,16 @@ impl ThumbnailGenerator {
                 );
 
                 let transformed = transform.transform_point3(pos);
-
-                min = min.min(transformed);
-                max = max.max(transformed);
-                // let pos = Vec4::new(
-                //     vertex.x.value() as f32,
-                //     vertex.y.value() as f32,
-                //     vertex.z.value() as f32,
-                //     1.0,
-                // );
-                // let transformed = *transform * pos;
-
-                // min.x = min.x.min(transformed.x);
-                // min.y = min.y.min(transformed.y);
-                // min.z = min.z.min(transformed.z);
-
-                // max.x = max.x.max(transformed.x);
-                // max.y = max.y.max(transformed.y);
-                // max.z = max.z.max(transformed.z);
+                total_bbox.expand_to_include(&transformed);
             }
         }
 
-        (min, max)
+        total_bbox
     }
 
     /// Gets the center and size from a bounding box
-    fn get_bounding_box_size(&self, bbox: &(glam::Vec3, glam::Vec3)) -> (glam::Vec3, glam::Vec3) {
-        let min = bbox.0;
-        let max = bbox.1;
-
-        let center = glam::Vec3::new(
-            (min.x + max.x) / 2.0,
-            (min.y + max.y) / 2.0,
-            (min.z + max.z) / 2.0,
-        );
-
-        let size = glam::Vec3::new(max.x - min.x, max.y - min.y, max.z - min.z);
-
-        (center, size)
+    fn get_bounding_box_size(&self, bbox: &BoundingBox) -> (glam::Vec3, glam::Vec3) {
+        (bbox.center(), bbox.delta())
     }
 
     /// Sets up the camera matrix with auto-fit to the model
@@ -411,13 +353,6 @@ impl ThumbnailGenerator {
 
         // Projection matrix
         let aspect_ratio = self.config.width as f32 / self.config.height as f32;
-        // let projection_matrix = glam::Mat4::perspective_rh_zo(
-        //     self.config.camera_fov.to_radians(),
-        //     aspect_ratio,
-        //     DEFAULT_CAMERA_NEAR,
-        //     DEFAULT_CAMERA_FAR,
-        // );
-
         let projection_matrix = glam::Mat4::perspective_rh(
             self.config.camera_fov.to_radians(),
             aspect_ratio,
