@@ -63,7 +63,7 @@ impl OrthographicCamera {
         proj * view
     }
 
-    fn position(&self) -> Vec3 {
+    pub fn position(&self) -> Vec3 {
         let direction = Vec3::new(
             self.yaw.cos() * self.pitch.cos(),
             self.yaw.sin() * self.pitch.cos(),

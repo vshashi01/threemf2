@@ -10,7 +10,7 @@ use crate::bbox::BoundingBox;
 use crate::camera::OrthographicCamera;
 use crate::euc::buffer::Buffer2d;
 use crate::euc::pipeline::Pipeline;
-use crate::mesh_pipeline::{ColoredMesh, InputVertexData, Rgba, WireframeMesh};
+use crate::mesh_pipeline::{ColoredMesh, Rgba, VertexIn, WireframeMesh};
 
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
@@ -203,23 +203,30 @@ impl ThumbnailGenerator {
 
         // euc expects vertices in a flat array where each group of 3 is a triangle
         // We need to expand our indexed triangles into a flat vertex array
-        let mut triangle_vertices: Vec<InputVertexData> = Vec::with_capacity(all_indices.len() * 3);
+        let mut triangle_vertices: Vec<VertexIn> = Vec::with_capacity(all_indices.len() * 3);
         for triangle_indices in &all_indices {
-            triangle_vertices.push(InputVertexData {
-                pos: vertices[triangle_indices[0]],
+            let p0 = glam::Vec3::from_array(vertices[triangle_indices[0]]);
+            let p1 = glam::Vec3::from_array(vertices[triangle_indices[1]]);
+            let p2 = glam::Vec3::from_array(vertices[triangle_indices[2]]);
+
+            //all threemf Mesh is expected to have CCW winding order (Right hand rule)
+            let normal = (p1 - p0).cross(p2 - p0).normalize();
+
+            triangle_vertices.push(VertexIn {
+                pos: p0,
+                normal: normal,
             });
-            triangle_vertices.push(InputVertexData {
-                pos: vertices[triangle_indices[1]],
-            });
-            triangle_vertices.push(InputVertexData {
-                pos: vertices[triangle_indices[2]],
-            });
+            triangle_vertices.push(VertexIn { pos: p1, normal });
+            triangle_vertices.push(VertexIn { pos: p2, normal });
         }
 
         if self.config.enable_surface {
             ColoredMesh {
                 mesh_color: Rgba(self.config.mesh_color),
-                mvp_matrix: camera_matrix,
+                model_matrix: camera_matrix,
+                light_matrix: glam::Mat4::IDENTITY,
+                camera_pos: camera.position(),
+                light_pos: camera.position(),
             }
             .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
         }
@@ -469,9 +476,9 @@ mod tests {
             image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
                 .expect("Failed to decode generated PNG");
 
-        // generated_image
-        //     .save("tests/data/golden_files/components-object_new.png")
-        //     .unwrap();
+        generated_image
+            .save("tests/data/golden_files/components-object_new.png")
+            .unwrap();
         let generated_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,
