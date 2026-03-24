@@ -24,13 +24,13 @@ impl OrthographicCamera {
             view_height: 2.0,
             near: -1000.0,
             far: 1000.0,
-            up: Vec3::NEG_Z, //to make the camera go up
+            up: Vec3::NEG_Z, //to make the camera oriented with Z axis upwards
         }
     }
 
     pub fn with_angles(mut self, yaw_deg: f32, pitch_deg: f32) -> Self {
         self.yaw = yaw_deg.to_radians();
-        self.pitch = pitch_deg.clamp(-89.0, 89.0).to_radians();
+        self.pitch = pitch_deg.clamp(-89.99, 89.99).to_radians();
         self
     }
 

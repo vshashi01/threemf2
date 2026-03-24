@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use glam::Vec3;
 
 use crate::euc::{
@@ -111,10 +113,6 @@ impl<'r> Pipeline<'r> for ColoredMesh {
     fn aa_mode(&self) -> crate::euc::pipeline::AaMode {
         AaMode::Msaa { level: 2 }
     }
-
-    fn coordinate_mode(&self) -> euc::pipeline::CoordinateMode {
-        euc::pipeline::CoordinateMode::OPENGL
-    }
 }
 
 pub struct WireframeMesh {
@@ -159,9 +157,5 @@ impl<'r> Pipeline<'r> for WireframeMesh {
 
     fn aa_mode(&self) -> crate::euc::pipeline::AaMode {
         AaMode::Msaa { level: 2 }
-    }
-
-    fn coordinate_mode(&self) -> crate::euc::pipeline::CoordinateMode {
-        euc::pipeline::CoordinateMode::OPENGL
     }
 }

@@ -491,7 +491,8 @@ mod tests {
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
         let config = ThumbnailConfig::default()
             .with_wireframe(false)
-            .with_surface(true);
+            .with_surface(true)
+            .with_camera_angles(-135.0, 30.0);
         let generator = ThumbnailGenerator::new(config);
         let thumbnail = generator.generate(&package.root).unwrap();
 
@@ -500,9 +501,9 @@ mod tests {
             image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
                 .expect("Failed to decode generated PNG");
 
-        generated_image
-            .save("tests/data/golden_files/components-object_new.png")
-            .unwrap();
+        // generated_image
+        //     .save("tests/data/golden_files/components-object_new.png")
+        //     .unwrap();
         let generated_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,
@@ -533,7 +534,8 @@ mod tests {
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
         let config = ThumbnailConfig::default()
             .with_wireframe(true)
-            .with_surface(false);
+            .with_surface(false)
+            .with_camera_angles(-135.0, 30.0);
         let generator = ThumbnailGenerator::new(config);
         let thumbnail = generator.generate(&package.root).unwrap();
 

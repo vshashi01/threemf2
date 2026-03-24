@@ -111,41 +111,6 @@ pub enum AaMode {
 }
 
 impl CoordinateMode {
-    /// OpenGL-like coordinates (right-handed, y = up, -1 to 1 z clip range).
-    pub const OPENGL: Self = Self {
-        handedness: Handedness::Right,
-        y_axis_direction: YAxisDirection::Up,
-        z_clip_range: Some(-1.0..1.0),
-    };
-
-    /// Vulkan-like coordinates (left-handed, y = down, 0 to 1 z clip range).
-    pub const VULKAN: Self = Self {
-        handedness: Handedness::Left,
-        y_axis_direction: YAxisDirection::Down,
-        z_clip_range: Some(0.0..1.0),
-    };
-
-    /// Metal-like coordinates (right-handed, y = down, 0 to 1 z clip range).
-    pub const METAL: Self = Self {
-        handedness: Handedness::Right,
-        y_axis_direction: YAxisDirection::Down,
-        z_clip_range: Some(0.0..1.0),
-    };
-
-    /// DirectX-like coordinates (left-handed, y = up, 0 to 1 z clip range).
-    pub const DIRECTX: Self = Self {
-        handedness: Handedness::Left,
-        y_axis_direction: YAxisDirection::Up,
-        z_clip_range: Some(0.0..1.0),
-    };
-
-    pub fn without_z_clip(self) -> Self {
-        Self {
-            z_clip_range: None,
-            ..self
-        }
-    }
-
     pub(crate) fn passes_z_clip(&self, z: f32) -> bool {
         // Don't use `.contains(&z)`, it isn't inclusive
         self.z_clip_range
@@ -156,7 +121,12 @@ impl CoordinateMode {
 
 impl Default for CoordinateMode {
     fn default() -> Self {
-        Self::VULKAN
+        // Bottom Left is 0,0
+        Self {
+            handedness: Handedness::Right,
+            y_axis_direction: YAxisDirection::Up,
+            z_clip_range: Some(-1.0..1.0),
+        }
     }
 }
 
