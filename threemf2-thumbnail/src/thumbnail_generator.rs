@@ -99,17 +99,19 @@ impl ThumbnailConfig {
         self
     }
 
-    /// Sets the camera field of view
+    /// Sets the aspect ratio of the thumbnail
     pub fn with_aspect_ratio(mut self, ratio: f32) -> Self {
         self.aspect_ratio = ratio;
         self
     }
 
+    /// Enable or disable the wireframe rendering for supported entities
     pub fn with_wireframe(mut self, enable: bool) -> Self {
         self.enable_wireframe = enable;
         self
     }
 
+    /// Enable or disable Filled rendering for supported entities
     pub fn with_surface(mut self, enable: bool) -> Self {
         self.enable_surface = enable;
         self
@@ -150,7 +152,6 @@ impl ThumbnailGenerator {
         let (center, size) = self.get_bounding_box_size(&bounding_box);
 
         // Setup camera with auto-fit
-        // let camera_matrix = self.setup_camera_matrix(center, size);
         let mut camera = OrthographicCamera::looking_at(center)
             .with_angles(self.config.yaw_angle, self.config.pitch_angle)
             .with_aspect_ratio(self.config.aspect_ratio);
@@ -356,39 +357,6 @@ impl ThumbnailGenerator {
     fn get_bounding_box_size(&self, bbox: &BoundingBox) -> (glam::Vec3, glam::Vec3) {
         (bbox.center(), bbox.delta())
     }
-
-    // fn setup_camera_matrix(&self, target: glam::Vec3, size: glam::Vec3) -> glam::Mat4 {
-    //     let max_size = size.x.max(size.y).max(size.z);
-    //     let padding_factor = 1.0 + self.config.padding;
-    //     let distance = (max_size / 1.75) * padding_factor
-    //         / (self.config.aspect_ratio.to_radians() / 2.0).tan();
-
-    //     // Calculate camera position using spherical coordinates
-    //     let azimuth = self.config.yaw_angle.to_radians();
-    //     let elevation = self.config.pitch_angle.to_radians();
-    //     let distance = distance.max(1.0);
-
-    //     let cam_x = target.x + distance * azimuth.cos() * elevation.cos();
-    //     let cam_y = target.y + distance * elevation.sin();
-    //     let cam_z = target.z + distance * azimuth.sin() * elevation.cos();
-    //     let camera_pos = glam::Vec3::new(cam_x, cam_y, cam_z);
-
-    //     // View matrix
-    //     let view_matrix =
-    //         glam::Mat4::look_at_rh(camera_pos, target, glam::Vec3::new(0.0, 0.0, 1.0));
-
-    //     // Projection matrix
-    //     let aspect_ratio = self.config.width as f32 / self.config.height as f32;
-    //     let projection_matrix = glam::Mat4::perspective_rh(
-    //         self.config.aspect_ratio.to_radians(),
-    //         aspect_ratio,
-    //         DEFAULT_CAMERA_NEAR,
-    //         DEFAULT_CAMERA_FAR,
-    //     );
-
-    //     // Return MVP matrix
-    //     projection_matrix * view_matrix
-    // }
 
     /// Encodes the pixel buffer as a PNG image
     fn encode_png(&self, pixels: &[Rgba]) -> Result<Vec<u8>, Error> {
