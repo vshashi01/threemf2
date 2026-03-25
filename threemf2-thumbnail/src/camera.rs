@@ -1,5 +1,7 @@
 use glam::{Mat4, Vec3};
 
+use crate::bbox::BoundingBox;
+
 #[derive(Debug, Clone, Copy)]
 pub struct OrthographicCamera {
     target: Vec3,
@@ -72,6 +74,62 @@ impl OrthographicCamera {
         .normalize();
         self.target - direction
     }
+
+    pub fn get_directional_light_data(
+        &self,
+        scene_bounds: &BoundingBox,
+        back_offset: f32,
+        right_offset: f32,
+    ) -> LightData {
+        let camera_position = self.position();
+
+        // Get camera direction and calculate orthogonal vectors
+        let forward = (self.target - camera_position).normalize(); // Where camera looks
+        let up = glam::Vec3::NEG_Z; // Same as camera
+        let right = forward.cross(up).normalize(); // Camera's right vector
+
+        // Light from back of camera (opposite to forward), slightly to the right
+        let back_offset = -forward * back_offset; // Behind camera (negative forward)
+        let right_offset = right * right_offset; // Slightly to the right
+        let light_pos = camera_position + back_offset + right_offset;
+
+        let light_dir = (self.target - light_pos).normalize(); // Direction from light to center
+
+        let light_view = glam::Mat4::look_at_rh(light_pos, self.target, glam::Vec3::NEG_Z);
+
+        // Use orthographic projection for the shadow map
+        // 2. Transform the scene bounding box corners to light space
+        let mut min = glam::Vec3::MAX;
+        let mut max = glam::Vec3::MIN;
+        for corner in scene_bounds.corners() {
+            let light_space = light_view.transform_point3(corner);
+            min = min.min(light_space);
+            max = max.max(light_space);
+        }
+
+        // 3. Create orthographic projection covering the bounds
+        let light_proj = glam::Mat4::orthographic_rh(
+            min.x,
+            max.x,
+            min.y,
+            max.y,
+            min.z - 10.0, // near (add margin behind the light)
+            max.z + 10.0, // far (add margin beyond the scene)
+        );
+        let light_view_proj = light_proj * light_view;
+
+        LightData {
+            light_pos,
+            light_dir,
+            light_view_proj,
+        }
+    }
+}
+
+pub struct LightData {
+    pub light_pos: glam::Vec3,
+    pub light_dir: glam::Vec3,
+    pub light_view_proj: glam::Mat4,
 }
 
 #[cfg(test)]

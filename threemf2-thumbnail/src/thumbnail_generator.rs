@@ -10,9 +10,7 @@ use crate::bbox::BoundingBox;
 use crate::camera::OrthographicCamera;
 use crate::euc::buffer::Buffer2d;
 use crate::euc::pipeline::Pipeline;
-use crate::euc::sampler::Sampler;
-use crate::euc::texture::{Empty, Texture};
-use crate::mesh_pipeline::{ColoredMesh, MeshShadow, Rgba, VertexIn, WireframeMesh};
+use crate::mesh_pipeline::{ColoredMesh, Rgba, VertexIn, WireframeMesh};
 
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
@@ -161,31 +159,7 @@ impl ThumbnailGenerator {
         camera.fit_to_bounds(size, self.config.padding);
         let camera_matrix = camera.view_projection_matrix();
 
-        // Create a view matrix from light position looking at the model center
-        let light_pos = camera.position() + glam::Vec3::new(0.0, 0.0, 25.0);
-        let light_view = glam::Mat4::look_at_rh(light_pos, center, glam::Vec3::Z);
-        // Use orthographic projection for the shadow map
-        // let light_proj = glam::Mat4::orthographic_rh();
-        // 2. Transform the scene bounding box corners to light space
-        let mut min = glam::Vec3::MAX;
-        let mut max = glam::Vec3::MIN;
-        for corner in bounding_box.corners() {
-            let light_space = light_view.transform_point3(corner);
-            min = min.min(light_space);
-            max = max.max(light_space);
-        }
-
-        // 3. Create orthographic projection covering the bounds
-        let light_proj = glam::Mat4::orthographic_rh(
-            min.x,
-            max.x, // left, right
-            min.y,
-            max.y,        // bottom, top
-            min.z - 10.0, // near (add margin behind the light)
-            max.z + 10.0, // far (add margin beyond the scene)
-        );
-        let light_matrix = light_proj * light_view;
-
+        let light_data = camera.get_directional_light_data(&bounding_box, 10.0, 0.5);
         // Create render buffers
         let width = self.config.width as usize;
         let height = self.config.height as usize;
@@ -239,30 +213,20 @@ impl ThumbnailGenerator {
             //all threemf Mesh is expected to have CCW winding order (Right hand rule)
             let normal = (p1 - p0).cross(p2 - p0).normalize();
 
-            triangle_vertices.push(VertexIn {
-                pos: p0,
-                normal: normal,
-            });
+            triangle_vertices.push(VertexIn { pos: p0, normal });
             triangle_vertices.push(VertexIn { pos: p1, normal });
             triangle_vertices.push(VertexIn { pos: p2, normal });
         }
 
         if self.config.enable_surface {
-            let mut shadow_buffer = Buffer2d::fill([256; 2], 1.0);
-
-            MeshShadow { light_matrix }.render(
-                &triangle_vertices,
-                &mut Empty::default(),
-                &mut shadow_buffer,
-            );
-
             ColoredMesh {
                 mesh_color: Rgba(self.config.mesh_color),
-                model_matrix: camera_matrix,
-                light_matrix,
-                light_pos,
+                model: glam::Mat4::IDENTITY,
+                view_proj: camera_matrix,
+                normal_matrix: glam::Mat3::IDENTITY.inverse().transpose(),
+                light_view_proj: light_data.light_view_proj,
+                light_dir: light_data.light_dir,
                 camera_pos: camera.position(),
-                shadow_buffer: (shadow_buffer).linear().clamped(),
             }
             .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
         }
@@ -503,7 +467,7 @@ mod tests {
         let config = ThumbnailConfig::default()
             .with_wireframe(false)
             .with_surface(true)
-            .with_camera_angles(-45.0, -15.0);
+            .with_camera_angles(-135.0, 30.0);
         let generator = ThumbnailGenerator::new(config);
         let thumbnail = generator.generate(&package.root).unwrap();
 
@@ -512,9 +476,9 @@ mod tests {
             image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
                 .expect("Failed to decode generated PNG");
 
-        generated_image
-            .save("tests/data/golden_files/components-object_new.png")
-            .unwrap();
+        // generated_image
+        //     .save("tests/data/golden_files/components-object_new.png")
+        //     .unwrap();
         let generated_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,
