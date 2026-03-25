@@ -293,3 +293,98 @@ impl<'r> Pipeline<'r> for MeshShadow {
     #[inline(always)]
     fn blend(&self, _old: Self::Pixel, _new: Self::Fragment) {}
 }
+
+// pub struct ColoredMesh {
+//     // Transforms
+//     pub model: Mat4,
+//     pub view_proj: Mat4,              // Projection * View
+//     pub light_view_proj: Mat4,         // LightProjection * LightView
+//     pub normal_matrix: Mat3,           // transpose(inverse(model))
+
+//     // Camera
+//     pub camera_pos: Vec3,
+
+//     // Directional light
+//     pub light_dir: Vec3,               // world space, normalized
+//     pub light_color: Vec3,
+
+//     // Shadow map
+//     pub shadow_buffer: Clamped<Linear<Buffer2d<f32>>>,
+// }
+
+// pub struct SurfaceVertexOut {
+//     pub world_pos: Vec3,
+//     pub world_normal: Vec3,
+//     pub light_ndc: Vec3,
+//     pub color: Rgba,
+// }
+
+// fn vertex(&self, v: &VertexIn) -> ([f32; 4], SurfaceVertexOut) {
+//     let local_pos = Vec4::new(v.pos[0], v.pos[1], v.pos[2], 1.0);
+
+//     // ---- Model → World
+//     let world_pos4 = self.model * local_pos;
+//     let world_pos = world_pos4.xyz();
+
+//     // ---- Normal → World
+//     let world_normal = (self.normal_matrix * Vec3::from(v.normal)).normalize();
+
+//     // ---- World → Clip (camera)
+//     let clip_pos = self.view_proj * world_pos4;
+
+//     // ---- World → Light Clip (shadows)
+//     let light_clip = self.light_view_proj * world_pos4;
+//     let light_ndc = light_clip.xyz() / light_clip.w;
+
+//     (
+//         [clip_pos.x, clip_pos.y, clip_pos.z, clip_pos.w],
+//         SurfaceVertexOut {
+//             world_pos,
+//             world_normal,
+//             light_ndc,
+//             color: Rgba([255, 255, 255, 255]),
+//         },
+//     )
+// }
+
+// fn fragment(&self, i: SurfaceVertexOut) -> Rgba {
+//     // ---- Lighting vectors (world space)
+//     let n = i.world_normal.normalize();
+//     let l = (-self.light_dir).normalize();
+//     let v = (self.camera_pos - i.world_pos).normalize();
+
+//     // ---- Phong (simple, thumbnail-friendly)
+//     let ambient = 0.15;
+
+//     let diffuse = n.dot(l).max(0.0);
+
+//     let specular = if diffuse > 0.0 {
+//         let r = (-l).reflect(n);
+//         r.dot(v).max(0.0).powf(32.0)
+//     } else {
+//         0.0
+//     };
+
+//     // ---- Shadow mapping
+//     let uv = i.light_ndc.xy() * Vec2::new(0.5, -0.5) + 0.5;
+//     let depth = i.light_ndc.z * 0.5 + 0.5;
+
+//     let shadow_depth = self.shadow_buffer.sample(uv.to_array());
+//     let bias = 0.001;
+//     let in_light = depth - bias <= shadow_depth;
+
+//     let light = ambient + if in_light {
+//         diffuse + specular
+//     } else {
+//         0.0
+//     };
+
+//     // ---- Final color
+//     let c = i.color.0;
+//     Rgba([
+//         (c[0] as f32 * light).clamp(0.0, 255.0) as u8,
+//         (c[1] as f32 * light).clamp(0.0, 255.0) as u8,
+//         (c[2] as f32 * light).clamp(0.0, 255.0) as u8,
+//         255,
+//     ])
+// }
