@@ -67,6 +67,7 @@ impl OrthographicCamera {
         proj * view
     }
 
+    // Todo: Correct positions approach
     pub fn position(&self) -> Vec3 {
         let direction = Vec3::new(
             self.yaw.cos() * self.pitch.cos(),
