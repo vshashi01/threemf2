@@ -54,15 +54,15 @@ impl WeightedSum for SurfaceVertexOut {
 
 #[derive(Debug, Clone, Copy)]
 pub struct WireframeVertexOut {
-    pub clip_pos: Vec3,
-    pub world_normal: Vec3,
+    pub world_pos: Vec3,
+    //pub world_normal: Vec3,
     pub vertex_color: Rgba,
 }
 
 impl WeightedSum for WireframeVertexOut {
     fn weighted_sum<const N: usize>(values: [Self; N], weights: [f32; N]) -> Self {
-        let mut clip_pos = Vec3::ZERO;
-        let mut world_normal = Vec3::ZERO;
+        let mut world_pos = Vec3::ZERO;
+        //let mut world_normal = Vec3::ZERO;
         let mut r: f32 = 0.0;
         let mut g: f32 = 0.0;
         let mut b: f32 = 0.0;
@@ -70,8 +70,8 @@ impl WeightedSum for WireframeVertexOut {
 
         for i in 0..N {
             let w = weights[i];
-            clip_pos += values[i].clip_pos * w;
-            world_normal += values[i].world_normal * w;
+            world_pos += values[i].world_pos * w;
+            // world_normal += values[i].world_normal * w;
             r += values[i].vertex_color.0[0] as f32 * w;
             g += values[i].vertex_color.0[1] as f32 * w;
             b += values[i].vertex_color.0[2] as f32 * w;
@@ -79,8 +79,8 @@ impl WeightedSum for WireframeVertexOut {
         }
 
         Self {
-            clip_pos,
-            world_normal,
+            world_pos,
+            //world_normal,
             vertex_color: Rgba([r as u8, g as u8, b as u8, a as u8]),
         }
     }
@@ -209,11 +209,9 @@ impl<'r> Pipeline<'r> for ColoredMesh {
 }
 
 pub struct WireframeMesh {
+    pub model: glam::Mat4,
+    pub view_proj: glam::Mat4,
     pub wireframe_color: Rgba,
-    // camera_pos: glam::Vec3,
-    // view: glam::Mat4,
-    // projection: glam::Mat4,
-    pub mvp_matrix: glam::Mat4,
 }
 
 impl<'r> Pipeline<'r> for WireframeMesh {
@@ -227,14 +225,16 @@ impl<'r> Pipeline<'r> for WireframeMesh {
 
     type Pixel = Rgba;
 
-    fn vertex(&self, vertex: &Self::Vertex) -> ([f32; 4], Self::VertexData) {
-        let pos_vec = glam::Vec4::new(vertex.pos[0], vertex.pos[1], vertex.pos[2], 1.0);
-        let transformed = self.mvp_matrix * pos_vec;
+    fn vertex(&self, vertex: &VertexIn) -> ([f32; 4], Self::VertexData) {
+        let local_pos = glam::Vec4::new(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0);
+        let world_pos = self.model * local_pos;
+        let clip_pos = self.view_proj * world_pos;
+
+        //ToDo: consider introducing Wireframe bias to reduce the problem with Z fighting.
         (
-            [transformed.x, transformed.y, transformed.z, transformed.w],
+            [clip_pos.x, clip_pos.y, clip_pos.z, clip_pos.w],
             WireframeVertexOut {
-                clip_pos: glam::Vec3::new(transformed.x, transformed.y, transformed.z),
-                world_normal: glam::Vec3::new(transformed.x, transformed.y, transformed.z),
+                world_pos: glam::Vec3::new(world_pos.x, world_pos.y, world_pos.z),
                 vertex_color: self.wireframe_color,
             },
         )

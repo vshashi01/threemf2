@@ -48,7 +48,9 @@ impl OrthographicCamera {
 
         self.view_width = diagonal.max(max_dimension);
         self.view_height = self.view_width / self.aspect_ratio;
-        self.far = bounds_size.length() * padding_factor + 1.0;
+        let depth = bounds_size.length() * padding_factor + 1.0;
+        self.far = depth;
+        self.near = -depth;
     }
 
     pub fn view_projection_matrix(&self) -> Mat4 {
