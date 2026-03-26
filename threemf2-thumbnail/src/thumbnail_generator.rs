@@ -172,72 +172,115 @@ impl ThumbnailGenerator {
         let mut vertex_offset = 0;
 
         for (mesh, transform) in meshes_with_transforms {
-            all_vertices.reserve_exact(mesh.vertices.vertex.len());
-            // Add vertices
-            for vertex in &mesh.vertices.vertex {
-                let pos = glam::Vec3::new(
-                    vertex.x.value() as f32,
-                    vertex.y.value() as f32,
-                    vertex.z.value() as f32,
+            let mut triangle_vertices: Vec<VertexIn> =
+                Vec::with_capacity(mesh.triangles.triangle.len() * 3);
+
+            for triangle in &mesh.triangles.triangle {
+                let p0 = glam::Vec3::new(
+                    mesh.vertices.vertex[triangle.v1 as usize].x.value() as f32,
+                    mesh.vertices.vertex[triangle.v1 as usize].y.value() as f32,
+                    mesh.vertices.vertex[triangle.v1 as usize].z.value() as f32,
+                );
+                let p1 = glam::Vec3::new(
+                    mesh.vertices.vertex[triangle.v2 as usize].x.value() as f32,
+                    mesh.vertices.vertex[triangle.v2 as usize].y.value() as f32,
+                    mesh.vertices.vertex[triangle.v2 as usize].z.value() as f32,
+                );
+                let p2 = glam::Vec3::new(
+                    mesh.vertices.vertex[triangle.v3 as usize].x.value() as f32,
+                    mesh.vertices.vertex[triangle.v3 as usize].y.value() as f32,
+                    mesh.vertices.vertex[triangle.v3 as usize].z.value() as f32,
                 );
 
-                let transformed = transform.transform_point3(pos);
-                all_vertices.push([transformed.x, transformed.y, transformed.z]);
+                //all threemf Mesh is expected to have CCW winding order (Right hand rule)
+                let normal = (p1 - p0).cross(p2 - p0).normalize();
+
+                triangle_vertices.push(VertexIn { pos: p0, normal });
+                triangle_vertices.push(VertexIn { pos: p1, normal });
+                triangle_vertices.push(VertexIn { pos: p2, normal });
             }
 
-            // Add indices (with offset)
-            all_indices.reserve_exact(mesh.triangles.triangle.len());
-            for triangle in &mesh.triangles.triangle {
-                all_indices.push([
-                    triangle.v1 as usize + vertex_offset,
-                    triangle.v2 as usize + vertex_offset,
-                    triangle.v3 as usize + vertex_offset,
-                ]);
+            if self.config.enable_surface {
+                ColoredMesh {
+                    mesh_color: Rgba(self.config.mesh_color),
+                    model: transform,
+                    view_proj: camera_matrix,
+                    normal_matrix: glam::Mat3::IDENTITY.inverse().transpose(),
+                    light_view_proj: light_data.light_view_proj,
+                    light_dir: light_data.light_dir,
+                    camera_pos: camera.position(),
+                }
+                .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
             }
-
-            vertex_offset += mesh.vertices.vertex.len();
         }
 
-        // Render each triangle using euc
-        // Each triangle is 3 consecutive vertices
-        let vertices: Vec<[f32; 3]> = all_vertices;
+        // for (mesh, transform) in meshes_with_transforms {
+        //     all_vertices.reserve_exact(mesh.vertices.vertex.len());
+        //     // Add vertices
+        //     for vertex in &mesh.vertices.vertex {
+        //         let pos = glam::Vec3::new(
+        //             vertex.x.value() as f32,
+        //             vertex.y.value() as f32,
+        //             vertex.z.value() as f32,
+        //         );
 
-        // euc expects vertices in a flat array where each group of 3 is a triangle
-        // We need to expand our indexed triangles into a flat vertex array
-        let mut triangle_vertices: Vec<VertexIn> = Vec::with_capacity(all_indices.len() * 3);
-        for triangle_indices in &all_indices {
-            let p0 = glam::Vec3::from_array(vertices[triangle_indices[0]]);
-            let p1 = glam::Vec3::from_array(vertices[triangle_indices[1]]);
-            let p2 = glam::Vec3::from_array(vertices[triangle_indices[2]]);
+        //         let transformed = transform.transform_point3(pos);
+        //         all_vertices.push([transformed.x, transformed.y, transformed.z]);
+        //     }
 
-            //all threemf Mesh is expected to have CCW winding order (Right hand rule)
-            let normal = (p1 - p0).cross(p2 - p0).normalize();
+        //     // Add indices (with offset)
+        //     all_indices.reserve_exact(mesh.triangles.triangle.len());
+        //     for triangle in &mesh.triangles.triangle {
+        //         all_indices.push([
+        //             triangle.v1 as usize + vertex_offset,
+        //             triangle.v2 as usize + vertex_offset,
+        //             triangle.v3 as usize + vertex_offset,
+        //         ]);
+        //     }
 
-            triangle_vertices.push(VertexIn { pos: p0, normal });
-            triangle_vertices.push(VertexIn { pos: p1, normal });
-            triangle_vertices.push(VertexIn { pos: p2, normal });
-        }
+        //     vertex_offset += mesh.vertices.vertex.len();
+        // }
 
-        if self.config.enable_surface {
-            ColoredMesh {
-                mesh_color: Rgba(self.config.mesh_color),
-                model: glam::Mat4::IDENTITY,
-                view_proj: camera_matrix,
-                normal_matrix: glam::Mat3::IDENTITY.inverse().transpose(),
-                light_view_proj: light_data.light_view_proj,
-                light_dir: light_data.light_dir,
-                camera_pos: camera.position(),
-            }
-            .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
-        }
+        // // Render each triangle using euc
+        // // Each triangle is 3 consecutive vertices
+        // let vertices: Vec<[f32; 3]> = all_vertices;
 
-        if self.config.enable_wireframe {
-            WireframeMesh {
-                wireframe_color: Rgba([0, 0, 0, 255]),
-                mvp_matrix: camera_matrix,
-            }
-            .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
-        }
+        // // euc expects vertices in a flat array where each group of 3 is a triangle
+        // // We need to expand our indexed triangles into a flat vertex array
+        // let mut triangle_vertices: Vec<VertexIn> = Vec::with_capacity(all_indices.len() * 3);
+        // for triangle_indices in &all_indices {
+        //     let p0 = glam::Vec3::from_array(vertices[triangle_indices[0]]);
+        //     let p1 = glam::Vec3::from_array(vertices[triangle_indices[1]]);
+        //     let p2 = glam::Vec3::from_array(vertices[triangle_indices[2]]);
+
+        //     //all threemf Mesh is expected to have CCW winding order (Right hand rule)
+        //     let normal = (p1 - p0).cross(p2 - p0).normalize();
+
+        //     triangle_vertices.push(VertexIn { pos: p0, normal });
+        //     triangle_vertices.push(VertexIn { pos: p1, normal });
+        //     triangle_vertices.push(VertexIn { pos: p2, normal });
+        // }
+
+        // if self.config.enable_surface {
+        //     ColoredMesh {
+        //         mesh_color: Rgba(self.config.mesh_color),
+        //         model: glam::Mat4::IDENTITY,
+        //         view_proj: camera_matrix,
+        //         normal_matrix: glam::Mat3::IDENTITY.inverse().transpose(),
+        //         light_view_proj: light_data.light_view_proj,
+        //         light_dir: light_data.light_dir,
+        //         camera_pos: camera.position(),
+        //     }
+        //     .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
+        // }
+
+        // if self.config.enable_wireframe {
+        //     WireframeMesh {
+        //         wireframe_color: Rgba([0, 0, 0, 255]),
+        //         mvp_matrix: camera_matrix,
+        //     }
+        //     .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
+        // }
 
         // Encode as PNG
         let png_data = self.encode_png(color_buffer.raw())?;
@@ -476,9 +519,9 @@ mod tests {
             image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
                 .expect("Failed to decode generated PNG");
 
-        // generated_image
-        //     .save("tests/data/golden_files/components-object_new.png")
-        //     .unwrap();
+        generated_image
+            .save("tests/data/golden_files/components-object_new.png")
+            .unwrap();
         let generated_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,
