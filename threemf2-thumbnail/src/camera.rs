@@ -13,6 +13,7 @@ pub struct OrthographicCamera {
     near: f32,
     far: f32,
     up: Vec3,
+    zoom_factor: f32,
 }
 
 impl OrthographicCamera {
@@ -26,7 +27,8 @@ impl OrthographicCamera {
             view_height: 2.0,
             near: -1000.0,
             far: 1000.0,
-            up: Vec3::NEG_Z, //to make the camera oriented with Z axis upwards
+            up: Vec3::NEG_Z,  //to make the camera oriented with Z axis upwards
+            zoom_factor: 1.0, //the limit should be (0.1, 2.0)
         }
     }
 
@@ -41,9 +43,14 @@ impl OrthographicCamera {
         self
     }
 
+    pub fn with_zoom_factor(mut self, factor: f32) -> Self {
+        self.zoom_factor = factor;
+        self
+    }
+
     pub fn fit_to_bounds(&mut self, bounds_size: Vec3, padding: f32) {
         let padding_factor = 1.0 + padding;
-        let diagonal = bounds_size.length() * padding_factor;
+        let diagonal = bounds_size.length() * (padding_factor / self.zoom_factor);
         let max_dimension = bounds_size.x.max(bounds_size.y).max(bounds_size.z) * padding_factor;
 
         self.view_width = diagonal.max(max_dimension);
@@ -75,7 +82,7 @@ impl OrthographicCamera {
             self.pitch.sin(),
         )
         .normalize();
-        self.target - direction
+        self.target - direction * 10.0
     }
 
     pub fn get_directional_light_data(

@@ -28,6 +28,8 @@ pub struct ThumbnailConfig {
     pub height: u32,
     /// Padding around the model as a fraction of the model size (0.0 to 0.1)
     pub padding: f32,
+    /// Zoom factor to modify the size of the model in the thumbnaul (0.1 to 2.0)
+    pub zoom_factor: f32,
     /// Background color as RGBA
     pub background_color: [u8; 4],
     /// Mesh color as RGBA (used for flat shading)
@@ -50,6 +52,7 @@ impl Default for ThumbnailConfig {
             width: DEFAULT_WIDTH,
             height: DEFAULT_HEIGHT,
             padding: DEFAULT_PADDING,
+            zoom_factor: 1.0,
             background_color: [255, 0, 0, 255], // Red
             mesh_color: [100, 149, 237, 255],   // Cornflower blue
             yaw_angle: 0.0,
@@ -77,6 +80,11 @@ impl ThumbnailConfig {
     /// Sets the padding around the model
     pub fn with_padding(mut self, padding: f32) -> Self {
         self.padding = padding.clamp(0.0, 0.5);
+        self
+    }
+
+    pub fn with_zoom(mut self, zoom: f32) -> Self {
+        self.zoom_factor = zoom.clamp(0.1, 2.0);
         self
     }
 
@@ -154,6 +162,7 @@ impl ThumbnailGenerator {
         // Setup camera with auto-fit
         let mut camera = OrthographicCamera::looking_at(center)
             .with_angles(self.config.yaw_angle, self.config.pitch_angle)
+            .with_zoom_factor(self.config.zoom_factor)
             .with_aspect_ratio(self.config.aspect_ratio);
 
         camera.fit_to_bounds(size, self.config.padding);
@@ -455,9 +464,9 @@ mod tests {
             image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
                 .expect("Failed to decode generated PNG");
 
-        generated_image
-            .save("tests/data/golden_files/components-object_new.png")
-            .unwrap();
+        // generated_image
+        //     .save("tests/data/golden_files/components-object_new.png")
+        //     .unwrap();
         let generated_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,
@@ -465,6 +474,51 @@ mod tests {
         );
 
         let ref_image = image::open("tests/data/golden_files/components-object.png").unwrap();
+        let ref_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &ref_image.to_rgb8(),
+        );
+
+        let flip_result = nv_flip::flip(ref_image, generated_image, 0.01);
+        let pool = nv_flip::FlipPool::from_image(&flip_result);
+        if let Some(Ordering::Greater) = pool.mean().partial_cmp(&0.01) {
+            println!("Mean error {}", pool.mean());
+            panic!("Something is wrong with Surface only thumbnail")
+        }
+    }
+
+    #[test]
+    fn test_generate_thumbnail_surface_only_zoomed() {
+        let path = PathBuf::from("../threemf2/tests/data/mesh-composedpart.3mf");
+        let reader = File::open(path).unwrap();
+
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
+        let config = ThumbnailConfig::default()
+            .with_zoom(2.0)
+            .with_wireframe(false)
+            .with_surface(true)
+            .with_camera_angles(-135.0, 30.0);
+        let generator = ThumbnailGenerator::new(config);
+        let thumbnail = generator.generate(&package.root).unwrap();
+
+        // Decode the generated PNG thumbnail to raw RGB data
+        let generated_image =
+            image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
+                .expect("Failed to decode generated PNG");
+
+        // generated_image
+        //     .save("tests/data/golden_files/components-object-zoomed_new.png")
+        //     .unwrap();
+        let generated_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &generated_image.to_rgb8(),
+        );
+
+        let ref_image =
+            image::open("tests/data/golden_files/components-object-zoomed.png").unwrap();
         let ref_image = nv_flip::FlipImageRgb8::with_data(
             generator.config.width,
             generator.config.height,
