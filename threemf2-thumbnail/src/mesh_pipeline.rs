@@ -3,7 +3,7 @@ use glam::{Vec3, Vec4Swizzles};
 use crate::euc::{
     self,
     math::WeightedSum,
-    pipeline::{AaMode, DepthMode, Pipeline},
+    pipeline::{AaMode, CoordinateMode, DepthMode, Pipeline},
     primitives::{LineTriangleList, TriangleList},
     rasterizer::CullMode,
 };
@@ -138,6 +138,11 @@ impl<'r> Pipeline<'r> for ColoredMesh {
         DepthMode::LESS_WRITE
     }
 
+    fn coordinate_mode(&self) -> CoordinateMode {
+        // Bottom Left is 0,0
+        CoordinateMode::OPENGL
+    }
+
     fn vertex(&self, vs_in: &VertexIn) -> ([f32; 4], SurfaceVertexOut) {
         let local_pos = glam::Vec4::new(vs_in.pos[0], vs_in.pos[1], vs_in.pos[2], 1.0);
 
@@ -197,7 +202,7 @@ impl<'r> Pipeline<'r> for ColoredMesh {
         new
     }
 
-    fn aa_mode(&self) -> crate::euc::pipeline::AaMode {
+    fn aa_mode(&self) -> euc::pipeline::AaMode {
         AaMode::Msaa { level: 2 }
     }
 
@@ -225,6 +230,10 @@ impl<'r> Pipeline<'r> for WireframeMesh {
 
     type Pixel = Rgba;
 
+    fn coordinate_mode(&self) -> CoordinateMode {
+        CoordinateMode::OPENGL
+    }
+
     fn vertex(&self, vertex: &VertexIn) -> ([f32; 4], Self::VertexData) {
         let local_pos = glam::Vec4::new(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0);
         let world_pos = self.model * local_pos;
@@ -248,7 +257,7 @@ impl<'r> Pipeline<'r> for WireframeMesh {
         new
     }
 
-    fn aa_mode(&self) -> crate::euc::pipeline::AaMode {
+    fn aa_mode(&self) -> euc::pipeline::AaMode {
         AaMode::Msaa { level: 2 }
     }
 }

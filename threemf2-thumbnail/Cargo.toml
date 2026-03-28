@@ -18,6 +18,7 @@ threemf2 = { path = "../threemf2", features = ["io-write"] }
 glam = { version = "0.32.1" }
 image = { version = "0.25", default-features = false, features = ["png"] }
 clipline = { version = "0.2.0" }
+# euc = { git = "https://github.com/zesterer/euc.git", default-features = false } //default par has a bug in it related to number of threads for shader
 
 
 [dev-dependencies]

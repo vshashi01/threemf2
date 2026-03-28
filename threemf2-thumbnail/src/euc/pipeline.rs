@@ -111,6 +111,12 @@ pub enum AaMode {
 }
 
 impl CoordinateMode {
+    pub const OPENGL: Self = Self {
+        handedness: Handedness::Right,
+        y_axis_direction: YAxisDirection::Up,
+        z_clip_range: Some(-1.0..1.0),
+    };
+
     pub(crate) fn passes_z_clip(&self, z: f32) -> bool {
         // Don't use `.contains(&z)`, it isn't inclusive
         self.z_clip_range
@@ -121,12 +127,7 @@ impl CoordinateMode {
 
 impl Default for CoordinateMode {
     fn default() -> Self {
-        // Bottom Left is 0,0
-        Self {
-            handedness: Handedness::Right,
-            y_axis_direction: YAxisDirection::Up,
-            z_clip_range: Some(-1.0..1.0),
-        }
+        Self::OPENGL
     }
 }
 
