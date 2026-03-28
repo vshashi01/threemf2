@@ -7,10 +7,12 @@ use threemf2::io::Error;
 use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
 use crate::bbox::BoundingBox;
+use crate::beam_lattice_pipeline::{BeamVertexIn, ColoredBeamLattice};
 use crate::camera::OrthographicCamera;
 use crate::euc::buffer::Buffer2d;
 use crate::euc::pipeline::Pipeline;
-use crate::mesh_pipeline::{ColoredMesh, Rgba, VertexIn, WireframeMesh};
+use crate::mesh_pipeline::{ColoredMesh, VertexIn, WireframeMesh};
+use crate::rgba::Rgba;
 
 use image::ImageEncoder;
 use image::codecs::png::PngEncoder;
@@ -31,9 +33,13 @@ pub struct ThumbnailConfig {
     /// Zoom factor to modify the size of the model in the thumbnaul (0.1 to 2.0)
     pub zoom_factor: f32,
     /// Background color as RGBA
-    pub background_color: [u8; 4],
-    /// Mesh color as RGBA (used for flat shading)
-    pub mesh_color: [u8; 4],
+    pub background_color: Rgba,
+    /// Mesh color as Rgba
+    pub mesh_color: Rgba,
+    /// Wireframe color as Rgba
+    pub wireframe_color: Rgba,
+    /// Beam Lattice color as Rgba
+    pub beam_lattice_color: Rgba,
     /// Camera yaw angle in degrees (about the Z axis)
     pub yaw_angle: f32,
     /// Camera patch angle in degrees (about the XY plane)
@@ -53,8 +59,10 @@ impl Default for ThumbnailConfig {
             height: DEFAULT_HEIGHT,
             padding: DEFAULT_PADDING,
             zoom_factor: 1.0,
-            background_color: [255, 0, 0, 255], // Red
-            mesh_color: [100, 149, 237, 255],   // Cornflower blue
+            background_color: Rgba([255, 0, 0, 255]), // Red
+            mesh_color: Rgba([100, 149, 237, 255]),   // Cornflower blue
+            wireframe_color: Rgba([0, 0, 0, 255]),    //black
+            beam_lattice_color: Rgba([255, 255, 0, 255]), //yellow
             yaw_angle: 0.0,
             pitch_angle: 0.0,
             aspect_ratio: 1.0,
@@ -90,13 +98,25 @@ impl ThumbnailConfig {
 
     /// Sets the background color
     pub fn with_background_color(mut self, r: u8, g: u8, b: u8, a: u8) -> Self {
-        self.background_color = [r, g, b, a];
+        self.background_color = Rgba([r, g, b, a]);
         self
     }
 
     /// Sets the mesh color
     pub fn with_mesh_color(mut self, r: u8, g: u8, b: u8, a: u8) -> Self {
-        self.mesh_color = [r, g, b, a];
+        self.mesh_color = Rgba([r, g, b, a]);
+        self
+    }
+
+    /// Sets the wireframe color
+    pub fn with_wireframe_color(mut self, r: u8, g: u8, b: u8, a: u8) -> Self {
+        self.wireframe_color = Rgba([r, g, b, a]);
+        self
+    }
+
+    /// Sets the beam lattice color
+    pub fn with_beam_lattice_color(mut self, r: u8, g: u8, b: u8, a: u8) -> Self {
+        self.beam_lattice_color = Rgba([r, g, b, a]);
         self
     }
 
@@ -172,7 +192,7 @@ impl ThumbnailGenerator {
         // Create render buffers
         let width = self.config.width as usize;
         let height = self.config.height as usize;
-        let mut color_buffer = Buffer2d::fill([width, height], Rgba(self.config.background_color));
+        let mut color_buffer = Buffer2d::fill([width, height], self.config.background_color);
         let mut depth_buffer = Buffer2d::fill([width, height], 1.0);
 
         for (mesh, transform) in meshes_with_transforms {
@@ -206,7 +226,7 @@ impl ThumbnailGenerator {
 
             if self.config.enable_surface {
                 ColoredMesh {
-                    mesh_color: Rgba(self.config.mesh_color),
+                    mesh_color: self.config.mesh_color,
                     model: transform,
                     view_proj: camera_matrix,
                     normal_matrix: glam::Mat3::from_mat4(transform.inverse().transpose()),
@@ -219,11 +239,37 @@ impl ThumbnailGenerator {
 
             if self.config.enable_wireframe {
                 WireframeMesh {
-                    wireframe_color: Rgba([0, 0, 0, 255]),
+                    wireframe_color: self.config.wireframe_color,
                     view_proj: camera_matrix,
                     model: transform,
                 }
                 .render(&triangle_vertices, &mut color_buffer, &mut depth_buffer);
+            }
+
+            if let Some(bl) = &mesh.beamlattice {
+                let mut bl_vertices = Vec::with_capacity(bl.beams.beam.len() * 2);
+                for beam in &bl.beams.beam {
+                    let p0 = glam::Vec3::new(
+                        mesh.vertices.vertex[beam.v1 as usize].x.value() as f32,
+                        mesh.vertices.vertex[beam.v1 as usize].y.value() as f32,
+                        mesh.vertices.vertex[beam.v1 as usize].z.value() as f32,
+                    );
+                    let p1 = glam::Vec3::new(
+                        mesh.vertices.vertex[beam.v2 as usize].x.value() as f32,
+                        mesh.vertices.vertex[beam.v2 as usize].y.value() as f32,
+                        mesh.vertices.vertex[beam.v2 as usize].z.value() as f32,
+                    );
+
+                    bl_vertices.push(BeamVertexIn { pos: p0 });
+                    bl_vertices.push(BeamVertexIn { pos: p1 });
+                }
+
+                ColoredBeamLattice {
+                    transform,
+                    view_proj: camera_matrix,
+                    color: self.config.beam_lattice_color,
+                }
+                .render(&bl_vertices, &mut color_buffer, &mut depth_buffer);
             }
         }
 
@@ -411,7 +457,7 @@ mod tests {
         assert_eq!(config.width, 512);
         assert_eq!(config.height, 512);
         assert_eq!(config.padding, 0.2);
-        assert_eq!(config.background_color, [255, 0, 0, 255]);
+        assert_eq!(config.background_color, Rgba([255, 0, 0, 255]));
     }
 
     #[test]
@@ -617,6 +663,49 @@ mod tests {
         if let Some(Ordering::Greater) = pool.mean().partial_cmp(&0.01) {
             println!("Mean error {}", pool.mean());
             panic!("Something is wrong with Wireframe thumbnail")
+        }
+    }
+
+    #[test]
+    fn test_generate_thumbnail_with_beam_lattice_mesh() {
+        let path = PathBuf::from("../threemf2/tests/data/mesh-composedpart-beamlattice.3mf");
+        let reader = File::open(path).unwrap();
+
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, false).unwrap();
+        let config = ThumbnailConfig::default()
+            .with_wireframe(false)
+            .with_surface(true)
+            .with_camera_angles(-135.0, 30.0);
+        let generator = ThumbnailGenerator::new(config);
+        let thumbnail = generator.generate(&package.root).unwrap();
+
+        // Decode the generated PNG thumbnail to raw RGB data
+        let generated_image =
+            image::load_from_memory_with_format(&thumbnail.data, image::ImageFormat::Png)
+                .expect("Failed to decode generated PNG");
+
+        // generated_image
+        //     .save("tests/data/golden_files/mesh-beam-lattice_new.png")
+        //     .unwrap();
+        let generated_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &generated_image.to_rgb8(),
+        );
+
+        let ref_image = image::open("tests/data/golden_files/mesh-beam-lattice.png").unwrap();
+        let ref_image = nv_flip::FlipImageRgb8::with_data(
+            generator.config.width,
+            generator.config.height,
+            &ref_image.to_rgb8(),
+        );
+
+        let flip_result = nv_flip::flip(ref_image, generated_image, 0.01);
+        let pool = nv_flip::FlipPool::from_image(&flip_result);
+        if let Some(Ordering::Greater) = pool.mean().partial_cmp(&0.01) {
+            println!("Mean error {}", pool.mean());
+            panic!("Something is wrong with Surface only thumbnail")
         }
     }
 

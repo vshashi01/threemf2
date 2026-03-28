@@ -1,7 +1,7 @@
 use super::*;
 use crate::euc::pipeline::{CoordinateMode, YAxisDirection};
 
-/// A rasterizer that produces filled triangles.
+/// A rasterizer that produces filled lines.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Lines;
 

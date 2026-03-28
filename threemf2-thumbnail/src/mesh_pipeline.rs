@@ -1,11 +1,14 @@
 use glam::{Vec3, Vec4Swizzles};
 
-use crate::euc::{
-    self,
-    math::WeightedSum,
-    pipeline::{AaMode, CoordinateMode, DepthMode, Pipeline},
-    primitives::{LineTriangleList, TriangleList},
-    rasterizer::CullMode,
+use crate::{
+    euc::{
+        self,
+        math::WeightedSum,
+        pipeline::{AaMode, CoordinateMode, DepthMode, Pipeline},
+        primitives::{LineTriangleList, TriangleList},
+        rasterizer::CullMode,
+    },
+    rgba::Rgba,
 };
 
 #[derive(Debug)]
@@ -83,27 +86,6 @@ impl WeightedSum for WireframeVertexOut {
             //world_normal,
             vertex_color: Rgba([r as u8, g as u8, b as u8, a as u8]),
         }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Rgba(pub [u8; 4]);
-
-impl WeightedSum for Rgba {
-    fn weighted_sum<const N: usize>(values: [Self; N], weights: [f32; N]) -> Self {
-        let mut r = 0.0f32;
-        let mut g = 0.0f32;
-        let mut b = 0.0f32;
-        let mut a = 0.0f32;
-
-        for i in 0..N {
-            r += values[i].0[0] as f32 * weights[i];
-            g += values[i].0[1] as f32 * weights[i];
-            b += values[i].0[2] as f32 * weights[i];
-            a += values[i].0[3] as f32 * weights[i];
-        }
-
-        Rgba([r as u8, g as u8, b as u8, a as u8])
     }
 }
 
