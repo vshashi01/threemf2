@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "threemf2",
+    "threemf2-thumbnail",
     "threemf2-benches",
     "threemf2-tests",
     "threemf2-xsd-validation",

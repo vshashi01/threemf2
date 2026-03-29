@@ -96,6 +96,5 @@ name = "query_example"
 path = "examples/query_example.rs"
 required-features = ["io-memory-optimized-read"]
 
-
 [package.metadata.cargo-all-features]
 max_combination_size = 3
