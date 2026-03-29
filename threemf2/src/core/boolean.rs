@@ -154,9 +154,10 @@ mod write_tests {
             OptionalResourceId, OptionalResourceIndex,
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::Object,
+            object_kind::ObjectKind,
             transform::Transform,
         },
-        threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
+        threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX},
     };
 
     #[test]
@@ -323,9 +324,10 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: None,
-            booleanshape: Some(BooleanShape {
+            // mesh: None,
+            // components: None,
+            // booleanshape:
+            kind: Some(ObjectKind::BooleanShape(BooleanShape {
                 objectid: 95,
                 operation: BooleanOperation::Difference,
                 transform: None,
@@ -342,12 +344,12 @@ mod write_tests {
                         path: None,
                     },
                 ],
-            }),
+            })),
         };
 
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><bo:boolean objectid="66" /><bo:boolean objectid="213" /></bo:booleanshape></object>"##,
-            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS,
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><boolean objectid="66" /><boolean objectid="213" /></bo:booleanshape></object>"##,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS,
         );
 
         let obj_string = to_string(&obj).unwrap();
@@ -368,6 +370,7 @@ mod memory_optimized_read_tests {
             boolean::{Boolean, BooleanOperation, BooleanShape},
             mesh::Mesh,
             object::Object,
+            object_kind::ObjectKind,
             transform::Transform,
         },
         threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
@@ -529,9 +532,10 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: None,
-                booleanshape: Some(BooleanShape {
+                // mesh: None,
+                // components: None,
+                // booleanshape:
+                kind: Some(ObjectKind::BooleanShape(BooleanShape {
                     objectid: 95,
                     operation: BooleanOperation::Difference,
                     transform: None,
@@ -548,7 +552,7 @@ mod memory_optimized_read_tests {
                             path: None
                         }
                     ]
-                })
+                })),
             }
         )
     }
@@ -561,9 +565,14 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::boolean::{Boolean, BooleanOperation, BooleanShape},
-        core::transform::Transform,
-        threemf_namespaces::BOOLEAN_NS,
+        core::{
+            OptionalResourceId, OptionalResourceIndex,
+            boolean::{Boolean, BooleanOperation, BooleanShape},
+            object::Object,
+            object_kind::ObjectKind,
+            transform::Transform,
+        },
+        threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
     };
 
     #[test]
@@ -702,6 +711,48 @@ mod speed_optimized_read_tests {
         );
     }
 
-    // Note: BooleanOperation is always used as an attribute in BooleanShape.
-    // Testing it in isolation requires special handling, so we skip those tests.
+    #[test]
+    pub fn fromxml_obj_with_booleanshape_test() {
+        let xml_string = format!(
+            r##"<object xmlns="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><bo:boolean objectid="66" /><bo:boolean objectid="213" /></bo:booleanshape></object>"##,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS,
+        );
+
+        let obj = from_str::<Object>(&xml_string).unwrap();
+
+        assert_eq!(
+            obj,
+            Object {
+                id: 100,
+                objecttype: None,
+                thumbnail: None,
+                partnumber: None,
+                name: None,
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
+                uuid: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape:
+                kind: Some(ObjectKind::BooleanShape(BooleanShape {
+                    objectid: 95,
+                    operation: BooleanOperation::Difference,
+                    transform: None,
+                    path: None,
+                    booleans: vec![
+                        Boolean {
+                            objectid: 66,
+                            transform: None,
+                            path: None,
+                        },
+                        Boolean {
+                            objectid: 213,
+                            transform: None,
+                            path: None
+                        }
+                    ]
+                })),
+            }
+        )
+    }
 }

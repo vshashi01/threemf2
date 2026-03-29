@@ -9,11 +9,12 @@ use serde::Deserialize;
 
 use crate::{
     core::{
+        OptionalResourceId,
         boolean::BooleanShape,
         component::Components,
         mesh::Mesh,
+        object_kind::ObjectKind,
         types::{OptionalResourceIndex, ResourceId},
-        OptionalResourceId,
     },
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS},
 };
@@ -112,24 +113,25 @@ pub struct Object {
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
     pub uuid: Option<String>,
 
-    /// The Mesh contained in this object. See [`Mesh`]
-    ///
-    /// This field is mutually exclusive with [`Object::components`]
-    pub mesh: Option<Mesh>,
+    pub kind: Option<ObjectKind>,
+    // /// The Mesh contained in this object. See [`Mesh`]
+    // ///
+    // /// This field is mutually exclusive with [`Object::components`]
+    // pub mesh: Option<Mesh>,
 
-    /// The Components contained in this object.
-    ///
-    /// This field is mutually exclusive with [`Object::mesh`] and [`Object::booleanshape`]
-    pub components: Option<Components>,
+    // /// The Components contained in this object.
+    // ///
+    // /// This field is mutually exclusive with [`Object::mesh`] and [`Object::booleanshape`]
+    // pub components: Option<Components>,
 
-    /// The BooleanShape defining boolean operations for this object.
-    ///
-    /// This field is mutually exclusive with [`Object::mesh`] and [`Object::components`]
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(ns(BOOLEAN_NS))
-    )]
-    pub booleanshape: Option<BooleanShape>,
+    // /// The BooleanShape defining boolean operations for this object.
+    // ///
+    // /// This field is mutually exclusive with [`Object::mesh`] and [`Object::components`]
+    // #[cfg_attr(
+    //     any(feature = "write", feature = "memory-optimized-read"),
+    //     xml(ns(BOOLEAN_NS))
+    // )]
+    // pub booleanshape: Option<BooleanShape>,
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -176,14 +178,15 @@ impl From<String> for ObjectType {
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod write_tests {
-    use instant_xml::{to_string, ToXml};
+    use instant_xml::{ToXml, to_string};
     use pretty_assertions::assert_eq;
 
     use crate::{
         core::{
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
-            OptionalResourceId, OptionalResourceIndex,
+            object_kind::ObjectKind,
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
@@ -210,9 +213,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: None,
-            booleanshape: None,
+            kind: None, // mesh: None,
+                        // components: None,
+                        // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -234,9 +237,10 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: Some("someUUID".to_owned()),
-            mesh: None,
-            components: None,
-            booleanshape: None,
+            kind: None,
+            // mesh: None,
+            // components: None,
+            // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -258,9 +262,10 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: None,
-            booleanshape: None,
+            kind: None,
+            // mesh: None,
+            // components: None,
+            // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
         println!("{}", object_string);
@@ -282,14 +287,19 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: Some(Mesh {
+            kind: Some(ObjectKind::Mesh(Mesh {
                 vertices: Vertices { vertex: vec![] },
                 triangles: Triangles { triangle: vec![] },
                 trianglesets: None,
                 beamlattice: None,
-            }),
-            components: None,
-            booleanshape: None,
+            })), // mesh: Some(Mesh {
+                 //     vertices: Vertices { vertex: vec![] },
+                 //     triangles: Triangles { triangle: vec![] },
+                 //     trianglesets: None,
+                 //     beamlattice: None,
+                 // }),
+                 // components: None,
+                 // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -311,16 +321,23 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: Some(Components {
+            kind: Some(ObjectKind::Components(Components {
                 component: vec![Component {
                     objectid: 23,
                     transform: None,
                     path: None,
                     uuid: None,
                 }],
-            }),
-            booleanshape: None,
+            })), // mesh: None,
+                 // components: Some(Components {
+                 //     component: vec![Component {
+                 //         objectid: 23,
+                 //         transform: None,
+                 //         path: None,
+                 //         uuid: None,
+                 //     }],
+                 // }),
+                 // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -361,14 +378,15 @@ mod write_tests {
 #[cfg(feature = "memory-optimized-read")]
 #[cfg(test)]
 mod memory_optimized_read_tests {
-    use instant_xml::{from_str, FromXml};
+    use instant_xml::{FromXml, from_str};
     use pretty_assertions::assert_eq;
 
     use crate::{
         core::{
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
-            OptionalResourceId, OptionalResourceIndex,
+            object_kind::ObjectKind,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
@@ -395,9 +413,10 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -422,9 +441,10 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -448,9 +468,10 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -474,9 +495,10 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -500,14 +522,19 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: Some(Mesh {
+                kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
                     trianglesets: None,
-                    beamlattice: None,
-                }),
-                components: None,
-                booleanshape: None,
+                    beamlattice: None
+                })) // mesh: Some(Mesh {
+                    //     vertices: Vertices { vertex: vec![] },
+                    //     triangles: Triangles { triangle: vec![] },
+                    //     trianglesets: None,
+                    //     beamlattice: None,
+                    // }),
+                    // components: None,
+                    // booleanshape: None,
             }
         );
     }
@@ -531,16 +558,23 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: Some(Components {
+                kind: Some(ObjectKind::Components(Components {
                     component: vec![Component {
                         objectid: 23,
                         transform: None,
                         path: None,
-                        uuid: None,
-                    }],
-                }),
-                booleanshape: None,
+                        uuid: None
+                    }]
+                })) // mesh: None,
+                    // components: Some(Components {
+                    //     component: vec![Component {
+                    //         objectid: 23,
+                    //         transform: None,
+                    //         path: None,
+                    //         uuid: None,
+                    //     }],
+                    // }),
+                    // booleanshape: None,
             }
         );
     }
@@ -587,9 +621,10 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
+            OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
-            OptionalResourceId, OptionalResourceIndex,
+            object_kind::ObjectKind,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
@@ -616,9 +651,10 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -643,9 +679,10 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -669,9 +706,10 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -695,9 +733,10 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
-                booleanshape: None,
+                kind: None,
+                // mesh: None,
+                // components: None,
+                // booleanshape: None,
             }
         );
     }
@@ -721,14 +760,19 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: Some(Mesh {
+                kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
                     trianglesets: None,
                     beamlattice: None,
-                }),
-                components: None,
-                booleanshape: None,
+                })) // mesh: Some(Mesh {
+                    //     vertices: Vertices { vertex: vec![] },
+                    //     triangles: Triangles { triangle: vec![] },
+                    //     trianglesets: None,
+                    //     beamlattice: None,
+                    // }),
+                    // components: None,
+                    // booleanshape: None,
             }
         );
     }
@@ -752,16 +796,23 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: Some(Components {
+                kind: Some(ObjectKind::Components(Components {
                     component: vec![Component {
                         objectid: 23,
                         transform: None,
                         path: None,
                         uuid: None,
-                    }],
-                }),
-                booleanshape: None,
+                    }]
+                })) // mesh: None,
+                    // components: Some(Components {
+                    //     component: vec![Component {
+                    //         objectid: 23,
+                    //         transform: None,
+                    //         path: None,
+                    //         uuid: None,
+                    //     }],
+                    // }),
+                    // booleanshape: None,
             }
         );
     }

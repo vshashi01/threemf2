@@ -167,6 +167,7 @@ use crate::{
         mesh::Mesh,
         model::Model,
         object::{Object, ObjectType},
+        object_kind::ObjectKind,
         transform::Transform,
     },
     io::ThreemfPackage,
@@ -448,7 +449,7 @@ pub struct MeshObjectRef<'a>(GenericObjectRef<'a, Mesh>);
 impl<'a> MeshObjectRef<'a> {
     fn new(o: ObjectRef<'a>) -> Self {
         MeshObjectRef(GenericObjectRef {
-            entity: o.object.mesh.as_ref().unwrap(),
+            entity: o.object.kind.as_ref().unwrap().get_mesh().unwrap(),
             id: o.object.id,
             object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
             thumbnail: o.object.thumbnail.clone(),
@@ -603,7 +604,16 @@ pub fn get_mesh_objects_from_model_ref<'a>(
         .resources
         .object
         .iter()
-        .filter(|o| o.mesh.is_some())
+        //.filter(|o| o.mesh.is_some())
+        .filter(|o| {
+            if let Some(kind) = &o.kind
+                && let ObjectKind::Mesh(_) = kind
+            {
+                true
+            } else {
+                false
+            }
+        })
         .map(move |o| ObjectRef {
             object: o,
             path: model_ref.path,
@@ -661,7 +671,13 @@ pub struct ComponentsObjectRef<'a>(GenericObjectRef<'a, Components>);
 impl<'a> ComponentsObjectRef<'a> {
     fn new(o: ObjectRef<'a>) -> Self {
         ComponentsObjectRef(GenericObjectRef {
-            entity: o.object.components.as_ref().unwrap(),
+            entity: o
+                .object
+                .kind
+                .as_ref()
+                .unwrap()
+                .get_components_object()
+                .unwrap(),
             id: o.object.id,
             object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
             thumbnail: o.object.thumbnail.clone(),
@@ -1050,7 +1066,16 @@ pub fn get_components_objects_from_model_ref<'a>(
         .resources
         .object
         .iter()
-        .filter(|o| o.components.is_some())
+        //.filter(|o| o.components.is_some())
+        .filter(|o| {
+            if let Some(kind) = &o.kind
+                && let ObjectKind::Components(_) = kind
+            {
+                true
+            } else {
+                false
+            }
+        })
         .map(move |o| ObjectRef {
             object: o,
             path: model_ref.path,
@@ -1420,7 +1445,7 @@ mod tests {
 
         match object_ref {
             Some(obj_ref) => {
-                assert!(obj_ref.object.mesh.is_some());
+                assert!(obj_ref.object.kind.as_ref().unwrap().get_mesh().is_some());
                 assert_eq!(obj_ref.object.id, 1);
             }
             None => panic!("Object ref not found"),

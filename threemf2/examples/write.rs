@@ -6,6 +6,7 @@ use threemf2::{
         metadata::Metadata,
         model::{Model, Unit},
         object::{Object, ObjectType},
+        object_kind::ObjectKind,
         resources::Resources,
         types::OptionalResourceIndex,
     },
@@ -39,7 +40,8 @@ fn main() {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: Some(Mesh {
+                // mesh:
+                kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices {
                         vertex: vec![
                             Vertex::new(0.0, 0.0, 0.0),
@@ -61,9 +63,9 @@ fn main() {
                     trianglesets: None,
                     // #[cfg(feature = "beam-lattice")]
                     beamlattice: None,
-                }),
-                components: None,
-                booleanshape: None,
+                })),
+                // components: None,
+                // booleanshape: None,
             }],
             basematerials: vec![],
         },

@@ -26,6 +26,7 @@ use threemf2::{
         metadata::Metadata,
         model::{Model, Unit},
         object::{Object, ObjectType},
+        object_kind::ObjectKind,
         resources::Resources,
     },
     io::ThreemfPackage,
@@ -327,9 +328,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
         uuid: None,
-        mesh: Some(cube_mesh_1),
-        components: None,
-        booleanshape: None,
+        kind: Some(ObjectKind::Mesh(cube_mesh_1)),
+        // mesh: Some(cube_mesh_1),
+        // components: None,
+        // booleanshape: None,
     };
 
     let cube_object_2 = Object {
@@ -341,9 +343,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
         uuid: None,
-        mesh: Some(cube_mesh_2),
-        components: None,
-        booleanshape: None,
+        kind: Some(ObjectKind::Mesh(cube_mesh_2)),
+        // mesh: Some(cube_mesh_2),
+        // components: None,
+        // booleanshape: None,
     };
 
     let result_object = Object {
@@ -355,9 +358,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
         uuid: None,
-        mesh: None,
-        components: None,
-        booleanshape: Some(boolean_shape),
+        kind: Some(ObjectKind::BooleanShape(boolean_shape)),
+        // mesh: None,
+        // components: None,
+        // booleanshape: Some(boolean_shape),
     };
 
     // Create the model

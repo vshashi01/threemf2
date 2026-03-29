@@ -7,6 +7,8 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
+#[cfg(feature = "write")]
+use crate::core::object_kind::ObjectKind;
 use crate::{
     core::{build::Build, metadata::Metadata, resources::Resources},
     threemf_namespaces::{
@@ -126,13 +128,23 @@ impl Model {
                 return true;
             }
 
-            if let Some(components) = &obj.components {
-                for comp in &components.component {
+            if let Some(kind) = &obj.kind
+                && let ObjectKind::Components(comps) = kind
+            {
+                for comp in &comps.component {
                     if comp.path.is_some() || comp.uuid.is_some() {
                         return true;
                     }
                 }
             }
+
+            // if let Some(components) = &obj.components {
+            //     for comp in &components.component {
+            //         if comp.path.is_some() || comp.uuid.is_some() {
+            //             return true;
+            //         }
+            //     }
+            // }
         }
 
         false
@@ -140,10 +152,16 @@ impl Model {
 
     fn uses_beamlattice_ns(&self) -> bool {
         for obj in &self.resources.object {
-            let Some(mesh) = &obj.mesh else { continue };
-            if mesh.beamlattice.is_some() {
+            if let Some(kind) = &obj.kind
+                && let ObjectKind::Mesh(mesh) = kind
+                && mesh.beamlattice.is_some()
+            {
                 return true;
             }
+            // let Some(mesh) = &obj.mesh else { continue };
+            // if mesh.beamlattice.is_some() {
+            //     return true;
+            // }
         }
 
         false
@@ -151,11 +169,17 @@ impl Model {
 
     fn uses_triangleset_ns(&self) -> bool {
         for obj in &self.resources.object {
-            if let Some(mesh) = &obj.mesh
+            if let Some(kind) = &obj.kind
+                && let ObjectKind::Mesh(mesh) = kind
                 && mesh.trianglesets.is_some()
             {
                 return true;
             }
+            // if let Some(mesh) = &obj.mesh
+            //     && mesh.trianglesets.is_some()
+            // {
+            //     return true;
+            // }
         }
 
         false
@@ -163,9 +187,14 @@ impl Model {
 
     fn uses_boolean_ns(&self) -> bool {
         for obj in &self.resources.object {
-            if obj.booleanshape.is_some() {
+            if let Some(kind) = &obj.kind
+                && let ObjectKind::BooleanShape(_) = kind
+            {
                 return true;
             }
+            // if obj.booleanshape.is_some() {
+            //     return true;
+            // }
         }
 
         false
@@ -185,6 +214,7 @@ mod write_tests {
             mesh::{Mesh, Triangles, Vertices},
             metadata::Metadata,
             object::{Object, ObjectType},
+            object_kind::ObjectKind,
             resources::Resources,
         },
         threemf_namespaces::{
@@ -221,9 +251,10 @@ mod write_tests {
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                    mesh: None,
-                    components: None,
-                    booleanshape: None,
+                    kind: None,
+                    // mesh: None,
+                    // components: None,
+                    // booleanshape: None,
                 }],
             },
             build: Build {
@@ -282,14 +313,19 @@ mod write_tests {
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                    mesh: Some(Mesh {
+                    kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
                         trianglesets: None,
                         beamlattice: None,
-                    }),
-                    components: None,
-                    booleanshape: None,
+                    })), // mesh: Some(Mesh {
+                         //     vertices: Vertices { vertex: vec![] },
+                         //     triangles: Triangles { triangle: vec![] },
+                         //     trianglesets: None,
+                         //     beamlattice: None,
+                         // }),
+                         // components: None,
+                         // booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -326,14 +362,19 @@ mod write_tests {
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: Some("test-uuid".to_string()),
-                    mesh: Some(Mesh {
+                    kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
                         trianglesets: None,
                         beamlattice: None,
-                    }),
-                    components: None,
-                    booleanshape: None,
+                    })), // mesh: Some(Mesh {
+                         //     vertices: Vertices { vertex: vec![] },
+                         //     triangles: Triangles { triangle: vec![] },
+                         //     trianglesets: None,
+                         //     beamlattice: None,
+                         // }),
+                         // components: None,
+                         // booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -375,7 +416,7 @@ mod write_tests {
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                    mesh: Some(Mesh {
+                    kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
                         trianglesets: None,
@@ -394,9 +435,29 @@ mod write_tests {
                             balls: None,
                             beamsets: None,
                         }),
-                    }),
-                    components: None,
-                    booleanshape: None,
+                    })),
+                    // mesh: Some(Mesh {
+                    //     vertices: Vertices { vertex: vec![] },
+                    //     triangles: Triangles { triangle: vec![] },
+                    //     trianglesets: None,
+                    //     beamlattice: Some(BeamLattice {
+                    //         minlength: 0.1,
+                    //         radius: 0.05,
+                    //         ballmode: None,
+                    //         ballradius: None,
+                    //         clippingmode: None,
+                    //         clippingmesh: OptionalResourceId::none(),
+                    //         representationmesh: OptionalResourceId::none(),
+                    //         pid: OptionalResourceId::none(),
+                    //         pindex: OptionalResourceIndex::none(),
+                    //         cap: None,
+                    //         beams: crate::core::beamlattice::Beams { beam: vec![] },
+                    //         balls: None,
+                    //         beamsets: None,
+                    //     }),
+                    // }),
+                    // components: None,
+                    // booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -438,16 +499,24 @@ mod write_tests {
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                    mesh: Some(Mesh {
+                    kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
                         trianglesets: Some(TriangleSets {
                             trianglesets: vec![],
                         }),
                         beamlattice: None,
-                    }),
-                    components: None,
-                    booleanshape: None,
+                    })),
+                    // mesh: Some(Mesh {
+                    //     vertices: Vertices { vertex: vec![] },
+                    //     triangles: Triangles { triangle: vec![] },
+                    //     trianglesets: Some(TriangleSets {
+                    //         trianglesets: vec![],
+                    //     }),
+                    //     beamlattice: None,
+                    // }),
+                    // components: None,
+                    // booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -489,7 +558,7 @@ mod write_tests {
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: Some("test-uuid".to_string()),
-                    mesh: Some(Mesh {
+                    kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
                         trianglesets: Some(TriangleSets {
@@ -510,9 +579,31 @@ mod write_tests {
                             balls: None,
                             beamsets: None,
                         }),
-                    }),
-                    components: None,
-                    booleanshape: None,
+                    })),
+                    // mesh: Some(Mesh {
+                    //     vertices: Vertices { vertex: vec![] },
+                    //     triangles: Triangles { triangle: vec![] },
+                    //     trianglesets: Some(TriangleSets {
+                    //         trianglesets: vec![],
+                    //     }),
+                    //     beamlattice: Some(BeamLattice {
+                    //         minlength: 0.1,
+                    //         radius: 0.05,
+                    //         ballmode: None,
+                    //         ballradius: None,
+                    //         clippingmode: None,
+                    //         clippingmesh: OptionalResourceId::none(),
+                    //         representationmesh: OptionalResourceId::none(),
+                    //         pid: OptionalResourceId::none(),
+                    //         pindex: OptionalResourceIndex::none(),
+                    //         cap: None,
+                    //         beams: crate::core::beamlattice::Beams { beam: vec![] },
+                    //         balls: None,
+                    //         beamsets: None,
+                    //     }),
+                    // }),
+                    // components: None,
+                    // booleanshape: None,
                 }],
                 basematerials: vec![],
             },
@@ -550,6 +641,7 @@ mod memory_optimized_read_tests {
 
     use crate::core::OptionalResourceId;
     use crate::core::OptionalResourceIndex;
+    use crate::core::object_kind::ObjectKind;
     use crate::{
         core::{
             build::{Build, Item},
@@ -594,9 +686,10 @@ mod memory_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
-                        mesh: None,
-                        components: None,
-                        booleanshape: None,
+                        kind: None,
+                        // mesh: None,
+                        // components: None,
+                        // booleanshape: None,
                     }],
                 },
                 build: Build {
@@ -652,16 +745,24 @@ mod memory_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: Some("someObjectUUID".to_owned()),
-                        mesh: None,
-                        components: Some(Components {
+                        kind: Some(ObjectKind::Components(Components {
                             component: vec![Component {
                                 objectid: 1,
                                 transform: None,
                                 path: Some("//somePath//Component".to_owned()),
                                 uuid: Some("someComponentUUID".to_owned()),
                             }]
-                        }),
-                        booleanshape: None,
+                        })),
+                        // mesh: none,
+                        // components: some(components {
+                        //     component: vec![component {
+                        //         objectid: 1,
+                        //         transform: none,
+                        //         path: some("//somepath//component".to_owned()),
+                        //         uuid: some("somecomponentuuid".to_owned()),
+                        //     }]
+                        // }),
+                        // booleanshape: none,
                     }],
                 },
                 build: Build {
@@ -721,6 +822,7 @@ mod speed_optimized_read_tests {
             component::{Component, Components},
             metadata::Metadata,
             object::{Object, ObjectType},
+            object_kind::ObjectKind,
             resources::Resources,
         },
         threemf_namespaces::{CORE_NS, PROD_NS},
@@ -760,9 +862,10 @@ mod speed_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
-                        mesh: None,
-                        components: None,
-                        booleanshape: None,
+                        kind: None,
+                        // mesh: None,
+                        // components: None,
+                        // booleanshape: None,
                     }],
                 },
                 build: Build {
@@ -818,16 +921,24 @@ mod speed_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: Some("someObjectUUID".to_owned()),
-                        mesh: None,
-                        components: Some(Components {
+                        kind: Some(ObjectKind::Components(Components {
                             component: vec![Component {
                                 objectid: 1,
                                 transform: None,
                                 path: Some("//somePath//Component".to_owned()),
                                 uuid: Some("someComponentUUID".to_owned()),
                             }]
-                        }),
-                        booleanshape: None,
+                        })),
+                        // mesh: None,
+                        // components: Some(Components {
+                        //     component: vec![Component {
+                        //         objectid: 1,
+                        //         transform: None,
+                        //         path: Some("//somePath//Component".to_owned()),
+                        //         uuid: Some("someComponentUUID".to_owned()),
+                        //     }]
+                        // }),
+                        // booleanshape: None,
                     }],
                 },
                 build: Build {

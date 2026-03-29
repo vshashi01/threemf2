@@ -165,11 +165,13 @@ mod tests {
                             }
 
                             for obj in &model.resources.object {
-                                total_objects += 1;
-                                if obj.mesh.is_some() {
-                                    mesh_objects += 1;
-                                } else if obj.components.is_some() {
-                                    composedpart_objects += 1;
+                                if let Some(kind) = &obj.kind {
+                                    total_objects += 1;
+                                    if kind.get_mesh().is_some() {
+                                        mesh_objects += 1;
+                                    } else if kind.get_components_object().is_some() {
+                                        composedpart_objects += 1;
+                                    }
                                 }
                             }
 
@@ -232,11 +234,13 @@ mod tests {
                             }
 
                             for obj in &model.resources.object {
-                                total_objects += 1;
-                                if obj.mesh.is_some() {
-                                    mesh_objects += 1;
-                                } else if obj.components.is_some() {
-                                    composedpart_objects += 1;
+                                if let Some(kind) = &obj.kind {
+                                    total_objects += 1;
+                                    if kind.get_mesh().is_some() {
+                                        mesh_objects += 1;
+                                    } else if kind.get_components_object().is_some() {
+                                        composedpart_objects += 1;
+                                    }
                                 }
                             }
 

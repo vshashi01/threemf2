@@ -700,6 +700,7 @@ mod memory_optimized_read_tests {
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::Model,
             object::Object,
+            object_kind::ObjectKind,
             resources::Resources,
         },
         threemf_namespaces::{
@@ -978,7 +979,7 @@ mod memory_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
-                        mesh: Some(Mesh {
+                        kind: Some(ObjectKind::Mesh(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
                                     Vertex::new(-1.0, -1.0, 0.0),
@@ -1047,9 +1048,9 @@ mod memory_optimized_read_tests {
                                 }),
                                 beamsets: None,
                             }),
-                        }),
-                        components: None,
-                        booleanshape: None
+                        })),
+                        // components: None,
+                        // booleanshape: None
                     }],
                     basematerials: vec![]
                 },
@@ -1075,6 +1076,7 @@ mod speed_optimized_read_tests {
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::Model,
             object::Object,
+            object_kind::ObjectKind,
             resources::Resources,
         },
         threemf_namespaces::{
@@ -1443,7 +1445,7 @@ mod speed_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
-                        mesh: Some(Mesh {
+                        kind: Some(ObjectKind::Mesh(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
                                     Vertex::new(-1.0, -1.0, 0.0),
@@ -1512,9 +1514,9 @@ mod speed_optimized_read_tests {
                                 }),
                                 beamsets: None,
                             }),
-                        }),
-                        components: None,
-                        booleanshape: None
+                        })),
+                        // components: None,
+                        // booleanshape: None
                     }],
                     basematerials: vec![]
                 },

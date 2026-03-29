@@ -16,7 +16,7 @@ mod tests {
 
         match object_ref {
             Some(obj_ref) => {
-                assert!(obj_ref.object.mesh.is_some());
+                assert!(obj_ref.object.kind.as_ref().unwrap().get_mesh().is_some());
                 assert_eq!(obj_ref.object.id, 1);
             }
             None => panic!("Object ref not found"),
@@ -112,7 +112,7 @@ mod tests {
         let objects = get_mesh_objects_from_model_ref(model_ref).collect::<Vec<_>>();
         assert_eq!(objects.len(), 5);
         for obj in objects {
-            assert!(obj.object.mesh.is_some());
+            assert!(obj.object.kind.as_ref().unwrap().get_mesh().is_some());
         }
     }
 
