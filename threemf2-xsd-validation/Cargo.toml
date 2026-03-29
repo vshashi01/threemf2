@@ -13,6 +13,6 @@ threemf2 = { path = "../threemf2", features = [
 ] }
 
 [dev-dependencies]
-fastxml = { version = "0.8.0", features = ["ureq"] }
+fastxml = { version = "0.8.1" }
 pretty_assertions = { version = "1.4.1" }
 zip = { version = "8.2.0", default-features = false, features = ["deflate"] }
