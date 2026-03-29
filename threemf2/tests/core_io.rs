@@ -26,6 +26,8 @@ mod tests {
 
         match result {
             Ok(package) => {
+                use threemf2::io::validator::{ValidationRule, Validator};
+
                 assert_eq!(package.relationships.len(), 1);
 
                 let objects = get_objects(&package).collect::<Vec<_>>();
@@ -48,6 +50,16 @@ mod tests {
 
                 let ns = package.get_namespaces_on_model(None).unwrap();
                 assert_eq!(ns.len(), 3);
+
+                let validator = Validator::new()
+                    .with_rule(ValidationRule::ObjectIdReference)
+                    .with_rule(ValidationRule::ResourceIdReference)
+                    .with_rule(ValidationRule::BuildItemReference)
+                    .with_rule(ValidationRule::ComponentReference);
+
+                let result = validator.validate_package(&package);
+                assert!(!result.is_valid);
+                assert_eq!(result.issues.len(), 3);
             }
             Err(err) => {
                 panic!("read failed {:?}", err);
@@ -72,6 +84,8 @@ mod tests {
 
         match result {
             Ok(package) => {
+                use threemf2::io::validator::{ValidationRule, Validator};
+
                 assert_eq!(package.relationships.len(), 1);
 
                 let objects = get_objects(&package).collect::<Vec<_>>();
@@ -94,6 +108,16 @@ mod tests {
 
                 let ns = package.get_namespaces_on_model(None).unwrap();
                 assert_eq!(ns.len(), 3);
+
+                let validator = Validator::new()
+                    .with_rule(ValidationRule::ObjectIdReference)
+                    .with_rule(ValidationRule::ResourceIdReference)
+                    .with_rule(ValidationRule::BuildItemReference)
+                    .with_rule(ValidationRule::ComponentReference);
+
+                let result = validator.validate_package(&package);
+                assert!(!result.is_valid);
+                assert_eq!(result.issues.len(), 3);
             }
             Err(err) => {
                 panic!("read failed {:?}", err);

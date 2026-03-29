@@ -9,6 +9,9 @@ pub use utils::parse_xmlns_attributes;
 
 pub mod thumbnail_handle;
 
+pub mod validator;
+mod validator_rules;
+
 /// Represents an XML namespace declaration with its prefix and URI
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct XmlNamespace {
