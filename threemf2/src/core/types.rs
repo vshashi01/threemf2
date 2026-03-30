@@ -1,8 +1,9 @@
-//! 3MF Specification-compliant type aliases
+//! 3MF Specification-compliant type aliases or New types
 //!
 //! These types map directly to the 3MF XSD schema simple types:
-//! - ST_ResourceID: Object IDs, property group IDs (1 to 2^31-1)
-//! - ST_ResourceIndex: Vertex indices, property indices (0 to 2^31-1)
+//! - ResourceId = ST_ResourceID: Object IDs, property group IDs (1 to 2^31-1)
+//! - ResourceIndex = ST_ResourceIndex: Vertex indices, property indices (0 to 2^31-1)
+//! - Double = ST_Number: All number inputs in the form of 64-byte float number
 
 use std::num::NonZeroU32;
 
@@ -25,9 +26,8 @@ pub type ResourceId = u32;
 /// Used for: vertex indices (v1, v2, v3), property indices (p1, p2, p3, pindex)
 pub type ResourceIndex = u32;
 
-/// Optional Resource ID type with memory optimization
-/// Uses Option<NonZeroU32> for 4-byte storage instead of 8-byte Option<u32>
-/// XSD: ST_ResourceID (xs:positiveInteger, maxExclusive="2147483648")
+/// Compact Optional type for ResourceId with Option<NonZeroU32>
+/// (4 bytes vs 8 bytes for Option<u32>)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 pub struct OptionalResourceId(Option<NonZeroU32>);
@@ -349,6 +349,10 @@ impl IntoIndex for u32 {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "speed-optimized-read", derive(serde::Deserialize))]
+/// A new type wrapping the f64 so that a custom (de)serializer can be implemented using
+/// the lexical_core::f64 for better performance. This maybe renamed in the future to Number
+/// to align with the 3MF Naming conventions.
+/// From<f64> is implemented on this type and From<Double> is implemented for f64 for ease of use.
 pub struct Double(f64);
 
 impl Double {

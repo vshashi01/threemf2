@@ -141,6 +141,11 @@ pub struct Object {
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
     pub uuid: Option<String>,
 
+    /// The actual geometry that is contained in this [`Object`].
+    /// This deviates from the standard 3MF Data Model intentionally for
+    /// Rust library ergonomics..
+    /// This is optional only for developemnt. In Practice an empty
+    /// object is not a valid 3MF Model. This may be changed in the future.
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
@@ -150,27 +155,11 @@ pub struct Object {
         )
     )]
     pub kind: Option<ObjectKind>,
-    // /// The Mesh contained in this object. See [`Mesh`]
-    // ///
-    // /// This field is mutually exclusive with [`Object::components`]
-    // pub mesh: Option<Mesh>,
-
-    // /// The Components contained in this object.
-    // ///
-    // /// This field is mutually exclusive with [`Object::mesh`] and [`Object::booleanshape`]
-    // pub components: Option<Components>,
-
-    // /// The BooleanShape defining boolean operations for this object.
-    // ///
-    // /// This field is mutually exclusive with [`Object::mesh`] and [`Object::components`]
-    // #[cfg_attr(
-    //     any(feature = "write", feature = "memory-optimized-read"),
-    //     xml(ns(BOOLEAN_NS))
-    // )]
-    // pub booleanshape: Option<BooleanShape>,
 }
 
 impl Object {
+    /// Convenince fn that returns an [`Some<&Mesh>`] if this
+    /// object contains a core mesh geometry
     pub fn get_mesh(&self) -> Option<&Mesh> {
         if let Some(kind) = &self.kind
             && let ObjectKind::Mesh(mesh) = kind
@@ -181,6 +170,8 @@ impl Object {
         }
     }
 
+    /// Convenince fn that returns an [`Some<&Components>`] if this
+    /// object contains a core mesh geometry
     pub fn get_components_object(&self) -> Option<&Components> {
         if let Some(kind) = &self.kind
             && let ObjectKind::Components(comps) = kind
@@ -191,6 +182,8 @@ impl Object {
         }
     }
 
+    /// Convenince fn that returns an [`Some<&BooleanShape>`] if this
+    /// object contains a core mesh geometry
     pub fn get_boolean_shape_object(&self) -> Option<&BooleanShape> {
         if let Some(kind) = &self.kind
             && let ObjectKind::BooleanShape(shape) = kind
@@ -207,11 +200,11 @@ impl Object {
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
-/// Specifies the type of a 3MF object, indicating its role in the build process.
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
     xml(scalar, rename_all = "lowercase")
 )]
+/// Specifies the type of a 3MF object, indicating its role in the build process.
 pub enum ObjectType {
     /// The Object is intended as a production model.
     #[default]
@@ -253,6 +246,9 @@ impl From<String> for ObjectType {
 )]
 #[cfg_attr(feature = "speed-optimized-read", serde(rename_all = "lowercase"))]
 #[non_exhaustive]
+/// This is not a type found in the 3MF data model but it is introduced here
+/// for better ergonomics of this library. This kind will specify all different variants
+/// of a 3MF Object.
 pub enum ObjectKind {
     Mesh(Mesh),
     Components(Components),

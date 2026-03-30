@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Core types have been changed for better memory usage**
-  - Changed all uses of `usize` for resource ID with a custom `ResourceId` type backed by u32
-  - Changed all uses of `usize` for resource index with a custom `ResourceIndex` type backed by u32
+  - Changed all uses of `usize` for resource ID with a custom `ResourceId` type alias with u32
+  - Changed all uses of `usize` for resource index with a custom `ResourceIndex` type alias with u32
   - Changed all uses of `Option<usize>` for optional resource Ids with a custom `OptionalResourceId` type backed by u32
   - Change all uses if `Option<usize>` for optional resource index with a custom `OptionalResourceIndex` type backed by u32
   - `Object` struct is changed to have a field `kind` of type `ObjectKind` where the specific geometry is a variant inside type `ObjectKind`. This ensures future extensions to `ObjectKind` to (hopefully) not be breaking change.
