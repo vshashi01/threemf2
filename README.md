@@ -14,6 +14,7 @@ This repository uses a Cargo workspace with `threemf2` (main crate), `threemf2-b
 | Triangle Set       | Extension |       MUST       |     OPTIONAL      |           Core Spec 1.3.0 |
 | Production         | Extension |       MUST       |     OPTIONAL      |                     1.1.2 |
 | Beam Lattice       | Extension |       MUST       |     OPTIONAL      |                     1.2.0 |
+| Boolean Operations | Extension |       MUST       |     OPTIONAL      |                     1.1.1 |
 
 **Note: This library is still in active development, expect frequent API changes!!**
 
