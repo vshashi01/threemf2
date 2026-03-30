@@ -18,6 +18,35 @@ use crate::{
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS},
 };
 
+/// Custom deserializer for `Option<ObjectKind>` to handle empty elements
+/// when using speed-optimized-read feature.
+#[cfg(feature = "speed-optimized-read")]
+pub mod serde_object_kind {
+    use super::ObjectKind;
+    use serde::{Deserialize, Deserializer};
+
+    /// Returns `None` as the default value for `Option<ObjectKind>`.
+    pub fn default_none() -> Option<ObjectKind> {
+        None
+    }
+
+    /// Deserializes `Option<ObjectKind>` with fallback to `None` on error.
+    ///
+    /// This handles the case where an `<object>` element has no child elements
+    /// (empty object), which would otherwise fail with `MissingChildOrAttribute`.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<ObjectKind>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // Try to deserialize as Option<ObjectKind>
+        // If it fails (e.g., no child elements match the enum), return None
+        match Option::<ObjectKind>::deserialize(deserializer) {
+            Ok(val) => Ok(val),
+            Err(_) => Ok(None),
+        }
+    }
+}
+
 /// Represents a 3D object in a 3MF model, either a mesh, component assembly, or boolean shape.
 ///
 /// Objects are the primary building blocks of 3MF models. They can contain:
@@ -112,7 +141,14 @@ pub struct Object {
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
     pub uuid: Option<String>,
 
-    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "#content", default))]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            rename = "#content",
+            default = "crate::core::object::serde_object_kind::default_none",
+            deserialize_with = "crate::core::object::serde_object_kind::deserialize"
+        )
+    )]
     pub kind: Option<ObjectKind>,
     // /// The Mesh contained in this object. See [`Mesh`]
     // ///

@@ -96,5 +96,11 @@ name = "query_example"
 path = "examples/query_example.rs"
 required-features = ["io-memory-optimized-read"]
 
+[[example]]
+name = "boolean_write"
+path = "examples/boolean_write.rs"
+required-features = ["io-write"]
+
+
 [package.metadata.cargo-all-features]
 max_combination_size = 3

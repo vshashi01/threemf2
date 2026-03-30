@@ -7,7 +7,6 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-#[cfg(feature = "write")]
 use crate::{
     core::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
     threemf_namespaces::{
