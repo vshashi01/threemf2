@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release.
+ - 24 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 8 unique issues were worked on: [#22](https://github.com/vshashi01/threemf2/issues/22), [#24](https://github.com/vshashi01/threemf2/issues/24), [#25](https://github.com/vshashi01/threemf2/issues/25), [#26](https://github.com/vshashi01/threemf2/issues/26), [#27](https://github.com/vshashi01/threemf2/issues/27), [#28](https://github.com/vshashi01/threemf2/issues/28), [#29](https://github.com/vshashi01/threemf2/issues/29), [#30](https://github.com/vshashi01/threemf2/issues/30)
 
@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#30](https://github.com/vshashi01/threemf2/issues/30)**
     - Release v0.2.0 ([`69e5347`](https://github.com/vshashi01/threemf2/commit/69e53473f10a4079a181e8cfadeb2212038f0970))
  * **Uncategorized**
+    - Release threemf2 v0.2.0 ([`0500a8a`](https://github.com/vshashi01/threemf2/commit/0500a8af11792ff60952659e6b8d277d6c4c2a69))
     - Fixed the issue with xmlns missed in the namespace definitions for the model element. ([`b03ca18`](https://github.com/vshashi01/threemf2/commit/b03ca1802d95ea2d5ac53834ac31ef3a5ca0a363))
     - Fixed depedency and atttribute issue when only speed-optimized-read is enabled ([`5603a9a`](https://github.com/vshashi01/threemf2/commit/5603a9ab698293aff295c584ad7f9e0b1290c0e8))
     - Adjusting changelogs prior to release of threemf2 v0.1.2 ([`2839d6e`](https://github.com/vshashi01/threemf2/commit/2839d6e80af0926c10eb21c9bbcec524e98452f5))
