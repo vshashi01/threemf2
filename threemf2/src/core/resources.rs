@@ -101,9 +101,6 @@ mod write_tests {
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }],
             basematerials: vec![],
         };
@@ -207,9 +204,6 @@ mod memory_optimized_read_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: None,
-                    // mesh: None,
-                    // components: None,
-                    // booleanshape: None,
                 }],
                 basematerials: vec![],
             }
@@ -317,9 +311,6 @@ mod speed_optimized_read_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: None,
-                    // mesh: None,
-                    // components: None,
-                    // booleanshape: None,
                 }],
                 basematerials: vec![],
             }

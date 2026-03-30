@@ -25,8 +25,7 @@ use threemf2::{
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         metadata::Metadata,
         model::{Model, Unit},
-        object::{Object, ObjectType},
-        object_kind::ObjectKind,
+        object::{Object, ObjectKind, ObjectType},
         resources::Resources,
     },
     io::ThreemfPackage,
@@ -330,8 +329,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         uuid: None,
         kind: Some(ObjectKind::Mesh(cube_mesh_1)),
         // mesh: Some(cube_mesh_1),
-        // components: None,
-        // booleanshape: None,
     };
 
     let cube_object_2 = Object {
@@ -345,8 +342,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         uuid: None,
         kind: Some(ObjectKind::Mesh(cube_mesh_2)),
         // mesh: Some(cube_mesh_2),
-        // components: None,
-        // booleanshape: None,
     };
 
     let result_object = Object {
@@ -359,9 +354,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pindex: OptionalResourceIndex::none(),
         uuid: None,
         kind: Some(ObjectKind::BooleanShape(boolean_shape)),
-        // mesh: None,
-        // components: None,
-        // booleanshape: Some(boolean_shape),
     };
 
     // Create the model

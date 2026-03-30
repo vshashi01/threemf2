@@ -169,19 +169,16 @@ mod tests {
                             }
 
                             for obj in &model.resources.object {
-                                if let Some(kind) = &obj.kind {
-                                    total_objects += 1;
-
-                                    if kind.get_mesh().is_some() {
-                                        mesh_objects += 1;
-                                        if let Some(uuid) = &obj.uuid
-                                            && uuid == "79f98073-4eaa-4737-b065-041b98fb50a6"
-                                        {
-                                            found_object_by_uuid = true;
-                                        }
-                                    } else if kind.get_components_object().is_some() {
-                                        composedpart_objects += 1;
+                                total_objects += 1;
+                                if obj.get_mesh().is_some() {
+                                    mesh_objects += 1;
+                                    if let Some(uuid) = &obj.uuid
+                                        && uuid == "79f98073-4eaa-4737-b065-041b98fb50a6"
+                                    {
+                                        found_object_by_uuid = true;
                                     }
+                                } else if obj.get_components_object().is_some() {
+                                    composedpart_objects += 1;
                                 }
                             }
 
@@ -261,18 +258,16 @@ mod tests {
                             }
 
                             for obj in &model.resources.object {
-                                if let Some(kind) = &obj.kind {
-                                    total_objects += 1;
-                                    if kind.get_mesh().is_some() {
-                                        mesh_objects += 1;
-                                        if let Some(uuid) = &obj.uuid
-                                            && uuid == "79f98073-4eaa-4737-b065-041b98fb50a6"
-                                        {
-                                            found_object_by_uuid = true;
-                                        }
-                                    } else if kind.get_components_object().is_some() {
-                                        composedpart_objects += 1;
+                                total_objects += 1;
+                                if obj.get_mesh().is_some() {
+                                    mesh_objects += 1;
+                                    if let Some(uuid) = &obj.uuid
+                                        && uuid == "79f98073-4eaa-4737-b065-041b98fb50a6"
+                                    {
+                                        found_object_by_uuid = true;
                                     }
+                                } else if obj.get_components_object().is_some() {
+                                    composedpart_objects += 1;
                                 }
                             }
 

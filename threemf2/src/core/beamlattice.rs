@@ -699,8 +699,7 @@ mod memory_optimized_read_tests {
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::Model,
-            object::Object,
-            object_kind::ObjectKind,
+            object::{Object, ObjectKind},
             resources::Resources,
         },
         threemf_namespaces::{
@@ -1049,8 +1048,6 @@ mod memory_optimized_read_tests {
                                 beamsets: None,
                             }),
                         })),
-                        // components: None,
-                        // booleanshape: None
                     }],
                     basematerials: vec![]
                 },
@@ -1075,8 +1072,7 @@ mod speed_optimized_read_tests {
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::Model,
-            object::Object,
-            object_kind::ObjectKind,
+            object::{Object, ObjectKind},
             resources::Resources,
         },
         threemf_namespaces::{
@@ -1515,8 +1511,6 @@ mod speed_optimized_read_tests {
                                 beamsets: None,
                             }),
                         })),
-                        // components: None,
-                        // booleanshape: None
                     }],
                     basematerials: vec![]
                 },

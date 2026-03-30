@@ -153,8 +153,7 @@ mod write_tests {
         core::{
             OptionalResourceId, OptionalResourceIndex,
             boolean::{Boolean, BooleanOperation, BooleanShape},
-            object::Object,
-            object_kind::ObjectKind,
+            object::{Object, ObjectKind},
             transform::Transform,
         },
         threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX},
@@ -324,9 +323,7 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            // mesh: None,
-            // components: None,
-            // booleanshape:
+
             kind: Some(ObjectKind::BooleanShape(BooleanShape {
                 objectid: 95,
                 operation: BooleanOperation::Difference,
@@ -366,11 +363,9 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, ResourceId,
+            OptionalResourceId, OptionalResourceIndex,
             boolean::{Boolean, BooleanOperation, BooleanShape},
-            mesh::Mesh,
-            object::Object,
-            object_kind::ObjectKind,
+            object::{Object, ObjectKind},
             transform::Transform,
         },
         threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
@@ -532,9 +527,7 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape:
+
                 kind: Some(ObjectKind::BooleanShape(BooleanShape {
                     objectid: 95,
                     operation: BooleanOperation::Difference,
@@ -568,8 +561,7 @@ mod speed_optimized_read_tests {
         core::{
             OptionalResourceId, OptionalResourceIndex,
             boolean::{Boolean, BooleanOperation, BooleanShape},
-            object::Object,
-            object_kind::ObjectKind,
+            object::{Object, ObjectKind},
             transform::Transform,
         },
         threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
@@ -731,9 +723,7 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape:
+
                 kind: Some(ObjectKind::BooleanShape(BooleanShape {
                     objectid: 95,
                     operation: BooleanOperation::Difference,

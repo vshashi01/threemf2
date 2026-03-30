@@ -66,16 +66,9 @@ fn section_1_querying_objects(package: &ThreemfPackage) {
         }
 
         // Check object type
-        if obj_ref.object.kind.as_ref().unwrap().get_mesh().is_some() {
+        if obj_ref.object.get_mesh().is_some() {
             println!("  Type: Mesh Object");
-        } else if obj_ref
-            .object
-            .kind
-            .as_ref()
-            .unwrap()
-            .get_components_object()
-            .is_some()
-        {
+        } else if obj_ref.object.get_components_object().is_some() {
             println!("  Type: Composed Part");
         }
     }

@@ -15,8 +15,7 @@ mod tests {
             build::{Build, Item},
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             model::{Model, Unit},
-            object::{Object, ObjectType},
-            object_kind::ObjectKind,
+            object::{Object, ObjectKind, ObjectType},
             resources::Resources,
             types::OptionalResourceIndex,
         },
@@ -75,8 +74,6 @@ mod tests {
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
                         kind: Some(ObjectKind::Mesh(mesh.clone())), // mesh: Some(mesh.clone()),
-                                                                    // components: None,
-                                                                    // booleanshape: None,
                     }],
                     basematerials: vec![],
                 },
@@ -169,7 +166,7 @@ mod tests {
             let obj = &root_model.resources.object[0];
             assert_eq!(obj.id, 1);
             assert_eq!(obj.name, Some("Mesh".to_owned()));
-            assert!(obj.kind.as_ref().unwrap().get_mesh().is_some());
+            assert!(obj.get_mesh().is_some());
         }
     }
 }

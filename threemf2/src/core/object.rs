@@ -13,7 +13,6 @@ use crate::{
         boolean::BooleanShape,
         component::Components,
         mesh::Mesh,
-        object_kind::ObjectKind,
         types::{OptionalResourceIndex, ResourceId},
     },
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS},
@@ -113,6 +112,7 @@ pub struct Object {
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
     pub uuid: Option<String>,
 
+    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "#content", default))]
     pub kind: Option<ObjectKind>,
     // /// The Mesh contained in this object. See [`Mesh`]
     // ///
@@ -132,6 +132,38 @@ pub struct Object {
     //     xml(ns(BOOLEAN_NS))
     // )]
     // pub booleanshape: Option<BooleanShape>,
+}
+
+impl Object {
+    pub fn get_mesh(&self) -> Option<&Mesh> {
+        if let Some(kind) = &self.kind
+            && let ObjectKind::Mesh(mesh) = kind
+        {
+            Some(mesh)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_components_object(&self) -> Option<&Components> {
+        if let Some(kind) = &self.kind
+            && let ObjectKind::Components(comps) = kind
+        {
+            Some(comps)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_boolean_shape_object(&self) -> Option<&BooleanShape> {
+        if let Some(kind) = &self.kind
+            && let ObjectKind::BooleanShape(shape) = kind
+        {
+            Some(shape)
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -175,6 +207,21 @@ impl From<String> for ObjectType {
     }
 }
 
+#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
+#[cfg_attr(feature = "write", derive(ToXml))]
+#[derive(PartialEq, Debug, Clone)]
+#[cfg_attr(
+    any(feature = "write", feature = "memory-optimized-read"),
+    xml(forward)
+)]
+#[cfg_attr(feature = "speed-optimized-read", serde(rename_all = "lowercase"))]
+pub enum ObjectKind {
+    Mesh(Mesh),
+    Components(Components),
+    BooleanShape(BooleanShape),
+}
+
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod write_tests {
@@ -186,7 +233,6 @@ mod write_tests {
             OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
-            object_kind::ObjectKind,
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
@@ -194,7 +240,7 @@ mod write_tests {
         },
     };
 
-    use super::{Object, ObjectType};
+    use super::{Object, ObjectKind, ObjectType};
 
     use std::vec;
 
@@ -213,9 +259,7 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            kind: None, // mesh: None,
-                        // components: None,
-                        // booleanshape: None,
+            kind: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -238,9 +282,6 @@ mod write_tests {
             pindex: OptionalResourceIndex::none(),
             uuid: Some("someUUID".to_owned()),
             kind: None,
-            // mesh: None,
-            // components: None,
-            // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -263,9 +304,6 @@ mod write_tests {
             pindex: OptionalResourceIndex::none(),
             uuid: None,
             kind: None,
-            // mesh: None,
-            // components: None,
-            // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
         println!("{}", object_string);
@@ -298,8 +336,6 @@ mod write_tests {
                  //     trianglesets: None,
                  //     beamlattice: None,
                  // }),
-                 // components: None,
-                 // booleanshape: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -328,16 +364,15 @@ mod write_tests {
                     path: None,
                     uuid: None,
                 }],
-            })), // mesh: None,
-                 // components: Some(Components {
-                 //     component: vec![Component {
-                 //         objectid: 23,
-                 //         transform: None,
-                 //         path: None,
-                 //         uuid: None,
-                 //     }],
-                 // }),
-                 // booleanshape: None,
+            })),
+            // components: Some(Components {
+            //     component: vec![Component {
+            //         objectid: 23,
+            //         transform: None,
+            //         path: None,
+            //         uuid: None,
+            //     }],
+            // }),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -386,14 +421,13 @@ mod memory_optimized_read_tests {
             OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
-            object_kind::ObjectKind,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
         },
     };
 
-    use super::{Object, ObjectType};
+    use super::{Object, ObjectKind, ObjectType};
 
     use std::vec;
 
@@ -414,9 +448,6 @@ mod memory_optimized_read_tests {
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -442,9 +473,6 @@ mod memory_optimized_read_tests {
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -469,9 +497,6 @@ mod memory_optimized_read_tests {
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -496,9 +521,6 @@ mod memory_optimized_read_tests {
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -533,8 +555,6 @@ mod memory_optimized_read_tests {
                     //     trianglesets: None,
                     //     beamlattice: None,
                     // }),
-                    // components: None,
-                    // booleanshape: None,
             }
         );
     }
@@ -565,8 +585,7 @@ mod memory_optimized_read_tests {
                         path: None,
                         uuid: None
                     }]
-                })) // mesh: None,
-                    // components: Some(Components {
+                })) // components: Some(Components {
                     //     component: vec![Component {
                     //         objectid: 23,
                     //         transform: None,
@@ -574,7 +593,6 @@ mod memory_optimized_read_tests {
                     //         uuid: None,
                     //     }],
                     // }),
-                    // booleanshape: None,
             }
         );
     }
@@ -624,14 +642,13 @@ mod speed_optimized_read_tests {
             OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
-            object_kind::ObjectKind,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
         },
     };
 
-    use super::{Object, ObjectType};
+    use super::{Object, ObjectKind, ObjectType};
 
     use std::vec;
 
@@ -652,9 +669,6 @@ mod speed_optimized_read_tests {
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -680,9 +694,6 @@ mod speed_optimized_read_tests {
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -707,9 +718,6 @@ mod speed_optimized_read_tests {
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -734,9 +742,6 @@ mod speed_optimized_read_tests {
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
                 kind: None,
-                // mesh: None,
-                // components: None,
-                // booleanshape: None,
             }
         );
     }
@@ -771,8 +776,6 @@ mod speed_optimized_read_tests {
                     //     trianglesets: None,
                     //     beamlattice: None,
                     // }),
-                    // components: None,
-                    // booleanshape: None,
             }
         );
     }
@@ -783,10 +786,10 @@ mod speed_optimized_read_tests {
             r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
             CORE_NS, PROD_PREFIX, PROD_NS
         );
-        let object = from_str::<Object>(&xml_string).unwrap();
-
+        let object = from_str::<Object>(&xml_string);
+        println!("{object:?}");
         assert_eq!(
-            object,
+            object.unwrap(),
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
@@ -803,8 +806,7 @@ mod speed_optimized_read_tests {
                         path: None,
                         uuid: None,
                     }]
-                })) // mesh: None,
-                    // components: Some(Components {
+                })) // components: Some(Components {
                     //     component: vec![Component {
                     //         objectid: 23,
                     //         transform: None,
@@ -812,7 +814,6 @@ mod speed_optimized_read_tests {
                     //         uuid: None,
                     //     }],
                     // }),
-                    // booleanshape: None,
             }
         );
     }

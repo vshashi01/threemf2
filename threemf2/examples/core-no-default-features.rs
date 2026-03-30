@@ -4,8 +4,7 @@ use threemf2::core::{
     mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
     metadata::Metadata,
     model::{Model, Unit},
-    object::{Object, ObjectType},
-    object_kind::ObjectKind,
+    object::{Object, ObjectKind, ObjectType},
     resources::Resources,
     types::OptionalResourceIndex,
 };
@@ -61,8 +60,6 @@ fn main() {
                     // #[cfg(feature = "beam-lattice")]
                     beamlattice: None,
                 })),
-                // components: None,
-                // booleanshape: None,
             }],
             basematerials: vec![],
         },

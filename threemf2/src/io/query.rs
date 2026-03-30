@@ -166,8 +166,7 @@ use crate::{
         component::Components,
         mesh::Mesh,
         model::Model,
-        object::{Object, ObjectType},
-        object_kind::ObjectKind,
+        object::{Object, ObjectKind, ObjectType},
         transform::Transform,
     },
     io::ThreemfPackage,
@@ -449,7 +448,7 @@ pub struct MeshObjectRef<'a>(GenericObjectRef<'a, Mesh>);
 impl<'a> MeshObjectRef<'a> {
     fn new(o: ObjectRef<'a>) -> Self {
         MeshObjectRef(GenericObjectRef {
-            entity: o.object.kind.as_ref().unwrap().get_mesh().unwrap(),
+            entity: o.object.get_mesh().unwrap(),
             id: o.object.id,
             object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
             thumbnail: o.object.thumbnail.clone(),
@@ -671,13 +670,7 @@ pub struct ComponentsObjectRef<'a>(GenericObjectRef<'a, Components>);
 impl<'a> ComponentsObjectRef<'a> {
     fn new(o: ObjectRef<'a>) -> Self {
         ComponentsObjectRef(GenericObjectRef {
-            entity: o
-                .object
-                .kind
-                .as_ref()
-                .unwrap()
-                .get_components_object()
-                .unwrap(),
+            entity: o.object.get_components_object().unwrap(),
             id: o.object.id,
             object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
             thumbnail: o.object.thumbnail.clone(),
@@ -1445,7 +1438,7 @@ mod tests {
 
         match object_ref {
             Some(obj_ref) => {
-                assert!(obj_ref.object.kind.as_ref().unwrap().get_mesh().is_some());
+                assert!(obj_ref.object.get_mesh().is_some());
                 assert_eq!(obj_ref.object.id, 1);
             }
             None => panic!("Object ref not found"),

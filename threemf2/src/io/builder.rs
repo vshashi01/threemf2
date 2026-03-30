@@ -128,8 +128,7 @@ use crate::{
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         metadata::Metadata,
         model::Model,
-        object::Object,
-        object_kind::ObjectKind,
+        object::{Object, ObjectKind},
         resources::Resources,
         transform::Transform,
     },
@@ -546,9 +545,7 @@ impl ModelBuilder {
         let id = builder.object_id;
         let object = builder.build()?;
 
-        if let Some(kind) = &object.kind
-            && let Some(mesh) = kind.get_mesh()
-        {
+        if let Some(mesh) = object.get_mesh() {
             self.set_recommended_namespaces_for_mesh(mesh);
         }
 
@@ -907,8 +904,7 @@ impl ModelBuilder {
                 break;
             }
 
-            if let Some(kind) = &object.kind
-                && let Some(mesh) = kind.get_mesh()
+            if let Some(mesh) = object.get_mesh()
                 && let Some(beam_lattice) = &mesh.beamlattice
             {
                 is_beam_lattice_required = true;
@@ -941,15 +937,11 @@ impl ModelBuilder {
         }
 
         // Detect boolean operations extension
-        let is_boolean_required = self.resources.objects.iter().any(|obj| {
-            if let Some(kind) = &obj.kind
-                && kind.get_boolean_shape_object().is_some()
-            {
-                true
-            } else {
-                false
-            }
-        });
+        let is_boolean_required = self
+            .resources
+            .objects
+            .iter()
+            .any(|obj| obj.get_boolean_shape_object().is_some());
 
         if is_boolean_required {
             let is_boolean_ext_set = required_extensions.iter().find(|ns| ns.uri == BOOLEAN_NS);
@@ -1342,8 +1334,6 @@ impl MeshObjectBuilder {
             uuid: self.uuid,
             kind: Some(ObjectKind::Mesh(mesh)),
             // mesh: Some(mesh),
-            // components: None,
-            // booleanshape: None,
         })
     }
 }
@@ -1722,9 +1712,8 @@ impl ComponentsObjectBuilder {
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
-            kind: Some(ObjectKind::Components(components)), // mesh: None,
-                                                            // components: Some(components),
-                                                            // booleanshape: None,
+            kind: Some(ObjectKind::Components(components)),
+            // components: Some(components),
         })
     }
 }
@@ -1971,9 +1960,6 @@ impl BooleanObjectBuilder {
             pindex: self.pindex,
             uuid: self.uuid,
             kind: Some(ObjectKind::BooleanShape(boolean_shape)),
-            // mesh: None,
-            // components: None,
-            // booleanshape: Some(boolean_shape),
         })
     }
 }
@@ -3020,12 +3006,7 @@ mod tests {
         builder.add_build(None).unwrap();
         builder.add_build_item(obj_id).unwrap();
         let model = builder.build().unwrap();
-        let mesh = model.resources.object[0]
-            .kind
-            .as_ref()
-            .unwrap()
-            .get_mesh()
-            .unwrap();
+        let mesh = model.resources.object[0].get_mesh().unwrap();
         assert_eq!(mesh.vertices.vertex.len(), 5);
         assert_eq!(mesh.triangles.triangle.len(), 3);
     }
@@ -3050,14 +3031,8 @@ mod tests {
         builder.add_build_item(obj2_id).unwrap();
         let model = builder.build().unwrap();
         let obj = &model.resources.object[1];
-        assert!(obj.kind.as_ref().unwrap().get_components_object().is_some());
-        let comp = &obj
-            .kind
-            .as_ref()
-            .unwrap()
-            .get_components_object()
-            .unwrap()
-            .component[0];
+        assert!(obj.get_components_object().is_some());
+        let comp = &obj.get_components_object().unwrap().component[0];
         assert_eq!(comp.objectid, obj1_id.0);
     }
 
@@ -3200,12 +3175,7 @@ mod tests {
         builder.add_build(None).unwrap();
         builder.add_build_item(obj_id).unwrap();
         let model = builder.build().unwrap();
-        let mesh = model.resources.object[0]
-            .kind
-            .as_ref()
-            .unwrap()
-            .get_mesh()
-            .unwrap();
+        let mesh = model.resources.object[0].get_mesh().unwrap();
         assert!(mesh.trianglesets.is_some());
         let sets = &mesh.trianglesets.as_ref().unwrap().trianglesets;
         assert_eq!(sets.len(), 2);
@@ -3541,9 +3511,9 @@ mod tests {
 
         assert_eq!(model.resources.object.len(), 1);
         let obj = &model.resources.object[0];
-        assert!(obj.kind.as_ref().unwrap().get_mesh().is_some());
+        assert!(obj.get_mesh().is_some());
 
-        let mesh = obj.kind.as_ref().unwrap().get_mesh().unwrap();
+        let mesh = obj.get_mesh().unwrap();
         assert!(mesh.beamlattice.is_some());
 
         assert_eq!(model.requiredextensions, Some("b ".to_owned()));
@@ -3573,12 +3543,7 @@ mod tests {
         builder.add_build_item(obj_id).unwrap();
 
         let model = builder.build().unwrap();
-        let mesh = model.resources.object[0]
-            .kind
-            .as_ref()
-            .unwrap()
-            .get_mesh()
-            .unwrap();
+        let mesh = model.resources.object[0].get_mesh().unwrap();
         let bl = mesh.beamlattice.as_ref().unwrap();
         assert!(bl.balls.is_some());
 
