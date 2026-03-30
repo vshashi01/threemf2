@@ -10,22 +10,56 @@ use serde::Deserialize;
 use crate::{
     core::{
         OptionalResourceId,
+        boolean::BooleanShape,
         component::Components,
         mesh::Mesh,
         types::{OptionalResourceIndex, ResourceId},
     },
-    threemf_namespaces::{CORE_NS, PROD_NS},
+    threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS},
 };
 
-/// Represents a 3D object in a 3MF model, either a mesh or a component assembly.
+/// Custom deserializer for `Option<ObjectKind>` to handle empty elements
+/// when using speed-optimized-read feature.
+#[cfg(feature = "speed-optimized-read")]
+pub mod serde_object_kind {
+    use super::ObjectKind;
+    use serde::{Deserialize, Deserializer};
+
+    /// Returns `None` as the default value for `Option<ObjectKind>`.
+    pub fn default_none() -> Option<ObjectKind> {
+        None
+    }
+
+    /// Deserializes `Option<ObjectKind>` with fallback to `None` on error.
+    ///
+    /// This handles the case where an `<object>` element has no child elements
+    /// (empty object), which would otherwise fail with `MissingChildOrAttribute`.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<ObjectKind>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // Try to deserialize as Option<ObjectKind>
+        // If it fails (e.g., no child elements match the enum), return None
+        match Option::<ObjectKind>::deserialize(deserializer) {
+            Ok(val) => Ok(val),
+            Err(_) => Ok(None),
+        }
+    }
+}
+
+/// Represents a 3D object in a 3MF model, either a mesh, component assembly, or boolean shape.
 ///
-/// Objects are the primary building blocks of 3MF models. They can contain triangle mesh
-/// geometry directly or reference other objects through components with transforms.
+/// Objects are the primary building blocks of 3MF models. They can contain:
+/// - Triangle mesh geometry directly ([`Object::mesh`])
+/// - References to other objects through components ([`Object::components`])
+/// - Boolean operations defining a shape ([`Object::booleanshape`])
+///
+/// These three options are mutually exclusive - an object can only have one of them set.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Debug, Clone)]
-#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS), rename="object"))]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS, bo=BOOLEAN_NS), rename="object"))]
 pub struct Object {
     /// A unique identifier for this object
     #[cfg_attr(
@@ -107,15 +141,65 @@ pub struct Object {
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
     pub uuid: Option<String>,
 
-    /// The Mesh contained in this object. See [`Mesh`]
-    ///
-    /// This field is mutually exclusive with [`Object::components`]
-    pub mesh: Option<Mesh>,
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            rename = "#content",
+            default = "crate::core::object::serde_object_kind::default_none",
+            deserialize_with = "crate::core::object::serde_object_kind::deserialize"
+        )
+    )]
+    pub kind: Option<ObjectKind>,
+    // /// The Mesh contained in this object. See [`Mesh`]
+    // ///
+    // /// This field is mutually exclusive with [`Object::components`]
+    // pub mesh: Option<Mesh>,
 
-    /// The Components contained in this object.
-    ///
-    /// This field is mutually exclusive with [`Object::mesh`]
-    pub components: Option<Components>,
+    // /// The Components contained in this object.
+    // ///
+    // /// This field is mutually exclusive with [`Object::mesh`] and [`Object::booleanshape`]
+    // pub components: Option<Components>,
+
+    // /// The BooleanShape defining boolean operations for this object.
+    // ///
+    // /// This field is mutually exclusive with [`Object::mesh`] and [`Object::components`]
+    // #[cfg_attr(
+    //     any(feature = "write", feature = "memory-optimized-read"),
+    //     xml(ns(BOOLEAN_NS))
+    // )]
+    // pub booleanshape: Option<BooleanShape>,
+}
+
+impl Object {
+    pub fn get_mesh(&self) -> Option<&Mesh> {
+        if let Some(kind) = &self.kind
+            && let ObjectKind::Mesh(mesh) = kind
+        {
+            Some(mesh)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_components_object(&self) -> Option<&Components> {
+        if let Some(kind) = &self.kind
+            && let ObjectKind::Components(comps) = kind
+        {
+            Some(comps)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_boolean_shape_object(&self) -> Option<&BooleanShape> {
+        if let Some(kind) = &self.kind
+            && let ObjectKind::BooleanShape(shape) = kind
+        {
+            Some(shape)
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -159,6 +243,22 @@ impl From<String> for ObjectType {
     }
 }
 
+#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
+#[cfg_attr(feature = "write", derive(ToXml))]
+#[derive(PartialEq, Debug, Clone)]
+#[cfg_attr(
+    any(feature = "write", feature = "memory-optimized-read"),
+    xml(forward)
+)]
+#[cfg_attr(feature = "speed-optimized-read", serde(rename_all = "lowercase"))]
+#[non_exhaustive]
+pub enum ObjectKind {
+    Mesh(Mesh),
+    Components(Components),
+    BooleanShape(BooleanShape),
+}
+
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod write_tests {
@@ -172,20 +272,20 @@ mod write_tests {
             mesh::{Mesh, Triangles, Vertices},
         },
         threemf_namespaces::{
-            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS,
-            CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
+            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
         },
     };
 
-    use super::{Object, ObjectType};
+    use super::{Object, ObjectKind, ObjectType};
 
     use std::vec;
 
     #[test]
     pub fn toxml_simple_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" id="4"></object>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
         );
         let object = Object {
             id: 4,
@@ -196,8 +296,7 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: None,
+            kind: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -207,8 +306,8 @@ mod write_tests {
     #[test]
     pub fn toxml_production_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" id="4" {}:UUID="someUUID"></object>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" {}:UUID="someUUID"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX
         );
         let object = Object {
             id: 4,
@@ -219,8 +318,7 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: Some("someUUID".to_owned()),
-            mesh: None,
-            components: None,
+            kind: None,
         };
         let object_string = to_string(&object).unwrap();
 
@@ -230,8 +328,8 @@ mod write_tests {
     #[test]
     pub fn toxml_intermediate_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
         );
         let object = Object {
             id: 4,
@@ -242,8 +340,7 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: None,
+            kind: None,
         };
         let object_string = to_string(&object).unwrap();
         println!("{}", object_string);
@@ -254,7 +351,7 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{CORE_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            r##"<object xmlns="{CORE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
         );
         let object = Object {
             id: 4,
@@ -265,13 +362,17 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: Some(Mesh {
+            kind: Some(ObjectKind::Mesh(Mesh {
                 vertices: Vertices { vertex: vec![] },
                 triangles: Triangles { triangle: vec![] },
                 trianglesets: None,
                 beamlattice: None,
-            }),
-            components: None,
+            })), // mesh: Some(Mesh {
+                 //     vertices: Vertices { vertex: vec![] },
+                 //     triangles: Triangles { triangle: vec![] },
+                 //     trianglesets: None,
+                 //     beamlattice: None,
+                 // }),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -281,8 +382,8 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_component_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
-            CORE_NS, PROD_PREFIX, PROD_NS
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
         );
         let object = Object {
             id: 4,
@@ -293,15 +394,14 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: Some(Components {
+            kind: Some(ObjectKind::Components(Components {
                 component: vec![Component {
                     objectid: 23,
                     transform: None,
                     path: None,
                     uuid: None,
                 }],
-            }),
+            })),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -356,7 +456,7 @@ mod memory_optimized_read_tests {
         },
     };
 
-    use super::{Object, ObjectType};
+    use super::{Object, ObjectKind, ObjectType};
 
     use std::vec;
 
@@ -376,8 +476,7 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -402,8 +501,7 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -427,8 +525,7 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -452,8 +549,7 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -477,13 +573,17 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: Some(Mesh {
+                kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
                     trianglesets: None,
-                    beamlattice: None,
-                }),
-                components: None,
+                    beamlattice: None
+                })) // mesh: Some(Mesh {
+                    //     vertices: Vertices { vertex: vec![] },
+                    //     triangles: Triangles { triangle: vec![] },
+                    //     trianglesets: None,
+                    //     beamlattice: None,
+                    // }),
             }
         );
     }
@@ -507,15 +607,21 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: Some(Components {
+                kind: Some(ObjectKind::Components(Components {
                     component: vec![Component {
                         objectid: 23,
                         transform: None,
                         path: None,
-                        uuid: None,
-                    }],
-                }),
+                        uuid: None
+                    }]
+                })) // components: Some(Components {
+                    //     component: vec![Component {
+                    //         objectid: 23,
+                    //         transform: None,
+                    //         path: None,
+                    //         uuid: None,
+                    //     }],
+                    // }),
             }
         );
     }
@@ -571,7 +677,7 @@ mod speed_optimized_read_tests {
         },
     };
 
-    use super::{Object, ObjectType};
+    use super::{Object, ObjectKind, ObjectType};
 
     use std::vec;
 
@@ -591,8 +697,7 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -617,8 +722,7 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -642,8 +746,7 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -667,8 +770,7 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
-                mesh: None,
-                components: None,
+                kind: None,
             }
         );
     }
@@ -692,13 +794,17 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: Some(Mesh {
+                kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
                     trianglesets: None,
                     beamlattice: None,
-                }),
-                components: None,
+                })) // mesh: Some(Mesh {
+                    //     vertices: Vertices { vertex: vec![] },
+                    //     triangles: Triangles { triangle: vec![] },
+                    //     trianglesets: None,
+                    //     beamlattice: None,
+                    // }),
             }
         );
     }
@@ -709,10 +815,10 @@ mod speed_optimized_read_tests {
             r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
             CORE_NS, PROD_PREFIX, PROD_NS
         );
-        let object = from_str::<Object>(&xml_string).unwrap();
-
+        let object = from_str::<Object>(&xml_string);
+        println!("{object:?}");
         assert_eq!(
-            object,
+            object.unwrap(),
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
@@ -722,15 +828,21 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                mesh: None,
-                components: Some(Components {
+                kind: Some(ObjectKind::Components(Components {
                     component: vec![Component {
                         objectid: 23,
                         transform: None,
                         path: None,
                         uuid: None,
-                    }],
-                }),
+                    }]
+                })) // components: Some(Components {
+                    //     component: vec![Component {
+                    //         objectid: 23,
+                    //         transform: None,
+                    //         path: None,
+                    //         uuid: None,
+                    //     }],
+                    // }),
             }
         );
     }

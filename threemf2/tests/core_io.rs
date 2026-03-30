@@ -166,9 +166,9 @@ mod tests {
 
                             for obj in &model.resources.object {
                                 total_objects += 1;
-                                if obj.mesh.is_some() {
+                                if obj.get_mesh().is_some() {
                                     mesh_objects += 1;
-                                } else if obj.components.is_some() {
+                                } else if obj.get_components_object().is_some() {
                                     composedpart_objects += 1;
                                 }
                             }
@@ -233,9 +233,9 @@ mod tests {
 
                             for obj in &model.resources.object {
                                 total_objects += 1;
-                                if obj.mesh.is_some() {
+                                if obj.get_mesh().is_some() {
                                     mesh_objects += 1;
-                                } else if obj.components.is_some() {
+                                } else if obj.get_components_object().is_some() {
                                     composedpart_objects += 1;
                                 }
                             }

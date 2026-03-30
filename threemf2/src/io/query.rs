@@ -9,11 +9,13 @@
 //! The query API is organized around lightweight reference types that wrap entities with
 //! additional context like the originating model path:
 //!
-//! - [`ObjectRef`] - References to any object (mesh or composed)
+//! - [`ObjectRef`] - References to any object (mesh, composed, or boolean shape)
 //! - [`MeshObjectRef`] - References to mesh objects with triangle geometry
-//! - [`ComponentsObjectRef`] - References to Components Object
+//! - [`ComponentsObjectRef`] - References to Components Object (assemblies)
+//! - [`BooleanShapeRef`] - References to Boolean Shape objects (CSG operations)
 //! - [`ItemRef`] - References to build items (objects to be manufactured)
 //! - [`ComponentRef`] - References to components within composed parts
+//! - [`BooleanRef`] - References to boolean operands within boolean shapes
 //! - [`ModelRef`] - References to models with their path information
 //!
 //! # Common Patterns
@@ -104,6 +106,42 @@
 //! }
 //! ```
 //!
+//! ## Working with Boolean Shape Objects
+//!
+//! Boolean shapes define objects through constructive solid geometry (CSG) operations:
+//!
+//! ```rust,ignore
+//! // Get all boolean shape objects
+//! for boolean_ref in get_boolean_shape_objects(&package) {
+//!     println!("Boolean shape {}:", boolean_ref.id);
+//!     println!("  Base object: {}", boolean_ref.base_objectid());
+//!     println!("  Operation: {:?}", boolean_ref.operation());
+//!     
+//!     // Check operation type
+//!     if boolean_ref.is_difference() {
+//!         println!("  Subtracting volumes");
+//!     } else if boolean_ref.is_union() {
+//!         println!("  Merging volumes");
+//!     } else if boolean_ref.is_intersection() {
+//!         println!("  Keeping intersection");
+//!     }
+//!     
+//!     // List operands
+//!     for operand in boolean_ref.booleans() {
+//!         println!("  Operand: object {}", operand.objectid);
+//!         if let Some(path) = &operand.path {
+//!             println!("    From model: {}", path);
+//!         }
+//!     }
+//! }
+//!
+//! // Find all difference operations
+//! let diff_count = get_boolean_shape_objects(&package)
+//!     .filter(|b| b.is_difference())
+//!     .count();
+//! println!("Found {} subtraction operations", diff_count);
+//! ```
+//!
 //! # Production Extension Support
 //!
 //! The 3MF Production extension adds UUIDs for tracking objects and items through
@@ -162,11 +200,12 @@ use std::ops::Deref;
 use crate::{
     core::{
         OptionalResourceId, OptionalResourceIndex,
+        boolean::{BooleanOperation, BooleanShape},
         build::Item,
         component::Components,
         mesh::Mesh,
         model::Model,
-        object::{Object, ObjectType},
+        object::{Object, ObjectKind, ObjectType},
         transform::Transform,
     },
     io::ThreemfPackage,
@@ -448,7 +487,7 @@ pub struct MeshObjectRef<'a>(GenericObjectRef<'a, Mesh>);
 impl<'a> MeshObjectRef<'a> {
     fn new(o: ObjectRef<'a>) -> Self {
         MeshObjectRef(GenericObjectRef {
-            entity: o.object.mesh.as_ref().unwrap(),
+            entity: o.object.get_mesh().unwrap(),
             id: o.object.id,
             object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
             thumbnail: o.object.thumbnail.clone(),
@@ -603,7 +642,16 @@ pub fn get_mesh_objects_from_model_ref<'a>(
         .resources
         .object
         .iter()
-        .filter(|o| o.mesh.is_some())
+        //.filter(|o| o.mesh.is_some())
+        .filter(|o| {
+            if let Some(kind) = &o.kind
+                && let ObjectKind::Mesh(_) = kind
+            {
+                true
+            } else {
+                false
+            }
+        })
         .map(move |o| ObjectRef {
             object: o,
             path: model_ref.path,
@@ -661,7 +709,7 @@ pub struct ComponentsObjectRef<'a>(GenericObjectRef<'a, Components>);
 impl<'a> ComponentsObjectRef<'a> {
     fn new(o: ObjectRef<'a>) -> Self {
         ComponentsObjectRef(GenericObjectRef {
-            entity: o.object.components.as_ref().unwrap(),
+            entity: o.object.get_components_object().unwrap(),
             id: o.object.id,
             object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
             thumbnail: o.object.thumbnail.clone(),
@@ -719,6 +767,232 @@ impl<'a> ComponentsObjectRef<'a> {
 
 impl<'a> Deref for ComponentsObjectRef<'a> {
     type Target = GenericObjectRef<'a, Components>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+/// A reference to a boolean shape object with convenient access to boolean operations.
+///
+/// Boolean shapes define objects by applying boolean operations (union, difference, intersection)
+/// between a base object and one or more operand objects.
+///
+/// # Accessing Data
+///
+/// * Call [`boolean_shape()`](BooleanShapeRef::boolean_shape) to get the underlying boolean shape data
+/// * Use [`base_objectid()`](BooleanShapeRef::base_objectid) to get the base object reference
+/// * Use [`operation()`](BooleanShapeRef::operation) to determine the operation type
+/// * Call [`booleans()`](BooleanShapeRef::booleans) to iterate over operands
+/// * Use convenience methods [`is_union()`](BooleanShapeRef::is_union), [`is_difference()`](BooleanShapeRef::is_difference),
+///   [`is_intersection()`](BooleanShapeRef::is_intersection) for quick operation type checking
+/// * Access object metadata directly (id, name, uuid, etc.) via [`Deref`]
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// for boolean_ref in get_boolean_shape_objects(&package) {
+///     // Access object metadata via Deref
+///     println!("Boolean Shape: {} (ID: {})",
+///         boolean_ref.name.as_deref().unwrap_or("unnamed"),
+///         boolean_ref.id
+///     );
+///     
+///     // Access boolean operation details
+///     println!("  Base object: {}", boolean_ref.base_objectid());
+///     println!("  Operation: {:?}", boolean_ref.operation());
+///     
+///     // Check operation type
+///     if boolean_ref.is_difference() {
+///         println!("  This is a subtraction operation");
+///     }
+///     
+///     // List operands
+///     for operand in boolean_ref.booleans() {
+///         println!("  Operand: object {}", operand.objectid);
+///         if let Some(transform) = &operand.transform {
+///             println!("    Has transform");
+///         }
+///     }
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_boolean_shape_objects()`] - Get all boolean shapes from a package
+/// * [`BooleanShape`] - The underlying boolean shape type
+/// * [`BooleanOperation`] - The operation type enum
+pub struct BooleanShapeRef<'a>(GenericObjectRef<'a, BooleanShape>);
+
+impl<'a> BooleanShapeRef<'a> {
+    fn new(o: ObjectRef<'a>) -> Self {
+        BooleanShapeRef(GenericObjectRef {
+            entity: o.object.get_boolean_shape_object().unwrap(),
+            id: o.object.id,
+            object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
+            thumbnail: o.object.thumbnail.clone(),
+            part_number: o.object.partnumber.clone(),
+            name: o.object.name.clone(),
+            pid: o.object.pid,
+            pindex: o.object.pindex,
+            uuid: o.object.uuid.clone(),
+            origin_model_path: o.path,
+        })
+    }
+
+    /// Returns a reference to the boolean shape data.
+    ///
+    /// The boolean shape contains the base object ID, operation type, transform,
+    /// and the sequence of boolean operands.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// for boolean_ref in get_boolean_shape_objects(&package) {
+    ///     let shape = boolean_ref.boolean_shape();
+    ///     println!("Base object: {}", shape.objectid);
+    ///     println!("Number of operands: {}", shape.booleans.len());
+    ///     
+    ///     if let Some(transform) = &shape.transform {
+    ///         println!("Base has transform");
+    ///     }
+    /// }
+    /// ```
+    pub fn boolean_shape(&self) -> &'a BooleanShape {
+        self.entity
+    }
+
+    /// Returns the ID of the base object.
+    ///
+    /// The base object is the primary shape to which boolean operations are applied.
+    /// It can be a mesh object, another boolean shape, or other shape types.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// for boolean_ref in get_boolean_shape_objects(&package) {
+    ///     let base_id = boolean_ref.base_objectid();
+    ///     println!("Boolean shape {} operates on object {}",
+    ///         boolean_ref.id, base_id);
+    /// }
+    /// ```
+    pub fn base_objectid(&self) -> u32 {
+        self.entity.objectid
+    }
+
+    /// Returns the boolean operation type.
+    ///
+    /// The operation determines how operands are combined with the base object:
+    /// - `Union`: Merges shapes together
+    /// - `Difference`: Subtracts operands from the base
+    /// - `Intersection`: Keeps only overlapping volume
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// use threemf2::io::query::*;
+    /// use threemf2::core::boolean::BooleanOperation;
+    ///
+    /// for boolean_ref in get_boolean_shape_objects(&package) {
+    ///     match boolean_ref.operation() {
+    ///         BooleanOperation::Union => println!("Union operation"),
+    ///         BooleanOperation::Difference => println!("Difference operation"),
+    ///         BooleanOperation::Intersection => println!("Intersection operation"),
+    ///     }
+    /// }
+    /// ```
+    pub fn operation(&self) -> BooleanOperation {
+        self.entity.operation
+    }
+
+    /// Returns true if the operation is Union.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// for boolean_ref in get_boolean_shape_objects(&package) {
+    ///     if boolean_ref.is_union() {
+    ///         println!("Merging shapes together");
+    ///     }
+    /// }
+    /// ```
+    pub fn is_union(&self) -> bool {
+        matches!(self.entity.operation, BooleanOperation::Union)
+    }
+
+    /// Returns true if the operation is Difference.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// for boolean_ref in get_boolean_shape_objects(&package) {
+    ///     if boolean_ref.is_difference() {
+    ///         println!("Subtracting shapes");
+    ///     }
+    /// }
+    /// ```
+    pub fn is_difference(&self) -> bool {
+        matches!(self.entity.operation, BooleanOperation::Difference)
+    }
+
+    /// Returns true if the operation is Intersection.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// for boolean_ref in get_boolean_shape_objects(&package) {
+    ///     if boolean_ref.is_intersection() {
+    ///         println!("Keeping only overlapping volume");
+    ///     }
+    /// }
+    /// ```
+    pub fn is_intersection(&self) -> bool {
+        matches!(self.entity.operation, BooleanOperation::Intersection)
+    }
+
+    /// Returns an iterator over the boolean operands.
+    ///
+    /// Operands are the mesh objects that participate in the boolean operation
+    /// with the base object. Each operand can have its own transform and path
+    /// for cross-model references.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// for boolean_ref in get_boolean_shape_objects(&package) {
+    ///     println!("Boolean shape {} has {} operands:",
+    ///         boolean_ref.id,
+    ///         boolean_ref.booleans().count()
+    ///     );
+    ///     
+    ///     for (i, operand) in boolean_ref.booleans().enumerate() {
+    ///         println!("  Operand {}: object {}", i + 1, operand.objectid);
+    ///         
+    ///         if let Some(transform) = &operand.transform {
+    ///             println!("    Has transform applied");
+    ///         }
+    ///         
+    ///         if let Some(path) = &operand.path {
+    ///             println!("    From model: {}", path);
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    pub fn booleans(&self) -> impl Iterator<Item = BooleanRef> + '_ {
+        self.entity.booleans.iter().map(|b| BooleanRef {
+            objectid: b.objectid,
+            transform: b.transform.clone(),
+            path: b.path.clone(),
+        })
+    }
+}
+
+impl<'a> Deref for BooleanShapeRef<'a> {
+    type Target = GenericObjectRef<'a, BooleanShape>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -783,6 +1057,52 @@ pub struct ComponentRef {
     pub transform: Option<Transform>,
     /// UUID of the component.
     pub uuid: Option<String>,
+}
+
+/// A reference to a boolean operand within a boolean shape.
+///
+/// Boolean operands reference mesh objects that participate in boolean operations
+/// (union, difference, intersection) with a base object.
+///
+/// # Fields
+///
+/// * `objectid` - The ID of the mesh object used as the boolean operand
+/// * `transform` - Optional transform applied to the operand before the operation
+/// * `path` - Optional path for cross-model references (production extension)
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// for boolean_shape in get_boolean_shape_objects(&package) {
+///     for operand in boolean_shape.booleans() {
+///         println!("Operand references object {}", operand.objectid);
+///         
+///         if let Some(transform) = &operand.transform {
+///             println!("  Has transform applied");
+///         }
+///         
+///         if let Some(path) = &operand.path {
+///             println!("  From model: {}", path);
+///         }
+///     }
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`BooleanShapeRef::booleans()`] - Get operands from a boolean shape
+/// * [`BooleanShapeRef`] - The parent boolean shape reference
+pub struct BooleanRef {
+    /// ID of the referenced mesh object.
+    pub objectid: u32,
+    /// Transform applied to the operand.
+    pub transform: Option<Transform>,
+    /// Path to the operand model file (production extension).
+    pub path: Option<String>,
 }
 /// A reference to a build item with convenient accessor methods.
 ///
@@ -1050,7 +1370,144 @@ pub fn get_components_objects_from_model_ref<'a>(
         .resources
         .object
         .iter()
-        .filter(|o| o.components.is_some())
+        //.filter(|o| o.components.is_some())
+        .filter(|o| {
+            if let Some(kind) = &o.kind
+                && let ObjectKind::Components(_) = kind
+            {
+                true
+            } else {
+                false
+            }
+        })
+        .map(move |o| ObjectRef {
+            object: o,
+            path: model_ref.path,
+        })
+}
+
+/// Returns an iterator over boolean shape objects in the package.
+///
+/// Boolean shapes define objects by applying boolean operations between a base object
+/// and one or more operands. This function returns only objects of type BooleanShape,
+/// filtering out mesh objects and composed parts.
+///
+/// # Arguments
+///
+/// * `package` - The 3MF package to query
+///
+/// # Returns
+///
+/// An iterator over [`BooleanShapeRef`] for all boolean shape objects.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // Analyze boolean operations
+/// for boolean_ref in get_boolean_shape_objects(&package) {
+///     println!("Boolean shape: {} (ID: {})",
+///         boolean_ref.name.as_deref().unwrap_or("unnamed"),
+///         boolean_ref.id
+///     );
+///     
+///     println!("  Base object: {}", boolean_ref.base_objectid());
+///     println!("  Operation: {:?}", boolean_ref.operation());
+///     
+///     // Count operands
+///     let operand_count = boolean_ref.booleans().count();
+///     println!("  Operands: {}", operand_count);
+///     
+///     // Check operation type
+///     if boolean_ref.is_difference() {
+///         println!("  This subtracts volumes");
+///     }
+/// }
+///
+/// // Find all difference operations
+/// let difference_count = get_boolean_shape_objects(&package)
+///     .filter(|b| b.is_difference())
+///     .count();
+/// println!("Total difference operations: {}", difference_count);
+/// ```
+///
+/// # See Also
+///
+/// * [`get_mesh_objects()`] - Get mesh objects (not boolean shapes)
+/// * [`get_components_objects()`] - Get composed parts
+/// * [`get_objects()`] - Get all objects (meshes, components, and boolean shapes)
+/// * [`BooleanShapeRef`] - The reference type returned
+pub fn get_boolean_shape_objects<'a>(
+    package: &'a ThreemfPackage,
+) -> impl Iterator<Item = BooleanShapeRef<'a>> {
+    iter_objects_from(package, get_boolean_shape_objects_from_model_ref).map(BooleanShapeRef::new)
+}
+
+/// Returns an iterator over boolean shape objects in a specific model.
+///
+/// Like [`get_boolean_shape_objects()`] but queries only a single model instance.
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`BooleanShapeRef`] for boolean shape objects in this model.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // Count boolean shapes per model
+/// let root_booleans = get_boolean_shape_objects_from_model(&package.root).count();
+/// println!("Root model: {} boolean shapes", root_booleans);
+///
+/// for (path, model) in &package.sub_models {
+///     let sub_booleans = get_boolean_shape_objects_from_model(model).count();
+///     if sub_booleans > 0 {
+///         println!("{}: {} boolean shapes", path, sub_booleans);
+///     }
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_boolean_shape_objects()`] - Query across all models
+pub fn get_boolean_shape_objects_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = BooleanShapeRef<'a>> {
+    get_boolean_shape_objects_from_model_ref(ModelRef { model, path: None })
+        .map(BooleanShapeRef::new)
+}
+
+/// Returns an iterator over boolean shape objects in the model reference.
+///
+/// Internal helper that preserves model path information.
+/// Most users should use [`get_boolean_shape_objects()`] or [`get_boolean_shape_objects_from_model()`].
+pub fn get_boolean_shape_objects_from_model_ref<'a>(
+    model_ref: ModelRef<'a>,
+) -> impl Iterator<Item = ObjectRef<'a>> {
+    model_ref
+        .model
+        .resources
+        .object
+        .iter()
+        .filter(|o| {
+            if let Some(kind) = &o.kind
+                && let ObjectKind::BooleanShape(_) = kind
+            {
+                true
+            } else {
+                false
+            }
+        })
         .map(move |o| ObjectRef {
             object: o,
             path: model_ref.path,
@@ -1420,7 +1877,7 @@ mod tests {
 
         match object_ref {
             Some(obj_ref) => {
-                assert!(obj_ref.object.mesh.is_some());
+                assert!(obj_ref.object.get_mesh().is_some());
                 assert_eq!(obj_ref.object.id, 1);
             }
             None => panic!("Object ref not found"),
@@ -1560,5 +2017,201 @@ mod tests {
             .filter(|i| i.origin_model_path.is_none())
             .count();
         assert!(root_items > 0);
+    }
+
+    #[test]
+    fn test_boolean_shape_query_api_exists() {
+        // This test verifies that all the boolean shape query types and functions exist
+        // and can be called. It doesn't require a boolean shape test file.
+
+        // Verify BooleanRef struct exists
+        let _boolean_ref = BooleanRef {
+            objectid: 1,
+            transform: None,
+            path: None,
+        };
+
+        // Test that BooleanRef fields are accessible
+        assert_eq!(_boolean_ref.objectid, 1);
+        assert!(_boolean_ref.transform.is_none());
+        assert!(_boolean_ref.path.is_none());
+    }
+
+    #[test]
+    fn test_get_boolean_shape_objects_from_file() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mesh-booleans-operations-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let boolean_shapes = get_boolean_shape_objects(&package).collect::<Vec<_>>();
+
+        // Verify we find exactly 2 boolean shapes
+        assert_eq!(boolean_shapes.len(), 2, "Expected 2 boolean shapes");
+
+        // Verify we can access all boolean shapes
+        for boolean_ref in &boolean_shapes {
+            assert!(!boolean_ref.boolean_shape().booleans.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_boolean_shape_operations() {
+        use crate::core::boolean::BooleanOperation;
+
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mesh-booleans-operations-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let boolean_shapes: std::collections::HashMap<u32, _> = get_boolean_shape_objects(&package)
+            .map(|b| (b.id, b))
+            .collect();
+
+        // Verify Object 6 has Intersection operation
+        let intersected = boolean_shapes
+            .get(&6)
+            .expect("Object 6 (Intersected) not found");
+        assert_eq!(intersected.operation(), BooleanOperation::Intersection);
+        assert!(intersected.is_intersection());
+        assert!(!intersected.is_difference());
+        assert!(!intersected.is_union());
+
+        // Verify Object 8 has Difference operation
+        let full_part = boolean_shapes
+            .get(&8)
+            .expect("Object 8 (Full part) not found");
+        assert_eq!(full_part.operation(), BooleanOperation::Difference);
+        assert!(full_part.is_difference());
+        assert!(!full_part.is_intersection());
+        assert!(!full_part.is_union());
+    }
+
+    #[test]
+    fn test_boolean_shape_base_objects() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mesh-booleans-operations-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let boolean_shapes: std::collections::HashMap<u32, _> = get_boolean_shape_objects(&package)
+            .map(|b| (b.id, b))
+            .collect();
+
+        // Verify Object 6 (Intersected) base is Object 4 (Cube)
+        let intersected = boolean_shapes.get(&6).expect("Object 6 not found");
+        assert_eq!(
+            intersected.base_objectid(),
+            4,
+            "Object 6 base should be Object 4 (Cube)"
+        );
+
+        // Verify Object 8 (Full part) base is Object 6 (Intersected - nested boolean!)
+        let full_part = boolean_shapes.get(&8).expect("Object 8 not found");
+        assert_eq!(
+            full_part.base_objectid(),
+            6,
+            "Object 8 base should be Object 6 (nested boolean)"
+        );
+    }
+
+    #[test]
+    fn test_boolean_operands_count() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mesh-booleans-operations-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let boolean_shapes: std::collections::HashMap<u32, _> = get_boolean_shape_objects(&package)
+            .map(|b| (b.id, b))
+            .collect();
+
+        // Verify "Intersected" (Object 6) has 1 operand (Sphere)
+        let intersected = boolean_shapes.get(&6).expect("Object 6 not found");
+        let intersected_operands: Vec<_> = intersected.booleans().collect();
+        assert_eq!(
+            intersected_operands.len(),
+            1,
+            "Object 6 should have 1 operand (Sphere)"
+        );
+
+        // Verify "Full part" (Object 8) has 3 operands (same Cylinder with 3 different transforms)
+        let full_part = boolean_shapes.get(&8).expect("Object 8 not found");
+        let full_part_operands: Vec<_> = full_part.booleans().collect();
+        assert_eq!(
+            full_part_operands.len(),
+            3,
+            "Object 8 should have 3 operands (Cylinder with different transforms)"
+        );
+    }
+
+    #[test]
+    fn test_boolean_operands_properties() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mesh-booleans-operations-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let boolean_shapes: std::collections::HashMap<u32, _> = get_boolean_shape_objects(&package)
+            .map(|b| (b.id, b))
+            .collect();
+
+        // Test Object 6 (Intersected) operand
+        let intersected = boolean_shapes.get(&6).expect("Object 6 not found");
+        let intersected_operands: Vec<_> = intersected.booleans().collect();
+        assert_eq!(
+            intersected_operands[0].objectid, 5,
+            "Object 6 operand should be Object 5 (Sphere)"
+        );
+        assert!(
+            intersected_operands[0].transform.is_some(),
+            "Sphere should have a transform"
+        );
+        assert!(
+            intersected_operands[0].path.is_none(),
+            "Sphere should not have a path (same model)"
+        );
+
+        // Test Object 8 (Full part) operands - all should be Object 3 (Cylinder)
+        let full_part = boolean_shapes.get(&8).expect("Object 8 not found");
+        let full_part_operands: Vec<_> = full_part.booleans().collect();
+
+        for (i, operand) in full_part_operands.iter().enumerate() {
+            assert_eq!(
+                operand.objectid, 3,
+                "Operand {} should reference Object 3 (Cylinder)",
+                i
+            );
+            assert!(
+                operand.transform.is_some(),
+                "Operand {} should have a transform",
+                i
+            );
+        }
+    }
+
+    #[test]
+    fn test_boolean_base_transform() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mesh-booleans-operations-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let boolean_shapes: std::collections::HashMap<u32, _> = get_boolean_shape_objects(&package)
+            .map(|b| (b.id, b))
+            .collect();
+
+        // Test Object 6 (Intersected) - base transform should exist
+        let intersected = boolean_shapes.get(&6).expect("Object 6 not found");
+        assert!(
+            intersected.boolean_shape().transform.is_some(),
+            "Object 6 base should have a transform"
+        );
     }
 }

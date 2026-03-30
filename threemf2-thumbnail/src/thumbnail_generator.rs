@@ -318,12 +318,12 @@ impl ThumbnailGenerator {
             })?;
 
         // If the object has a mesh, add it
-        if let Some(mesh) = &object.mesh {
+        if let Some(mesh) = object.get_mesh() {
             meshes.push((mesh, transform));
         }
 
         // If the object has components, recursively process them
-        if let Some(components) = &object.components {
+        if let Some(components) = object.get_components_object() {
             for component in &components.component {
                 let component_transform = component
                     .transform

@@ -675,8 +675,7 @@ mod tests {
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
                             uuid: Some("uuid".to_owned()),
-                            mesh: None,
-                            components: None,
+                            kind: None,
                         }],
                         basematerials: vec![],
                     },
@@ -915,6 +914,43 @@ mod tests {
                     .unwrap();
                 //println!("Namespaces: {:?}", root_namespaces);
                 assert_eq!(root_namespaces.len(), 4);
+            }
+            Err(err) => panic!("{:?}", err),
+        }
+    }
+
+    #[cfg(feature = "io-memory-optimized-read")]
+    #[test]
+    fn test_boolean_operations_namespace_tracking() {
+        use crate::threemf_namespaces::BOOLEAN_NS;
+
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mesh-booleans-operations-material.3mf");
+        let reader = File::open(path).unwrap();
+
+        let result = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true);
+        match result {
+            Ok(threemf) => {
+                let root_namespaces = threemf.get_namespaces_on_model(None).unwrap();
+
+                // Verify that Boolean Operations namespace is tracked
+                let has_boolean_ns = root_namespaces.iter().any(|ns| ns.uri == BOOLEAN_NS);
+                assert!(
+                    has_boolean_ns,
+                    "Boolean Operations namespace ({})",
+                    BOOLEAN_NS
+                );
+
+                // Also verify the namespace prefix
+                let boolean_ns = root_namespaces
+                    .iter()
+                    .find(|ns| ns.uri == BOOLEAN_NS)
+                    .expect("Boolean namespace should be present");
+                assert_eq!(
+                    boolean_ns.prefix.as_deref(),
+                    Some("bo"),
+                    "Boolean namespace should have 'bo' prefix"
+                );
             }
             Err(err) => panic!("{:?}", err),
         }

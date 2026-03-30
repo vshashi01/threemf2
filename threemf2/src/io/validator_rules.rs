@@ -275,7 +275,7 @@ mod tests {
     use super::*;
     use crate::core::{
         build::Build,
-        object::Object,
+        object::{Object, ObjectKind},
         resources::{BaseMaterials, Resources},
         types::OptionalResourceId,
     };
@@ -301,8 +301,7 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: None,
+            kind: None,
         }
     }
 
@@ -316,8 +315,7 @@ mod tests {
             pid: OptionalResourceId::new(pid),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: None,
+            kind: None,
         }
     }
 
@@ -462,8 +460,7 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::new(0),
             uuid: None,
-            mesh: None,
-            components: None,
+            kind: None,
         };
         let resources = Resources {
             object: vec![object],
@@ -558,10 +555,9 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
-            mesh: None,
-            components: Some(crate::core::component::Components {
+            kind: Some(ObjectKind::Components(crate::core::component::Components {
                 component: components,
-            }),
+            })),
         }
     }
 
@@ -575,13 +571,12 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
-            mesh: Some(crate::core::mesh::Mesh {
+            kind: Some(ObjectKind::Mesh(crate::core::mesh::Mesh {
                 vertices: crate::core::mesh::Vertices { vertex: vec![] },
                 triangles: crate::core::mesh::Triangles { triangle: vec![] },
                 trianglesets: None,
                 beamlattice: None,
-            }),
-            components: None,
+            })),
         }
     }
 

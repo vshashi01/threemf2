@@ -83,7 +83,7 @@ fn main() {
 
             if let Some(obj) = model.resources.object.first() {
                 println!("First object name: {:?}", obj.name);
-                if let Some(mesh) = &obj.mesh {
+                if let Some(mesh) = &obj.get_mesh() {
                     println!("Vertices: {}", mesh.vertices.vertex.len());
                     println!("Triangles: {}", mesh.triangles.triangle.len());
                 }

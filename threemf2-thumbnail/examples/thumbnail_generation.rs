@@ -5,7 +5,7 @@
 //!
 //! Run with: cargo run --example thumbnail_generation --features thumbnail-generation
 
-use threemf2::core::model::Model;
+use threemf2::core::{model::Model, object::ObjectKind};
 use threemf2_thumbnail::{ThumbnailConfig, ThumbnailGenerator};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -186,8 +186,7 @@ fn create_cube_model() -> Model {
 
     let object = Object {
         id: 1,
-        mesh: Some(mesh),
-        components: None,
+        kind: Some(ObjectKind::Mesh(mesh)),
         name: Some("Cube".to_string()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
