@@ -216,6 +216,7 @@ impl From<String> for ObjectType {
     xml(forward)
 )]
 #[cfg_attr(feature = "speed-optimized-read", serde(rename_all = "lowercase"))]
+#[non_exhaustive]
 pub enum ObjectKind {
     Mesh(Mesh),
     Components(Components),
@@ -365,14 +366,6 @@ mod write_tests {
                     uuid: None,
                 }],
             })),
-            // components: Some(Components {
-            //     component: vec![Component {
-            //         objectid: 23,
-            //         transform: None,
-            //         path: None,
-            //         uuid: None,
-            //     }],
-            // }),
         };
         let object_string = to_string(&object).unwrap();
 

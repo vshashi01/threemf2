@@ -2052,7 +2052,7 @@ mod tests {
 
         // Verify we can access all boolean shapes
         for boolean_ref in &boolean_shapes {
-            assert!(boolean_ref.boolean_shape().booleans.len() > 0);
+            assert!(!boolean_ref.boolean_shape().booleans.is_empty());
         }
     }
 
