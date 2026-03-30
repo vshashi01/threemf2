@@ -50,9 +50,9 @@ pub mod serde_object_kind {
 /// Represents a 3D object in a 3MF model, either a mesh, component assembly, or boolean shape.
 ///
 /// Objects are the primary building blocks of 3MF models. They can contain:
-/// - Triangle mesh geometry directly ([`Object::mesh`])
-/// - References to other objects through components ([`Object::components`])
-/// - Boolean operations defining a shape ([`Object::booleanshape`])
+/// - Triangle mesh geometry directly ([`ObjectKind::Mesh`])
+/// - References to other objects through components ([`ObjectKind::Components`])
+/// - Boolean operations defining a shape ([`ObjectKind::BooleanShape`])
 ///
 /// These three options are mutually exclusive - an object can only have one of them set.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]

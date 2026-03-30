@@ -26,8 +26,8 @@ pub type ResourceId = u32;
 /// Used for: vertex indices (v1, v2, v3), property indices (p1, p2, p3, pindex)
 pub type ResourceIndex = u32;
 
-/// Compact Optional type for ResourceId with Option<NonZeroU32>
-/// (4 bytes vs 8 bytes for Option<u32>)
+/// Compact Optional type for ResourceId with [`Option<NonZeroU32>`]
+/// (4 bytes vs 8 bytes for [`Option<u32>`])
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 pub struct OptionalResourceId(Option<NonZeroU32>);
@@ -144,7 +144,7 @@ impl instant_xml::Accumulate<OptionalResourceId> for OptionalResourceId {
 /// Sentinel value representing "None" for OptionalResourceIndex
 const OPTIONAL_RESOURCE_INDEX_NONE: u32 = u32::MAX;
 
-/// Compact Optional type for ResourceIndex (4 bytes vs 8 bytes for Option<u32>)
+/// Compact Optional type for ResourceIndex (4 bytes vs 8 bytes for [`Option<u32>`])
 /// Uses sentinel value instead of enum discriminant
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -352,7 +352,7 @@ impl IntoIndex for u32 {
 /// A new type wrapping the f64 so that a custom (de)serializer can be implemented using
 /// the lexical_core::f64 for better performance. This maybe renamed in the future to Number
 /// to align with the 3MF Naming conventions.
-/// From<f64> is implemented on this type and From<Double> is implemented for f64 for ease of use.
+/// [`From<f64>`] is implemented on this type and [`From<Double>`] is implemented for f64 for ease of use.
 pub struct Double(f64);
 
 impl Double {

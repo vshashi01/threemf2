@@ -144,8 +144,8 @@ impl Validator {
 
     /// Validates a single model using Model-scope rules only.
     ///
-    /// This method runs all validation rules that have [ValidationScope::Model].
-    /// Package-scope rules are skipped.
+    /// This method runs all specified Validation on the target Model that has scope [`ValidationScope::ModelOrPackage`].
+    /// Rules with [`ValidationScope::PackageOnly`] are skipped.
     ///
     /// # Returns
     ///
@@ -166,8 +166,8 @@ impl Validator {
     /// Validates a full package using all rules.
     ///
     /// This method runs all validation rules on the root model and all sub-models.
-    /// Model-scope rules are run on each model individually.
-    /// Package-scope rules are run once on the entire package.
+    /// Rules with [`ValidationScope::ModelOrPackage`] are run on each model individually.
+    /// Rules with [`ValidationScope::PackageOnly`] are run once on the entire package.
     ///
     /// # Returns
     ///
