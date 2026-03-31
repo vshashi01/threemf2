@@ -9,43 +9,14 @@ use serde::Deserialize;
 
 use crate::{
     core::{
-        OptionalResourceId,
         boolean::BooleanShape,
         component::Components,
         mesh::Mesh,
-        types::{OptionalResourceIndex, ResourceId},
+        slice::MeshResolution,
+        types::{OptionalResourceId, OptionalResourceIndex, ResourceId},
     },
-    threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS},
+    threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS, SLICE_NS},
 };
-
-/// Custom deserializer for `Option<ObjectKind>` to handle empty elements
-/// when using speed-optimized-read feature.
-#[cfg(feature = "speed-optimized-read")]
-pub mod serde_object_kind {
-    use super::ObjectKind;
-    use serde::{Deserialize, Deserializer};
-
-    /// Returns `None` as the default value for `Option<ObjectKind>`.
-    pub fn default_none() -> Option<ObjectKind> {
-        None
-    }
-
-    /// Deserializes `Option<ObjectKind>` with fallback to `None` on error.
-    ///
-    /// This handles the case where an `<object>` element has no child elements
-    /// (empty object), which would otherwise fail with `MissingChildOrAttribute`.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<ObjectKind>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        // Try to deserialize as Option<ObjectKind>
-        // If it fails (e.g., no child elements match the enum), return None
-        match Option::<ObjectKind>::deserialize(deserializer) {
-            Ok(val) => Ok(val),
-            Err(_) => Ok(None),
-        }
-    }
-}
 
 /// Represents a 3D object in a 3MF model, either a mesh, component assembly, or boolean shape.
 ///
@@ -59,7 +30,7 @@ pub mod serde_object_kind {
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Debug, Clone)]
-#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS, bo=BOOLEAN_NS), rename="object"))]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS, bo=BOOLEAN_NS, s=SLICE_NS), rename="object"))]
 pub struct Object {
     /// A unique identifier for this object
     #[cfg_attr(
@@ -140,6 +111,40 @@ pub struct Object {
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
     pub uuid: Option<String>,
+
+    /// Identifies the SliceStack that contains the slice data for this object.
+    /// If used alone, the slice data exists in the same file as the object.
+    /// If used with slicepath, the slice data is in the specified file.
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(attribute, ns(SLICE_NS))
+    )]
+    #[cfg_attr(
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::serde_optional_resource_id::default_none",
+            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+        )
+    )]
+    pub slicestackid: OptionalResourceId,
+
+    /// Absolute path to a non-root model file containing slice data.
+    /// Used in combination with slicestackid when slices are in separate files.
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(attribute, ns(SLICE_NS))
+    )]
+    pub slicepath: Option<String>,
+
+    /// Indicates the intended resolution of mesh models when slice data is present.
+    /// "fullres" means the mesh can regenerate the slices; "lowres" means it cannot.
+    /// Packages with "lowres" MUST list the slice extension in requiredextensions.
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(attribute, ns(SLICE_NS))
+    )]
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub meshresolution: Option<MeshResolution>,
 
     /// The actual geometry that is contained in this [`Object`].
     /// This deviates from the standard 3MF Data Model intentionally for
@@ -255,6 +260,35 @@ pub enum ObjectKind {
     BooleanShape(BooleanShape),
 }
 
+/// Custom deserializer for `Option<ObjectKind>` to handle empty elements
+/// when using speed-optimized-read feature.
+#[cfg(feature = "speed-optimized-read")]
+pub mod serde_object_kind {
+    use super::ObjectKind;
+    use serde::{Deserialize, Deserializer};
+
+    /// Returns `None` as the default value for `Option<ObjectKind>`.
+    pub fn default_none() -> Option<ObjectKind> {
+        None
+    }
+
+    /// Deserializes `Option<ObjectKind>` with fallback to `None` on error.
+    ///
+    /// This handles the case where an `<object>` element has no child elements
+    /// (empty object), which would otherwise fail with `MissingChildOrAttribute`.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<ObjectKind>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // Try to deserialize as Option<ObjectKind>
+        // If it fails (e.g., no child elements match the enum), return None
+        match Option::<ObjectKind>::deserialize(deserializer) {
+            Ok(val) => Ok(val),
+            Err(_) => Ok(None),
+        }
+    }
+}
+
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod write_tests {
@@ -292,6 +326,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         };
         let object_string = to_string(&object).unwrap();
@@ -314,6 +351,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: Some("someUUID".to_owned()),
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         };
         let object_string = to_string(&object).unwrap();
@@ -336,6 +376,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         };
         let object_string = to_string(&object).unwrap();
@@ -358,6 +401,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Mesh(Mesh {
                 vertices: Vertices { vertex: vec![] },
                 triangles: Triangles { triangle: vec![] },
@@ -390,6 +436,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Components(Components {
                 component: vec![Component {
                     objectid: 23,
@@ -472,6 +521,9 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -497,6 +549,9 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -521,6 +576,9 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -545,6 +603,9 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -569,6 +630,9 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
@@ -603,6 +667,9 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: Some(ObjectKind::Components(Components {
                     component: vec![Component {
                         objectid: 23,
@@ -693,6 +760,9 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -718,6 +788,9 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: Some("someUUID".to_owned()),
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -742,6 +815,9 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -766,6 +842,9 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: None,
             }
         );
@@ -790,6 +869,9 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
@@ -824,6 +906,9 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: Some(ObjectKind::Components(Components {
                     component: vec![Component {
                         objectid: 23,

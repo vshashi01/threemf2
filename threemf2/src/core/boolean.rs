@@ -323,6 +323,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
 
             kind: Some(ObjectKind::BooleanShape(BooleanShape {
                 objectid: 95,
@@ -527,6 +530,9 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
 
                 kind: Some(ObjectKind::BooleanShape(BooleanShape {
                     objectid: 95,
@@ -723,6 +729,9 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
 
                 kind: Some(ObjectKind::BooleanShape(BooleanShape {
                     objectid: 95,

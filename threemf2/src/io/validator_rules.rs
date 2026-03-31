@@ -301,6 +301,9 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         }
     }
@@ -315,6 +318,9 @@ mod tests {
             pid: OptionalResourceId::new(pid),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         }
     }
@@ -335,6 +341,7 @@ mod tests {
                 create_test_object(3),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -347,6 +354,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(1), create_test_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -361,6 +369,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(0)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -375,6 +384,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(2_147_483_648)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -394,6 +404,7 @@ mod tests {
                 create_test_object(2_147_483_648), // Error: out of range
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -411,6 +422,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object_with_pid(1, 10)],
             basematerials,
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -422,7 +434,8 @@ mod tests {
     fn test_resource_id_missing_pid_reference() {
         let resources = Resources {
             object: vec![create_test_object_with_pid(1, 10)],
-            basematerials: Vec::new(), // No BaseMaterials with id=10
+            basematerials: Vec::new(),
+            slicestack: Vec::new(), // No BaseMaterials with id=10
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -442,6 +455,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -460,11 +474,15 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::new(0),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         };
         let resources = Resources {
             object: vec![object],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -488,6 +506,7 @@ mod tests {
                 create_test_object_with_pid(4, 5),  // Valid
             ],
             basematerials,
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -505,6 +524,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -555,6 +575,9 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Components(crate::core::component::Components {
                 component: components,
             })),
@@ -571,6 +594,9 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Mesh(crate::core::mesh::Mesh {
                 vertices: crate::core::mesh::Vertices { vertex: vec![] },
                 triangles: crate::core::mesh::Triangles { triangle: vec![] },
@@ -587,6 +613,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -604,6 +631,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(2)]); // References object 2 which doesn't exist
         let model = create_test_model(resources, build);
@@ -624,6 +652,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1), create_test_mesh_object(2)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1), // Valid
@@ -649,6 +678,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![]);
         let model = create_test_model(resources, build);
@@ -670,6 +700,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(1)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -689,6 +720,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(999)]), // References object 999 which doesn't exist
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -720,6 +752,7 @@ mod tests {
                 ),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -738,6 +771,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1), create_test_mesh_object(2)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -756,6 +790,7 @@ mod tests {
                 create_test_object_with_components(1, vec![create_test_component(1)]), // Component references itself
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -777,6 +812,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(1)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -793,6 +829,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -809,6 +846,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(1)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -825,6 +863,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(999)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1),   // Valid

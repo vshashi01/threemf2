@@ -8,8 +8,8 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{object::Object, types::ResourceId},
-    threemf_namespaces::CORE_NS,
+    core::{object::Object, slice::SliceStack, types::ResourceId},
+    threemf_namespaces::{CORE_NS, SLICE_NS},
 };
 
 /// A collection of Objects and other properties that are referenced by other elements.
@@ -19,7 +19,7 @@ use crate::{
 #[derive(Default, PartialEq, Debug, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_NS), rename = "resources")
+    xml(ns(CORE_NS, s = SLICE_NS), rename = "resources")
 )]
 pub struct Resources {
     /// Collection of Object. See [`crate::core::object::Object`]
@@ -29,6 +29,14 @@ pub struct Resources {
     /// Collection of Materials.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub basematerials: Vec<BaseMaterials>,
+
+    /// Collection of SliceStack. See [`crate::core::slice::SliceStack`]
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(ns(SLICE_NS))
+    )]
+    pub slicestack: Vec<SliceStack>,
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -101,8 +109,12 @@ mod write_tests {
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 kind: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
             }],
             basematerials: vec![],
+            slicestack: vec![],
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -124,6 +136,7 @@ mod write_tests {
                     displaycolor: "#FEFEFE00".to_owned(),
                 }],
             }],
+            slicestack: vec![],
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -204,8 +217,12 @@ mod memory_optimized_read_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                 }],
                 basematerials: vec![],
+                slicestack: vec![],
             }
         );
     }
@@ -229,6 +246,7 @@ mod memory_optimized_read_tests {
                         displaycolor: "#FEFEFE00".to_owned(),
                     }],
                 }],
+                slicestack: vec![],
             }
         );
     }
@@ -311,8 +329,12 @@ mod speed_optimized_read_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                 }],
                 basematerials: vec![],
+                slicestack: vec![],
             }
         );
     }
@@ -336,6 +358,7 @@ mod speed_optimized_read_tests {
                         displaycolor: "#FEFEFE00".to_owned(),
                     }],
                 }],
+                slicestack: vec![],
             }
         );
     }

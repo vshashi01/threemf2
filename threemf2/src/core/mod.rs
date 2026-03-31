@@ -31,6 +31,9 @@ pub mod beamlattice;
 /// Defines the type representing a Boolean Shape element and other elements and attributes related to it.
 pub mod boolean;
 
+/// Defines the type representing the Slice extension element and related elements.
+pub mod slice;
+
 /// Defines 3MF specification-compliant type aliases for IDs and indices.
 pub mod types;
 

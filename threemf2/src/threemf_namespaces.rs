@@ -1,10 +1,15 @@
-/////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 ///  Namespaces & Prefixes related to the Core specification and its extensions
 pub const CORE_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
 
 pub const CORE_TRIANGLESET_NS: &str =
     "http://schemas.microsoft.com/3dmanufacturing/trianglesets/2021/07";
 pub const CORE_TRIANGLESET_PREFIX: &str = "t";
+
+////////////////////////////////////////////////////////////////////////////////////
+/// Namespaces & Prefixes related to the Slice extension
+pub const SLICE_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/slice/2015/07";
+pub const SLICE_PREFIX: &str = "s";
 
 ////////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Boolean operations extension
@@ -32,6 +37,9 @@ pub enum ThreemfNamespace {
     /// Core 3MF
     Core,
 
+    /// Slice extension specification
+    Slice,
+
     /// Boolean operations extension specification
     Boolean,
 
@@ -50,6 +58,7 @@ impl ThreemfNamespace {
     pub fn uri(&self) -> &'static str {
         match self {
             Self::Core => CORE_NS,
+            Self::Slice => SLICE_NS,
             Self::Boolean => BOOLEAN_NS,
             Self::Prod => PROD_NS,
             Self::BeamLattice => BEAM_LATTICE_NS,
@@ -63,6 +72,7 @@ impl ThreemfNamespace {
     pub fn prefix(&self) -> Option<&'static str> {
         match self {
             Self::Core => None, // default namespace
+            Self::Slice => Some(SLICE_PREFIX),
             Self::Boolean => Some(BOOLEAN_PREFIX),
             Self::Prod => Some(PROD_PREFIX),
             Self::BeamLattice => Some(BEAM_LATTICE_PREFIX),

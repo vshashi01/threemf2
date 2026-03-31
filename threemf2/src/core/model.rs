@@ -7,6 +7,8 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
+#[cfg(feature = "write")]
+use crate::core::resources;
 use crate::{
     core::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
     threemf_namespaces::{
@@ -107,6 +109,10 @@ impl Model {
             used.push(ThreemfNamespace::Boolean);
         }
 
+        if self.uses_slice_ns() {
+            used.push(ThreemfNamespace::Slice);
+        }
+
         used
     }
 
@@ -177,6 +183,10 @@ impl Model {
 
         false
     }
+
+    fn uses_slice_ns(&self) -> bool {
+        !self.resources.slicestack.is_empty()
+    }
 }
 
 #[cfg(feature = "write")]
@@ -219,6 +229,7 @@ mod write_tests {
             }],
             resources: Resources {
                 basematerials: vec![],
+                slicestack: vec![],
                 object: vec![Object {
                     id: 346,
                     objecttype: Some(ObjectType::Model),
@@ -229,6 +240,9 @@ mod write_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                 }],
             },
             build: Build {
@@ -293,8 +307,12 @@ mod write_tests {
                         trianglesets: None,
                         beamlattice: None,
                     })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                 }],
                 basematerials: vec![],
+                slicestack: vec![],
             },
             build: Build {
                 uuid: None,
@@ -320,6 +338,8 @@ mod write_tests {
             recommendedextensions: None,
             metadata: vec![],
             resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
                 object: vec![Object {
                     id: 1,
                     objecttype: Some(ObjectType::Model),
@@ -335,8 +355,10 @@ mod write_tests {
                         trianglesets: None,
                         beamlattice: None,
                     })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                 }],
-                basematerials: vec![],
             },
             build: Build {
                 uuid: None,
@@ -367,6 +389,8 @@ mod write_tests {
             recommendedextensions: None,
             metadata: vec![],
             resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
                 object: vec![Object {
                     id: 1,
                     objecttype: Some(ObjectType::Model),
@@ -396,6 +420,9 @@ mod write_tests {
                             beamsets: None,
                         }),
                     })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                     // mesh: Some(Mesh {
                     //     vertices: Vertices { vertex: vec![] },
                     //     triangles: Triangles { triangle: vec![] },
@@ -417,7 +444,6 @@ mod write_tests {
                     //     }),
                     // }),
                 }],
-                basematerials: vec![],
             },
             build: Build {
                 uuid: None,
@@ -448,6 +474,8 @@ mod write_tests {
             recommendedextensions: None,
             metadata: vec![],
             resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
                 object: vec![Object {
                     id: 1,
                     objecttype: Some(ObjectType::Model),
@@ -465,6 +493,9 @@ mod write_tests {
                         }),
                         beamlattice: None,
                     })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                     // mesh: Some(Mesh {
                     //     vertices: Vertices { vertex: vec![] },
                     //     triangles: Triangles { triangle: vec![] },
@@ -474,7 +505,6 @@ mod write_tests {
                     //     beamlattice: None,
                     // }),
                 }],
-                basematerials: vec![],
             },
             build: Build {
                 uuid: None,
@@ -505,6 +535,8 @@ mod write_tests {
             recommendedextensions: None,
             metadata: vec![],
             resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
                 object: vec![Object {
                     id: 1,
                     objecttype: Some(ObjectType::Model),
@@ -536,6 +568,9 @@ mod write_tests {
                             beamsets: None,
                         }),
                     })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                     // mesh: Some(Mesh {
                     //     vertices: Vertices { vertex: vec![] },
                     //     triangles: Triangles { triangle: vec![] },
@@ -559,7 +594,6 @@ mod write_tests {
                     //     }),
                     // }),
                 }],
-                basematerials: vec![],
             },
             build: Build {
                 uuid: None,
@@ -630,6 +664,7 @@ mod memory_optimized_read_tests {
                 }],
                 resources: Resources {
                     basematerials: vec![],
+                    slicestack: vec![],
                     object: vec![Object {
                         id: 346,
                         objecttype: Some(ObjectType::Model),
@@ -639,6 +674,9 @@ mod memory_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
                         kind: None,
                     }],
                 },
@@ -686,6 +724,7 @@ mod memory_optimized_read_tests {
                 }],
                 resources: Resources {
                     basematerials: vec![],
+                    slicestack: vec![],
                     object: vec![Object {
                         id: 346,
                         objecttype: Some(ObjectType::Model),
@@ -703,6 +742,9 @@ mod memory_optimized_read_tests {
                                 uuid: Some("someComponentUUID".to_owned()),
                             }]
                         })),
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
                         // mesh: none,
                         // components: some(components {
                         //     component: vec![component {
@@ -801,6 +843,7 @@ mod speed_optimized_read_tests {
                 }],
                 resources: Resources {
                     basematerials: vec![],
+                    slicestack: vec![],
                     object: vec![Object {
                         id: 346,
                         objecttype: Some(ObjectType::Model),
@@ -810,6 +853,9 @@ mod speed_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
                         kind: None,
                     }],
                 },
@@ -857,6 +903,7 @@ mod speed_optimized_read_tests {
                 }],
                 resources: Resources {
                     basematerials: vec![],
+                    slicestack: vec![],
                     object: vec![Object {
                         id: 346,
                         objecttype: Some(ObjectType::Model),
@@ -874,6 +921,9 @@ mod speed_optimized_read_tests {
                                 uuid: Some("someComponentUUID".to_owned()),
                             }]
                         })),
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
                         // components: Some(Components {
                         //     component: vec![Component {
                         //         objectid: 1,

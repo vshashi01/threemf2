@@ -978,6 +978,9 @@ mod memory_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
                         kind: Some(ObjectKind::Mesh(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
@@ -1049,7 +1052,8 @@ mod memory_optimized_read_tests {
                             }),
                         })),
                     }],
-                    basematerials: vec![]
+                    basematerials: vec![],
+                    slicestack: vec![],
                 },
                 build: Build {
                     uuid: None,
@@ -1441,6 +1445,9 @@ mod speed_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
                         kind: Some(ObjectKind::Mesh(Mesh {
                             vertices: Vertices {
                                 vertex: vec![
@@ -1512,7 +1519,8 @@ mod speed_optimized_read_tests {
                             }),
                         })),
                     }],
-                    basematerials: vec![]
+                    basematerials: vec![],
+                    slicestack: vec![],
                 },
                 build: Build {
                     uuid: None,
