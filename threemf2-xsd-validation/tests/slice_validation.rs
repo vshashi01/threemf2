@@ -9,11 +9,11 @@ use threemf2::{
     core::{
         OptionalResourceId, OptionalResourceIndex,
         build::{Build, Item},
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+        mesh::{self, Mesh, Triangle, Triangles, Vertex, Vertices},
         model::{Model, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
-        slice::{MeshResolution, Polygon, Segment, Slice, SliceStack, SliceVertex, SliceVertices},
+        slice::{self, MeshResolution, Polygon, Segment, Slice, SliceStack},
     },
     io::{
         ThreemfPackage,
@@ -44,10 +44,10 @@ fn validate_simple_slice() {
     // Create vertices for mesh - need at least 4 triangles for valid 3MF
     let vertices = Vertices {
         vertex: vec![
-            Vertex::new(0.0, 0.0, 0.0),
-            Vertex::new(10.0, 0.0, 0.0),
-            Vertex::new(10.0, 10.0, 0.0),
-            Vertex::new(0.0, 10.0, 0.0),
+            mesh::Vertex::new(0.0, 0.0, 0.0),
+            mesh::Vertex::new(10.0, 0.0, 0.0),
+            mesh::Vertex::new(10.0, 10.0, 0.0),
+            mesh::Vertex::new(0.0, 10.0, 0.0),
         ],
     };
 
@@ -93,16 +93,25 @@ fn validate_simple_slice() {
     };
 
     // Create slice data
-    let slice_vertices = SliceVertices {
+    let slice_vertices = slice::Vertices {
         vertex: vec![
-            SliceVertex { x: 0.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 10.0 },
+            slice::Vertex {
+                x: 0.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 10.0.into(),
+            },
         ],
     };
 
     let slice = Slice {
-        ztop: 0.1,
+        ztop: 0.1.into(),
         vertices: Some(slice_vertices),
         polygon: vec![Polygon {
             startv: 0,
@@ -125,7 +134,7 @@ fn validate_simple_slice() {
 
     let slicestack = SliceStack {
         id: 1,
-        zbottom: Some(0.0),
+        zbottom: Some(0.0.into()),
         slice: vec![slice],
         sliceref: vec![],
     };
@@ -212,21 +221,45 @@ fn validate_simple_slice() {
 #[test]
 fn validate_slice_multiple_polygons() {
     // Create slice with multiple polygons
-    let slice_vertices = SliceVertices {
+    let slice_vertices = slice::Vertices {
         vertex: vec![
-            SliceVertex { x: 0.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 10.0 },
-            SliceVertex { x: 0.0, y: 10.0 },
-            SliceVertex { x: 2.0, y: 2.0 },
-            SliceVertex { x: 8.0, y: 2.0 },
-            SliceVertex { x: 8.0, y: 8.0 },
-            SliceVertex { x: 2.0, y: 8.0 },
+            slice::Vertex {
+                x: 0.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 10.0.into(),
+            },
+            slice::Vertex {
+                x: 0.0.into(),
+                y: 10.0.into(),
+            },
+            slice::Vertex {
+                x: 2.0.into(),
+                y: 2.0.into(),
+            },
+            slice::Vertex {
+                x: 8.0.into(),
+                y: 2.0.into(),
+            },
+            slice::Vertex {
+                x: 8.0.into(),
+                y: 8.0.into(),
+            },
+            slice::Vertex {
+                x: 2.0.into(),
+                y: 8.0.into(),
+            },
         ],
     };
 
     let slice = Slice {
-        ztop: 0.1,
+        ztop: 0.1.into(),
         vertices: Some(slice_vertices),
         polygon: vec![
             // Outer polygon
@@ -282,7 +315,7 @@ fn validate_slice_multiple_polygons() {
 
     let slicestack = SliceStack {
         id: 1,
-        zbottom: Some(0.0),
+        zbottom: Some(0.0.into()),
         slice: vec![slice],
         sliceref: vec![],
     };

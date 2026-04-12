@@ -718,6 +718,7 @@ mod tests {
             writer
         };
 
+        // usually breaks due to additional namespace declaration that arent filtered out
         assert_eq!(bytes.into_inner().len(), 944);
     }
 

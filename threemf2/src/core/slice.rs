@@ -42,7 +42,10 @@
 //! ```
 
 use crate::{
-    core::{types::ResourceId, OptionalResourceId, OptionalResourceIndex, ResourceIndex},
+    core::{
+        OptionalResourceId, OptionalResourceIndex, ResourceIndex,
+        types::{Double, ResourceId},
+    },
     threemf_namespaces::SLICE_NS,
 };
 
@@ -55,13 +58,18 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
+const MAX_VERTEX_BUFFER: usize = 1000;
+
 /// Indicates the intended resolution of mesh models when slice data is present.
 ///
 /// When a 3MF package contains both mesh and slice data, this attribute helps
 /// consumers understand whether the mesh is intended for fabrication or is a
 /// lower-resolution representation.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
+#[cfg_attr(
+    feature = "speed-optimized-read",
+    serde(from = "String", rename_all = "lowercase")
+)]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
@@ -124,59 +132,20 @@ pub struct SliceStack {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub zbottom: Option<f64>,
+    pub zbottom: Option<Double>,
 
-    /// Actual slice data if this stack contains slices directly.
-    /// Mutually exclusive with `slicerefs`.
-    /// Note: serialized directly as `<slice>` elements without a wrapper
-    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "slice", default))]
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(rename = "slice")
-    )]
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub slice: Vec<Slice>,
 
-    /// References to external slice stacks if data is in separate files.
-    /// Mutually exclusive with `slice`.
-    /// Note: serialized directly as `<sliceref>` elements without a wrapper
-    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "sliceref", default))]
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(rename = "sliceref")
-    )]
-    pub sliceref: Vec<SliceRef>,
-}
-
-/// Container for slice elements within a slice stack.
-#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "slices")
-)]
-pub struct Slices {
-    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "slice", default))]
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(rename = "slice")
-    )]
-    pub slice: Vec<Slice>,
-}
-
-/// Container for sliceref elements within a slice stack.
-#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "slicerefs")
-)]
-pub struct SliceRefs {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub sliceref: Vec<SliceRef>,
+}
+
+impl SliceStack {
+    pub fn has_owned_slices(&self) -> bool {
+        // matches!(self.kind, SliceDataKind::Slice(_))
+        !self.slice.is_empty()
+    }
 }
 
 /// Reference to slice data in a separate model part within the 3MF package.
@@ -227,11 +196,11 @@ pub struct Slice {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub ztop: f64,
+    pub ztop: Double,
 
     /// 2D vertices for this slice. Required if slice contains geometry.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
-    pub vertices: Option<SliceVertices>,
+    pub vertices: Option<Vertices>,
 
     /// Polygons defining the contours of this slice.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
@@ -240,50 +209,138 @@ pub struct Slice {
 
 /// Container for 2D vertices within a slice.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "vertices")
-)]
-pub struct SliceVertices {
-    /// 2D vertex data. Must contain at least 2 vertices if present.
+#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "vertices"))]
+pub struct Vertices {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
-    pub vertex: Vec<SliceVertex>,
+    pub vertex: Vec<Vertex>,
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Vertices {
+    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: SLICE_NS,
+            name: "vertices",
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if into.is_some() {
+            return Err(instant_xml::Error::DuplicateValue(field));
+        }
+
+        let mut vertices: Vec<Vertex> = Vec::with_capacity(MAX_VERTEX_BUFFER);
+
+        while let Some(node) = deserializer.next() {
+            if let Ok(n) = node
+                && let instant_xml::de::Node::Open(element) = n
+            {
+                //println!("This is element value {:?}", element);
+                let mut vertex_value: Option<Vertex> = None;
+                let mut nested = deserializer.nested(element);
+
+                if <Vertex as instant_xml::FromXml>::deserialize(
+                    &mut vertex_value,
+                    "vertex",
+                    &mut nested,
+                )
+                .is_ok()
+                    && let Some(vertex) = vertex_value
+                {
+                    vertices.push(vertex);
+                };
+            }
+        }
+
+        vertices.shrink_to_fit();
+        *into = Some(Vertices { vertex: vertices });
+
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: instant_xml::Kind = instant_xml::Kind::Scalar;
 }
 
 /// 2D vertex representing a point in slice space.
 ///
 /// Vertices are referenced by zero-based indices in segments.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "vertex")
-)]
-pub struct SliceVertex {
-    /// X coordinate of the vertex.
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub x: f64,
+#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "vertex"))]
+pub struct Vertex {
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub x: Double,
 
-    /// Y coordinate of the vertex.
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
-    pub y: f64,
+    #[cfg_attr(feature = "write", xml(attribute))]
+    pub y: Double,
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Vertex {
+    #[inline]
+    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: SLICE_NS,
+            name: "vertex",
+        }
+    }
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _: &'static str,
+        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        use ::instant_xml::Error;
+        use ::instant_xml::de::Node;
+        let mut x: f64 = 0.0;
+        let mut y: f64 = 0.0;
+
+        while let Some(node) = deserializer.next() {
+            let node = node?;
+            match node {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+
+                    match id.name.as_bytes().first() {
+                        Some(b'x') => {
+                            x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
+                        Some(b'y') => {
+                            y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
+                        }
+                        _ => {}
+                    };
+                }
+                Node::Open(data) => {
+                    let mut nested = deserializer.nested(data);
+                    nested.ignore()?;
+                }
+                Node::Text(_) => {}
+                _ => {
+                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
+                }
+            }
+        }
+
+        *into = Some(Self {
+            x: Double::new(x),
+            y: Double::new(y),
+        });
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
 }
 
 /// Closed or open contour defined by a sequence of segments.
-///
-/// For model/solidsupport objects, polygons MUST be closed (final segment
-/// connects back to startv). For support objects, polygons are open contours.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
@@ -311,67 +368,138 @@ pub struct Polygon {
 /// first segment) to this segment's v2. This creates a chain of connected
 /// vertices that form the polygon.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
-#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "segment")
-)]
+#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "segment"))]
 pub struct Segment {
     /// Index of the second vertex of this segment.
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub v2: ResourceIndex,
 
     /// Property index for the first vertex of this segment (overrides slice-level).
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+        )
     )]
     pub p1: OptionalResourceIndex,
 
     /// Property index for the second vertex of this segment (overrides slice-level).
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
+        feature = "speed-optimized-read",
+        serde(
+            default = "crate::core::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+        )
     )]
     pub p2: OptionalResourceIndex,
 
     /// Property group ID for this segment (overrides object-level).
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_optional_resource_id::default_none",
-            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+            default = "crate::core::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,
 }
 
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for Segment {
+    #[inline]
+    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+        id == ::instant_xml::Id {
+            ns: SLICE_NS,
+            name: "segment",
+        }
+    }
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _: &'static str,
+        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        use ::instant_xml::Error;
+        use ::instant_xml::de::Node;
+        let mut v2: ResourceIndex = 0;
+        let mut p1: OptionalResourceIndex = OptionalResourceIndex::none();
+        let mut p2: OptionalResourceIndex = OptionalResourceIndex::none();
+        let mut pid: OptionalResourceId = OptionalResourceId::none();
+
+        while let Some(node) = deserializer.next() {
+            let node = node?;
+            match node {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+
+                    match id.name {
+                        "v2" => v2 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "p1" => {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
+                                p1 = OptionalResourceIndex::new(value);
+                            }
+                        }
+                        "p2" => {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
+                                p2 = OptionalResourceIndex::new(value);
+                            }
+                        }
+                        "pid" => {
+                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
+                                pid = OptionalResourceId::new(value);
+                            }
+                        }
+                        _ => {}
+                    };
+                }
+                Node::Open(data) => {
+                    let mut nested = deserializer.nested(data);
+                    nested.ignore()?;
+                }
+                Node::Text(_) => {}
+                _ => {
+                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
+                }
+            }
+        }
+
+        *into = Some(Self { v2, p1, p2, pid });
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+}
+
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod write_tests {
-    use instant_xml::to_string;
+    use instant_xml::{ToXml, to_string};
     use pretty_assertions::assert_eq;
 
     use crate::threemf_namespaces::SLICE_NS;
 
-    use super::{MeshResolution, Slice, SliceRef, SliceStack, SliceVertex, SliceVertices};
+    use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
+
+    #[derive(Debug, ToXml)]
+    struct WriteResolution {
+        res: MeshResolution,
+    }
 
     #[test]
     pub fn toxml_meshresolution_fullres_test() {
         let xml_string = format!(
-            r#"<MeshResolution xmlns="{}">fullres</MeshResolution>"#,
+            r#"<WriteResolution><res xmlns="{}">fullres</res></WriteResolution>"#,
             SLICE_NS
         );
-        let resolution = MeshResolution::FullRes;
+        let resolution = WriteResolution {
+            res: MeshResolution::FullRes,
+        };
         let resolution_string = to_string(&resolution).unwrap();
 
         assert_eq!(resolution_string, xml_string);
@@ -380,10 +508,12 @@ mod write_tests {
     #[test]
     pub fn toxml_meshresolution_lowres_test() {
         let xml_string = format!(
-            r#"<MeshResolution xmlns="{}">lowres</MeshResolution>"#,
+            r#"<WriteResolution><res xmlns="{}">lowres</res></WriteResolution>"#,
             SLICE_NS
         );
-        let resolution = MeshResolution::LowRes;
+        let resolution = WriteResolution {
+            res: MeshResolution::LowRes,
+        };
         let resolution_string = to_string(&resolution).unwrap();
 
         assert_eq!(resolution_string, xml_string);
@@ -392,7 +522,10 @@ mod write_tests {
     #[test]
     pub fn toxml_slice_vertex_test() {
         let xml_string = format!(r#"<vertex xmlns="{}" x="1.5" y="2.5" />"#, SLICE_NS);
-        let vertex = SliceVertex { x: 1.5, y: 2.5 };
+        let vertex = Vertex {
+            x: 1.5.into(),
+            y: 2.5.into(),
+        };
         let vertex_string = to_string(&vertex).unwrap();
 
         assert_eq!(vertex_string, xml_string);
@@ -401,17 +534,29 @@ mod write_tests {
     #[test]
     pub fn toxml_slice_test() {
         let xml_string = format!(
-            r#"<slice xmlns="{}" ztop="0.1"><vertices><vertex x="0.0" y="0.0" /><vertex x="1.0" y="0.0" /><vertex x="1.0" y="1.0" /><vertex x="0.0" y="1.0" /></vertices><polygon startv="0"><segment v2="1" /><segment v2="2" /><segment v2="3" /></polygon></slice>"#,
+            r#"<slice xmlns="{}" ztop="0.1"><vertices><vertex x="0" y="0" /><vertex x="1" y="0" /><vertex x="1" y="1" /><vertex x="0" y="1" /></vertices><polygon startv="0"><segment v2="1" /><segment v2="2" /><segment v2="3" /></polygon></slice>"#,
             SLICE_NS
         );
         let slice = Slice {
-            ztop: 0.1,
-            vertices: Some(SliceVertices {
+            ztop: 0.1.into(),
+            vertices: Some(Vertices {
                 vertex: vec![
-                    SliceVertex { x: 0.0, y: 0.0 },
-                    SliceVertex { x: 1.0, y: 0.0 },
-                    SliceVertex { x: 1.0, y: 1.0 },
-                    SliceVertex { x: 0.0, y: 1.0 },
+                    Vertex {
+                        x: 0.0.into(),
+                        y: 0.0.into(),
+                    },
+                    Vertex {
+                        x: 1.0.into(),
+                        y: 0.0.into(),
+                    },
+                    Vertex {
+                        x: 1.0.into(),
+                        y: 1.0.into(),
+                    },
+                    Vertex {
+                        x: 0.0.into(),
+                        y: 1.0.into(),
+                    },
                 ],
             }),
             polygon: vec![super::Polygon {
@@ -461,18 +606,25 @@ mod write_tests {
     #[test]
     pub fn toxml_slicestack_with_slices_test() {
         let xml_string = format!(
-            r#"<slicestack xmlns="{}" id="1" zbottom="0.0"><slice ztop="0.1"><vertices><vertex x="0.0" y="0.0" /><vertex x="1.0" y="0.0" /></vertices><polygon startv="0"><segment v2="1" /></polygon></slice></slicestack>"#,
+            r#"<slicestack xmlns="{}" id="1" zbottom="0"><slice ztop="0.1"><vertices><vertex x="0" y="0" /><vertex x="1" y="0" /></vertices><polygon startv="0"><segment v2="1" /></polygon></slice></slicestack>"#,
             SLICE_NS
         );
         let slicestack = SliceStack {
             id: 1,
-            zbottom: Some(0.0),
+            zbottom: Some(0.0.into()),
+            sliceref: vec![],
             slice: vec![Slice {
-                ztop: 0.1,
-                vertices: Some(SliceVertices {
+                ztop: 0.1.into(),
+                vertices: Some(Vertices {
                     vertex: vec![
-                        SliceVertex { x: 0.0, y: 0.0 },
-                        SliceVertex { x: 1.0, y: 0.0 },
+                        Vertex {
+                            x: 0.0.into(),
+                            y: 0.0.into(),
+                        },
+                        Vertex {
+                            x: 1.0.into(),
+                            y: 0.0.into(),
+                        },
                     ],
                 }),
                 polygon: vec![super::Polygon {
@@ -485,7 +637,6 @@ mod write_tests {
                     }],
                 }],
             }],
-            sliceref: vec![],
         };
         let slicestack_string = to_string(&slicestack).unwrap();
 
@@ -495,12 +646,12 @@ mod write_tests {
     #[test]
     pub fn toxml_slicestack_with_slicerefs_test() {
         let xml_string = format!(
-            r#"<slicestack xmlns="{}" id="1" zbottom="0.0"><sliceref slicestackid="2" slicepath="/2D/slices1.model" /><sliceref slicestackid="3" slicepath="/2D/slices2.model" /></slicestack>"#,
+            r#"<slicestack xmlns="{}" id="1" zbottom="0"><sliceref slicestackid="2" slicepath="/2D/slices1.model" /><sliceref slicestackid="3" slicepath="/2D/slices2.model" /></slicestack>"#,
             SLICE_NS
         );
         let slicestack = SliceStack {
             id: 1,
-            zbottom: Some(0.0),
+            zbottom: Some(0.0.into()),
             slice: vec![],
             sliceref: vec![
                 SliceRef {
@@ -528,7 +679,7 @@ mod memory_optimized_read_tests {
     use crate::core::{OptionalResourceId, OptionalResourceIndex};
     use crate::threemf_namespaces::SLICE_NS;
 
-    use super::{MeshResolution, Slice, SliceRef, SliceStack, SliceVertex, SliceVertices};
+    use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
 
     #[test]
     pub fn fromxml_meshresolution_fullres_test() {
@@ -555,9 +706,15 @@ mod memory_optimized_read_tests {
     #[test]
     pub fn fromxml_slice_vertex_test() {
         let xml_string = format!(r#"<vertex xmlns="{}" x="1.5" y="2.5" />"#, SLICE_NS);
-        let vertex = from_str::<SliceVertex>(&xml_string).unwrap();
+        let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
-        assert_eq!(vertex, SliceVertex { x: 1.5, y: 2.5 });
+        assert_eq!(
+            vertex,
+            Vertex {
+                x: 1.5.into(),
+                y: 2.5.into()
+            }
+        );
     }
 
     #[test]
@@ -571,11 +728,17 @@ mod memory_optimized_read_tests {
         assert_eq!(
             slice,
             Slice {
-                ztop: 0.1,
-                vertices: Some(SliceVertices {
+                ztop: 0.1.into(),
+                vertices: Some(Vertices {
                     vertex: vec![
-                        SliceVertex { x: 0.0, y: 0.0 },
-                        SliceVertex { x: 1.0, y: 0.0 },
+                        Vertex {
+                            x: 0.0.into(),
+                            y: 0.0.into()
+                        },
+                        Vertex {
+                            x: 1.0.into(),
+                            y: 0.0.into()
+                        },
                     ],
                 }),
                 polygon: vec![super::Polygon {
@@ -617,9 +780,8 @@ mod memory_optimized_read_tests {
         let slicestack = from_str::<SliceStack>(&xml_string).unwrap();
 
         assert_eq!(slicestack.id, 1);
-        assert_eq!(slicestack.zbottom, Some(0.0));
-        assert!(!slicestack.slice.is_empty());
-        assert!(slicestack.sliceref.is_empty());
+        assert_eq!(slicestack.zbottom, Some(0.0.into()));
+        assert!(slicestack.has_owned_slices());
     }
 
     #[test]
@@ -631,8 +793,7 @@ mod memory_optimized_read_tests {
         let slicestack = from_str::<SliceStack>(&xml_string).unwrap();
 
         assert_eq!(slicestack.id, 1);
-        assert!(slicestack.slice.is_empty());
-        assert!(!slicestack.sliceref.is_empty());
+        assert!(!slicestack.has_owned_slices());
     }
 }
 
@@ -645,7 +806,7 @@ mod speed_optimized_read_tests {
     use crate::core::{OptionalResourceId, OptionalResourceIndex};
     use crate::threemf_namespaces::SLICE_NS;
 
-    use super::{MeshResolution, Slice, SliceRef, SliceStack, SliceVertex, SliceVertices};
+    use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
 
     #[test]
     pub fn fromxml_meshresolution_fullres_test() {
@@ -672,9 +833,15 @@ mod speed_optimized_read_tests {
     #[test]
     pub fn fromxml_slice_vertex_test() {
         let xml_string = format!(r#"<vertex xmlns="{}" x="1.5" y="2.5" />"#, SLICE_NS);
-        let vertex = from_str::<SliceVertex>(&xml_string).unwrap();
+        let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
-        assert_eq!(vertex, SliceVertex { x: 1.5, y: 2.5 });
+        assert_eq!(
+            vertex,
+            Vertex {
+                x: 1.5.into(),
+                y: 2.5.into()
+            }
+        );
     }
 
     #[test]
@@ -688,11 +855,17 @@ mod speed_optimized_read_tests {
         assert_eq!(
             slice,
             Slice {
-                ztop: 0.1,
-                vertices: Some(SliceVertices {
+                ztop: 0.1.into(),
+                vertices: Some(Vertices {
                     vertex: vec![
-                        SliceVertex { x: 0.0, y: 0.0 },
-                        SliceVertex { x: 1.0, y: 0.0 },
+                        Vertex {
+                            x: 0.0.into(),
+                            y: 0.0.into()
+                        },
+                        Vertex {
+                            x: 1.0.into(),
+                            y: 0.0.into()
+                        },
                     ],
                 }),
                 polygon: vec![super::Polygon {
@@ -734,9 +907,8 @@ mod speed_optimized_read_tests {
         let slicestack = from_str::<SliceStack>(&xml_string).unwrap();
 
         assert_eq!(slicestack.id, 1);
-        assert_eq!(slicestack.zbottom, Some(0.0));
-        assert!(!slicestack.slice.is_empty());
-        assert!(slicestack.sliceref.is_empty());
+        assert_eq!(slicestack.zbottom, Some(0.0.into()));
+        assert!(slicestack.has_owned_slices())
     }
 
     #[test]
@@ -748,7 +920,6 @@ mod speed_optimized_read_tests {
         let slicestack = from_str::<SliceStack>(&xml_string).unwrap();
 
         assert_eq!(slicestack.id, 1);
-        assert!(slicestack.slice.is_empty());
-        assert!(!slicestack.sliceref.is_empty());
+        assert!(!slicestack.has_owned_slices());
     }
 }

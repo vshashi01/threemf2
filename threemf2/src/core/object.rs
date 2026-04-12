@@ -81,8 +81,8 @@ pub struct Object {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_optional_resource_id::default_none",
-            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+            default = "crate::core::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,
@@ -96,8 +96,8 @@ pub struct Object {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_impl::default_none",
-            deserialize_with = "crate::core::types::serde_impl::deserialize"
+            default = "crate::core::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
         )
     )]
     pub pindex: OptionalResourceIndex,
@@ -122,8 +122,8 @@ pub struct Object {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_optional_resource_id::default_none",
-            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+            default = "crate::core::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
         )
     )]
     pub slicestackid: OptionalResourceId,
@@ -300,10 +300,12 @@ mod write_tests {
             OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
+            slice,
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
-            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,
+            SLICE_PREFIX,
         },
     };
 
@@ -314,8 +316,8 @@ mod write_tests {
     #[test]
     pub fn toxml_simple_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4"></object>"#,
-            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, SLICE_PREFIX, SLICE_NS
         );
         let object = Object {
             id: 4,
@@ -339,8 +341,15 @@ mod write_tests {
     #[test]
     pub fn toxml_production_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" {}:UUID="someUUID"></object>"#,
-            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" {}:UUID="someUUID"></object>"#,
+            CORE_NS,
+            BOOLEAN_PREFIX,
+            BOOLEAN_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            PROD_PREFIX
         );
         let object = Object {
             id: 4,
@@ -364,8 +373,8 @@ mod write_tests {
     #[test]
     pub fn toxml_intermediate_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
-            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, SLICE_PREFIX, SLICE_NS
         );
         let object = Object {
             id: 4,
@@ -390,7 +399,7 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{CORE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            r##"<object xmlns="{CORE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{SLICE_PREFIX}="{SLICE_NS}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
         );
         let object = Object {
             id: 4,
@@ -409,12 +418,7 @@ mod write_tests {
                 triangles: Triangles { triangle: vec![] },
                 trianglesets: None,
                 beamlattice: None,
-            })), // mesh: Some(Mesh {
-                 //     vertices: Vertices { vertex: vec![] },
-                 //     triangles: Triangles { triangle: vec![] },
-                 //     trianglesets: None,
-                 //     beamlattice: None,
-                 // }),
+            })),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -424,8 +428,17 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_component_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
-            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:slicepath="/2D/model_with_slice_stack.model" {}:meshresolution="lowres"><components><component objectid="23" /></components></object>"##,
+            CORE_NS,
+            BOOLEAN_PREFIX,
+            BOOLEAN_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            SLICE_PREFIX,
+            SLICE_PREFIX,
+            SLICE_PREFIX
         );
         let object = Object {
             id: 4,
@@ -436,9 +449,9 @@ mod write_tests {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
-            slicestackid: OptionalResourceId::none(),
-            slicepath: None,
-            meshresolution: None,
+            slicestackid: OptionalResourceId::new(236),
+            slicepath: Some("/2D/model_with_slice_stack.model".to_owned()),
+            meshresolution: Some(slice::MeshResolution::LowRes),
             kind: Some(ObjectKind::Components(Components {
                 component: vec![Component {
                     objectid: 23,
@@ -495,9 +508,11 @@ mod memory_optimized_read_tests {
             OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
+            slice,
         },
         threemf_namespaces::{
-            CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
+            CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,
+            SLICE_PREFIX,
         },
     };
 
@@ -614,8 +629,16 @@ mod memory_optimized_read_tests {
     #[test]
     pub fn fromxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
-            CORE_NS, PROD_PREFIX, PROD_NS, CORE_TRIANGLESET_PREFIX, CORE_TRIANGLESET_NS
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:meshresolution="lowres"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            CORE_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            SLICE_PREFIX,
+            SLICE_PREFIX,
+            CORE_TRIANGLESET_PREFIX,
+            CORE_TRIANGLESET_NS,
         );
         let object = from_str::<Object>(&xml_string).unwrap();
 
@@ -630,20 +653,15 @@ mod memory_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                slicestackid: OptionalResourceId::none(),
+                slicestackid: OptionalResourceId::new(236),
                 slicepath: None,
-                meshresolution: None,
+                meshresolution: Some(slice::MeshResolution::LowRes),
                 kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
                     trianglesets: None,
                     beamlattice: None
-                })) // mesh: Some(Mesh {
-                    //     vertices: Vertices { vertex: vec![] },
-                    //     triangles: Triangles { triangle: vec![] },
-                    //     trianglesets: None,
-                    //     beamlattice: None,
-                    // }),
+                }))
             }
         );
     }
@@ -677,14 +695,7 @@ mod memory_optimized_read_tests {
                         path: None,
                         uuid: None
                     }]
-                })) // components: Some(Components {
-                    //     component: vec![Component {
-                    //         objectid: 23,
-                    //         transform: None,
-                    //         path: None,
-                    //         uuid: None,
-                    //     }],
-                    // }),
+                }))
             }
         );
     }
@@ -734,9 +745,11 @@ mod speed_optimized_read_tests {
             OptionalResourceId, OptionalResourceIndex,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
+            slice,
         },
         threemf_namespaces::{
-            CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX,
+            CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,
+            SLICE_PREFIX,
         },
     };
 
@@ -853,8 +866,16 @@ mod speed_optimized_read_tests {
     #[test]
     pub fn fromxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
-            CORE_NS, PROD_PREFIX, PROD_NS, CORE_TRIANGLESET_PREFIX, CORE_TRIANGLESET_NS
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:meshresolution="lowres"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            CORE_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            SLICE_PREFIX,
+            SLICE_PREFIX,
+            CORE_TRIANGLESET_PREFIX,
+            CORE_TRIANGLESET_NS,
         );
         let object = from_str::<Object>(&xml_string).unwrap();
 
@@ -869,20 +890,15 @@ mod speed_optimized_read_tests {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                slicestackid: OptionalResourceId::none(),
+                slicestackid: OptionalResourceId::new(236),
                 slicepath: None,
-                meshresolution: None,
+                meshresolution: Some(slice::MeshResolution::LowRes),
                 kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices { vertex: vec![] },
                     triangles: Triangles { triangle: vec![] },
                     trianglesets: None,
                     beamlattice: None,
-                })) // mesh: Some(Mesh {
-                    //     vertices: Vertices { vertex: vec![] },
-                    //     triangles: Triangles { triangle: vec![] },
-                    //     trianglesets: None,
-                    //     beamlattice: None,
-                    // }),
+                }))
             }
         );
     }
@@ -916,14 +932,7 @@ mod speed_optimized_read_tests {
                         path: None,
                         uuid: None,
                     }]
-                })) // components: Some(Components {
-                    //     component: vec![Component {
-                    //         objectid: 23,
-                    //         transform: None,
-                    //         path: None,
-                    //         uuid: None,
-                    //     }],
-                    // }),
+                }))
             }
         );
     }

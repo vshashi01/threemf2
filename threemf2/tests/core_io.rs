@@ -53,7 +53,7 @@ mod tests {
 
                 let validator = Validator::new()
                     .with_rule(ValidationRule::ObjectIdReference)
-                    .with_rule(ValidationRule::ResourceIdReference)
+                    .with_rule(ValidationRule::BaseMaterialReference)
                     .with_rule(ValidationRule::BuildItemReference)
                     .with_rule(ValidationRule::ComponentReference);
 
@@ -111,7 +111,7 @@ mod tests {
 
                 let validator = Validator::new()
                     .with_rule(ValidationRule::ObjectIdReference)
-                    .with_rule(ValidationRule::ResourceIdReference)
+                    .with_rule(ValidationRule::BaseMaterialReference)
                     .with_rule(ValidationRule::BuildItemReference)
                     .with_rule(ValidationRule::ComponentReference);
 

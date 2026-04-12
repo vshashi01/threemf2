@@ -307,8 +307,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_impl::default_none",
-            deserialize_with = "crate::core::types::serde_impl::deserialize"
+            default = "crate::core::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p1: OptionalResourceIndex,
@@ -318,8 +318,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_impl::default_none",
-            deserialize_with = "crate::core::types::serde_impl::deserialize"
+            default = "crate::core::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p2: OptionalResourceIndex,
@@ -329,8 +329,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_impl::default_none",
-            deserialize_with = "crate::core::types::serde_impl::deserialize"
+            default = "crate::core::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p3: OptionalResourceIndex,
@@ -340,8 +340,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::serde_optional_resource_id::default_none",
-            deserialize_with = "crate::core::types::serde_optional_resource_id::deserialize"
+            default = "crate::core::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,

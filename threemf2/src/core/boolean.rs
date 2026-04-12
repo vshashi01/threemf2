@@ -156,7 +156,9 @@ mod write_tests {
             object::{Object, ObjectKind},
             transform::Transform,
         },
-        threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX},
+        threemf_namespaces::{
+            BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
+        },
     };
 
     #[test]
@@ -348,13 +350,13 @@ mod write_tests {
         };
 
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><boolean objectid="66" /><boolean objectid="213" /></bo:booleanshape></object>"##,
-            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS,
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><boolean objectid="66" /><boolean objectid="213" /></bo:booleanshape></object>"##,
+            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, SLICE_PREFIX, SLICE_NS,
         );
 
         let obj_string = to_string(&obj).unwrap();
 
-        assert_eq!(xml_string, obj_string);
+        assert_eq!(obj_string, xml_string);
     }
 }
 

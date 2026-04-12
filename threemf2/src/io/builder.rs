@@ -130,17 +130,14 @@ use crate::{
         model::Model,
         object::{Object, ObjectKind},
         resources::Resources,
-        slice::{
-            MeshResolution, Polygon, Segment, Slice, SliceRef, SliceStack, SliceVertex,
-            SliceVertices,
-        },
+        slice::{self, MeshResolution, Polygon, Segment, Slice, SliceRef, SliceStack},
         transform::Transform,
     },
     io::XmlNamespace,
     threemf_namespaces::{
-        self, BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS,
-        BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,
-        SLICE_PREFIX,
+        BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX,
+        BOOLEAN_NS, BOOLEAN_PREFIX, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS,
+        PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
     },
 };
 
@@ -341,6 +338,9 @@ pub struct ModelBuilder {
     // tracks next object id
     next_object_id: ObjectId,
 
+    // tracks next slicestack id
+    next_slicestack_id: SliceStackId,
+
     // tracks if the model requires production ext
     // ensures UUID is set at the minimum
     is_production_ext_required: bool,
@@ -375,6 +375,7 @@ impl ModelBuilder {
             build: None,
             is_root,
             next_object_id: 1.into(),
+            next_slicestack_id: 1.into(),
             is_production_ext_required: false,
         }
     }
@@ -855,25 +856,37 @@ impl ModelBuilder {
     ///     });
     /// });
     /// ```
-    pub fn add_slice_stack<F>(&mut self, f: F) -> ResourceId
+    pub fn add_slice_stack<F>(&mut self, f: F) -> Result<SliceStackId, SliceStackBuilderError>
     where
         F: FnOnce(&mut SliceStackBuilder),
     {
-        let mut builder = SliceStackBuilder::new();
-
-        // Assign ID before calling the closure so users can reference it if needed
-        let id = self.next_object_id.0; // Use object ID counter for simplicity
-        builder.id(id);
+        let id = self.next_slicestack_id;
+        let mut builder = SliceStackBuilder::new(id);
 
         f(&mut builder);
-
-        let slice_stack = builder.build();
-        let assigned_id = slice_stack.id;
+        let slice_stack = builder.build()?;
 
         self.resources.slicestack.push(slice_stack);
-        self.next_object_id = ObjectId(id + 1);
+        self.next_slicestack_id = SliceStackId(id.0 + 1);
 
-        assigned_id
+        Ok(id)
+    }
+
+    /// Add a boolean shape object from a pre-configured [`BooleanObjectBuilder`].
+    ///
+    /// This is an advanced method for cases where you need to construct the builder
+    /// separately. Most users should use [`add_booleanshape_object()`](ModelBuilder::add_booleanshape_object) instead.
+    pub fn add_slice_stack_from_builder(
+        &mut self,
+        builder: SliceStackBuilder,
+    ) -> Result<SliceStackId, SliceStackBuilderError> {
+        let id = builder.id;
+        let object = builder.build()?;
+
+        self.resources.slicestack.push(object);
+        self.next_slicestack_id = SliceStackId(id.0 + 1);
+
+        Ok(SliceStackId(id.0))
     }
 
     /// Build the final [`Model`].
@@ -926,7 +939,6 @@ impl ModelBuilder {
     }
 
     fn set_recommended_namespaces_for_mesh(&mut self, mesh: &Mesh) {
-        use threemf_namespaces::{CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX};
         if mesh.trianglesets.is_some()
             && self
                 .recommendedextensions
@@ -1011,10 +1023,11 @@ impl ModelBuilder {
         }
 
         // Detect slice extension
-        // Required if any object has a slicestackid OR if any mesh has lowres meshresolution
-        let is_slice_required = self.resources.objects.iter().any(|obj| {
-            obj.slicestackid.is_some() || matches!(obj.meshresolution, Some(MeshResolution::LowRes))
-        });
+        let is_slice_required = !self.resources.slicestack.is_empty()
+            || self.resources.objects.iter().any(|obj| {
+                obj.slicestackid.is_some()
+                    || matches!(obj.meshresolution, Some(MeshResolution::LowRes))
+            });
 
         if is_slice_required {
             let is_slice_ext_set = required_extensions.iter().find(|ns| ns.uri == SLICE_NS);
@@ -1274,6 +1287,22 @@ impl From<ResourceId> for ObjectId {
 
 impl From<ObjectId> for ResourceId {
     fn from(id: ObjectId) -> ResourceId {
+        id.0
+    }
+}
+
+/// Type-safe wrapper for SliceStack Ids to prevent mix-ups
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SliceStackId(ResourceId);
+
+impl From<ResourceId> for SliceStackId {
+    fn from(id: ResourceId) -> Self {
+        SliceStackId(id)
+    }
+}
+
+impl From<SliceStackId> for ResourceId {
+    fn from(id: SliceStackId) -> ResourceId {
         id.0
     }
 }
@@ -2770,6 +2799,14 @@ impl BeamSetBuilder {
     }
 }
 
+/// Errors that can occur when SliceStack is built.
+#[derive(Debug, Error, Clone, Copy, PartialEq)]
+pub enum SliceStackBuilderError {
+    /// Both Slice and Slice ref is set.
+    #[error("Slice stack cannot contain both Slices and SliceRefs")]
+    BothSliceAndSliceRefCannotBeSet,
+}
+
 /// Builder for constructing a slice stack with 2D slice data.
 ///
 /// `SliceStackBuilder` allows you to define 2.5D geometry by adding slices
@@ -2817,32 +2854,20 @@ impl BeamSetBuilder {
 /// }).unwrap();
 /// ```
 pub struct SliceStackBuilder {
-    id: Option<ResourceId>,
+    id: SliceStackId,
     zbottom: Option<f64>,
     slices: Vec<Slice>,
     slicerefs: Vec<SliceRef>,
 }
 
 impl SliceStackBuilder {
-    fn new() -> Self {
+    fn new(id: SliceStackId) -> Self {
         Self {
-            id: None,
+            id,
             zbottom: None,
             slices: Vec::new(),
             slicerefs: Vec::new(),
         }
-    }
-
-    /// Set the unique ID for this slice stack.
-    ///
-    /// If not set, the ID will be automatically assigned by the [`ModelBuilder`].
-    ///
-    /// # Parameters
-    ///
-    /// - `id`: The slice stack ID
-    pub fn id(&mut self, id: ResourceId) -> &mut Self {
-        self.id = Some(id);
-        self
     }
 
     /// Set the starting z-level relative to the build platform.
@@ -2888,12 +2913,16 @@ impl SliceStackBuilder {
         self
     }
 
-    fn build(self) -> SliceStack {
-        SliceStack {
-            id: self.id.unwrap_or(0),
-            zbottom: self.zbottom,
-            slice: self.slices,
-            sliceref: self.slicerefs,
+    fn build(self) -> Result<SliceStack, SliceStackBuilderError> {
+        if !self.slicerefs.is_empty() && !self.slices.is_empty() {
+            Err(SliceStackBuilderError::BothSliceAndSliceRefCannotBeSet)
+        } else {
+            Ok(SliceStack {
+                id: self.id.0,
+                zbottom: self.zbottom.map(|zbot| zbot.into()),
+                slice: self.slices,
+                sliceref: self.slicerefs,
+            })
         }
     }
 }
@@ -2903,7 +2932,7 @@ impl SliceStackBuilder {
 /// Each slice represents a horizontal cross-section at a specific z-height.
 pub struct SliceBuilder {
     ztop: Option<f64>,
-    vertices: Vec<SliceVertex>,
+    vertices: Vec<slice::Vertex>,
     polygons: Vec<Polygon>,
 }
 
@@ -2935,7 +2964,10 @@ impl SliceBuilder {
     /// - `x`: X coordinate
     /// - `y`: Y coordinate
     pub fn add_vertex(&mut self, x: f64, y: f64) -> &mut Self {
-        self.vertices.push(SliceVertex { x, y });
+        self.vertices.push(slice::Vertex {
+            x: x.into(),
+            y: y.into(),
+        });
         self
     }
 
@@ -2946,7 +2978,10 @@ impl SliceBuilder {
     /// - `vertices`: Slice of (x, y) tuples
     pub fn add_vertices(&mut self, vertices: &[(f64, f64)]) -> &mut Self {
         for &(x, y) in vertices {
-            self.vertices.push(SliceVertex { x, y });
+            self.vertices.push(slice::Vertex {
+                x: x.into(),
+                y: y.into(),
+            });
         }
         self
     }
@@ -2970,13 +3005,13 @@ impl SliceBuilder {
         let vertices = if self.vertices.is_empty() {
             None
         } else {
-            Some(SliceVertices {
+            Some(slice::Vertices {
                 vertex: self.vertices,
             })
         };
 
         Slice {
-            ztop: self.ztop.unwrap_or(0.0),
+            ztop: self.ztop.unwrap_or(0.0).into(),
             vertices,
             polygon: self.polygons,
         }

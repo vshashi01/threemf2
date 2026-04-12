@@ -2,17 +2,17 @@ use threemf2::{
     core::{
         OptionalResourceId, OptionalResourceIndex,
         build::{Build, Item},
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+        mesh::{self, Mesh, Triangle, Triangles, Vertices},
         model::{Model, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
-        slice::{
-            MeshResolution, Polygon, Segment, Slice, SliceStack, SliceVertex, SliceVertices, Slices,
-        },
+        slice::{self, MeshResolution, Polygon, Segment, Slice, SliceStack},
     },
-    io::ThreemfPackage,
-    io::content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-    io::relationship::{Relationship, RelationshipType, Relationships},
+    io::{
+        ThreemfPackage,
+        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
+        relationship::{Relationship, RelationshipType, Relationships},
+    },
 };
 
 use std::collections::HashMap;
@@ -28,14 +28,14 @@ fn main() {
     // Create vertices for a simple cube mesh
     let vertices = Vertices {
         vertex: vec![
-            Vertex::new(0.0, 0.0, 0.0),
-            Vertex::new(10.0, 0.0, 0.0),
-            Vertex::new(10.0, 10.0, 0.0),
-            Vertex::new(0.0, 10.0, 0.0),
-            Vertex::new(0.0, 0.0, 10.0),
-            Vertex::new(10.0, 0.0, 10.0),
-            Vertex::new(10.0, 10.0, 10.0),
-            Vertex::new(0.0, 10.0, 10.0),
+            mesh::Vertex::new(0.0, 0.0, 0.0),
+            mesh::Vertex::new(10.0, 0.0, 0.0),
+            mesh::Vertex::new(10.0, 10.0, 0.0),
+            mesh::Vertex::new(0.0, 10.0, 0.0),
+            mesh::Vertex::new(0.0, 0.0, 10.0),
+            mesh::Vertex::new(10.0, 0.0, 10.0),
+            mesh::Vertex::new(10.0, 10.0, 10.0),
+            mesh::Vertex::new(0.0, 10.0, 10.0),
         ],
     };
 
@@ -84,18 +84,30 @@ fn main() {
     };
 
     // Create slice vertices for the first layer
-    let slice_vertices_1 = SliceVertices {
+    let slice_vertices_1 = slice::Vertices {
         vertex: vec![
-            SliceVertex { x: 0.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 10.0 },
-            SliceVertex { x: 0.0, y: 10.0 },
+            slice::Vertex {
+                x: 0.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 10.0.into(),
+            },
+            slice::Vertex {
+                x: 0.0.into(),
+                y: 10.0.into(),
+            },
         ],
     };
 
     // Create first slice at z=0.1
     let slice_1 = Slice {
-        ztop: 0.1,
+        ztop: 0.1.into(),
         vertices: Some(slice_vertices_1),
         polygon: vec![Polygon {
             startv: 0,
@@ -123,18 +135,30 @@ fn main() {
     };
 
     // Create slice vertices for the second layer
-    let slice_vertices_2 = SliceVertices {
+    let slice_vertices_2 = slice::Vertices {
         vertex: vec![
-            SliceVertex { x: 0.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 0.0 },
-            SliceVertex { x: 10.0, y: 10.0 },
-            SliceVertex { x: 0.0, y: 10.0 },
+            slice::Vertex {
+                x: 0.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 0.0.into(),
+            },
+            slice::Vertex {
+                x: 10.0.into(),
+                y: 10.0.into(),
+            },
+            slice::Vertex {
+                x: 0.0.into(),
+                y: 10.0.into(),
+            },
         ],
     };
 
     // Create second slice at z=0.2
     let slice_2 = Slice {
-        ztop: 0.2,
+        ztop: 0.2.into(),
         vertices: Some(slice_vertices_2),
         polygon: vec![Polygon {
             startv: 0,
@@ -164,11 +188,9 @@ fn main() {
     // Create the slice stack
     let slicestack = SliceStack {
         id: 1,
-        zbottom: Some(0.0),
-        slices: Some(Slices {
-            slice: vec![slice_1, slice_2],
-        }),
-        slicerefs: None,
+        zbottom: Some(0.0.into()),
+        slice: vec![slice_1, slice_2],
+        sliceref: vec![],
     };
 
     // Create the object with mesh and slice reference

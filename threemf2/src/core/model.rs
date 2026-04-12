@@ -7,12 +7,11 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-#[cfg(feature = "write")]
-use crate::core::resources;
 use crate::{
     core::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
     threemf_namespaces::{
-        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, PROD_NS, ThreemfNamespace,
+        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, PROD_NS, SLICE_NS,
+        ThreemfNamespace,
     },
 };
 
@@ -25,7 +24,7 @@ use crate::{
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS), rename = "model"))]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS), rename = "model"))]
 pub struct Model {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
@@ -92,6 +91,7 @@ impl From<String> for Unit {
 impl Model {
     pub fn used_namespaces(&self) -> Vec<ThreemfNamespace> {
         let mut used = vec![ThreemfNamespace::Core];
+        used.reserve_exact(10);
 
         if self.uses_prod_ns() {
             used.push(ThreemfNamespace::Prod);
@@ -99,6 +99,10 @@ impl Model {
 
         if self.uses_beamlattice_ns() {
             used.push(ThreemfNamespace::BeamLattice);
+
+            if self.uses_beamlattice_balls_ns() {
+                used.push(ThreemfNamespace::BeamLatticeBalls);
+            }
         }
 
         if self.uses_triangleset_ns() {
@@ -159,6 +163,22 @@ impl Model {
         false
     }
 
+    fn uses_beamlattice_balls_ns(&self) -> bool {
+        for obj in &self.resources.object {
+            if let Some(kind) = &obj.kind
+                && let ObjectKind::Mesh(mesh) = kind
+                && let Some(beam_lattice) = &mesh.beamlattice
+                && (beam_lattice.balls.is_some()
+                    || beam_lattice.ballmode.is_some()
+                    || beam_lattice.ballradius.is_some())
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
     fn uses_triangleset_ns(&self) -> bool {
         for obj in &self.resources.object {
             if let Some(kind) = &obj.kind
@@ -186,6 +206,9 @@ impl Model {
 
     fn uses_slice_ns(&self) -> bool {
         !self.resources.slicestack.is_empty()
+            || self.resources.object.iter().any(|o| {
+                o.slicestackid.is_some() || o.slicepath.is_some() || o.meshresolution.is_some()
+            })
     }
 }
 
@@ -197,16 +220,18 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex, beamlattice, boolean,
             build::{Build, Item},
             mesh::{Mesh, Triangles, Vertices},
             metadata::Metadata,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
+            slice::{self},
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
-            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, ThreemfNamespace,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,
+            SLICE_PREFIX, ThreemfNamespace,
         },
     };
 
@@ -215,7 +240,7 @@ mod write_tests {
     #[test]
     pub fn toxml_simple_model_test() {
         let xml_string = format!(
-            r#"<model xmlns="{CORE_NS}" xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            r#"<model xmlns="{CORE_NS}" xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{SLICE_PREFIX}="{SLICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
         );
         let model = Model {
             // xmlns: None,
@@ -423,26 +448,6 @@ mod write_tests {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
-                    // mesh: Some(Mesh {
-                    //     vertices: Vertices { vertex: vec![] },
-                    //     triangles: Triangles { triangle: vec![] },
-                    //     trianglesets: None,
-                    //     beamlattice: Some(BeamLattice {
-                    //         minlength: 0.1,
-                    //         radius: 0.05,
-                    //         ballmode: None,
-                    //         ballradius: None,
-                    //         clippingmode: None,
-                    //         clippingmesh: OptionalResourceId::none(),
-                    //         representationmesh: OptionalResourceId::none(),
-                    //         pid: OptionalResourceId::none(),
-                    //         pindex: OptionalResourceIndex::none(),
-                    //         cap: None,
-                    //         beams: crate::core::beamlattice::Beams { beam: vec![] },
-                    //         balls: None,
-                    //         beamsets: None,
-                    //     }),
-                    // }),
                 }],
             },
             build: Build {
@@ -461,6 +466,75 @@ mod write_tests {
         assert_eq!(
             namespaces,
             vec![ThreemfNamespace::Core, ThreemfNamespace::BeamLattice]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_beamlattice_balls() {
+        use crate::core::beamlattice::BeamLattice;
+
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(Mesh {
+                        vertices: Vertices { vertex: vec![] },
+                        triangles: Triangles { triangle: vec![] },
+                        trianglesets: None,
+                        beamlattice: Some(BeamLattice {
+                            minlength: 0.1,
+                            radius: 0.05,
+                            ballmode: Some(beamlattice::BallMode::Mixed),
+                            ballradius: Some(1.0),
+                            clippingmode: None,
+                            clippingmesh: OptionalResourceId::none(),
+                            representationmesh: OptionalResourceId::none(),
+                            pid: OptionalResourceId::none(),
+                            pindex: OptionalResourceIndex::none(),
+                            cap: None,
+                            beams: crate::core::beamlattice::Beams { beam: vec![] },
+                            balls: Some(beamlattice::Balls { ball: vec![] }),
+                            beamsets: None,
+                        }),
+                    })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![
+                ThreemfNamespace::Core,
+                ThreemfNamespace::BeamLattice,
+                ThreemfNamespace::BeamLatticeBalls
+            ]
         );
     }
 
@@ -496,14 +570,6 @@ mod write_tests {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
-                    // mesh: Some(Mesh {
-                    //     vertices: Vertices { vertex: vec![] },
-                    //     triangles: Triangles { triangle: vec![] },
-                    //     trianglesets: Some(TriangleSets {
-                    //         trianglesets: vec![],
-                    //     }),
-                    //     beamlattice: None,
-                    // }),
                 }],
             },
             build: Build {
@@ -526,17 +592,13 @@ mod write_tests {
     }
 
     #[test]
-    fn test_used_namespaces_multiple_extensions() {
-        use crate::core::{beamlattice::BeamLattice, triangle_set::TriangleSets};
-
+    fn test_used_namespaces_with_boolean_object() {
         let model = Model {
             unit: Some(Unit::Millimeter),
             requiredextensions: None,
             recommendedextensions: None,
             metadata: vec![],
             resources: Resources {
-                basematerials: vec![],
-                slicestack: vec![],
                 object: vec![Object {
                     id: 1,
                     objecttype: Some(ObjectType::Model),
@@ -545,55 +607,20 @@ mod write_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: Some("test-uuid".to_string()),
-                    kind: Some(ObjectKind::Mesh(Mesh {
-                        vertices: Vertices { vertex: vec![] },
-                        triangles: Triangles { triangle: vec![] },
-                        trianglesets: Some(TriangleSets {
-                            trianglesets: vec![],
-                        }),
-                        beamlattice: Some(BeamLattice {
-                            minlength: 0.1,
-                            radius: 0.05,
-                            ballmode: None,
-                            ballradius: None,
-                            clippingmode: None,
-                            clippingmesh: OptionalResourceId::none(),
-                            representationmesh: OptionalResourceId::none(),
-                            pid: OptionalResourceId::none(),
-                            pindex: OptionalResourceIndex::none(),
-                            cap: None,
-                            beams: crate::core::beamlattice::Beams { beam: vec![] },
-                            balls: None,
-                            beamsets: None,
-                        }),
+                    uuid: None,
+                    kind: Some(ObjectKind::BooleanShape(boolean::BooleanShape {
+                        objectid: 1,
+                        operation: boolean::BooleanOperation::Intersection,
+                        transform: None,
+                        path: None,
+                        booleans: vec![],
                     })),
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
-                    // mesh: Some(Mesh {
-                    //     vertices: Vertices { vertex: vec![] },
-                    //     triangles: Triangles { triangle: vec![] },
-                    //     trianglesets: Some(TriangleSets {
-                    //         trianglesets: vec![],
-                    //     }),
-                    //     beamlattice: Some(BeamLattice {
-                    //         minlength: 0.1,
-                    //         radius: 0.05,
-                    //         ballmode: None,
-                    //         ballradius: None,
-                    //         clippingmode: None,
-                    //         clippingmesh: OptionalResourceId::none(),
-                    //         representationmesh: OptionalResourceId::none(),
-                    //         pid: OptionalResourceId::none(),
-                    //         pindex: OptionalResourceIndex::none(),
-                    //         cap: None,
-                    //         beams: crate::core::beamlattice::Beams { beam: vec![] },
-                    //         balls: None,
-                    //         beamsets: None,
-                    //     }),
-                    // }),
                 }],
+                basematerials: vec![],
+                slicestack: vec![],
             },
             build: Build {
                 uuid: None,
@@ -610,11 +637,145 @@ mod write_tests {
         let namespaces = model.used_namespaces();
         assert_eq!(
             namespaces,
-            vec![
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Boolean]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_slices() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: Resources {
+                object: vec![],
+                basematerials: vec![],
+                slicestack: vec![slice::SliceStack {
+                    id: 1,
+                    zbottom: Some(0.0.into()),
+                    sliceref: vec![],
+                    slice: vec![slice::Slice {
+                        ztop: 1.0.into(),
+                        vertices: Some(slice::Vertices { vertex: vec![] }),
+                        polygon: vec![slice::Polygon {
+                            startv: 0,
+                            segment: vec![slice::Segment {
+                                v2: 1,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
+                            }],
+                        }],
+                    }],
+                }],
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Slice]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_multiple_extensions() {
+        use crate::core::{beamlattice::BeamLattice, triangle_set::TriangleSets};
+
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![
+                    Object {
+                        id: 1,
+                        objecttype: Some(ObjectType::Model),
+                        thumbnail: None,
+                        partnumber: None,
+                        name: None,
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: Some("test-uuid".to_string()),
+                        kind: Some(ObjectKind::Mesh(Mesh {
+                            vertices: Vertices { vertex: vec![] },
+                            triangles: Triangles { triangle: vec![] },
+                            trianglesets: Some(TriangleSets {
+                                trianglesets: vec![],
+                            }),
+                            beamlattice: Some(BeamLattice {
+                                minlength: 0.1,
+                                radius: 0.05,
+                                ballmode: Some(beamlattice::BallMode::None),
+                                ballradius: None,
+                                clippingmode: None,
+                                clippingmesh: OptionalResourceId::none(),
+                                representationmesh: OptionalResourceId::none(),
+                                pid: OptionalResourceId::none(),
+                                pindex: OptionalResourceIndex::none(),
+                                cap: None,
+                                beams: crate::core::beamlattice::Beams { beam: vec![] },
+                                balls: None,
+                                beamsets: None,
+                            }),
+                        })),
+                        slicestackid: OptionalResourceId::new(236),
+                        slicepath: Some("/2D/stack_model.model".to_owned()),
+                        meshresolution: Some(slice::MeshResolution::LowRes),
+                    },
+                    Object {
+                        id: 2,
+                        objecttype: None,
+                        thumbnail: None,
+                        partnumber: None,
+                        name: None,
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: Some("test-uuid-boolean".to_owned()),
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
+                        kind: Some(ObjectKind::BooleanShape(boolean::BooleanShape {
+                            objectid: 2,
+                            operation: boolean::BooleanOperation::Difference,
+                            transform: None,
+                            path: None,
+                            booleans: vec![],
+                        })),
+                    },
+                ],
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            [
                 ThreemfNamespace::Core,
                 ThreemfNamespace::Prod,
                 ThreemfNamespace::BeamLattice,
-                ThreemfNamespace::CoreTriangleSet
+                ThreemfNamespace::BeamLatticeBalls,
+                ThreemfNamespace::CoreTriangleSet,
+                ThreemfNamespace::Boolean,
+                ThreemfNamespace::Slice,
             ]
         );
     }
@@ -745,15 +906,6 @@ mod memory_optimized_read_tests {
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
                         meshresolution: None,
-                        // mesh: none,
-                        // components: some(components {
-                        //     component: vec![component {
-                        //         objectid: 1,
-                        //         transform: none,
-                        //         path: some("//somepath//component".to_owned()),
-                        //         uuid: some("somecomponentuuid".to_owned()),
-                        //     }]
-                        // }),
                     }],
                 },
                 build: Build {

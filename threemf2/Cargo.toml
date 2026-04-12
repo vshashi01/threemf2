@@ -101,6 +101,11 @@ name = "boolean_write"
 path = "examples/boolean_write.rs"
 required-features = ["io-write"]
 
+[[example]]
+name = "slice_write"
+path = "examples/slice_write.rs"
+required-features = ["io-write"]
+
 
 [package.metadata.cargo-all-features]
 max_combination_size = 3

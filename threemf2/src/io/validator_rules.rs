@@ -3,7 +3,7 @@
 //! This module contains the concrete implementations for each validation rule.
 
 use crate::core::model::Model;
-use crate::io::query::{ComponentsObjectRef, ItemRef, ObjectRef};
+use crate::io::query::{ComponentsObjectRef, ItemRef, ObjectRef, SliceStackRef};
 use crate::io::validator::{Severity, ValidationIssue, ValidationRule};
 use crate::io::{ThreemfPackage, query};
 use std::collections::HashSet;
@@ -14,9 +14,12 @@ use std::collections::HashSet;
 pub fn run_rule_for_model(rule: &ValidationRule, model: &Model) -> Vec<ValidationIssue> {
     match rule {
         ValidationRule::ObjectIdReference => validate_object_id_reference(model, None),
-        ValidationRule::ResourceIdReference => validate_resource_id_reference(model, None),
+        ValidationRule::BaseMaterialReference => validate_resource_id_reference(model, None),
         ValidationRule::BuildItemReference => validate_build_item_references(model, None),
         ValidationRule::ComponentReference => validate_component_references(model, None),
+        ValidationRule::ObjectToSliceStackReference => {
+            validate_object_to_slicestack_references(model, None)
+        }
     }
 }
 
@@ -31,7 +34,7 @@ pub fn run_rule_for_package(
         ValidationRule::ObjectIdReference => {
             validate_object_id_reference(&package.root, Some(package))
         }
-        ValidationRule::ResourceIdReference => {
+        ValidationRule::BaseMaterialReference => {
             validate_resource_id_reference(&package.root, Some(package))
         }
         ValidationRule::BuildItemReference => {
@@ -39,6 +42,9 @@ pub fn run_rule_for_package(
         }
         ValidationRule::ComponentReference => {
             validate_component_references(&package.root, Some(package))
+        }
+        ValidationRule::ObjectToSliceStackReference => {
+            validate_object_to_slicestack_references(&package.root, Some(package))
         }
     }
 }
@@ -164,6 +170,27 @@ fn validate_object_id_reference(
     issues
 }
 
+fn validate_object_to_slicestack_references(
+    model: &Model,
+    package: Option<&ThreemfPackage>,
+) -> Vec<ValidationIssue> {
+    let mut issues = Vec::new();
+
+    let obj_refs = get_objects_it(model, package);
+    let slicestack_refs = get_slicestacks_it(model, package).collect::<Vec<_>>();
+
+    for obj_ref in obj_refs {
+        if slicestack_refs.iter().any(|stack_ref| {
+            stack_ref.path == obj_ref.object.slicepath.as_deref()
+                && stack_ref.slicestack.id == obj_ref.object.slicestackid.unwrap_or(u32::MAX)
+        }) {
+            issues.push(ValidationIssue::new(Severity::Error, format!("Unable to find slicestack with id: {:?} in model path: {:?} referenced by Object with object id: {:?} in model path: {:?}", obj_ref.object.slicestackid, obj_ref.object.slicepath, obj_ref.object.id, obj_ref.path)));
+        }
+    }
+
+    issues
+}
+
 enum IteratorType<I1, I2> {
     FromPackage(I1),
     FromModel(I2),
@@ -217,6 +244,18 @@ fn get_component_objects_it<'a>(
         IteratorType::FromPackage(query::get_components_objects(package))
     } else {
         IteratorType::FromModel(query::get_components_objects_from_model(model))
+    }
+}
+
+fn get_slicestacks_it<'a>(
+    model: &'a Model,
+    package: Option<&'a ThreemfPackage>,
+) -> IteratorType<impl Iterator<Item = SliceStackRef<'a>>, impl Iterator<Item = SliceStackRef<'a>>>
+{
+    if let Some(package) = package {
+        IteratorType::FromPackage(query::get_slice_stacks(package))
+    } else {
+        IteratorType::FromModel(query::get_slice_stacks_from_model(model))
     }
 }
 
@@ -531,7 +570,7 @@ mod tests {
         let object_issues = run_rule_for_model(&ValidationRule::ObjectIdReference, &model);
         assert!(object_issues.is_empty());
 
-        let resource_issues = run_rule_for_model(&ValidationRule::ResourceIdReference, &model);
+        let resource_issues = run_rule_for_model(&ValidationRule::BaseMaterialReference, &model);
         assert!(resource_issues.is_empty());
     }
 

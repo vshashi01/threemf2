@@ -49,6 +49,9 @@ pub enum ThreemfNamespace {
     /// Beam Lattice extension
     BeamLattice,
 
+    /// Beam Lattice balls extension
+    BeamLatticeBalls,
+
     /// Triangle Set extension (Part of the Core Spec)
     CoreTriangleSet,
 }
@@ -62,6 +65,7 @@ impl ThreemfNamespace {
             Self::Boolean => BOOLEAN_NS,
             Self::Prod => PROD_NS,
             Self::BeamLattice => BEAM_LATTICE_NS,
+            Self::BeamLatticeBalls => BEAM_LATTICE_BALLS_NS,
             Self::CoreTriangleSet => CORE_TRIANGLESET_NS,
         }
     }
@@ -76,6 +80,7 @@ impl ThreemfNamespace {
             Self::Boolean => Some(BOOLEAN_PREFIX),
             Self::Prod => Some(PROD_PREFIX),
             Self::BeamLattice => Some(BEAM_LATTICE_PREFIX),
+            Self::BeamLatticeBalls => Some(BEAM_LATTICE_BALLS_PREFIX),
             Self::CoreTriangleSet => Some(CORE_TRIANGLESET_PREFIX),
         }
     }
