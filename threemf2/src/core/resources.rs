@@ -8,8 +8,8 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{object::Object, types::ResourceId},
-    threemf_namespaces::CORE_NS,
+    core::{object::Object, slice::SliceStack, types::ResourceId},
+    threemf_namespaces::{CORE_NS, SLICE_NS},
 };
 
 /// A collection of Objects and other properties that are referenced by other elements.
@@ -19,7 +19,7 @@ use crate::{
 #[derive(Default, PartialEq, Debug, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_NS), rename = "resources")
+    xml(ns(CORE_NS, s = SLICE_NS), rename = "resources")
 )]
 pub struct Resources {
     /// Collection of Object. See [`crate::core::object::Object`]
@@ -29,6 +29,14 @@ pub struct Resources {
     /// Collection of Materials.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub basematerials: Vec<BaseMaterials>,
+
+    /// Collection of SliceStack. See [`crate::core::slice::SliceStack`]
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(ns(SLICE_NS))
+    )]
+    pub slicestack: Vec<SliceStack>,
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -78,8 +86,10 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
-        threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX},
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object, slice},
+        threemf_namespaces::{
+            BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
+        },
     };
 
     use super::{Base, BaseMaterials, Resources};
@@ -87,8 +97,8 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_object_test() {
         let xml_string = format!(
-            r#"<resources xmlns="{}"><object xmlns:{}="{}" xmlns:{}="{}" id="1"></object></resources>"#,
-            CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS
+            r#"<resources xmlns="{}" xmlns:{}="{}"><object xmlns:{}="{}" xmlns:{}="{}" id="1"></object></resources>"#,
+            CORE_NS, SLICE_PREFIX, SLICE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS,
         );
         let resources = Resources {
             object: vec![Object {
@@ -101,8 +111,12 @@ mod write_tests {
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
                 kind: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
             }],
             basematerials: vec![],
+            slicestack: vec![],
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -112,8 +126,8 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_basematerials_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}"><basematerials id="1"><base name="Base" displaycolor="#FEFEFE00" /></basematerials></resources>"##,
-            CORE_NS
+            r##"<resources xmlns="{}" xmlns:{}="{}"><basematerials id="1"><base name="Base" displaycolor="#FEFEFE00" /></basematerials></resources>"##,
+            CORE_NS, SLICE_PREFIX, SLICE_NS
         );
         let resources = Resources {
             object: vec![],
@@ -122,6 +136,31 @@ mod write_tests {
                 base: vec![Base {
                     name: "Base".to_owned(),
                     displaycolor: "#FEFEFE00".to_owned(),
+                }],
+            }],
+            slicestack: vec![],
+        };
+        let resources_string = to_string(&resources).unwrap();
+
+        assert_eq!(resources_string, xml_string);
+    }
+
+    #[test]
+    pub fn toxml_resources_with_slicestack_test() {
+        let xml_string = format!(
+            r##"<resources xmlns="{}" xmlns:{}="{}"><{}:slicestack id="236" zbottom="0.5"><sliceref slicestackid="154" slicepath="/2D/model.model" /></{}:slicestack></resources>"##,
+            CORE_NS, SLICE_PREFIX, SLICE_NS, SLICE_PREFIX, SLICE_PREFIX,
+        );
+        let resources = Resources {
+            object: vec![],
+            basematerials: vec![],
+            slicestack: vec![slice::SliceStack {
+                id: 236,
+                zbottom: Some(0.5.into()),
+                slice: vec![],
+                sliceref: vec![slice::SliceRef {
+                    slicestackid: 154,
+                    slicepath: "/2D/model.model".to_owned(),
                 }],
             }],
         };
@@ -177,8 +216,8 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
-        threemf_namespaces::CORE_NS,
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object, slice},
+        threemf_namespaces::{CORE_NS, SLICE_NS, SLICE_PREFIX},
     };
 
     use super::{Base, BaseMaterials, Resources};
@@ -204,8 +243,12 @@ mod memory_optimized_read_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                 }],
                 basematerials: vec![],
+                slicestack: vec![],
             }
         );
     }
@@ -227,6 +270,33 @@ mod memory_optimized_read_tests {
                     base: vec![Base {
                         name: "Base".to_owned(),
                         displaycolor: "#FEFEFE00".to_owned(),
+                    }],
+                }],
+                slicestack: vec![],
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_resources_with_slicestack_test() {
+        let xml_string = format!(
+            r##"<resources xmlns="{}" xmlns:{}="{}"><{}:slicestack id="236" zbottom="0.5"><{}:sliceref slicestackid="2" slicepath="/2D/slices.model" /></{}:slicestack></resources>"##,
+            CORE_NS, SLICE_PREFIX, SLICE_NS, SLICE_PREFIX, SLICE_PREFIX, SLICE_PREFIX,
+        );
+        let resources = from_str::<Resources>(&xml_string).unwrap();
+
+        assert_eq!(
+            resources,
+            Resources {
+                object: vec![],
+                basematerials: vec![],
+                slicestack: vec![slice::SliceStack {
+                    id: 236,
+                    zbottom: Some(0.5.into()),
+                    slice: vec![],
+                    sliceref: vec![slice::SliceRef {
+                        slicestackid: 2,
+                        slicepath: "/2D/slices.model".to_owned(),
                     }],
                 }],
             }
@@ -284,8 +354,8 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{OptionalResourceId, OptionalResourceIndex, object::Object},
-        threemf_namespaces::CORE_NS,
+        core::{OptionalResourceId, OptionalResourceIndex, object::Object, slice},
+        threemf_namespaces::{CORE_NS, SLICE_NS, SLICE_PREFIX},
     };
 
     use super::{Base, BaseMaterials, Resources};
@@ -311,8 +381,12 @@ mod speed_optimized_read_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
                 }],
                 basematerials: vec![],
+                slicestack: vec![],
             }
         );
     }
@@ -334,6 +408,33 @@ mod speed_optimized_read_tests {
                     base: vec![Base {
                         name: "Base".to_owned(),
                         displaycolor: "#FEFEFE00".to_owned(),
+                    }],
+                }],
+                slicestack: vec![],
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_resources_with_slicestack_test() {
+        let xml_string = format!(
+            r##"<resources xmlns="{}" xmlns:{}="{}"><{}:slicestack id="236" zbottom="0.5"><sliceref slicestackid="154" slicepath="/2D/model.model" /></{}:slicestack></resources>"##,
+            CORE_NS, SLICE_PREFIX, SLICE_NS, SLICE_PREFIX, SLICE_PREFIX,
+        );
+        let resources = from_str::<Resources>(&xml_string).unwrap();
+
+        assert_eq!(
+            resources,
+            Resources {
+                object: vec![],
+                basematerials: vec![],
+                slicestack: vec![slice::SliceStack {
+                    id: 236,
+                    zbottom: Some(0.5.into()),
+                    slice: vec![],
+                    sliceref: vec![slice::SliceRef {
+                        slicestackid: 154,
+                        slicepath: "/2D/model.model".to_owned(),
                     }],
                 }],
             }

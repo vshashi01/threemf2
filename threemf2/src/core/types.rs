@@ -267,7 +267,7 @@ impl instant_xml::Accumulate<OptionalResourceIndex> for OptionalResourceIndex {
 }
 
 #[cfg(feature = "speed-optimized-read")]
-pub mod serde_optional_resource_id {
+pub mod opt_res_id_impl {
     use super::OptionalResourceId;
     use serde::{Deserialize, Deserializer};
 
@@ -295,7 +295,7 @@ pub mod serde_optional_resource_id {
 }
 
 #[cfg(feature = "speed-optimized-read")]
-pub mod serde_impl {
+pub mod opt_res_index_impl {
     use super::OptionalResourceIndex;
     use serde::{Deserialize, Deserializer};
 

@@ -3,7 +3,7 @@
 //! This module contains the concrete implementations for each validation rule.
 
 use crate::core::model::Model;
-use crate::io::query::{ComponentsObjectRef, ItemRef, ObjectRef};
+use crate::io::query::{ComponentsObjectRef, ItemRef, ObjectRef, SliceStackRef};
 use crate::io::validator::{Severity, ValidationIssue, ValidationRule};
 use crate::io::{ThreemfPackage, query};
 use std::collections::HashSet;
@@ -14,9 +14,12 @@ use std::collections::HashSet;
 pub fn run_rule_for_model(rule: &ValidationRule, model: &Model) -> Vec<ValidationIssue> {
     match rule {
         ValidationRule::ObjectIdReference => validate_object_id_reference(model, None),
-        ValidationRule::ResourceIdReference => validate_resource_id_reference(model, None),
+        ValidationRule::BaseMaterialReference => validate_resource_id_reference(model, None),
         ValidationRule::BuildItemReference => validate_build_item_references(model, None),
         ValidationRule::ComponentReference => validate_component_references(model, None),
+        ValidationRule::ObjectToSliceStackReference => {
+            validate_object_to_slicestack_references(model, None)
+        }
     }
 }
 
@@ -31,7 +34,7 @@ pub fn run_rule_for_package(
         ValidationRule::ObjectIdReference => {
             validate_object_id_reference(&package.root, Some(package))
         }
-        ValidationRule::ResourceIdReference => {
+        ValidationRule::BaseMaterialReference => {
             validate_resource_id_reference(&package.root, Some(package))
         }
         ValidationRule::BuildItemReference => {
@@ -39,6 +42,9 @@ pub fn run_rule_for_package(
         }
         ValidationRule::ComponentReference => {
             validate_component_references(&package.root, Some(package))
+        }
+        ValidationRule::ObjectToSliceStackReference => {
+            validate_object_to_slicestack_references(&package.root, Some(package))
         }
     }
 }
@@ -164,6 +170,27 @@ fn validate_object_id_reference(
     issues
 }
 
+fn validate_object_to_slicestack_references(
+    model: &Model,
+    package: Option<&ThreemfPackage>,
+) -> Vec<ValidationIssue> {
+    let mut issues = Vec::new();
+
+    let obj_refs = get_objects_it(model, package);
+    let slicestack_refs = get_slicestacks_it(model, package).collect::<Vec<_>>();
+
+    for obj_ref in obj_refs {
+        if slicestack_refs.iter().any(|stack_ref| {
+            stack_ref.path == obj_ref.object.slicepath.as_deref()
+                && stack_ref.slicestack.id == obj_ref.object.slicestackid.unwrap_or(u32::MAX)
+        }) {
+            issues.push(ValidationIssue::new(Severity::Error, format!("Unable to find slicestack with id: {:?} in model path: {:?} referenced by Object with object id: {:?} in model path: {:?}", obj_ref.object.slicestackid, obj_ref.object.slicepath, obj_ref.object.id, obj_ref.path)));
+        }
+    }
+
+    issues
+}
+
 enum IteratorType<I1, I2> {
     FromPackage(I1),
     FromModel(I2),
@@ -217,6 +244,18 @@ fn get_component_objects_it<'a>(
         IteratorType::FromPackage(query::get_components_objects(package))
     } else {
         IteratorType::FromModel(query::get_components_objects_from_model(model))
+    }
+}
+
+fn get_slicestacks_it<'a>(
+    model: &'a Model,
+    package: Option<&'a ThreemfPackage>,
+) -> IteratorType<impl Iterator<Item = SliceStackRef<'a>>, impl Iterator<Item = SliceStackRef<'a>>>
+{
+    if let Some(package) = package {
+        IteratorType::FromPackage(query::get_slice_stacks(package))
+    } else {
+        IteratorType::FromModel(query::get_slice_stacks_from_model(model))
     }
 }
 
@@ -301,6 +340,9 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         }
     }
@@ -315,6 +357,9 @@ mod tests {
             pid: OptionalResourceId::new(pid),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         }
     }
@@ -335,6 +380,7 @@ mod tests {
                 create_test_object(3),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -347,6 +393,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(1), create_test_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -361,6 +408,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(0)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -375,6 +423,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(2_147_483_648)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -394,6 +443,7 @@ mod tests {
                 create_test_object(2_147_483_648), // Error: out of range
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -411,6 +461,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object_with_pid(1, 10)],
             basematerials,
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -422,7 +473,8 @@ mod tests {
     fn test_resource_id_missing_pid_reference() {
         let resources = Resources {
             object: vec![create_test_object_with_pid(1, 10)],
-            basematerials: Vec::new(), // No BaseMaterials with id=10
+            basematerials: Vec::new(),
+            slicestack: Vec::new(), // No BaseMaterials with id=10
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -442,6 +494,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -460,11 +513,15 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::new(0),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: None,
         };
         let resources = Resources {
             object: vec![object],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -488,6 +545,7 @@ mod tests {
                 create_test_object_with_pid(4, 5),  // Valid
             ],
             basematerials,
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -505,13 +563,14 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
         let object_issues = run_rule_for_model(&ValidationRule::ObjectIdReference, &model);
         assert!(object_issues.is_empty());
 
-        let resource_issues = run_rule_for_model(&ValidationRule::ResourceIdReference, &model);
+        let resource_issues = run_rule_for_model(&ValidationRule::BaseMaterialReference, &model);
         assert!(resource_issues.is_empty());
     }
 
@@ -555,6 +614,9 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Components(crate::core::component::Components {
                 component: components,
             })),
@@ -571,6 +633,9 @@ mod tests {
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Mesh(crate::core::mesh::Mesh {
                 vertices: crate::core::mesh::Vertices { vertex: vec![] },
                 triangles: crate::core::mesh::Triangles { triangle: vec![] },
@@ -587,6 +652,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -604,6 +670,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(2)]); // References object 2 which doesn't exist
         let model = create_test_model(resources, build);
@@ -624,6 +691,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1), create_test_mesh_object(2)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1), // Valid
@@ -649,6 +717,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![]);
         let model = create_test_model(resources, build);
@@ -670,6 +739,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(1)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -689,6 +759,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(999)]), // References object 999 which doesn't exist
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -720,6 +791,7 @@ mod tests {
                 ),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -738,6 +810,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1), create_test_mesh_object(2)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -756,6 +829,7 @@ mod tests {
                 create_test_object_with_components(1, vec![create_test_component(1)]), // Component references itself
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -777,6 +851,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(1)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -793,6 +868,7 @@ mod tests {
         let resources = Resources {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -809,6 +885,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(1)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -825,6 +902,7 @@ mod tests {
                 create_test_object_with_components(2, vec![create_test_component(999)]),
             ],
             basematerials: Vec::new(),
+            slicestack: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1),   // Valid

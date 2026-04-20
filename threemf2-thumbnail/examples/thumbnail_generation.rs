@@ -194,11 +194,15 @@ fn create_cube_model() -> Model {
         partnumber: None,
         uuid: None,
         objecttype: None,
+        meshresolution: None,
+        slicestackid: OptionalResourceId::none(),
+        slicepath: None,
     };
 
     let resources = Resources {
         object: vec![object],
         basematerials: vec![],
+        slicestack: vec![],
     };
 
     let build = Build {

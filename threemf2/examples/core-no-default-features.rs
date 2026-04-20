@@ -36,7 +36,9 @@ fn main() {
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                // mesh:
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+                meshresolution: None,
                 kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices {
                         vertex: vec![
@@ -57,11 +59,11 @@ fn main() {
                         }],
                     },
                     trianglesets: None,
-                    // #[cfg(feature = "beam-lattice")]
                     beamlattice: None,
                 })),
             }],
             basematerials: vec![],
+            slicestack: vec![],
         },
         build: Build {
             uuid: None,

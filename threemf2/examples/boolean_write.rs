@@ -327,8 +327,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
         uuid: None,
+        slicestackid: OptionalResourceId::none(),
+        slicepath: None,
+        meshresolution: None,
         kind: Some(ObjectKind::Mesh(cube_mesh_1)),
-        // mesh: Some(cube_mesh_1),
     };
 
     let cube_object_2 = Object {
@@ -340,8 +342,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
         uuid: None,
+        slicestackid: OptionalResourceId::none(),
+        slicepath: None,
+        meshresolution: None,
         kind: Some(ObjectKind::Mesh(cube_mesh_2)),
-        // mesh: Some(cube_mesh_2),
     };
 
     let result_object = Object {
@@ -353,6 +357,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
         uuid: None,
+        slicestackid: OptionalResourceId::none(),
+        slicepath: None,
+        meshresolution: None,
         kind: Some(ObjectKind::BooleanShape(boolean_shape)),
     };
 
@@ -376,6 +383,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         resources: Resources {
             object: vec![cube_object_1, cube_object_2, result_object],
             basematerials: vec![],
+            slicestack: vec![],
         },
         build: Build {
             uuid: None,

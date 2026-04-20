@@ -206,6 +206,7 @@ use crate::{
         mesh::Mesh,
         model::Model,
         object::{Object, ObjectKind, ObjectType},
+        slice::SliceStack,
         transform::Transform,
     },
     io::ThreemfPackage,
@@ -1854,6 +1855,187 @@ where
     I: IntoIterator<Item = ObjectRef<'a>>,
 {
     iter_models(package).flat_map(f)
+}
+
+/// A reference to a slice stack within a 3MF model.
+///
+/// Slice stacks contain 2.5D slice data that can be referenced by objects.
+/// This type provides access to slice stack data along with the originating
+/// model path information.
+///
+/// # Fields
+///
+/// * `slicestack` - Reference to the [`SliceStack`] data
+/// * `path` - Path to the model containing this slice stack (`None` for root model)
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// for stack_ref in get_slice_stacks(&package) {
+///     println!("SliceStack ID: {} at zbottom: {:?}",
+///         stack_ref.slicestack.id,
+///         stack_ref.slicestack.zbottom
+///     );
+/// }
+/// ```
+pub struct SliceStackRef<'a> {
+    /// The slice stack itself.
+    pub slicestack: &'a SliceStack,
+    /// The path to the model containing this slice stack, if None then it is the root model.
+    pub path: Option<&'a str>,
+}
+
+/// Returns an iterator over all slice stacks in the package.
+///
+/// Slice stacks contain 2.5D slice data (layers of 2D polygons) that can be
+/// referenced by objects. This function traverses all models (root + sub-models)
+/// and returns every slice stack with path tracking.
+///
+/// # Arguments
+///
+/// * `package` - The 3MF package to query
+///
+/// # Returns
+///
+/// An iterator over [`SliceStackRef`] for all slice stacks in the package.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // Count slice stacks per model
+/// for model_ref in iter_models(&package) {
+///     let stack_count = get_slice_stacks_from_model(model_ref.model).count();
+///     println!("Model {:?}: {} slice stacks", model_ref.path, stack_count);
+/// }
+///
+/// // Find slice stacks by ID
+/// if let Some(stack) = get_slice_stacks(&package).find(|s| s.slicestack.id == 1) {
+///     println!("Found slice stack 1");
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_slice_stacks_from_model()`] - Query slice stacks from a single model
+/// * [`iter_models()`] - Iterate over all models
+pub fn get_slice_stacks<'a>(
+    package: &'a ThreemfPackage,
+) -> impl Iterator<Item = SliceStackRef<'a>> {
+    iter_models(package).flat_map(|model_ref| {
+        model_ref
+            .model
+            .resources
+            .slicestack
+            .iter()
+            .map(move |s| SliceStackRef {
+                slicestack: s,
+                path: model_ref.path,
+            })
+    })
+}
+
+/// Returns an iterator over slice stacks in a specific model.
+///
+/// Unlike [`get_slice_stacks()`], this function only queries a single model instance,
+/// not the entire package.
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`SliceStackRef`] for slice stacks in this model only.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // Get slice stacks only from the root model
+/// let root_stacks: Vec<_> = get_slice_stacks_from_model(&package.root).collect();
+/// println!("Root model has {} slice stacks", root_stacks.len());
+///
+/// // Get slice stacks from a specific sub-model
+/// if let Some(model) = package.sub_models.get("/2D/slices.model") {
+///     let sub_stacks: Vec<_> = get_slice_stacks_from_model(model).collect();
+///     println!("Sub-model has {} slice stacks", sub_stacks.len());
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_slice_stacks()`] - Query across all models in a package
+pub fn get_slice_stacks_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = SliceStackRef<'a>> {
+    model.resources.slicestack.iter().map(|s| SliceStackRef {
+        slicestack: s,
+        path: None,
+    })
+}
+
+/// Finds a slice stack by ID from a given model.
+///
+/// Slice stack IDs are unique within a single model but may be duplicated across
+/// different sub-models. This function only searches within the specified model.
+///
+/// # Arguments
+///
+/// * `slicestack_id` - The slice stack ID to search for
+/// * `model` - The model to search in
+///
+/// # Returns
+///
+/// `Some(SliceStackRef)` if found, `None` otherwise. The returned reference will
+/// have `path` set to `None` since this is a single-model query.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // Find slice stack in root model
+/// if let Some(stack) = get_slice_stack_from_model(1, &package.root) {
+///     println!("Found slice stack 1: zbottom={:?}", stack.slicestack.zbottom);
+/// }
+///
+/// // Find slice stack in a specific sub-model
+/// if let Some(model) = package.sub_models.get("/2D/slices.model") {
+///     if let Some(stack) = get_slice_stack_from_model(2, model) {
+///         println!("Found slice stack 2 in sub-model");
+///     }
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_slice_stacks()`] - Search across all models in a package
+pub fn get_slice_stack_from_model<'a>(
+    slicestack_id: u32,
+    model: &'a Model,
+) -> Option<SliceStackRef<'a>> {
+    model
+        .resources
+        .slicestack
+        .iter()
+        .find(|s| s.id == slicestack_id)
+        .map(|slicestack| SliceStackRef {
+            slicestack,
+            path: None,
+        })
 }
 
 #[cfg(feature = "io-memory-optimized-read")]

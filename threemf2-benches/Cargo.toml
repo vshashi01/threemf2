@@ -39,5 +39,10 @@ name = "threemf_reader_multi"
 harness = false
 
 [[bench]]
+name = "threemf_reader_slices"
+harness = false
+
+
+[[bench]]
 name = "threemf_writer"
 harness = false

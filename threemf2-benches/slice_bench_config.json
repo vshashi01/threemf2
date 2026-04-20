@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "path": "third-party/lfs/mgx-bunny-sliced.3mf",
+      "motivation": "Large Number of Slices"
+    },
+    {
+      "path": "third-party/lfs/mesh-cube_gears-sliced.3mf",
+      "motivation": "Medium to Large Number of Slices with Slice Refs"
+    },
+    {
+      "path": "mesh-torus-sliced.3mf",
+      "motivation": "Small to Medium Number of Slices"
+    }
+  ]
+}

@@ -130,12 +130,14 @@ use crate::{
         model::Model,
         object::{Object, ObjectKind},
         resources::Resources,
+        slice::{self, MeshResolution, Polygon, Segment, Slice, SliceRef, SliceStack},
         transform::Transform,
     },
     io::XmlNamespace,
     threemf_namespaces::{
-        self, BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS,
-        BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, PROD_NS, PROD_PREFIX,
+        BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX,
+        BOOLEAN_NS, BOOLEAN_PREFIX, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS,
+        PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
     },
 };
 
@@ -336,6 +338,9 @@ pub struct ModelBuilder {
     // tracks next object id
     next_object_id: ObjectId,
 
+    // tracks next slicestack id
+    next_slicestack_id: SliceStackId,
+
     // tracks if the model requires production ext
     // ensures UUID is set at the minimum
     is_production_ext_required: bool,
@@ -370,6 +375,7 @@ impl ModelBuilder {
             build: None,
             is_root,
             next_object_id: 1.into(),
+            next_slicestack_id: 1.into(),
             is_production_ext_required: false,
         }
     }
@@ -819,6 +825,70 @@ impl ModelBuilder {
         }
     }
 
+    /// Add a slice stack to the model using a builder closure.
+    ///
+    /// Slice stacks contain 2.5D slice data (layers of 2D polygons) that can be
+    /// referenced by objects. The slice stack ID is automatically assigned and returned.
+    ///
+    /// # Parameters
+    ///
+    /// - `f`: A closure that configures the [`SliceStackBuilder`]
+    ///
+    /// # Returns
+    ///
+    /// The assigned slice stack ID as [`ResourceId`]
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// let stack_id = builder.add_slice_stack(|stack| {
+    ///     stack.zbottom(0.0);
+    ///     
+    ///     // Add a slice layer
+    ///     stack.add_slice(|slice| {
+    ///         slice.ztop(0.1);
+    ///         slice.add_vertices(&[(0.0, 0.0), (10.0, 0.0), (10.0, 10.0)]);
+    ///         slice.add_polygon(|poly| {
+    ///             poly.start_vertex(0);
+    ///             poly.add_segment(1);
+    ///             poly.add_segment(2);
+    ///         });
+    ///     });
+    /// });
+    /// ```
+    pub fn add_slice_stack<F>(&mut self, f: F) -> Result<SliceStackId, SliceStackBuilderError>
+    where
+        F: FnOnce(&mut SliceStackBuilder),
+    {
+        let id = self.next_slicestack_id;
+        let mut builder = SliceStackBuilder::new(id);
+
+        f(&mut builder);
+        let slice_stack = builder.build()?;
+
+        self.resources.slicestack.push(slice_stack);
+        self.next_slicestack_id = SliceStackId(id.0 + 1);
+
+        Ok(id)
+    }
+
+    /// Add a boolean shape object from a pre-configured [`BooleanObjectBuilder`].
+    ///
+    /// This is an advanced method for cases where you need to construct the builder
+    /// separately. Most users should use [`add_booleanshape_object()`](ModelBuilder::add_booleanshape_object) instead.
+    pub fn add_slice_stack_from_builder(
+        &mut self,
+        builder: SliceStackBuilder,
+    ) -> Result<SliceStackId, SliceStackBuilderError> {
+        let id = builder.id;
+        let object = builder.build()?;
+
+        self.resources.slicestack.push(object);
+        self.next_slicestack_id = SliceStackId(id.0 + 1);
+
+        Ok(SliceStackId(id.0))
+    }
+
     /// Build the final [`Model`].
     ///
     /// This consumes the builder and performs final validation:
@@ -869,7 +939,6 @@ impl ModelBuilder {
     }
 
     fn set_recommended_namespaces_for_mesh(&mut self, mesh: &Mesh) {
-        use threemf_namespaces::{CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX};
         if mesh.trianglesets.is_some()
             && self
                 .recommendedextensions
@@ -953,6 +1022,23 @@ impl ModelBuilder {
             }
         }
 
+        // Detect slice extension
+        let is_slice_required = !self.resources.slicestack.is_empty()
+            || self.resources.objects.iter().any(|obj| {
+                obj.slicestackid.is_some()
+                    || matches!(obj.meshresolution, Some(MeshResolution::LowRes))
+            });
+
+        if is_slice_required {
+            let is_slice_ext_set = required_extensions.iter().find(|ns| ns.uri == SLICE_NS);
+            if is_slice_ext_set.is_none() {
+                required_extensions.push(XmlNamespace {
+                    prefix: Some(SLICE_PREFIX.to_owned()),
+                    uri: SLICE_NS.to_owned(),
+                });
+            }
+        }
+
         required_extensions
     }
 }
@@ -988,12 +1074,14 @@ fn get_extensions_definition(extensions: &[XmlNamespace]) -> Option<String> {
 /// Builder for Resources
 pub struct ResourcesBuilder {
     objects: Vec<Object>,
+    slicestack: Vec<SliceStack>,
 }
 
 impl ResourcesBuilder {
     fn new() -> Self {
         Self {
             objects: Vec::new(),
+            slicestack: Vec::new(),
         }
     }
 
@@ -1001,6 +1089,7 @@ impl ResourcesBuilder {
         Resources {
             object: self.objects,
             basematerials: Vec::new(),
+            slicestack: self.slicestack,
         }
     }
 }
@@ -1202,6 +1291,22 @@ impl From<ObjectId> for ResourceId {
     }
 }
 
+/// Type-safe wrapper for SliceStack Ids to prevent mix-ups
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SliceStackId(ResourceId);
+
+impl From<ResourceId> for SliceStackId {
+    fn from(id: ResourceId) -> Self {
+        SliceStackId(id)
+    }
+}
+
+impl From<SliceStackId> for ResourceId {
+    fn from(id: SliceStackId) -> ResourceId {
+        id.0
+    }
+}
+
 /// Builder for Object
 pub struct ObjectBuilder<T> {
     entity: T,
@@ -1332,6 +1437,9 @@ impl MeshObjectBuilder {
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
+            slicestackid: crate::core::OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Mesh(mesh)),
             // mesh: Some(mesh),
         })
@@ -1712,6 +1820,9 @@ impl ComponentsObjectBuilder {
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
+            slicestackid: crate::core::OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::Components(components)),
             // components: Some(components),
         })
@@ -1959,6 +2070,9 @@ impl BooleanObjectBuilder {
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
+            slicestackid: crate::core::OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             kind: Some(ObjectKind::BooleanShape(boolean_shape)),
         })
     }
@@ -2681,6 +2795,301 @@ impl BeamSetBuilder {
                 .into_iter()
                 .map(|index| BallRef { index })
                 .collect(),
+        }
+    }
+}
+
+/// Errors that can occur when SliceStack is built.
+#[derive(Debug, Error, Clone, Copy, PartialEq)]
+pub enum SliceStackBuilderError {
+    /// Both Slice and Slice ref is set.
+    #[error("Slice stack cannot contain both Slices and SliceRefs")]
+    BothSliceAndSliceRefCannotBeSet,
+}
+
+/// Builder for constructing a slice stack with 2D slice data.
+///
+/// `SliceStackBuilder` allows you to define 2.5D geometry by adding slices
+/// at different z-heights. Each slice contains vertices and polygons that
+/// define the 2D contours at that layer.
+///
+/// Slice stacks can be referenced by objects to provide sliced model data
+/// alongside or instead of mesh geometry.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::builder::{ModelBuilder, Unit};
+///
+/// let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+///
+/// // Create a slice stack with two layers
+/// let stack_id = builder.add_slice_stack(|stack| {
+///     stack.zbottom(0.0);
+///     
+///     // Add first slice at z=0.1
+///     stack.add_slice(|slice| {
+///         slice.ztop(0.1);
+///         slice.add_vertices(&[
+///             (0.0, 0.0),
+///             (10.0, 0.0),
+///             (10.0, 10.0),
+///             (0.0, 10.0),
+///         ]);
+///         slice.add_polygon(|poly| {
+///             poly.start_vertex(0);
+///             poly.add_segment(1);
+///             poly.add_segment(2);
+///             poly.add_segment(3);
+///         });
+///     });
+/// });
+///
+/// // Create an object that references the slice stack
+/// let obj_id = builder.add_mesh_object(|obj| {
+///     obj.name("SlicedObject");
+///     obj.slice_stack(stack_id, None, None); // slicestack_id, slicepath, meshresolution
+///     // ... add mesh data
+///     Ok(())
+/// }).unwrap();
+/// ```
+pub struct SliceStackBuilder {
+    id: SliceStackId,
+    zbottom: Option<f64>,
+    slices: Vec<Slice>,
+    slicerefs: Vec<SliceRef>,
+}
+
+impl SliceStackBuilder {
+    fn new(id: SliceStackId) -> Self {
+        Self {
+            id,
+            zbottom: None,
+            slices: Vec::new(),
+            slicerefs: Vec::new(),
+        }
+    }
+
+    /// Set the starting z-level relative to the build platform.
+    ///
+    /// This allows alignment between mesh vertices and slice data.
+    ///
+    /// # Parameters
+    ///
+    /// - `zbottom`: The z-bottom position in model units
+    pub fn zbottom(&mut self, zbottom: f64) -> &mut Self {
+        self.zbottom = Some(zbottom);
+        self
+    }
+
+    /// Add a slice (2D layer) to this stack.
+    ///
+    /// # Parameters
+    ///
+    /// - `f`: A closure that configures a [`SliceBuilder`]
+    pub fn add_slice<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut SliceBuilder),
+    {
+        let mut builder = SliceBuilder::new();
+        f(&mut builder);
+        self.slices.push(builder.build());
+        self
+    }
+
+    /// Add a reference to an external slice stack.
+    ///
+    /// This is used when slice data is stored in a separate model file.
+    ///
+    /// # Parameters
+    ///
+    /// - `slicestackid`: The ID of the slice stack in the external file
+    /// - `slicepath`: Path to the model file containing the slice stack
+    pub fn add_sliceref(&mut self, slicestackid: ResourceId, slicepath: &str) -> &mut Self {
+        self.slicerefs.push(SliceRef {
+            slicestackid,
+            slicepath: slicepath.to_owned(),
+        });
+        self
+    }
+
+    fn build(self) -> Result<SliceStack, SliceStackBuilderError> {
+        if !self.slicerefs.is_empty() && !self.slices.is_empty() {
+            Err(SliceStackBuilderError::BothSliceAndSliceRefCannotBeSet)
+        } else {
+            Ok(SliceStack {
+                id: self.id.0,
+                zbottom: self.zbottom.map(|zbot| zbot.into()),
+                slice: self.slices,
+                sliceref: self.slicerefs,
+            })
+        }
+    }
+}
+
+/// Builder for constructing individual 2D slices within a slice stack.
+///
+/// Each slice represents a horizontal cross-section at a specific z-height.
+pub struct SliceBuilder {
+    ztop: Option<f64>,
+    vertices: Vec<slice::Vertex>,
+    polygons: Vec<Polygon>,
+}
+
+impl SliceBuilder {
+    fn new() -> Self {
+        Self {
+            ztop: None,
+            vertices: Vec::new(),
+            polygons: Vec::new(),
+        }
+    }
+
+    /// Set the z-position of the top of this slice.
+    ///
+    /// # Parameters
+    ///
+    /// - `ztop`: The z-top position in model units
+    pub fn ztop(&mut self, ztop: f64) -> &mut Self {
+        self.ztop = Some(ztop);
+        self
+    }
+
+    /// Add a 2D vertex to this slice.
+    ///
+    /// Vertices are referenced by their 0-based index in the order added.
+    ///
+    /// # Parameters
+    ///
+    /// - `x`: X coordinate
+    /// - `y`: Y coordinate
+    pub fn add_vertex(&mut self, x: f64, y: f64) -> &mut Self {
+        self.vertices.push(slice::Vertex {
+            x: x.into(),
+            y: y.into(),
+        });
+        self
+    }
+
+    /// Add multiple vertices from (x, y) tuples.
+    ///
+    /// # Parameters
+    ///
+    /// - `vertices`: Slice of (x, y) tuples
+    pub fn add_vertices(&mut self, vertices: &[(f64, f64)]) -> &mut Self {
+        for &(x, y) in vertices {
+            self.vertices.push(slice::Vertex {
+                x: x.into(),
+                y: y.into(),
+            });
+        }
+        self
+    }
+
+    /// Add a polygon to this slice.
+    ///
+    /// # Parameters
+    ///
+    /// - `f`: A closure that configures a [`PolygonBuilder`]
+    pub fn add_polygon<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut PolygonBuilder),
+    {
+        let mut builder = PolygonBuilder::new();
+        f(&mut builder);
+        self.polygons.push(builder.build());
+        self
+    }
+
+    fn build(self) -> Slice {
+        let vertices = if self.vertices.is_empty() {
+            None
+        } else {
+            Some(slice::Vertices {
+                vertex: self.vertices,
+            })
+        };
+
+        Slice {
+            ztop: self.ztop.unwrap_or(0.0).into(),
+            vertices,
+            polygon: self.polygons,
+        }
+    }
+}
+
+/// Builder for constructing polygons within a slice.
+///
+/// Polygons define closed or open contours made of line segments.
+pub struct PolygonBuilder {
+    startv: Option<ResourceIndex>,
+    segments: Vec<Segment>,
+}
+
+impl PolygonBuilder {
+    fn new() -> Self {
+        Self {
+            startv: None,
+            segments: Vec::new(),
+        }
+    }
+
+    /// Set the starting vertex index for this polygon.
+    ///
+    /// This is the index of the first vertex of the first segment.
+    ///
+    /// # Parameters
+    ///
+    /// - `startv`: The starting vertex index
+    pub fn start_vertex(&mut self, startv: ResourceIndex) -> &mut Self {
+        self.startv = Some(startv);
+        self
+    }
+
+    /// Add a segment to this polygon.
+    ///
+    /// Each segment connects from the previous segment's v2 (or startv for
+    /// the first segment) to the specified vertex v2.
+    ///
+    /// # Parameters
+    ///
+    /// - `v2`: The index of the second vertex of this segment
+    pub fn add_segment(&mut self, v2: ResourceIndex) -> &mut Self {
+        self.segments.push(Segment {
+            v2,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
+        });
+        self
+    }
+
+    /// Add a segment with property indices.
+    ///
+    /// # Parameters
+    ///
+    /// - `v2`: The index of the second vertex of this segment
+    /// - `p1`: Property index for the first vertex
+    /// - `p2`: Property index for the second vertex
+    pub fn add_segment_with_properties(
+        &mut self,
+        v2: ResourceIndex,
+        p1: OptionalResourceIndex,
+        p2: OptionalResourceIndex,
+    ) -> &mut Self {
+        self.segments.push(Segment {
+            v2,
+            p1,
+            p2,
+            pid: OptionalResourceId::none(),
+        });
+        self
+    }
+
+    fn build(self) -> Polygon {
+        Polygon {
+            startv: self.startv.unwrap_or(0),
+            segment: self.segments,
         }
     }
 }

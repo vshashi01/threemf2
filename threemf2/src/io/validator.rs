@@ -70,17 +70,23 @@ pub enum ValidationScope {
 }
 
 /// Validation rules that can be applied to 3MF packages or models.
+/// Validation rules has per rule scope that can be checked with scope impl function
+/// Scope: ModelOrPackage can be run for Model parts or the whole 3MF Package, usually when run only
+/// on specific model only, the validation may fail due to missing information referenced in other Model parts
+/// PackageOnly rules are only run on packages always
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ValidationRule {
     /// Validates that object IDs are unique, start at 1, and within valid range.
     ObjectIdReference,
     /// Validates that resource ID references (pid) exist in BaseMaterials and
     /// if pindex is defined then pid should also be defined.
-    ResourceIdReference,
+    BaseMaterialReference,
     /// Validates that all Build items are referencing a valid Object
     BuildItemReference,
     /// Validates that all Components are referencing a valid Object
     ComponentReference,
+    /// Validates that Objects are referencing valid SliceStacks
+    ObjectToSliceStackReference,
 }
 
 impl ValidationRule {
@@ -88,9 +94,10 @@ impl ValidationRule {
     pub fn scope(&self) -> ValidationScope {
         match self {
             ValidationRule::ObjectIdReference => ValidationScope::ModelOrPackage,
-            ValidationRule::ResourceIdReference => ValidationScope::ModelOrPackage,
+            ValidationRule::BaseMaterialReference => ValidationScope::ModelOrPackage,
             ValidationRule::BuildItemReference => ValidationScope::ModelOrPackage,
             ValidationRule::ComponentReference => ValidationScope::ModelOrPackage,
+            ValidationRule::ObjectToSliceStackReference => ValidationScope::PackageOnly,
         }
     }
 }
@@ -227,14 +234,14 @@ mod tests {
     fn test_validator_builder_pattern() {
         let validator = Validator::new()
             .with_rule(ValidationRule::ObjectIdReference)
-            .with_rule(ValidationRule::ResourceIdReference);
+            .with_rule(ValidationRule::BaseMaterialReference);
 
         assert_eq!(validator.rules.len(), 2);
         assert!(validator.rules.contains(&ValidationRule::ObjectIdReference));
         assert!(
             validator
                 .rules
-                .contains(&ValidationRule::ResourceIdReference)
+                .contains(&ValidationRule::BaseMaterialReference)
         );
     }
 
@@ -245,7 +252,7 @@ mod tests {
             ValidationScope::ModelOrPackage
         );
         assert_eq!(
-            ValidationRule::ResourceIdReference.scope(),
+            ValidationRule::BaseMaterialReference.scope(),
             ValidationScope::ModelOrPackage
         );
     }

@@ -675,9 +675,13 @@ mod tests {
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
                             uuid: Some("uuid".to_owned()),
+                            slicestackid: OptionalResourceId::none(),
+                            slicepath: None,
+                            meshresolution: None,
                             kind: None,
                         }],
                         basematerials: vec![],
+                        slicestack: vec![],
                     },
                     build: Build {
                         uuid: None,
@@ -714,6 +718,7 @@ mod tests {
             writer
         };
 
+        // usually breaks due to additional namespace declaration that arent filtered out
         assert_eq!(bytes.into_inner().len(), 944);
     }
 
@@ -733,6 +738,7 @@ mod tests {
                 resources: Resources {
                     object: vec![],
                     basematerials: vec![],
+                    slicestack: vec![],
                 },
                 build: Build {
                     uuid: None,
@@ -818,6 +824,7 @@ mod tests {
                 resources: Resources {
                     object: vec![],
                     basematerials: vec![],
+                    slicestack: vec![],
                 },
                 build: Build {
                     uuid: None,

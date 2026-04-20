@@ -717,6 +717,7 @@ mod tests {
             resources: Resources {
                 object: vec![],
                 basematerials: vec![],
+                slicestack: vec![],
             },
             build: Build {
                 uuid: None,

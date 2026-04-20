@@ -186,8 +186,12 @@ fn validate_beamlattice_with_trianglesets() {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: Some(ObjectKind::Mesh(mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 }],
                 basematerials: vec![],
+                slicestack: vec![],
             },
             build: Build {
                 uuid: None,
