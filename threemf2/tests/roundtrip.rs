@@ -80,6 +80,11 @@ mod tests {
                     }],
                     basematerials: vec![],
                     slicestack: vec![],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
                 },
                 build: Build {
                     uuid: None,

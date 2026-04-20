@@ -203,9 +203,14 @@ use crate::{
         boolean::{BooleanOperation, BooleanShape},
         build::Item,
         component::Components,
+        material::{
+            ColorElement, ColorGroup, Composite, CompositeMaterials, Multi, MultiProperties,
+            Tex2Coord, Texture2D, Texture2DGroup,
+        },
         mesh::Mesh,
         model::Model,
         object::{Object, ObjectKind, ObjectType},
+        resources::{Base, BaseMaterials},
         slice::SliceStack,
         transform::Transform,
     },
@@ -2038,9 +2043,691 @@ pub fn get_slice_stack_from_model<'a>(
         })
 }
 
+/// A reference to a ColorGroup within a 3MF model.
+///
+/// Color groups define a set of colors that can be referenced by index for applying
+/// to mesh vertices or triangles.
+///
+/// # Fields
+///
+/// * `colorgroup` - Reference to the [`ColorGroup`] data
+/// * `path` - Path to the model containing this ColorGroup (`None` for root model)
+#[derive(Debug)]
+pub struct ColorGroupRef<'a> {
+    /// The color group itself.
+    pub colorgroup: &'a ColorGroup,
+    /// The path to the model containing this color group, if None then it is the root model.
+    pub path: Option<&'a str>,
+}
+
+/// Returns an iterator over all color groups in a specific model.
+///
+/// Color groups define sRGB colors that can be referenced by index for material
+/// application to mesh geometry.
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`ColorGroupRef`] for all color groups in this model.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // List all color groups in the root model
+/// for cg_ref in get_color_groups_from_model(&package.root) {
+///     println!("ColorGroup ID: {} has {} colors",
+///         cg_ref.colorgroup.id,
+///         cg_ref.colorgroup.color.len()
+///     );
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_color_group_by_id()`] - Find a specific color group by ID
+/// * [`resolve_material_property()`] - Resolve pid/pindex to color
+pub fn get_color_groups_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = ColorGroupRef<'a>> {
+    model.resources.colorgroup.iter().map(|cg| ColorGroupRef {
+        colorgroup: cg,
+        path: None,
+    })
+}
+
+/// Finds a color group by ID from a given model.
+///
+/// Color group IDs are unique within a single model. This function only
+/// searches within the specified model.
+///
+/// # Arguments
+///
+/// * `colorgroup_id` - The color group ID to search for
+/// * `model` - The model to search in
+///
+/// # Returns
+///
+/// `Some(ColorGroupRef)` if found, `None` otherwise.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // Find color group in root model
+/// if let Some(cg) = get_color_group_by_id(1, &package.root) {
+///     println!("Found color group with {} colors", cg.colorgroup.color.len());
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_color_groups_from_model()`] - Get all color groups from a model
+pub fn get_color_group_by_id<'a>(
+    colorgroup_id: u32,
+    model: &'a Model,
+) -> Option<ColorGroupRef<'a>> {
+    model
+        .resources
+        .colorgroup
+        .iter()
+        .find(|cg| cg.id == colorgroup_id)
+        .map(|colorgroup| ColorGroupRef {
+            colorgroup,
+            path: None,
+        })
+}
+
+/// A reference to a Texture2DGroup within a 3MF model.
+///
+/// Texture 2D groups define UV coordinates for mapping a texture image to
+/// mesh vertices. They reference a Texture2D resource via `texid`.
+///
+/// # Fields
+///
+/// * `texture2dgroup` - Reference to the [`Texture2DGroup`] data
+/// * `path` - Path to the model containing this Texture2DGroup (`None` for root model)
+pub struct Texture2DGroupRef<'a> {
+    /// The texture 2D group itself.
+    pub texture2dgroup: &'a Texture2DGroup,
+    /// The path to the model containing this texture 2D group, if None then it is the root model.
+    pub path: Option<&'a str>,
+}
+
+/// Returns an iterator over all texture 2D groups in a specific model.
+///
+/// Texture 2D groups define UV coordinates for texture mapping to mesh geometry.
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`Texture2DGroupRef`] for all texture 2D groups in this model.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // List all texture groups in the root model
+/// for tg_ref in get_texture2d_groups_from_model(&package.root) {
+///     println!("Texture2DGroup ID: {} references texture {} with {} coordinates",
+///         tg_ref.texture2dgroup.id,
+///         tg_ref.texture2dgroup.texid,
+///         tg_ref.texture2dgroup.tex2coord.len()
+///     );
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_texture2d_group_by_id()`] - Find a specific texture group by ID
+/// * [`get_texture_for_group()`] - Resolve the referenced Texture2D
+pub fn get_texture2d_groups_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = Texture2DGroupRef<'a>> {
+    model
+        .resources
+        .texture2dgroup
+        .iter()
+        .map(|tg| Texture2DGroupRef {
+            texture2dgroup: tg,
+            path: None,
+        })
+}
+
+/// Finds a texture 2D group by ID from a given model.
+///
+/// Texture 2D group IDs are unique within a single model.
+///
+/// # Arguments
+///
+/// * `texture2dgroup_id` - The texture 2D group ID to search for
+/// * `model` - The model to search in
+///
+/// # Returns
+///
+/// `Some(Texture2DGroupRef)` if found, `None` otherwise.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// if let Some(tg) = get_texture2d_group_by_id(1, &package.root) {
+///     println!("Found texture group with {} UV coordinates", tg.texture2dgroup.tex2coord.len());
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_texture2d_groups_from_model()`] - Get all texture groups from a model
+pub fn get_texture2d_group_by_id<'a>(
+    texture2dgroup_id: u32,
+    model: &'a Model,
+) -> Option<Texture2DGroupRef<'a>> {
+    model
+        .resources
+        .texture2dgroup
+        .iter()
+        .find(|tg| tg.id == texture2dgroup_id)
+        .map(|texture2dgroup| Texture2DGroupRef {
+            texture2dgroup,
+            path: None,
+        })
+}
+
+/// A reference to CompositeMaterials within a 3MF model.
+///
+/// Composite materials define blends of multiple base materials with
+/// specific mixing ratios.
+///
+/// # Fields
+///
+/// * `compositematerials` - Reference to the [`CompositeMaterials`] data
+/// * `path` - Path to the model containing this CompositeMaterials (`None` for root model)
+pub struct CompositeMaterialsRef<'a> {
+    /// The composite materials definition itself.
+    pub compositematerials: &'a CompositeMaterials,
+    /// The path to the model containing this composite materials, if None then it is the root model.
+    pub path: Option<&'a str>,
+}
+
+/// Returns an iterator over all composite materials in a specific model.
+///
+/// Composite materials define blends of base materials using specific mixing ratios.
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`CompositeMaterialsRef`] for all composite materials in this model.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// for cm_ref in get_composite_materials_from_model(&package.root) {
+///     println!("CompositeMaterials ID: {} references base material {} with {} composites",
+///         cm_ref.compositematerials.id,
+///         cm_ref.compositematerials.matid,
+///         cm_ref.compositematerials.composite.len()
+///     );
+/// }
+/// ```
+pub fn get_composite_materials_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = CompositeMaterialsRef<'a>> {
+    model
+        .resources
+        .compositematerials
+        .iter()
+        .map(|cm| CompositeMaterialsRef {
+            compositematerials: cm,
+            path: None,
+        })
+}
+
+/// Finds composite materials by ID from a given model.
+///
+/// # Arguments
+///
+/// * `compositematerials_id` - The composite materials ID to search for
+/// * `model` - The model to search in
+///
+/// # Returns
+///
+/// `Some(CompositeMaterialsRef)` if found, `None` otherwise.
+pub fn get_composite_materials_by_id<'a>(
+    compositematerials_id: u32,
+    model: &'a Model,
+) -> Option<CompositeMaterialsRef<'a>> {
+    model
+        .resources
+        .compositematerials
+        .iter()
+        .find(|cm| cm.id == compositematerials_id)
+        .map(|compositematerials| CompositeMaterialsRef {
+            compositematerials,
+            path: None,
+        })
+}
+
+/// A reference to MultiProperties within a 3MF model.
+///
+/// Multi-properties define layered material properties with blend methods.
+///
+/// # Fields
+///
+/// * `multiproperties` - Reference to the [`MultiProperties`] data
+/// * `path` - Path to the model containing this MultiProperties (`None` for root model)
+pub struct MultiPropertiesRef<'a> {
+    /// The multi-properties definition itself.
+    pub multiproperties: &'a MultiProperties,
+    /// The path to the model containing this multi-properties, if None then it is the root model.
+    pub path: Option<&'a str>,
+}
+
+/// Returns an iterator over all multi-properties in a specific model.
+///
+/// Multi-properties define layered material properties that can be applied to mesh geometry.
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`MultiPropertiesRef`] for all multi-properties in this model.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// for mp_ref in get_multi_properties_from_model(&package.root) {
+///     println!("MultiProperties ID: {} with {} property layers",
+///         mp_ref.multiproperties.id,
+///         mp_ref.multiproperties.multi.len()
+///     );
+/// }
+/// ```
+pub fn get_multi_properties_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = MultiPropertiesRef<'a>> {
+    model
+        .resources
+        .multiproperties
+        .iter()
+        .map(|mp| MultiPropertiesRef {
+            multiproperties: mp,
+            path: None,
+        })
+}
+
+/// Finds multi-properties by ID from a given model.
+///
+/// # Arguments
+///
+/// * `multiproperties_id` - The multi-properties ID to search for
+/// * `model` - The model to search in
+///
+/// # Returns
+///
+/// `Some(MultiPropertiesRef)` if found, `None` otherwise.
+pub fn get_multi_properties_by_id<'a>(
+    multiproperties_id: u32,
+    model: &'a Model,
+) -> Option<MultiPropertiesRef<'a>> {
+    model
+        .resources
+        .multiproperties
+        .iter()
+        .find(|mp| mp.id == multiproperties_id)
+        .map(|multiproperties| MultiPropertiesRef {
+            multiproperties,
+            path: None,
+        })
+}
+
+/// A reference to a Texture2D within a 3MF model.
+///
+/// Texture2D resources reference image files within the 3MF package
+/// (e.g., "/3D/Textures/texture.png").
+///
+/// # Fields
+///
+/// * `texture2d` - Reference to the [`Texture2D`] data
+/// * `path` - Path to the model containing this Texture2D (`None` for root model)
+pub struct Texture2DRef<'a> {
+    /// The texture 2D resource itself.
+    pub texture2d: &'a Texture2D,
+    /// The path to the model containing this texture 2D, if None then it is the root model.
+    pub path: Option<&'a str>,
+}
+
+/// Returns an iterator over all Texture2D resources in a specific model.
+///
+/// Texture2D resources reference image files within the 3MF package.
+/// The `path` field in the Texture2D struct contains the path to the image
+/// file (e.g., "/3D/Textures/texture.png").
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`Texture2DRef`] for all Texture2D resources in this model.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// for tex_ref in get_texture2ds_from_model(&package.root) {
+///     println!("Texture2D ID: {} -> {} ({})",
+///         tex_ref.texture2d.id,
+///         tex_ref.texture2d.path,
+///         tex_ref.texture2d.contenttype
+///     );
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_texture2d_by_id()`] - Find a specific texture by ID
+/// * [`get_texture_for_group()`] - Get the texture referenced by a Texture2DGroup
+pub fn get_texture2ds_from_model<'a>(model: &'a Model) -> impl Iterator<Item = Texture2DRef<'a>> {
+    model.resources.texture2d.iter().map(|t| Texture2DRef {
+        texture2d: t,
+        path: None,
+    })
+}
+
+/// Finds a Texture2D by ID from a given model.
+///
+/// # Arguments
+///
+/// * `texture2d_id` - The Texture2D ID to search for
+/// * `model` - The model to search in
+///
+/// # Returns
+///
+/// `Some(Texture2DRef)` if found, `None` otherwise.
+pub fn get_texture2d_by_id<'a>(texture2d_id: u32, model: &'a Model) -> Option<Texture2DRef<'a>> {
+    model
+        .resources
+        .texture2d
+        .iter()
+        .find(|t| t.id == texture2d_id)
+        .map(|texture2d| Texture2DRef {
+            texture2d,
+            path: None,
+        })
+}
+
+/// A reference to BaseMaterials within a 3MF model.
+///
+/// Base materials define the basic materials (colors) that can be referenced
+/// by mesh objects. This is part of the core 3MF specification (not the material extension).
+///
+/// # Fields
+///
+/// * `basematerials` - Reference to the [`BaseMaterials`] data
+/// * `path` - Path to the model containing this BaseMaterials (`None` for root model)
+pub struct BaseMaterialsRef<'a> {
+    /// The base materials definition itself.
+    pub basematerials: &'a BaseMaterials,
+    /// The path to the model containing this base materials, if None then it is the root model.
+    pub path: Option<&'a str>,
+}
+
+/// Returns an iterator over all base materials in a specific model.
+///
+/// Base materials define the base colors/materials for 3MF objects.
+///
+/// # Arguments
+///
+/// * `model` - The model to query
+///
+/// # Returns
+///
+/// An iterator over [`BaseMaterialsRef`] for all base materials in this model.
+pub fn get_base_materials_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = BaseMaterialsRef<'a>> {
+    model
+        .resources
+        .basematerials
+        .iter()
+        .map(|bm| BaseMaterialsRef {
+            basematerials: bm,
+            path: None,
+        })
+}
+
+/// Finds base materials by ID from a given model.
+///
+/// # Arguments
+///
+/// * `basematerials_id` - The base materials ID to search for
+/// * `model` - The model to search in
+///
+/// # Returns
+///
+/// `Some(BaseMaterialsRef)` if found, `None` otherwise.
+pub fn get_base_materials_by_id<'a>(
+    basematerials_id: u32,
+    model: &'a Model,
+) -> Option<BaseMaterialsRef<'a>> {
+    model
+        .resources
+        .basematerials
+        .iter()
+        .find(|bm| bm.id == basematerials_id)
+        .map(|basematerials| BaseMaterialsRef {
+            basematerials,
+            path: None,
+        })
+}
+
+/// Resolved material property from pid/pindex references.
+///
+/// This enum represents the different types of material properties that can be
+/// resolved from pid (property group ID) and pindex (property index) references.
+#[derive(Debug)]
+pub enum MaterialProperty<'a> {
+    /// A color from a ColorGroup.
+    Color(&'a ColorElement),
+    /// A texture coordinate (UV) from a Texture2DGroup.
+    TextureCoord(&'a Tex2Coord),
+    /// A composite material definition.
+    Composite(&'a Composite),
+    /// A multi-property layer definition.
+    Multi(&'a Multi),
+    /// A base material definition.
+    Base(&'a Base),
+}
+
+/// Resolves a pid/pindex reference to its material property.
+///
+/// Objects and triangles can reference material properties via:
+/// - `pid`: The ID of a material resource (ColorGroup, Texture2DGroup, etc.)
+/// - `pindex`: The index within that resource
+///
+/// This function looks up the referenced resource and returns the material property
+/// at the specified index.
+///
+/// # Arguments
+///
+/// * `pid` - The property group ID (OptionalResourceId)
+/// * `pindex` - The property index within the group (OptionalResourceIndex)
+/// * `model` - The model containing the material resources
+///
+/// # Returns
+///
+/// `Some(MaterialProperty)` if the reference resolves successfully, `None` if:
+/// - `pid` is not set (no material assigned)
+/// - The referenced resource doesn't exist in the model
+/// - `pindex` is out of bounds for the resource
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // Check if an object has material properties and resolve them
+/// for obj_ref in get_objects(&package) {
+///     if let Some(material) = resolve_material_property(obj_ref.pid, obj_ref.pindex, &package.root) {
+///         match material {
+///             MaterialProperty::Color(color) => {
+///                 println!("Object {} uses color {:?}", obj_ref.id, color.color);
+///             }
+///             MaterialProperty::TextureCoord(texcoord) => {
+///                 println!("Object {} uses texture UV ({}, {})", obj_ref.id, texcoord.u, texcoord.v);
+///             }
+///             _ => {}
+///         }
+///     }
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_color_groups_from_model()`] - Get color groups from a model
+/// * [`get_texture2d_groups_from_model()`] - Get texture groups from a model
+pub fn resolve_material_property<'a>(
+    pid: OptionalResourceId,
+    pindex: OptionalResourceIndex,
+    model: &'a Model,
+) -> Option<MaterialProperty<'a>> {
+    let pid = pid.get()?;
+    let pindex = pindex.get()? as usize;
+
+    // Try ColorGroup
+    if let Some(cg_ref) = get_color_group_by_id(pid, model) {
+        return cg_ref
+            .colorgroup
+            .color
+            .get(pindex)
+            .map(MaterialProperty::Color);
+    }
+
+    // Try Texture2DGroup
+    if let Some(tg_ref) = get_texture2d_group_by_id(pid, model) {
+        return tg_ref
+            .texture2dgroup
+            .tex2coord
+            .get(pindex)
+            .map(MaterialProperty::TextureCoord);
+    }
+
+    // Try CompositeMaterials
+    if let Some(cm_ref) = get_composite_materials_by_id(pid, model) {
+        return cm_ref
+            .compositematerials
+            .composite
+            .get(pindex)
+            .map(MaterialProperty::Composite);
+    }
+
+    // Try MultiProperties
+    if let Some(mp_ref) = get_multi_properties_by_id(pid, model) {
+        return mp_ref
+            .multiproperties
+            .multi
+            .get(pindex)
+            .map(MaterialProperty::Multi);
+    }
+
+    // Try BaseMaterials
+    if let Some(bm_ref) = get_base_materials_by_id(pid, model) {
+        return bm_ref
+            .basematerials
+            .base
+            .get(pindex)
+            .map(MaterialProperty::Base);
+    }
+
+    None
+}
+
+/// Gets the Texture2D referenced by a Texture2DGroup.
+///
+/// Texture2DGroups reference a Texture2D resource via the `texid` field.
+/// This function looks up the referenced Texture2D in the model.
+///
+/// # Arguments
+///
+/// * `texture2dgroup` - The Texture2DGroup whose texture to look up
+/// * `model` - The model containing the Texture2D resources
+///
+/// # Returns
+///
+/// `Some(Texture2DRef)` if the referenced Texture2D exists, `None` otherwise.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use threemf2::io::{ThreemfPackage, query::*};
+///
+/// let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true)?;
+///
+/// // For each texture group, find its associated texture image
+/// for tg_ref in get_texture2d_groups_from_model(&package.root) {
+///     if let Some(tex_ref) = get_texture_for_group(tg_ref.texture2dgroup, &package.root) {
+///         println!("TextureGroup {} uses texture {} at {}",
+///             tg_ref.texture2dgroup.id,
+///             tex_ref.texture2d.id,
+///             tex_ref.texture2d.path
+///         );
+///     }
+/// }
+/// ```
+///
+/// # See Also
+///
+/// * [`get_texture2d_groups_from_model()`] - Get texture groups from a model
+/// * [`get_texture2d_by_id()`] - Find a texture by ID
+pub fn get_texture_for_group<'a>(
+    texture2dgroup: &Texture2DGroup,
+    model: &'a Model,
+) -> Option<Texture2DRef<'a>> {
+    get_texture2d_by_id(texture2dgroup.texid, model)
+}
+
 #[cfg(feature = "io-memory-optimized-read")]
 #[cfg(test)]
 mod tests {
+    use crate::core::material::TextureContentType;
+
     use super::*;
 
     use std::path::PathBuf;
@@ -2395,5 +3082,310 @@ mod tests {
             intersected.boolean_shape().transform.is_some(),
             "Object 6 base should have a transform"
         );
+    }
+
+    // ============================================================================
+    // MATERIAL EXTENSION QUERY TESTS
+    // ============================================================================
+
+    #[test]
+    fn test_get_color_groups_from_model() {
+        // Use the material test file
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        // Check that we can iterate color groups from the root model
+        let color_groups: Vec<_> = get_color_groups_from_model(&package.root).collect();
+
+        // Verify structure of color group references
+        for cg_ref in &color_groups {
+            assert!(
+                cg_ref.path.is_none(),
+                "Root model color groups should have None path"
+            );
+            assert!(
+                cg_ref.colorgroup.id > 0,
+                "Color group ID should be positive"
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_color_group_by_id() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        // Get the first color group ID if any exist
+        if let Some(first_cg) = get_color_groups_from_model(&package.root).next() {
+            let first_id = first_cg.colorgroup.id;
+
+            // Test finding by ID
+            let found = get_color_group_by_id(first_id, &package.root);
+            assert!(found.is_some(), "Should find color group by ID");
+            assert_eq!(found.unwrap().colorgroup.id, first_id);
+        }
+
+        // Test not found
+        let not_found = get_color_group_by_id(9999, &package.root);
+        assert!(
+            not_found.is_none(),
+            "Should return None for non-existent ID"
+        );
+    }
+
+    #[test]
+    fn test_get_texture2d_groups_from_model() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let texture_groups: Vec<_> = get_texture2d_groups_from_model(&package.root).collect();
+
+        // Verify structure of texture group references
+        for tg_ref in &texture_groups {
+            assert!(
+                tg_ref.path.is_none(),
+                "Root model texture groups should have None path"
+            );
+            assert!(
+                tg_ref.texture2dgroup.id > 0,
+                "Texture group ID should be positive"
+            );
+            // Note: texid might reference a texture or base materials, either is valid
+        }
+    }
+
+    #[test]
+    fn test_get_texture2ds_from_model() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let textures: Vec<_> = get_texture2ds_from_model(&package.root).collect();
+
+        for tex_ref in &textures {
+            assert!(
+                tex_ref.path.is_none(),
+                "Root model textures should have None path"
+            );
+            assert!(tex_ref.texture2d.id > 0, "Texture ID should be positive");
+            assert!(
+                !tex_ref.texture2d.path.is_empty(),
+                "Texture should have a path"
+            );
+            assert!(
+                tex_ref.texture2d.contenttype == TextureContentType::Png,
+                "Texture should have valid content type"
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_base_materials_from_model() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        let base_materials: Vec<_> = get_base_materials_from_model(&package.root).collect();
+
+        for bm_ref in &base_materials {
+            assert!(
+                bm_ref.path.is_none(),
+                "Root model base materials should have None path"
+            );
+            assert!(
+                bm_ref.basematerials.id > 0,
+                "Base materials ID should be positive"
+            );
+        }
+    }
+
+    #[test]
+    fn test_resolve_material_property_color() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        // Find objects that have pid/pindex set
+        let mesh_objects: Vec<_> = get_mesh_objects(&package).collect();
+
+        for mesh_ref in mesh_objects {
+            if let Some(material) =
+                resolve_material_property(mesh_ref.pid, mesh_ref.pindex, &package.root)
+            {
+                match material {
+                    MaterialProperty::Color(color) => {
+                        // Verify we got a valid color
+                        let _color_str = color.color.to_hex_compact();
+                    }
+                    MaterialProperty::TextureCoord(texcoord) => {
+                        // Verify we got valid texture coordinates
+                        let u: f64 = texcoord.u.into();
+                        let v: f64 = texcoord.v.into();
+                        assert!(
+                            (0.0..=1.0).contains(&u),
+                            "U coordinate should typically be in [0,1] range"
+                        );
+                        assert!(
+                            (0.0..=1.0).contains(&v),
+                            "V coordinate should typically be in [0,1] range"
+                        );
+                    }
+                    MaterialProperty::Base(base) => {
+                        // Verify we got a valid base material
+                        assert!(
+                            !base.displaycolor.is_empty(),
+                            "Base material should have a color"
+                        );
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_resolve_material_property_none_cases() {
+        // Create an empty model
+        let model = crate::core::model::Model {
+            unit: None,
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: crate::core::resources::Resources {
+                object: vec![],
+                basematerials: vec![],
+                slicestack: vec![],
+                colorgroup: vec![],
+                texture2dgroup: vec![],
+                compositematerials: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
+            },
+            build: crate::core::build::Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        // Test with no pid/pindex
+        let result = resolve_material_property(
+            OptionalResourceId::none(),
+            OptionalResourceIndex::none(),
+            &model,
+        );
+        assert!(result.is_none(), "Should return None when pid is not set");
+
+        // Test with non-existent resource
+        let result = resolve_material_property(
+            OptionalResourceId::new(999),
+            OptionalResourceIndex::new(0),
+            &model,
+        );
+        assert!(
+            result.is_none(),
+            "Should return None when resource doesn't exist"
+        );
+    }
+
+    #[test]
+    fn test_get_texture_for_group() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        // For each texture group that references a texture (not base materials), verify we can resolve its texture
+        for tg_ref in get_texture2d_groups_from_model(&package.root) {
+            // Only test if the texid actually references a texture (not base materials)
+            if get_texture2d_by_id(tg_ref.texture2dgroup.texid, &package.root).is_some() {
+                let texture_ref = get_texture_for_group(tg_ref.texture2dgroup, &package.root);
+
+                assert!(
+                    texture_ref.is_some(),
+                    "Texture2DGroup {} should reference an existing Texture2D",
+                    tg_ref.texture2dgroup.id
+                );
+
+                let texture = texture_ref.unwrap();
+                assert_eq!(
+                    texture.texture2d.id, tg_ref.texture2dgroup.texid,
+                    "Resolved texture ID should match texid"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_empty_material_collections() {
+        // Create a model with no material resources
+        let model = crate::core::model::Model {
+            unit: None,
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: crate::core::resources::Resources {
+                object: vec![],
+                basematerials: vec![],
+                slicestack: vec![],
+                colorgroup: vec![],
+                texture2dgroup: vec![],
+                compositematerials: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
+            },
+            build: crate::core::build::Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        // All iterators should be empty
+        assert_eq!(get_color_groups_from_model(&model).count(), 0);
+        assert_eq!(get_texture2d_groups_from_model(&model).count(), 0);
+        assert_eq!(get_composite_materials_from_model(&model).count(), 0);
+        assert_eq!(get_multi_properties_from_model(&model).count(), 0);
+        assert_eq!(get_texture2ds_from_model(&model).count(), 0);
+        assert_eq!(get_base_materials_from_model(&model).count(), 0);
+
+        // All lookups should return None
+        assert!(get_color_group_by_id(1, &model).is_none());
+        assert!(get_texture2d_group_by_id(1, &model).is_none());
+        assert!(get_composite_materials_by_id(1, &model).is_none());
+        assert!(get_multi_properties_by_id(1, &model).is_none());
+        assert!(get_texture2d_by_id(1, &model).is_none());
+        assert!(get_base_materials_by_id(1, &model).is_none());
+    }
+
+    #[test]
+    fn test_composite_and_multi_properties_empty() {
+        // Test with a file to verify composite and multi-properties functions don't panic
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+        let file = std::fs::File::open(path).unwrap();
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
+
+        // These may or may not be empty depending on the test file
+        let _composite_materials: Vec<_> =
+            get_composite_materials_from_model(&package.root).collect();
+        let _multi_properties: Vec<_> = get_multi_properties_from_model(&package.root).collect();
+
+        // Just verify the functions don't panic
     }
 }

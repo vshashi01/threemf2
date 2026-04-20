@@ -384,6 +384,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             object: vec![cube_object_1, cube_object_2, result_object],
             basematerials: vec![],
             slicestack: vec![],
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         },
         build: Build {
             uuid: None,

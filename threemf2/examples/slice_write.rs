@@ -219,6 +219,11 @@ fn main() {
         object: vec![object],
         basematerials: vec![],
         slicestack: vec![slicestack],
+        colorgroup: Vec::new(),
+        texture2dgroup: Vec::new(),
+        compositematerials: Vec::new(),
+        multiproperties: Vec::new(),
+        texture2d: Vec::new(),
     };
 
     // Create build section

@@ -203,6 +203,11 @@ fn create_cube_model() -> Model {
         object: vec![object],
         basematerials: vec![],
         slicestack: vec![],
+        colorgroup: vec![],
+        compositematerials: vec![],
+        texture2dgroup: vec![],
+        multiproperties: vec![],
+        texture2d: vec![],
     };
 
     let build = Build {

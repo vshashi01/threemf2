@@ -182,6 +182,11 @@ fn validate_simple_beamlattice() {
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
+                colorgroup: vec![],
+                compositematerials: vec![],
+                texture2dgroup: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
             },
             build: Build {
                 uuid: None,
@@ -344,6 +349,11 @@ fn validate_beamlattice_with_balls() {
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
+                colorgroup: vec![],
+                compositematerials: vec![],
+                texture2dgroup: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
             },
             build: Build {
                 uuid: None,

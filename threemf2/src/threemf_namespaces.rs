@@ -31,6 +31,11 @@ pub const BEAM_LATTICE_BALLS_NS: &str =
     "http://schemas.microsoft.com/3dmanufacturing/beamlattice/balls/2020/07";
 pub const BEAM_LATTICE_BALLS_PREFIX: &str = "b2";
 
+////////////////////////////////////////////////////////////////////////////////////
+/// Namespaces & Prefixes related to the Material extension
+pub const MATERIAL_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02";
+pub const MATERIAL_PREFIX: &str = "m";
+
 /// Enum representing the different 3MF specifications supported by this library
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ThreemfNamespace {
@@ -54,6 +59,9 @@ pub enum ThreemfNamespace {
 
     /// Triangle Set extension (Part of the Core Spec)
     CoreTriangleSet,
+
+    /// Material extension
+    Material,
 }
 
 impl ThreemfNamespace {
@@ -67,6 +75,7 @@ impl ThreemfNamespace {
             Self::BeamLattice => BEAM_LATTICE_NS,
             Self::BeamLatticeBalls => BEAM_LATTICE_BALLS_NS,
             Self::CoreTriangleSet => CORE_TRIANGLESET_NS,
+            Self::Material => MATERIAL_NS,
         }
     }
 
@@ -82,6 +91,7 @@ impl ThreemfNamespace {
             Self::BeamLattice => Some(BEAM_LATTICE_PREFIX),
             Self::BeamLatticeBalls => Some(BEAM_LATTICE_BALLS_PREFIX),
             Self::CoreTriangleSet => Some(CORE_TRIANGLESET_PREFIX),
+            Self::Material => Some(MATERIAL_PREFIX),
         }
     }
 

@@ -168,6 +168,11 @@ fn validate_simple_slice() {
             object: vec![object],
             basematerials: vec![],
             slicestack: vec![slicestack],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: vec![],
         },
         build: Build {
             uuid: None,
@@ -395,6 +400,11 @@ fn validate_slice_multiple_polygons() {
             object: vec![object],
             basematerials: vec![],
             slicestack: vec![slicestack],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: vec![],
         },
         build: Build {
             uuid: None,
