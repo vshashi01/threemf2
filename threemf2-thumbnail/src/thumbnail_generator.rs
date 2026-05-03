@@ -718,6 +718,11 @@ mod tests {
                 object: vec![],
                 basematerials: vec![],
                 slicestack: vec![],
+                colorgroup: vec![],
+                compositematerials: vec![],
+                texture2dgroup: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
             },
             build: Build {
                 uuid: None,

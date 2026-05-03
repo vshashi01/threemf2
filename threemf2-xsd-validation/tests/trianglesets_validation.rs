@@ -142,6 +142,11 @@ fn validate_simple_trianglesets() {
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
+                colorgroup: vec![],
+                compositematerials: vec![],
+                texture2dgroup: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
             },
             build: Build {
                 uuid: None,
@@ -279,6 +284,11 @@ fn validate_trianglesets_with_ref_ranges() {
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
+                colorgroup: vec![],
+                compositematerials: vec![],
+                texture2dgroup: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
             },
             build: Build {
                 uuid: None,

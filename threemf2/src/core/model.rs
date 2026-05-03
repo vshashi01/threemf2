@@ -10,7 +10,7 @@ use serde::Deserialize;
 use crate::{
     core::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
     threemf_namespaces::{
-        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, PROD_NS, SLICE_NS,
+        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, MATERIAL_NS, PROD_NS, SLICE_NS,
         ThreemfNamespace,
     },
 };
@@ -24,7 +24,8 @@ use crate::{
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS), rename = "model"))]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), 
+xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS, m = MATERIAL_NS), rename = "model"))]
 pub struct Model {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
@@ -115,6 +116,10 @@ impl Model {
 
         if self.uses_slice_ns() {
             used.push(ThreemfNamespace::Slice);
+        }
+
+        if self.uses_material_ns() {
+            used.push(ThreemfNamespace::Material);
         }
 
         used
@@ -210,6 +215,14 @@ impl Model {
                 o.slicestackid.is_some() || o.slicepath.is_some() || o.meshresolution.is_some()
             })
     }
+
+    fn uses_material_ns(&self) -> bool {
+        !self.resources.colorgroup.is_empty()
+            || !self.resources.texture2dgroup.is_empty()
+            || !self.resources.compositematerials.is_empty()
+            || !self.resources.multiproperties.is_empty()
+            || !self.resources.texture2d.is_empty()
+    }
 }
 
 #[cfg(feature = "write")]
@@ -220,8 +233,14 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, beamlattice, boolean,
+            Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceIdCollection,
+            ResourceIndexCollection, beamlattice, boolean,
             build::{Build, Item},
+            material::{
+                ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
+                MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
+                TileStyle,
+            },
             mesh::{Mesh, Triangles, Vertices},
             metadata::Metadata,
             object::{Object, ObjectKind, ObjectType},
@@ -230,8 +249,8 @@ mod write_tests {
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
-            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,
-            SLICE_PREFIX, ThreemfNamespace,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS,
+            PROD_PREFIX, SLICE_NS, SLICE_PREFIX, ThreemfNamespace,
         },
     };
 
@@ -240,10 +259,22 @@ mod write_tests {
     #[test]
     pub fn toxml_simple_model_test() {
         let xml_string = format!(
-            r#"<model xmlns="{CORE_NS}" xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{SLICE_PREFIX}="{SLICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            r#"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            CORE_NS,
+            BEAM_LATTICE_PREFIX,
+            BEAM_LATTICE_NS,
+            BOOLEAN_PREFIX,
+            BOOLEAN_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            CORE_TRIANGLESET_PREFIX,
+            CORE_TRIANGLESET_NS
         );
         let model = Model {
-            // xmlns: None,
             unit: Some(Unit::Millimeter),
             requiredextensions: None,
             recommendedextensions: None,
@@ -269,6 +300,11 @@ mod write_tests {
                     slicepath: None,
                     meshresolution: None,
                 }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -338,6 +374,11 @@ mod write_tests {
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -384,6 +425,11 @@ mod write_tests {
                     slicepath: None,
                     meshresolution: None,
                 }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -449,6 +495,11 @@ mod write_tests {
                     slicepath: None,
                     meshresolution: None,
                 }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -514,6 +565,11 @@ mod write_tests {
                     slicepath: None,
                     meshresolution: None,
                 }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -571,6 +627,11 @@ mod write_tests {
                     slicepath: None,
                     meshresolution: None,
                 }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -621,6 +682,11 @@ mod write_tests {
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -669,6 +735,11 @@ mod write_tests {
                         }],
                     }],
                 }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -752,6 +823,11 @@ mod write_tests {
                         })),
                     },
                 ],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -779,6 +855,129 @@ mod write_tests {
             ]
         );
     }
+
+    #[test]
+    fn test_used_namespaces_with_material() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![],
+                colorgroup: vec![ColorGroup {
+                    id: 1,
+                    color: vec![ColorElement {
+                        color: Color::from_hex("#FF0000").unwrap(),
+                    }],
+                }],
+                texture2dgroup: vec![Texture2DGroup {
+                    id: 2,
+                    texid: 1,
+                    tex2coord: vec![Tex2Coord {
+                        u: 0.0.into(),
+                        v: 0.0.into(),
+                    }],
+                }],
+                compositematerials: vec![CompositeMaterials {
+                    id: 3,
+                    matid: 10,
+                    matindices: ResourceIndexCollection::from(vec![0, 1]),
+                    composite: vec![Composite {
+                        values: vec![Double::new(1.0), Double::new(0.0)],
+                    }],
+                }],
+                multiproperties: vec![MultiProperties {
+                    id: 4,
+                    pids: ResourceIdCollection::from(vec![10, 20]),
+                    blendmethods: Some("mix".to_owned()),
+                    multi: vec![Multi {
+                        pindices: ResourceIndexCollection::from(vec![0, 0]),
+                    }],
+                }],
+                texture2d: vec![Texture2D {
+                    id: 5,
+                    path: "/3D/texture.png".to_owned(),
+                    contenttype: TextureContentType::Png,
+                    tilestyleu: Some(TileStyle::Wrap),
+                    tilestylev: Some(TileStyle::Mirror),
+                    filter: Some(Filter::Linear),
+                }],
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Material]
+        );
+    }
+
+    #[test]
+    pub fn toxml_model_with_material_resources_test() {
+        // Note: The serializer always includes all namespace declarations
+        // The actual order is: core, b, bo, m, p, s, t (alphabetical by prefix)
+        let xml_string = format!(
+            r##"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            CORE_NS,
+            BEAM_LATTICE_PREFIX,
+            BEAM_LATTICE_NS,
+            BOOLEAN_PREFIX,
+            BOOLEAN_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            CORE_TRIANGLESET_PREFIX,
+            CORE_TRIANGLESET_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX
+        );
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![],
+                colorgroup: vec![ColorGroup {
+                    id: 1,
+                    color: vec![ColorElement {
+                        color: Color::from_hex("#FF0000").unwrap(),
+                    }],
+                }],
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: vec![Texture2D {
+                    id: 2,
+                    path: "/3D/texture.png".to_owned(),
+                    contenttype: TextureContentType::Png,
+                    tilestyleu: None,
+                    tilestylev: None,
+                    filter: None,
+                }],
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+        let model_string = to_string(&model).unwrap();
+
+        assert_eq!(model_string, xml_string);
+    }
 }
 
 #[cfg(feature = "memory-optimized-read")]
@@ -790,15 +989,18 @@ mod memory_optimized_read_tests {
 
     use crate::core::OptionalResourceId;
     use crate::core::OptionalResourceIndex;
+    use crate::core::material::TextureContentType;
     use crate::{
         core::{
+            Color,
             build::{Build, Item},
             component::{Component, Components},
+            material::{ColorElement, ColorGroup, Texture2D},
             metadata::Metadata,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
         },
-        threemf_namespaces::{CORE_NS, PROD_NS},
+        threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS},
     };
 
     use super::{Model, Unit};
@@ -840,6 +1042,11 @@ mod memory_optimized_read_tests {
                         meshresolution: None,
                         kind: None,
                     }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
                 },
                 build: Build {
                     uuid: None,
@@ -907,6 +1114,11 @@ mod memory_optimized_read_tests {
                         slicepath: None,
                         meshresolution: None,
                     }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
                 },
                 build: Build {
                     uuid: Some("someBuildUUID".to_owned()),
@@ -949,6 +1161,57 @@ mod memory_optimized_read_tests {
             }
         );
     }
+
+    #[test]
+    pub fn fromxml_model_with_material_resources_test() {
+        let xml_string = format!(
+            r##"<model xmlns="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            CORE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX
+        );
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                unit: Some(Unit::Millimeter),
+                requiredextensions: None,
+                recommendedextensions: None,
+                metadata: vec![],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![],
+                    colorgroup: vec![ColorGroup {
+                        id: 1,
+                        color: vec![ColorElement {
+                            color: Color::from_hex("#FF0000").unwrap()
+                        }],
+                    }],
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: vec![Texture2D {
+                        id: 2,
+                        path: "/3D/texture.png".to_owned(),
+                        contenttype: TextureContentType::Png,
+                        tilestyleu: None,
+                        tilestylev: None,
+                        filter: None,
+                    }],
+                },
+                build: Build {
+                    uuid: None,
+                    item: vec![],
+                },
+            }
+        );
+    }
 }
 
 #[cfg(feature = "speed-optimized-read")]
@@ -960,14 +1223,15 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            Color, OptionalResourceId, OptionalResourceIndex,
             build::{Build, Item},
             component::{Component, Components},
+            material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
             metadata::Metadata,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
         },
-        threemf_namespaces::{CORE_NS, PROD_NS},
+        threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS},
     };
 
     use super::{Model, Unit};
@@ -1010,6 +1274,11 @@ mod speed_optimized_read_tests {
                         meshresolution: None,
                         kind: None,
                     }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
                 },
                 build: Build {
                     uuid: None,
@@ -1085,6 +1354,11 @@ mod speed_optimized_read_tests {
                         //     }]
                         // }),
                     }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
                 },
                 build: Build {
                     uuid: Some("someBuildUUID".to_owned()),
@@ -1125,6 +1399,57 @@ mod speed_optimized_read_tests {
                     Unit::Foot,
                     Unit::Meter,
                 ],
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_model_with_material_resources_test() {
+        let xml_string = format!(
+            r##"<model xmlns="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            CORE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX
+        );
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                unit: Some(Unit::Millimeter),
+                requiredextensions: None,
+                recommendedextensions: None,
+                metadata: vec![],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![],
+                    colorgroup: vec![ColorGroup {
+                        id: 1,
+                        color: vec![ColorElement {
+                            color: Color::from_hex("#FF0000").unwrap()
+                        }],
+                    }],
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: vec![Texture2D {
+                        id: 2,
+                        path: "/3D/texture.png".to_owned(),
+                        contenttype: TextureContentType::Png,
+                        tilestyleu: None,
+                        tilestylev: None,
+                        filter: None,
+                    }],
+                },
+                build: Build {
+                    uuid: None,
+                    item: vec![],
+                },
             }
         );
     }

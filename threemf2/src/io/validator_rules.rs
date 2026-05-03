@@ -381,6 +381,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -394,6 +399,11 @@ mod tests {
             object: vec![create_test_object(1), create_test_object(1)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -409,6 +419,11 @@ mod tests {
             object: vec![create_test_object(0)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -424,6 +439,11 @@ mod tests {
             object: vec![create_test_object(2_147_483_648)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -444,6 +464,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -462,6 +487,11 @@ mod tests {
             object: vec![create_test_object_with_pid(1, 10)],
             basematerials,
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -475,6 +505,11 @@ mod tests {
             object: vec![create_test_object_with_pid(1, 10)],
             basematerials: Vec::new(),
             slicestack: Vec::new(), // No BaseMaterials with id=10
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -495,6 +530,11 @@ mod tests {
             object: vec![create_test_object(1)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -522,6 +562,11 @@ mod tests {
             object: vec![object],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -546,6 +591,11 @@ mod tests {
             ],
             basematerials,
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -564,6 +614,11 @@ mod tests {
             object: vec![create_test_object(1)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -653,6 +708,11 @@ mod tests {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -671,6 +731,11 @@ mod tests {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(2)]); // References object 2 which doesn't exist
         let model = create_test_model(resources, build);
@@ -692,6 +757,11 @@ mod tests {
             object: vec![create_test_mesh_object(1), create_test_mesh_object(2)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1), // Valid
@@ -718,6 +788,11 @@ mod tests {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let build = create_test_build_with_items(vec![]);
         let model = create_test_model(resources, build);
@@ -740,6 +815,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -760,6 +840,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -792,6 +877,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -811,6 +901,11 @@ mod tests {
             object: vec![create_test_mesh_object(1), create_test_mesh_object(2)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -830,6 +925,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -852,6 +952,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -869,6 +974,11 @@ mod tests {
             object: vec![create_test_mesh_object(1)],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -886,6 +996,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -903,6 +1018,11 @@ mod tests {
             ],
             basematerials: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            texture2d: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1),   // Valid
