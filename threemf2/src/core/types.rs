@@ -73,6 +73,15 @@ impl Default for OptionalResourceId {
     }
 }
 
+impl From<&[u8]> for OptionalResourceId {
+    fn from(value: &[u8]) -> Self {
+        match lexical_core::parse(value) {
+            Ok(value) => OptionalResourceId::new(value),
+            Err(_) => OptionalResourceId::none(),
+        }
+    }
+}
+
 #[cfg(feature = "write")]
 impl ToXml for OptionalResourceId {
     fn serialize<W: std::fmt::Write + ?Sized>(
@@ -112,7 +121,7 @@ impl<'xml> FromXml<'xml> for OptionalResourceId {
 
         let value = match deserializer.take_str()? {
             Some(value) => {
-                let value: u32 = lexical_core::parse(value.as_bytes())
+                let value: u32 = lexical_core::parse(value.trim().as_bytes())
                     .map_err(|_| Error::MissingValue("Failed to parse OptionalResourceId"))?;
 
                 if value == 0 {
@@ -200,6 +209,15 @@ impl Default for OptionalResourceIndex {
     }
 }
 
+impl From<&[u8]> for OptionalResourceIndex {
+    fn from(value: &[u8]) -> Self {
+        match lexical_core::parse(value) {
+            Ok(value) => OptionalResourceIndex::new(value),
+            Err(_) => OptionalResourceIndex::none(),
+        }
+    }
+}
+
 #[cfg(feature = "write")]
 impl ToXml for OptionalResourceIndex {
     fn serialize<W: std::fmt::Write + ?Sized>(
@@ -243,7 +261,7 @@ impl<'xml> FromXml<'xml> for OptionalResourceIndex {
 
         let value = match deserializer.take_str()? {
             Some(value) => {
-                let value: u32 = lexical_core::parse(value.as_bytes())
+                let value: u32 = lexical_core::parse(value.trim().as_bytes())
                     .map_err(|_| Error::MissingValue("Failed to parse OptionalResourceIndex"))?;
 
                 Self::new(value)

@@ -723,6 +723,9 @@ mod tests {
                 texture2dgroup: vec![],
                 multiproperties: vec![],
                 texture2d: vec![],
+                disp2dgroup: vec![],
+                normvectorgroup: vec![],
+                displacement2d: vec![],
             },
             build: Build {
                 uuid: None,

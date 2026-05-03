@@ -131,7 +131,10 @@ fn validate_simple_production_model_with_uuids() {
                 compositematerials: vec![],
                 texture2dgroup: vec![],
                 multiproperties: vec![],
-                texture2d: vec![],
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: Some("96681a5d-5b0f-e592-8c51-da7ed587cb5f".to_owned()),
@@ -315,7 +318,10 @@ fn validate_production_model_with_components() {
                 compositematerials: vec![],
                 texture2dgroup: vec![],
                 multiproperties: vec![],
-                texture2d: vec![],
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: Some("build-uuid-1234-5678-90ab-cdef12345678".to_owned()),

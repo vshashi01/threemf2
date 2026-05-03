@@ -10,8 +10,8 @@ use serde::Deserialize;
 use crate::{
     core::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
     threemf_namespaces::{
-        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, MATERIAL_NS, PROD_NS, SLICE_NS,
-        ThreemfNamespace,
+        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, DISPLACEMENT_NS, MATERIAL_NS,
+        PROD_NS, SLICE_NS, ThreemfNamespace,
     },
 };
 
@@ -25,7 +25,7 @@ use crate::{
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(any(feature="write", feature="memory-optimized-read"), 
-xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS, m = MATERIAL_NS), rename = "model"))]
+xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS, m = MATERIAL_NS, d = DISPLACEMENT_NS), rename = "model"))]
 pub struct Model {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
@@ -120,6 +120,10 @@ impl Model {
 
         if self.uses_material_ns() {
             used.push(ThreemfNamespace::Material);
+        }
+
+        if self.uses_displacement_ns() {
+            used.push(ThreemfNamespace::Displacement);
         }
 
         used
@@ -223,6 +227,21 @@ impl Model {
             || !self.resources.multiproperties.is_empty()
             || !self.resources.texture2d.is_empty()
     }
+
+    fn uses_displacement_ns(&self) -> bool {
+        !self.resources.displacement2d.is_empty()
+            || !self.resources.normvectorgroup.is_empty()
+            || !self.resources.disp2dgroup.is_empty()
+            || self.resources.object.iter().any(|o| {
+                if let Some(kind) = &o.kind
+                    && let ObjectKind::DisplacementMesh(_) = kind
+                {
+                    true
+                } else {
+                    false
+                }
+            })
+    }
 }
 
 #[cfg(feature = "write")]
@@ -236,6 +255,7 @@ mod write_tests {
             Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceIdCollection,
             ResourceIndexCollection, beamlattice, boolean,
             build::{Build, Item},
+            displacement::Displacement2D,
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
                 MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -249,8 +269,9 @@ mod write_tests {
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
-            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS,
-            PROD_PREFIX, SLICE_NS, SLICE_PREFIX, ThreemfNamespace,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, DISPLACEMENT_NS, DISPLACEMENT_PREFIX,
+            MATERIAL_NS, MATERIAL_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
+            ThreemfNamespace,
         },
     };
 
@@ -259,12 +280,14 @@ mod write_tests {
     #[test]
     pub fn toxml_simple_model_test() {
         let xml_string = format!(
-            r#"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            r#"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
             CORE_NS,
             BEAM_LATTICE_PREFIX,
             BEAM_LATTICE_NS,
             BOOLEAN_PREFIX,
             BOOLEAN_NS,
+            DISPLACEMENT_PREFIX,
+            DISPLACEMENT_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             PROD_PREFIX,
@@ -305,6 +328,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -379,6 +405,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -430,6 +459,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -500,6 +532,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -570,6 +605,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -632,6 +670,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -687,6 +728,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -740,6 +784,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -828,6 +875,9 @@ mod write_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -905,6 +955,9 @@ mod write_tests {
                     tilestylev: Some(TileStyle::Mirror),
                     filter: Some(Filter::Linear),
                 }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -920,16 +973,58 @@ mod write_tests {
     }
 
     #[test]
+    fn test_used_namespaces_with_displacement() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: None,
+            recommendedextensions: None,
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![],
+                colorgroup: vec![],
+                texture2dgroup: vec![],
+                compositematerials: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
+                displacement2d: vec![Displacement2D {
+                    id: 10,
+                    path: "/3D/Textures/disp.png".to_owned(),
+                    channel: None,
+                    tilestyleu: None,
+                    tilestylev: None,
+                    filter: None,
+                }],
+                normvectorgroup: vec![],
+                disp2dgroup: vec![],
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Displacement]
+        );
+    }
+
+    #[test]
     pub fn toxml_model_with_material_resources_test() {
         // Note: The serializer always includes all namespace declarations
-        // The actual order is: core, b, bo, m, p, s, t (alphabetical by prefix)
+        // The actual order is: core, b, bo, d, m, p, s, t (alphabetical by prefix)
         let xml_string = format!(
-            r##"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            r##"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
             CORE_NS,
             BEAM_LATTICE_PREFIX,
             BEAM_LATTICE_NS,
             BOOLEAN_PREFIX,
             BOOLEAN_NS,
+            DISPLACEMENT_PREFIX,
+            DISPLACEMENT_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             PROD_PREFIX,
@@ -968,6 +1063,9 @@ mod write_tests {
                     tilestylev: None,
                     filter: None,
                 }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -1047,6 +1145,9 @@ mod memory_optimized_read_tests {
                     compositematerials: Vec::new(),
                     multiproperties: Vec::new(),
                     texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: None,
@@ -1119,6 +1220,9 @@ mod memory_optimized_read_tests {
                     compositematerials: Vec::new(),
                     multiproperties: Vec::new(),
                     texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: Some("someBuildUUID".to_owned()),
@@ -1204,6 +1308,9 @@ mod memory_optimized_read_tests {
                         tilestylev: None,
                         filter: None,
                     }],
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: None,
@@ -1279,6 +1386,9 @@ mod speed_optimized_read_tests {
                     compositematerials: Vec::new(),
                     multiproperties: Vec::new(),
                     texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: None,
@@ -1359,6 +1469,9 @@ mod speed_optimized_read_tests {
                     compositematerials: Vec::new(),
                     multiproperties: Vec::new(),
                     texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: Some("someBuildUUID".to_owned()),
@@ -1445,6 +1558,9 @@ mod speed_optimized_read_tests {
                         tilestylev: None,
                         filter: None,
                     }],
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: None,

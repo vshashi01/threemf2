@@ -8,15 +8,12 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::core::beamlattice::BeamLattice;
+#[cfg(feature = "memory-optimized-read")]
+use crate::core::constants;
 use crate::core::triangle_set::TriangleSets;
 use crate::core::types::{Double, OptionalResourceId, OptionalResourceIndex, ResourceIndex};
 use crate::threemf_namespaces::BEAM_LATTICE_NS;
 use crate::threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS};
-
-#[cfg(feature = "memory-optimized-read")]
-const MAX_VERTEX_BUFFER: usize = 100_000;
-#[cfg(feature = "memory-optimized-read")]
-const MAX_TRIANGLE_BUFFER: usize = 200_000;
 
 /// A triangle mesh
 ///
@@ -90,7 +87,7 @@ impl<'xml> FromXml<'xml> for Vertices {
             return Err(instant_xml::Error::DuplicateValue(field));
         }
 
-        let mut vertices: Vec<Vertex> = Vec::with_capacity(MAX_VERTEX_BUFFER);
+        let mut vertices: Vec<Vertex> = Vec::with_capacity(constants::MAX_VERTEX_BUFFER);
 
         while let Some(node) = deserializer.next() {
             if let Ok(n) = node
@@ -246,7 +243,7 @@ impl<'xml> FromXml<'xml> for Triangles {
             return Err(instant_xml::Error::DuplicateValue(field));
         }
 
-        let mut triangles: Vec<Triangle> = Vec::with_capacity(MAX_TRIANGLE_BUFFER);
+        let mut triangles: Vec<Triangle> = Vec::with_capacity(constants::MAX_TRIANGLE_BUFFER);
         while let Some(node) = deserializer.next() {
             if let Ok(n) = node
                 && let instant_xml::de::Node::Open(element) = n

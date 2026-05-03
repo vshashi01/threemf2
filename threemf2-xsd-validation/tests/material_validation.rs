@@ -153,7 +153,10 @@ fn validate_simple_colorgroup() {
                 compositematerials: vec![],
                 texture2dgroup: vec![],
                 multiproperties: vec![],
-                texture2d: vec![],
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -323,6 +326,9 @@ fn validate_texture2d_with_uv_mapping() {
                 texture2dgroup: vec![texture2dgroup],
                 multiproperties: vec![],
                 texture2d: vec![texture2d],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -525,6 +531,9 @@ fn validate_multi_properties() {
                 texture2dgroup: vec![texture2dgroup],
                 multiproperties: vec![multiproperties],
                 texture2d: vec![texture2d],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -691,7 +700,10 @@ fn validate_vertex_color_application() {
                 compositematerials: vec![],
                 texture2dgroup: vec![],
                 multiproperties: vec![],
-                texture2d: vec![],
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,

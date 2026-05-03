@@ -9,12 +9,13 @@ use serde::Deserialize;
 
 use crate::{
     core::{
+        displacement::{Disp2DGroup, Displacement2D, NormVectorGroup},
         material::{ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup},
         object::Object,
         slice::SliceStack,
         types::ResourceId,
     },
-    threemf_namespaces::{CORE_NS, MATERIAL_NS, SLICE_NS},
+    threemf_namespaces::{CORE_NS, DISPLACEMENT_NS, MATERIAL_NS, SLICE_NS},
 };
 
 /// A collection of Objects and other properties that are referenced by other elements.
@@ -82,6 +83,30 @@ pub struct Resources {
         xml(ns(MATERIAL_NS))
     )]
     pub texture2d: Vec<Texture2D>,
+
+    /// Collection of displacement texture resources.
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(ns(DISPLACEMENT_NS))
+    )]
+    pub displacement2d: Vec<Displacement2D>,
+
+    /// Collection of normalized vector groups for displacement.
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(ns(DISPLACEMENT_NS))
+    )]
+    pub normvectorgroup: Vec<NormVectorGroup>,
+
+    /// Collection of displacement coordinate groups.
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(ns(DISPLACEMENT_NS))
+    )]
+    pub disp2dgroup: Vec<Disp2DGroup>,
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -186,6 +211,9 @@ mod write_tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -213,6 +241,9 @@ mod write_tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -248,6 +279,9 @@ mod write_tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -324,6 +358,9 @@ mod write_tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -364,6 +401,9 @@ mod write_tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -403,6 +443,9 @@ mod write_tests {
             }],
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -442,6 +485,9 @@ mod write_tests {
                 ],
             }],
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -470,6 +516,9 @@ mod write_tests {
                 tilestylev: Some(TileStyle::Mirror),
                 filter: Some(Filter::Linear),
             }],
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -510,6 +559,9 @@ mod write_tests {
                 tilestylev: None,
                 filter: None,
             }],
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -571,6 +623,9 @@ mod memory_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -600,6 +655,9 @@ mod memory_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -631,6 +689,9 @@ mod memory_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -713,6 +774,9 @@ mod memory_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -755,6 +819,9 @@ mod memory_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -796,6 +863,9 @@ mod memory_optimized_read_tests {
                 }],
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -837,6 +907,9 @@ mod memory_optimized_read_tests {
                     ],
                 }],
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -867,6 +940,9 @@ mod memory_optimized_read_tests {
                     tilestylev: None,
                     filter: None,
                 }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -908,6 +984,9 @@ mod memory_optimized_read_tests {
                     tilestylev: None,
                     filter: None,
                 }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -967,6 +1046,9 @@ mod speed_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -996,6 +1078,9 @@ mod speed_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -1027,6 +1112,9 @@ mod speed_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -1109,6 +1197,9 @@ mod speed_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -1151,6 +1242,9 @@ mod speed_optimized_read_tests {
                 compositematerials: Vec::new(),
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -1192,6 +1286,9 @@ mod speed_optimized_read_tests {
                 }],
                 multiproperties: Vec::new(),
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -1233,6 +1330,9 @@ mod speed_optimized_read_tests {
                     ],
                 }],
                 texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -1263,6 +1363,9 @@ mod speed_optimized_read_tests {
                     tilestylev: None,
                     filter: None,
                 }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }
@@ -1304,6 +1407,9 @@ mod speed_optimized_read_tests {
                     tilestylev: None,
                     filter: None,
                 }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             }
         );
     }

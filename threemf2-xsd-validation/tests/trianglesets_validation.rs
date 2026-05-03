@@ -146,7 +146,10 @@ fn validate_simple_trianglesets() {
                 compositematerials: vec![],
                 texture2dgroup: vec![],
                 multiproperties: vec![],
-                texture2d: vec![],
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,
@@ -288,7 +291,10 @@ fn validate_trianglesets_with_ref_ranges() {
                 compositematerials: vec![],
                 texture2dgroup: vec![],
                 multiproperties: vec![],
-                texture2d: vec![],
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: Build {
                 uuid: None,

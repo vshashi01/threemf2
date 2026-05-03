@@ -203,6 +203,7 @@ use crate::{
         boolean::{BooleanOperation, BooleanShape},
         build::Item,
         component::Components,
+        displacement::{Disp2DGroup, Displacement2D, DisplacementMesh, NormVectorGroup},
         material::{
             ColorElement, ColorGroup, Composite, CompositeMaterials, Multi, MultiProperties,
             Tex2Coord, Texture2D, Texture2DGroup,
@@ -541,6 +542,38 @@ impl<'a> Deref for MeshObjectRef<'a> {
     }
 }
 
+/// A reference to a displacement mesh object.
+pub struct DisplacementMeshObjectRef<'a>(GenericObjectRef<'a, DisplacementMesh>);
+
+impl<'a> DisplacementMeshObjectRef<'a> {
+    fn new(o: ObjectRef<'a>) -> Self {
+        Self(GenericObjectRef {
+            entity: o.object.get_displacement_mesh().unwrap(),
+            id: o.object.id,
+            object_type: o.object.objecttype.unwrap_or(ObjectType::Model),
+            thumbnail: o.object.thumbnail.clone(),
+            part_number: o.object.partnumber.clone(),
+            name: o.object.name.clone(),
+            pid: o.object.pid,
+            pindex: o.object.pindex,
+            uuid: o.object.uuid.clone(),
+            origin_model_path: o.path,
+        })
+    }
+
+    pub fn mesh(&self) -> &'a DisplacementMesh {
+        self.entity
+    }
+}
+
+impl<'a> Deref for DisplacementMeshObjectRef<'a> {
+    type Target = GenericObjectRef<'a, DisplacementMesh>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /// Returns an iterator over mesh objects in the package.
 ///
 /// Filters out composed parts and returns only objects containing triangle geometry.
@@ -652,6 +685,46 @@ pub fn get_mesh_objects_from_model_ref<'a>(
         .filter(|o| {
             if let Some(kind) = &o.kind
                 && let ObjectKind::Mesh(_) = kind
+            {
+                true
+            } else {
+                false
+            }
+        })
+        .map(move |o| ObjectRef {
+            object: o,
+            path: model_ref.path,
+        })
+}
+
+/// Returns an iterator over displacement mesh objects in the package.
+pub fn get_displacement_mesh_objects<'a>(
+    package: &'a ThreemfPackage,
+) -> impl Iterator<Item = DisplacementMeshObjectRef<'a>> {
+    iter_objects_from(package, get_displacement_mesh_objects_from_model_ref)
+        .map(DisplacementMeshObjectRef::new)
+}
+
+/// Returns an iterator over displacement mesh objects in a specific model.
+pub fn get_displacement_mesh_objects_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = DisplacementMeshObjectRef<'a>> {
+    get_displacement_mesh_objects_from_model_ref(ModelRef { model, path: None })
+        .map(DisplacementMeshObjectRef::new)
+}
+
+/// Returns an iterator over displacement mesh object refs preserving model path.
+pub fn get_displacement_mesh_objects_from_model_ref<'a>(
+    model_ref: ModelRef<'a>,
+) -> impl Iterator<Item = ObjectRef<'a>> {
+    model_ref
+        .model
+        .resources
+        .object
+        .iter()
+        .filter(|o| {
+            if let Some(kind) = &o.kind
+                && let ObjectKind::DisplacementMesh(_) = kind
             {
                 true
             } else {
@@ -2491,6 +2564,104 @@ pub fn get_texture2d_by_id<'a>(texture2d_id: u32, model: &'a Model) -> Option<Te
         })
 }
 
+/// A reference to a Displacement2D resource within a 3MF model.
+pub struct Displacement2DRef<'a> {
+    pub displacement2d: &'a Displacement2D,
+    pub path: Option<&'a str>,
+}
+
+pub fn get_displacement2ds_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = Displacement2DRef<'a>> {
+    model
+        .resources
+        .displacement2d
+        .iter()
+        .map(|d| Displacement2DRef {
+            displacement2d: d,
+            path: None,
+        })
+}
+
+pub fn get_displacement2d_by_id<'a>(
+    displacement2d_id: u32,
+    model: &'a Model,
+) -> Option<Displacement2DRef<'a>> {
+    model
+        .resources
+        .displacement2d
+        .iter()
+        .find(|d| d.id == displacement2d_id)
+        .map(|displacement2d| Displacement2DRef {
+            displacement2d,
+            path: None,
+        })
+}
+
+/// A reference to a NormVectorGroup resource within a 3MF model.
+pub struct NormVectorGroupRef<'a> {
+    pub normvectorgroup: &'a NormVectorGroup,
+    pub path: Option<&'a str>,
+}
+
+pub fn get_normvectorgroups_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = NormVectorGroupRef<'a>> {
+    model
+        .resources
+        .normvectorgroup
+        .iter()
+        .map(|n| NormVectorGroupRef {
+            normvectorgroup: n,
+            path: None,
+        })
+}
+
+pub fn get_normvectorgroup_by_id<'a>(
+    normvectorgroup_id: u32,
+    model: &'a Model,
+) -> Option<NormVectorGroupRef<'a>> {
+    model
+        .resources
+        .normvectorgroup
+        .iter()
+        .find(|n| n.id == normvectorgroup_id)
+        .map(|normvectorgroup| NormVectorGroupRef {
+            normvectorgroup,
+            path: None,
+        })
+}
+
+/// A reference to a Disp2DGroup resource within a 3MF model.
+pub struct Disp2DGroupRef<'a> {
+    pub disp2dgroup: &'a Disp2DGroup,
+    pub path: Option<&'a str>,
+}
+
+pub fn get_disp2dgroups_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = Disp2DGroupRef<'a>> {
+    model.resources.disp2dgroup.iter().map(|d| Disp2DGroupRef {
+        disp2dgroup: d,
+        path: None,
+    })
+}
+
+pub fn get_disp2dgroup_by_id<'a>(
+    disp2dgroup_id: u32,
+    model: &'a Model,
+) -> Option<Disp2DGroupRef<'a>> {
+    model
+        .resources
+        .disp2dgroup
+        .iter()
+        .find(|d| d.id == disp2dgroup_id)
+        .map(|disp2dgroup| Disp2DGroupRef {
+            disp2dgroup,
+            path: None,
+        })
+}
+
 /// A reference to BaseMaterials within a 3MF model.
 ///
 /// Base materials define the basic materials (colors) that can be referenced
@@ -3092,7 +3263,7 @@ mod tests {
     fn test_get_color_groups_from_model() {
         // Use the material test file
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
@@ -3116,7 +3287,7 @@ mod tests {
     #[test]
     fn test_get_color_group_by_id() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
@@ -3142,7 +3313,7 @@ mod tests {
     #[test]
     fn test_get_texture2d_groups_from_model() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
@@ -3166,7 +3337,7 @@ mod tests {
     #[test]
     fn test_get_texture2ds_from_model() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
@@ -3193,7 +3364,7 @@ mod tests {
     #[test]
     fn test_get_base_materials_from_model() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
@@ -3215,7 +3386,7 @@ mod tests {
     #[test]
     fn test_resolve_material_property_color() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
@@ -3275,6 +3446,9 @@ mod tests {
                 compositematerials: vec![],
                 multiproperties: vec![],
                 texture2d: vec![],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: crate::core::build::Build {
                 uuid: None,
@@ -3305,7 +3479,7 @@ mod tests {
     #[test]
     fn test_get_texture_for_group() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
@@ -3348,6 +3522,9 @@ mod tests {
                 compositematerials: vec![],
                 multiproperties: vec![],
                 texture2d: vec![],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
             build: crate::core::build::Build {
                 uuid: None,
@@ -3376,7 +3553,7 @@ mod tests {
     fn test_composite_and_multi_properties_empty() {
         // Test with a file to verify composite and multi-properties functions don't panic
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let file = std::fs::File::open(path).unwrap();
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true).unwrap();
