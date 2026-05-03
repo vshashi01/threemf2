@@ -388,19 +388,19 @@ mod write_tests {
             slicestack: vec![],
             colorgroup: Vec::new(),
             texture2dgroup: Vec::new(),
-                compositematerials: vec![CompositeMaterials {
-                    id: 1,
-                    matid: 10,
-                    matindices: ResourceIndexCollection::from(vec![0, 1]),
-                    composite: vec![
-                        Composite {
-                            values: vec![Double::new(1.0), Double::new(0.0)]
-                        },
-                        Composite {
-                            values: vec![Double::new(0.5), Double::new(0.5)]
-                        },
-                    ],
-                }],
+            compositematerials: vec![CompositeMaterials {
+                id: 1,
+                matid: 10,
+                matindices: ResourceIndexCollection::from(vec![0, 1]),
+                composite: vec![
+                    Composite {
+                        values: vec![Double::new(1.0), Double::new(0.0)],
+                    },
+                    Composite {
+                        values: vec![Double::new(0.5), Double::new(0.5)],
+                    },
+                ],
+            }],
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
         };

@@ -40,4 +40,7 @@ pub mod material;
 /// Defines 3MF specification-compliant type aliases for IDs and indices.
 pub mod types;
 
-pub use types::{Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIdCollection, ResourceIndex, ResourceIndexCollection};
+pub use types::{
+    Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIdCollection,
+    ResourceIndex, ResourceIndexCollection,
+};

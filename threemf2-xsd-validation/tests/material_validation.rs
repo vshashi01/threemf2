@@ -10,8 +10,8 @@ use threemf2::{
         Color, OptionalResourceId, OptionalResourceIndex,
         build::{Build, Item},
         material::{
-            ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
-            MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType, TileStyle,
+            ColorElement, ColorGroup, Filter, Multi, MultiProperties, Tex2Coord, Texture2D,
+            Texture2DGroup, TextureContentType, TileStyle,
         },
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         model::{Model, Unit},

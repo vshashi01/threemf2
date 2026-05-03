@@ -25,8 +25,7 @@ use crate::{
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(any(feature="write", feature="memory-optimized-read"), 
-xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS, m = MATERIAL_NS), 
-rename = "model"))]
+xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS, m = MATERIAL_NS), rename = "model"))]
 pub struct Model {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
@@ -234,9 +233,19 @@ mod write_tests {
 
     use crate::{
         core::{
-            Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceIdCollection, ResourceIndexCollection, beamlattice, boolean, build::{Build, Item}, material::{
-                ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi, MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType, TileStyle
-            }, mesh::{Mesh, Triangles, Vertices}, metadata::Metadata, object::{Object, ObjectKind, ObjectType}, resources::Resources, slice::{self}
+            Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceIdCollection,
+            ResourceIndexCollection, beamlattice, boolean,
+            build::{Build, Item},
+            material::{
+                ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
+                MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
+                TileStyle,
+            },
+            mesh::{Mesh, Triangles, Vertices},
+            metadata::Metadata,
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+            slice::{self},
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
@@ -860,24 +869,33 @@ mod write_tests {
                 object: vec![],
                 colorgroup: vec![ColorGroup {
                     id: 1,
-                    color: vec![ColorElement { color: Color::from_hex("#FF0000").unwrap() }],
+                    color: vec![ColorElement {
+                        color: Color::from_hex("#FF0000").unwrap(),
+                    }],
                 }],
                 texture2dgroup: vec![Texture2DGroup {
                     id: 2,
                     texid: 1,
-                    tex2coord: vec![Tex2Coord { u: 0.0.into(), v: 0.0.into() }],
+                    tex2coord: vec![Tex2Coord {
+                        u: 0.0.into(),
+                        v: 0.0.into(),
+                    }],
                 }],
                 compositematerials: vec![CompositeMaterials {
                     id: 3,
                     matid: 10,
                     matindices: ResourceIndexCollection::from(vec![0, 1]),
-                    composite: vec![Composite { values: vec![Double::new(1.0), Double::new(0.0)] }],
+                    composite: vec![Composite {
+                        values: vec![Double::new(1.0), Double::new(0.0)],
+                    }],
                 }],
                 multiproperties: vec![MultiProperties {
                     id: 4,
                     pids: ResourceIdCollection::from(vec![10, 20]),
                     blendmethods: Some("mix".to_owned()),
-                    multi: vec![Multi { pindices: ResourceIndexCollection::from(vec![0, 0]) }],
+                    multi: vec![Multi {
+                        pindices: ResourceIndexCollection::from(vec![0, 0]),
+                    }],
                 }],
                 texture2d: vec![Texture2D {
                     id: 5,
@@ -935,7 +953,9 @@ mod write_tests {
                 object: vec![],
                 colorgroup: vec![ColorGroup {
                     id: 1,
-                    color: vec![ColorElement { color: Color::from_hex("#FF0000").unwrap() }],
+                    color: vec![ColorElement {
+                        color: Color::from_hex("#FF0000").unwrap(),
+                    }],
                 }],
                 texture2dgroup: Vec::new(),
                 compositematerials: Vec::new(),
@@ -972,11 +992,10 @@ mod memory_optimized_read_tests {
     use crate::core::material::TextureContentType;
     use crate::{
         core::{
-            Color, build::{Build, Item},
+            Color,
+            build::{Build, Item},
             component::{Component, Components},
-            material::{
-                ColorElement, ColorGroup, Texture2D,
-            },
+            material::{ColorElement, ColorGroup, Texture2D},
             metadata::Metadata,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
@@ -1170,7 +1189,9 @@ mod memory_optimized_read_tests {
                     object: vec![],
                     colorgroup: vec![ColorGroup {
                         id: 1,
-                        color: vec![ColorElement { color: Color::from_hex("#FF0000").unwrap() }],
+                        color: vec![ColorElement {
+                            color: Color::from_hex("#FF0000").unwrap()
+                        }],
                     }],
                     texture2dgroup: Vec::new(),
                     compositematerials: Vec::new(),
@@ -1205,9 +1226,7 @@ mod speed_optimized_read_tests {
             Color, OptionalResourceId, OptionalResourceIndex,
             build::{Build, Item},
             component::{Component, Components},
-            material::{
-                ColorElement, ColorGroup, Texture2D, TextureContentType,
-            },
+            material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
             metadata::Metadata,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
@@ -1411,7 +1430,9 @@ mod speed_optimized_read_tests {
                     object: vec![],
                     colorgroup: vec![ColorGroup {
                         id: 1,
-                        color: vec![ColorElement { color: Color::from_hex("#FF0000").unwrap() }],
+                        color: vec![ColorElement {
+                            color: Color::from_hex("#FF0000").unwrap()
+                        }],
                     }],
                     texture2dgroup: Vec::new(),
                     compositematerials: Vec::new(),
