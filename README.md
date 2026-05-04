@@ -8,19 +8,28 @@ This repository uses a Cargo workspace with `threemf2` (main crate), `threemf2-b
 
 ## Supported 3MF Extensions and Maximum Supported Versions
 
-| 3MF Specifications | Type      | Read<sub>1</sub> | Write<sub>2</sub> | Current supported version |
-| ------------------ | --------- | :--------------: | :---------------: | ------------------------: |
-| 3MF Core Spec      | Core      |       MUST       |       MUST        |                     1.3.0 |
-| Triangle Set       | Extension |       MUST       |     OPTIONAL      |           Core Spec 1.3.0 |
-| Production         | Extension |       MUST       |     OPTIONAL      |                     1.1.2 |
-| Beam Lattice       | Extension |       MUST       |     OPTIONAL      |                     1.2.0 |
-| Boolean Operations | Extension |       MUST       |     OPTIONAL      |                     1.1.1 |
+| 3MF Specifications | Type      | Read<sub>1</sub> |  Write<sub>2</sub>   | Current supported version |
+| ------------------ | --------- | :--------------: | :------------------: | ------------------------: |
+| 3MF Core Spec      | Core      |       MUST       |         MUST         |                     1.3.0 |
+| Triangle Set       | Extension |       MUST       |       OPTIONAL       |           Core Spec 1.3.0 |
+| Production         | Extension |       MUST       |       OPTIONAL       |                     1.1.2 |
+| Beam Lattice       | Extension |       MUST       |       OPTIONAL       |                     1.2.0 |
+| Boolean Operations | Extension |       MUST       |       OPTIONAL       |                     1.1.1 |
+| Slice              | Extension | MUST<sub>3</sub> | OPTIONAL<sub>3</sub> |                     1.0.2 |
+| Materials          | Extension | MUST<sub>4</sub> | OPTIONAL<sub>4</sub> |                     1.2.1 |
+| Displacement       | Extension | MUST<sub>5</sub> | OPTIONAL<sub>5</sub> |                     1.0.0 |
 
 **Note: This library is still in active development, expect frequent API changes!!**
 
 **Note<sub>1</sub>: Reading these data are currently MUST, which means if the data exists in the 3MF Model the library will automatically read it**
 
-**Note<sub>2</sub>: Write these data are currently optional however they are available by default in the mapping of the Rust types and are not conditionally compiled.**
+**Note<sub>2</sub>: Writing these data are currently optional however they are available by default in the mapping of the Rust types and are not conditionally compiled out.**
+
+**Note<sub>3</sub>: Slice extension data are read and written always as optional fields however the query and builder APIs are not stabilized hence expect future API changes.**
+
+**Note<sub>4</sub>: Material extension data are read and written always as optional fields however the query and builder APIs are not stabilized hence expect future API changes. All display specific material properties defined in this extension are not supported currently.**
+
+**Note<sub>5</sub>: Displacement extension data are read and written always as optional fields however the query and builder APIs are not stabilized hence expect future API changes.**
 
 ## Overview
 
