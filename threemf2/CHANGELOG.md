@@ -5,6 +5,125 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 (2026-05-04)
+
+### New Features (BREAKING)
+
+ - <csr-id-e9092445f995d41f5aa84c75fd9e064168b44eeb/> Added partial support 3MF Displacement extension
+   Latest spec can be found here: [3MF
+   Displacement](https://github.com/3MFConsortium/spec_displacement/blob/master/3MF%20Displacement%20Extension.md)
+   At the time of writing this, the latest spec version is **1.0.0**.
+   
+   Checklist to add support for new extension
+   
+   - [x] Add the necessary types and fields to the core module 
+   - [x] Add the serialization and deserialization of the new types and
+   fields along with tests
+   - [x] Introduce the new namespaces in threemf_namespace module
+   - [x] Add the used_namespace utility handling for Model struct for the
+   new namespace
+   - [x] Add test to ensure the new namespaces are reported by the readers
+   in io module
+   - [ ] Add query methods and tests to io::query module for reading from
+   3MF Package
+   - [ ] Add Builders and tests to io::builder module for writing to 3MF
+   Model
+   - [ ] Add integration tests to threemf2 crate (and if needed to
+   threemf2_tests crate)
+   - [x] Add XSD Validation for writing Model files with the target
+   namespace entities
+   - [ ] Add some thumbnail entity for the new types (if relevant)
+   - [ ] Add examples
+ - <csr-id-27efe0d15580b815e533b8e7a0fc7d222c74d4d0/> Add material extension support
+   3MF Material extensions introduce a capability to define Material
+   resources such as colors, textures and display properties for the
+   objects in the 3mf Model file. This enables communicating vertex or
+   triangle colors along with textured parts through 3mf file
+   
+   Latest spec can be found here: [3MF Material
+   Extension](https://github.com/3MFConsortium/spec_materials/blob/master/3MF%20Materials%20Extension.md)
+   At the time of writing this, the latest spec version is **1.2.1**.
+   
+   Checklist to add support for new extension
+   
+   - [x] Add the necessary types and fields to the core module 
+   - [x] Add the serialization and deserialization of the new types and
+   fields along with tests
+   - [x] Introduce the new namespaces in threemf_namespace module
+   - [x] Add the used_namespace utility handling for Model struct for the
+   new namespace
+   - [x] Add test to ensure the new namespaces are reported by the readers
+   in io module
+   - [ ] Add query methods and tests to io::query module for reading from
+   3MF Package
+   - [ ] Add Builders and tests to io::builder module for writing to 3MF
+   Model
+   - [x] Add integration tests to threemf2 crate (and if needed to
+   threemf2_tests crate)
+   - [x] Add XSD Validation for writing Model files with the target
+   namespace entities
+   - [ ] Add some thumbnail entity for the new types (if relevant)
+   - [ ] Add examples 
+   
+   This is a large extension as such the support for this extension will be
+   split to 2 parts since one is more useful than the other.
+   
+   This PR is to addresses issue #34 partially.
+ - <csr-id-85d28a804714c5c2539cb94079d68cab20ecc088/> Added basic support for Slice extension
+   3MF Slice extensions introduce a capability to define slicestack
+   geometry for Objects on top of their core geometry. This enables
+   communicating 2.5D geometries with 3MF files.
+   
+   Latest spec can be found here: [3MF Slice
+   Extension](https://github.com/3MFConsortium/spec_slice/blob/master/3MF%20Slice%20Extension.md)
+   At the time of writing this, the latest spec version is **1.0.2**.
+   
+   Checklist to add support for new extension
+   
+   - [x] Add the necessary types and fields to the core module 
+   - [x] Add the serialization and deserialization of the new types and
+   fields along with tests
+   - [x] Introduce the new namespaces in threemf_namespace module
+   - [x] Add the used_namespace utility handling for Model struct for the
+   new namespace
+   - [x] Add test to ensure the new namespaces are reported by the readers
+   in io module
+   - [ ] Add query methods and tests to io::query module for reading from
+   3MF Package
+   - [ ] Add Builders and tests to io::builder module for writing to 3MF
+   Model
+   - [x] Add integration tests to threemf2 crate (and if needed to
+   threemf2_tests crate)
+   - [x] Add XSD Validation for writing Model files with the target
+   namespace entities
+   - [ ] Add some thumbnail entity for the new types (if relevant)
+   - [ ] Add examples
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 14 calendar days.
+ - 34 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#33](https://github.com/vshashi01/threemf2/issues/33), [#35](https://github.com/vshashi01/threemf2/issues/35), [#37](https://github.com/vshashi01/threemf2/issues/37)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#33](https://github.com/vshashi01/threemf2/issues/33)**
+    - Added basic support for Slice extension ([`85d28a8`](https://github.com/vshashi01/threemf2/commit/85d28a804714c5c2539cb94079d68cab20ecc088))
+ * **[#35](https://github.com/vshashi01/threemf2/issues/35)**
+    - Add material extension support ([`27efe0d`](https://github.com/vshashi01/threemf2/commit/27efe0d15580b815e533b8e7a0fc7d222c74d4d0))
+ * **[#37](https://github.com/vshashi01/threemf2/issues/37)**
+    - Added partial support 3MF Displacement extension ([`e909244`](https://github.com/vshashi01/threemf2/commit/e9092445f995d41f5aa84c75fd9e064168b44eeb))
+ * **Uncategorized**
+    - Updated docs ([`17a98ee`](https://github.com/vshashi01/threemf2/commit/17a98eef0018f98e688b0c887fd7dcba4ee163d8))
+</details>
+
 ## 0.2.0 (2026-03-30)
 
 ### Changed
@@ -50,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 24 commits contributed to the release.
+ - 25 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 8 unique issues were worked on: [#22](https://github.com/vshashi01/threemf2/issues/22), [#24](https://github.com/vshashi01/threemf2/issues/24), [#25](https://github.com/vshashi01/threemf2/issues/25), [#26](https://github.com/vshashi01/threemf2/issues/26), [#27](https://github.com/vshashi01/threemf2/issues/27), [#28](https://github.com/vshashi01/threemf2/issues/28), [#29](https://github.com/vshashi01/threemf2/issues/29), [#30](https://github.com/vshashi01/threemf2/issues/30)
 
@@ -77,6 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#30](https://github.com/vshashi01/threemf2/issues/30)**
     - Release v0.2.0 ([`69e5347`](https://github.com/vshashi01/threemf2/commit/69e53473f10a4079a181e8cfadeb2212038f0970))
  * **Uncategorized**
+    - Release threemf2 v0.2.0 ([`767f009`](https://github.com/vshashi01/threemf2/commit/767f009c518e6599fab08cb4e3417ce5af92eeea))
     - Release threemf2 v0.2.0 ([`0500a8a`](https://github.com/vshashi01/threemf2/commit/0500a8af11792ff60952659e6b8d277d6c4c2a69))
     - Fixed the issue with xmlns missed in the namespace definitions for the model element. ([`b03ca18`](https://github.com/vshashi01/threemf2/commit/b03ca1802d95ea2d5ac53834ac31ef3a5ca0a363))
     - Fixed depedency and atttribute issue when only speed-optimized-read is enabled ([`5603a9a`](https://github.com/vshashi01/threemf2/commit/5603a9ab698293aff295c584ad7f9e0b1290c0e8))
