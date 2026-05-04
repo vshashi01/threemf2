@@ -687,6 +687,9 @@ mod tests {
                         compositematerials: Vec::new(),
                         multiproperties: Vec::new(),
                         texture2d: Vec::new(),
+                        displacement2d: Vec::new(),
+                        normvectorgroup: Vec::new(),
+                        disp2dgroup: Vec::new(),
                     },
                     build: Build {
                         uuid: None,
@@ -749,6 +752,9 @@ mod tests {
                     compositematerials: Vec::new(),
                     multiproperties: Vec::new(),
                     texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: None,
@@ -840,6 +846,9 @@ mod tests {
                     compositematerials: Vec::new(),
                     multiproperties: Vec::new(),
                     texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
                 },
                 build: Build {
                     uuid: None,
@@ -907,7 +916,7 @@ mod tests {
     #[test]
     fn i_root_namespaces_tracking_test() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/mgx-core-prod-beamlattice-material.3mf");
+            .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let reader = File::open(path).unwrap();
 
         let result = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true);

@@ -232,26 +232,16 @@ pub struct Texture2DGroup {
 /// Values outside [0,1] are handled according to the tile style settings.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(rename = "tex2coord"))]
-// #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone, Copy)]
-#[cfg_attr(
-    any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "tex2coord")
-)]
+#[cfg_attr(feature = "write", xml(ns(MATERIAL_NS), rename = "tex2coord"))]
 pub struct Tex2Coord {
     /// Horizontal coordinate (u-axis), increasing right from the origin.
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub u: Double,
 
     /// Vertical coordinate (v-axis), increasing up from the origin.
-    #[cfg_attr(
-        any(feature = "write", feature = "memory-optimized-read"),
-        xml(attribute)
-    )]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub v: Double,
 }
 

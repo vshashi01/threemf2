@@ -208,6 +208,9 @@ fn create_cube_model() -> Model {
         texture2dgroup: vec![],
         multiproperties: vec![],
         texture2d: vec![],
+        disp2dgroup: vec![],
+        normvectorgroup: vec![],
+        displacement2d: vec![],
     };
 
     let build = Build {

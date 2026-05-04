@@ -37,6 +37,9 @@ pub mod slice;
 /// Defines the type representing the Material extension elements and related elements.
 pub mod material;
 
+/// Defines the type representing the Displacement extension elements and related elements.
+pub mod displacement;
+
 /// Defines 3MF specification-compliant type aliases for IDs and indices.
 pub mod types;
 
@@ -44,3 +47,5 @@ pub use types::{
     Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIdCollection,
     ResourceIndex, ResourceIndexCollection,
 };
+
+mod constants;

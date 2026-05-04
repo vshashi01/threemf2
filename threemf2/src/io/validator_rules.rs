@@ -386,6 +386,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -404,6 +407,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -424,6 +430,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -444,6 +453,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -469,6 +481,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -492,6 +507,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -510,6 +528,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -535,6 +556,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -567,6 +591,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -596,6 +623,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -619,6 +649,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -713,6 +746,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -736,6 +772,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(2)]); // References object 2 which doesn't exist
         let model = create_test_model(resources, build);
@@ -762,6 +801,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1), // Valid
@@ -793,6 +835,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let build = create_test_build_with_items(vec![]);
         let model = create_test_model(resources, build);
@@ -820,6 +865,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -845,6 +893,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -882,6 +933,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -906,6 +960,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -930,6 +987,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -957,6 +1017,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -979,6 +1042,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -1001,6 +1067,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -1023,6 +1092,9 @@ mod tests {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1),   // Valid

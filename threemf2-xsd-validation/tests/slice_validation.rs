@@ -172,7 +172,10 @@ fn validate_simple_slice() {
             compositematerials: vec![],
             texture2dgroup: vec![],
             multiproperties: vec![],
-            texture2d: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
         build: Build {
             uuid: None,
@@ -404,7 +407,10 @@ fn validate_slice_multiple_polygons() {
             compositematerials: vec![],
             texture2dgroup: vec![],
             multiproperties: vec![],
-            texture2d: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
         build: Build {
             uuid: None,

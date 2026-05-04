@@ -1,0 +1,92 @@
+#[cfg(any(
+    feature = "io-memory-optimized-read",
+    feature = "io-speed-optimized-read",
+    feature = "io-lazy-read"
+))]
+#[cfg(test)]
+mod tests {
+
+    use threemf2::io::{ThreemfPackage, query};
+
+    use std::{fs::File, path::PathBuf};
+
+    #[cfg(feature = "io-memory-optimized-read")]
+    #[test]
+    fn read_displacement_package_memory_optimized() {
+        let path =
+            PathBuf::from("./tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
+        let reader = File::open(path).unwrap();
+
+        let package =
+            ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true).unwrap();
+
+        assert_eq!(query::get_displacement_mesh_objects(&package).count(), 1);
+        for object in query::get_displacement_mesh_objects(&package) {
+            assert!(object.mesh().beamlattice.is_some())
+        }
+        assert!(query::get_displacement2d_by_id(3, &package.root).is_some());
+        assert!(query::get_normvectorgroup_by_id(4, &package.root).is_some());
+        assert!(query::get_disp2dgroup_by_id(5, &package.root).is_some());
+
+        let namespaces = package.get_namespaces_on_model(None).unwrap();
+        assert!(
+            namespaces
+                .iter()
+                .any(|ns| ns.uri == threemf2::threemf_namespaces::DISPLACEMENT_NS)
+        );
+    }
+
+    #[cfg(feature = "io-speed-optimized-read")]
+    #[test]
+    fn read_displacement_package_speed_optimized() {
+        let path =
+            PathBuf::from("./tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
+        let reader = File::open(path).unwrap();
+
+        let package =
+            ThreemfPackage::from_reader_with_speed_optimized_deserializer(reader, true).unwrap();
+
+        assert_eq!(query::get_displacement_mesh_objects(&package).count(), 1);
+        for object in query::get_displacement_mesh_objects(&package) {
+            assert!(object.mesh().beamlattice.is_some())
+        }
+        assert!(query::get_displacement2d_by_id(3, &package.root).is_some());
+        assert!(query::get_normvectorgroup_by_id(4, &package.root).is_some());
+        assert!(query::get_disp2dgroup_by_id(5, &package.root).is_some());
+
+        let namespaces = package.get_namespaces_on_model(None).unwrap();
+        assert!(
+            namespaces
+                .iter()
+                .any(|ns| ns.uri == threemf2::threemf_namespaces::DISPLACEMENT_NS)
+        );
+    }
+
+    #[cfg(all(feature = "io-lazy-read", feature = "io-memory-optimized-read"))]
+    #[test]
+    fn read_displacement_package_lazy_memory_optimized() {
+        use threemf2::io::{CachePolicy, ThreemfPackageLazyReader};
+
+        let path =
+            PathBuf::from("./tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
+        let reader = File::open(path).unwrap();
+
+        let package = ThreemfPackageLazyReader::from_reader_with_memory_optimized_deserializer(
+            reader,
+            CachePolicy::NoCache,
+        )
+        .unwrap();
+
+        package
+            .with_model("/3D/3dmodel.model", |(model, _namespaces)| {
+                assert_eq!(
+                    query::get_displacement_mesh_objects_from_model(model).count(),
+                    1
+                );
+                assert!(query::get_displacement2d_by_id(3, model).is_some());
+                assert!(query::get_normvectorgroup_by_id(4, model).is_some());
+                assert!(query::get_disp2dgroup_by_id(5, model).is_some());
+            })
+            .unwrap();
+    }
+}

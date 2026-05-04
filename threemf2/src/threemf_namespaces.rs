@@ -36,6 +36,11 @@ pub const BEAM_LATTICE_BALLS_PREFIX: &str = "b2";
 pub const MATERIAL_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02";
 pub const MATERIAL_PREFIX: &str = "m";
 
+////////////////////////////////////////////////////////////////////////////////////
+/// Namespaces & Prefixes related to the Displacement extension
+pub const DISPLACEMENT_NS: &str = "http://schemas.3mf.io/3dmanufacturing/displacement/2023/10";
+pub const DISPLACEMENT_PREFIX: &str = "d";
+
 /// Enum representing the different 3MF specifications supported by this library
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ThreemfNamespace {
@@ -62,6 +67,9 @@ pub enum ThreemfNamespace {
 
     /// Material extension
     Material,
+
+    /// Displacement extension
+    Displacement,
 }
 
 impl ThreemfNamespace {
@@ -76,6 +84,7 @@ impl ThreemfNamespace {
             Self::BeamLatticeBalls => BEAM_LATTICE_BALLS_NS,
             Self::CoreTriangleSet => CORE_TRIANGLESET_NS,
             Self::Material => MATERIAL_NS,
+            Self::Displacement => DISPLACEMENT_NS,
         }
     }
 
@@ -92,6 +101,7 @@ impl ThreemfNamespace {
             Self::BeamLatticeBalls => Some(BEAM_LATTICE_BALLS_PREFIX),
             Self::CoreTriangleSet => Some(CORE_TRIANGLESET_PREFIX),
             Self::Material => Some(MATERIAL_PREFIX),
+            Self::Displacement => Some(DISPLACEMENT_PREFIX),
         }
     }
 

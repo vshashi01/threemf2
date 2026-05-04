@@ -1095,6 +1095,9 @@ impl ResourcesBuilder {
             compositematerials: Vec::new(),
             multiproperties: Vec::new(),
             texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         }
     }
 }

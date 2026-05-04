@@ -11,6 +11,7 @@ use crate::{
     core::{
         boolean::BooleanShape,
         component::Components,
+        displacement::DisplacementMesh,
         mesh::Mesh,
         slice::MeshResolution,
         types::{OptionalResourceId, OptionalResourceIndex, ResourceId},
@@ -198,6 +199,18 @@ impl Object {
             None
         }
     }
+
+    /// Convenince fn that returns an [`Some<&DisplacementMesh>`] if this
+    /// object contains a displacement mesh geometry
+    pub fn get_displacement_mesh(&self) -> Option<&DisplacementMesh> {
+        if let Some(kind) = &self.kind
+            && let ObjectKind::DisplacementMesh(mesh) = kind
+        {
+            Some(mesh)
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -258,6 +271,7 @@ pub enum ObjectKind {
     Mesh(Mesh),
     Components(Components),
     BooleanShape(BooleanShape),
+    DisplacementMesh(DisplacementMesh),
 }
 
 /// Custom deserializer for `Option<ObjectKind>` to handle empty elements
