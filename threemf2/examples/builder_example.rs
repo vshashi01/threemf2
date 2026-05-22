@@ -1,4 +1,5 @@
-use threemf2::io::{ModelBuilder, ObjectType, ThreemfPackage, Unit};
+use threemf2::core::builder::{ModelBuilder, ObjectType, Unit};
+use threemf2::io::ThreemfPackage;
 
 /// This example shows how to build 3MF Model using ModelBuilder.
 /// Use this to reduce the boilerplate needed to setup 3MF Models.

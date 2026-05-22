@@ -160,7 +160,7 @@ mod tests {
                 for model_path in package.model_paths() {
                     total_model_paths += 1;
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             //check if some part with some id exists in a specific sub-model
                             if model_path == "/3D/Objects/Object.model"
                                 && model.resources.object.iter().any(|o| o.id == 1)
@@ -182,7 +182,7 @@ mod tests {
                                 }
                             }
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }
@@ -194,7 +194,7 @@ mod tests {
                 assert!(found_object_by_id);
 
                 // Check build item UUID in root model
-                let (root_model, _) = package.root_model().unwrap();
+                let root_model = package.root_model().unwrap();
                 let can_find_build_item_by_uuid = root_model.build.item.iter().find(|i| {
                     if let Some(uuid) = &i.uuid {
                         uuid == "637f47fa-39e6-4363-b3a9-100329fc5d9c"
@@ -249,7 +249,7 @@ mod tests {
                 for model_path in package.model_paths() {
                     total_model_paths += 1;
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             //check if some part with some id exists in a specific sub-model
                             if model_path == "/3D/Objects/Object.model"
                                 && model.resources.object.iter().any(|o| o.id == 1)
@@ -271,7 +271,7 @@ mod tests {
                                 }
                             }
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }
@@ -283,7 +283,7 @@ mod tests {
                 assert!(found_object_by_id);
 
                 // Check build item UUID in root model
-                let (root_model, _) = package.root_model().unwrap();
+                let root_model = package.root_model().unwrap();
                 let can_find_build_item_by_uuid = root_model.build.item.iter().find(|i| {
                     if let Some(uuid) = &i.uuid {
                         uuid == "637f47fa-39e6-4363-b3a9-100329fc5d9c"

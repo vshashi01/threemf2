@@ -23,7 +23,7 @@ use crate::{
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(BOOLEAN_NS), rename = "booleanshape")
+    xml(ns(BOOLEAN_NS), rename = "booleanshape", force_prefix)
 )]
 pub struct BooleanShape {
     /// Reference to the base object ID to apply boolean operations.
@@ -79,7 +79,7 @@ pub struct BooleanShape {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(BOOLEAN_NS), rename = "boolean")
+    xml(ns(BOOLEAN_NS), rename = "boolean", force_prefix)
 )]
 pub struct Boolean {
     /// Reference to the mesh object ID to use as the boolean operand.
@@ -350,7 +350,7 @@ mod write_tests {
         };
 
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><boolean objectid="66" /><boolean objectid="213" /></bo:booleanshape></object>"##,
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="100"><bo:booleanshape objectid="95" operation="difference"><bo:boolean objectid="66" /><bo:boolean objectid="213" /></bo:booleanshape></object>"##,
             CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, SLICE_PREFIX, SLICE_NS,
         );
 

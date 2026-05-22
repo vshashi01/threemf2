@@ -116,7 +116,7 @@ impl From<String> for MeshResolution {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "slicestack")
+    xml(ns(SLICE_NS), rename = "slicestack", force_prefix)
 )]
 pub struct SliceStack {
     /// Unique identifier for this slice stack within the model part.
@@ -158,7 +158,7 @@ impl SliceStack {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "sliceref")
+    xml(ns(SLICE_NS), rename = "sliceref", force_prefix)
 )]
 pub struct SliceRef {
     /// Identifies the SliceStack in the referenced file.
@@ -187,7 +187,7 @@ pub struct SliceRef {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "slice")
+    xml(ns(SLICE_NS), rename = "slice", force_prefix)
 )]
 pub struct Slice {
     /// Z-position of the top of this slice relative to the build platform.
@@ -211,7 +211,10 @@ pub struct Slice {
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "vertices"))]
+#[cfg_attr(
+    feature = "write",
+    xml(ns(SLICE_NS), rename = "vertices", force_prefix)
+)]
 pub struct Vertices {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub vertex: Vec<Vertex>,
@@ -274,7 +277,7 @@ impl<'xml> FromXml<'xml> for Vertices {
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "vertex"))]
+#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "vertex", force_prefix))]
 pub struct Vertex {
     #[cfg_attr(feature = "write", xml(attribute))]
     pub x: Double,
@@ -347,7 +350,7 @@ impl<'xml> FromXml<'xml> for Vertex {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(SLICE_NS), rename = "polygon")
+    xml(ns(SLICE_NS), rename = "polygon", force_prefix)
 )]
 pub struct Polygon {
     /// Index of the first vertex of the first segment.
@@ -370,7 +373,7 @@ pub struct Polygon {
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "segment"))]
+#[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "segment", force_prefix))]
 pub struct Segment {
     /// Index of the second vertex of this segment.
     #[cfg_attr(feature = "write", xml(attribute))]

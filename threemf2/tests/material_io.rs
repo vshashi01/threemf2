@@ -26,6 +26,8 @@ mod tests {
         match result {
             Ok(package) => {
                 // Verify 2 mesh objects
+
+                use threemf2::threemf_namespaces::ThreemfNamespace;
                 let mesh_objects = get_mesh_objects(&package).collect::<Vec<_>>();
                 assert_eq!(mesh_objects.len(), 1);
 
@@ -86,7 +88,7 @@ mod tests {
 
                 // Verify material namespace is present
                 let ns = package.get_namespaces_on_model(None).unwrap();
-                assert!(ns.iter().any(|n| n.uri.contains("material")));
+                assert!(ns.iter().any(|n| matches!(n, ThreemfNamespace::Material)));
             }
             Err(err) => {
                 panic!("read failed {:?}", err);
@@ -109,6 +111,8 @@ mod tests {
         match result {
             Ok(package) => {
                 // Verify 2 mesh objects
+
+                use threemf2::threemf_namespaces::ThreemfNamespace;
                 let mesh_objects = get_mesh_objects(&package).collect::<Vec<_>>();
                 assert_eq!(mesh_objects.len(), 1);
 
@@ -169,7 +173,7 @@ mod tests {
 
                 // Verify material namespace is present
                 let ns = package.get_namespaces_on_model(None).unwrap();
-                assert!(ns.iter().any(|n| n.uri.contains("material")));
+                assert!(ns.iter().any(|n| matches!(n, ThreemfNamespace::Material)));
             }
             Err(err) => {
                 panic!("read failed {:?}", err);

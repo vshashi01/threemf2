@@ -314,6 +314,7 @@ mod tests {
     use super::*;
     use crate::core::{
         build::Build,
+        model::ThreemfExtensions,
         object::{Object, ObjectKind},
         resources::{BaseMaterials, Resources},
         types::OptionalResourceId,
@@ -322,8 +323,8 @@ mod tests {
     fn create_test_model(resources: Resources, build: Build) -> Model {
         Model {
             unit: None,
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: Vec::new(),
             resources,
             build,

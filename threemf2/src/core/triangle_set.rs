@@ -32,19 +32,23 @@ impl ToXml for TriangleSets {
     ) -> Result<(), Error> {
         let prefix = match field {
             Some(id) => {
-                let prefix = serializer.write_start(id.name, id.ns)?;
+                let prefix =
+                    serializer.write_start(id.name, id.ns, None::<instant_xml::ser::Context<0>>)?;
                 serializer.end_start()?;
                 Some((prefix, id.name))
             }
             None => {
-                let _ = serializer.write_start("trianglesets", CORE_TRIANGLESET_NS)?;
-                serializer.push(instant_xml::ser::Context {
-                    default_ns: CORE_TRIANGLESET_NS,
-                    prefixes: [],
-                })?;
+                let mut cx = instant_xml::ser::Context::default();
+                cx.default_ns = CORE_TRIANGLESET_NS;
+                let prefix =
+                    serializer.write_start("trianglesets", CORE_TRIANGLESET_NS, Some(cx))?;
+                // serializer.push(instant_xml::ser::Context {
+                //     default_ns: CORE_TRIANGLESET_NS,
+                //     prefixes: [],
+                // })?;
 
                 serializer.end_start()?;
-                Some((None, "trianglesets"))
+                Some((prefix, "trianglesets"))
             }
         };
 
@@ -58,8 +62,8 @@ impl ToXml for TriangleSets {
             )?;
         }
 
-        if let Some((prefix, name)) = prefix {
-            serializer.write_close(prefix, name)?;
+        if let Some((prefix, _)) = prefix {
+            serializer.write_close(prefix)?;
         }
 
         Ok(())
@@ -73,7 +77,7 @@ impl ToXml for TriangleSets {
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(
     feature = "memory-optimized-read",
-    xml(ns(CORE_TRIANGLESET_NS), rename = "triangleset")
+    xml(ns(CORE_TRIANGLESET_NS), rename = "triangleset", force_prefix)
 )]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriangleSet {
@@ -104,7 +108,8 @@ impl ToXml for TriangleSet {
     ) -> Result<(), Error> {
         let prefix = match field {
             Some(id) => {
-                let prefix = serializer.write_start(id.name, id.ns)?;
+                let prefix =
+                    serializer.write_start(id.name, id.ns, None::<instant_xml::ser::Context<0>>)?;
                 Some((prefix, id.name))
             }
             None => None,
@@ -130,8 +135,8 @@ impl ToXml for TriangleSet {
             triangle_refrange.serialize(field, serializer)?;
         }
 
-        if let Some((prefix, name)) = prefix {
-            serializer.write_close(prefix, name)?;
+        if let Some((prefix, _)) = prefix {
+            serializer.write_close(prefix)?;
         }
 
         Ok(())
@@ -145,7 +150,7 @@ impl ToXml for TriangleSet {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_TRIANGLESET_NS), rename = "ref")
+    xml(ns(CORE_TRIANGLESET_NS), rename = "ref", force_prefix)
 )]
 pub struct TriangleRef {
     #[cfg_attr(
@@ -162,7 +167,7 @@ pub struct TriangleRef {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_TRIANGLESET_NS), rename = "refrange")
+    xml(ns(CORE_TRIANGLESET_NS), rename = "refrange", force_prefix)
 )]
 pub struct TriangleRefRange {
     /// The start index of the range.

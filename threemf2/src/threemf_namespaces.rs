@@ -42,7 +42,7 @@ pub const DISPLACEMENT_NS: &str = "http://schemas.3mf.io/3dmanufacturing/displac
 pub const DISPLACEMENT_PREFIX: &str = "d";
 
 /// Enum representing the different 3MF specifications supported by this library
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ThreemfNamespace {
     /// Core 3MF
     Core,
@@ -70,11 +70,14 @@ pub enum ThreemfNamespace {
 
     /// Displacement extension
     Displacement,
+
+    /// Unknown namespace
+    Unknown { prefix: String, uri: String },
 }
 
 impl ThreemfNamespace {
     /// Returns the namespace Uri
-    pub fn uri(&self) -> &'static str {
+    pub fn uri(&self) -> &str {
         match self {
             Self::Core => CORE_NS,
             Self::Slice => SLICE_NS,
@@ -85,13 +88,14 @@ impl ThreemfNamespace {
             Self::CoreTriangleSet => CORE_TRIANGLESET_NS,
             Self::Material => MATERIAL_NS,
             Self::Displacement => DISPLACEMENT_NS,
+            Self::Unknown { prefix: _, uri } => uri,
         }
     }
 
     /// Returns the default prefix used by this library for this namespace
     /// Note: This is not reflective of prefix that maybe used by other
     /// producers.
-    pub fn prefix(&self) -> Option<&'static str> {
+    pub fn prefix(&self) -> Option<&str> {
         match self {
             Self::Core => None, // default namespace
             Self::Slice => Some(SLICE_PREFIX),
@@ -102,6 +106,49 @@ impl ThreemfNamespace {
             Self::CoreTriangleSet => Some(CORE_TRIANGLESET_PREFIX),
             Self::Material => Some(MATERIAL_PREFIX),
             Self::Displacement => Some(DISPLACEMENT_PREFIX),
+            Self::Unknown { prefix, uri: _ } => Some(prefix),
+        }
+    }
+
+    pub fn try_from_uri(uri: &str, assigned_prefix: Option<&str>) -> Option<Self> {
+        match uri {
+            CORE_NS => Some(Self::Core),
+            CORE_TRIANGLESET_NS => Some(Self::CoreTriangleSet),
+            PROD_NS => Some(Self::Prod),
+            BEAM_LATTICE_NS => Some(Self::BeamLattice),
+            BEAM_LATTICE_BALLS_NS => Some(Self::BeamLatticeBalls),
+            SLICE_NS => Some(Self::Slice),
+            BOOLEAN_NS => Some(Self::Boolean),
+            MATERIAL_NS => Some(Self::Material),
+            DISPLACEMENT_NS => Some(Self::Displacement),
+            _ => assigned_prefix.map(|prefix| Self::Unknown {
+                prefix: prefix.to_owned(),
+                uri: uri.to_owned(),
+            }),
+        }
+    }
+
+    pub fn try_from_prefix(prefix: &str, specified_uri: Option<&str>) -> Option<Self> {
+        match prefix {
+            //CORE_NS => Some(Self::Core),
+            CORE_TRIANGLESET_PREFIX => Some(Self::CoreTriangleSet),
+            PROD_PREFIX => Some(Self::Prod),
+            BEAM_LATTICE_PREFIX => Some(Self::BeamLattice),
+            BEAM_LATTICE_BALLS_PREFIX => Some(Self::BeamLatticeBalls),
+            SLICE_PREFIX => Some(Self::Slice),
+            BOOLEAN_PREFIX => Some(Self::Boolean),
+            MATERIAL_PREFIX => Some(Self::Material),
+            DISPLACEMENT_PREFIX => Some(Self::Displacement),
+            _ => match specified_uri {
+                Some(uri) => Some(Self::Unknown {
+                    prefix: prefix.to_owned(),
+                    uri: uri.to_owned(),
+                }),
+                None => Some(Self::Unknown {
+                    prefix: prefix.to_owned(),
+                    uri: "".to_owned(),
+                }),
+            },
         }
     }
 

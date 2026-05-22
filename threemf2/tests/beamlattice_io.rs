@@ -56,6 +56,8 @@ mod tests {
 
         match result {
             Ok(package) => {
+                use threemf2::threemf_namespaces::ThreemfNamespace;
+
                 let mesh_obj = get_mesh_objects(&package).collect::<Vec<_>>();
                 assert_eq!(mesh_obj.len(), 5);
 
@@ -66,7 +68,15 @@ mod tests {
                 assert_eq!(beam_lattice_obj, 2);
 
                 let ns = package.get_namespaces_on_model(None).unwrap();
-                assert_eq!(ns.len(), 4);
+                assert_eq!(
+                    ns,
+                    [
+                        ThreemfNamespace::Core,
+                        ThreemfNamespace::Prod,
+                        ThreemfNamespace::BeamLattice,
+                        ThreemfNamespace::Material
+                    ]
+                );
             }
             Err(err) => {
                 panic!("read failed {:?}", err);
@@ -93,11 +103,13 @@ mod tests {
 
         match result {
             Ok(package) => {
+                use threemf2::threemf_namespaces::ThreemfNamespace;
+
                 let mut mesh_objects = 0;
                 let mut beam_lattice_objects = 0;
                 for model_path in package.model_paths() {
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             use threemf2::io::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
@@ -106,7 +118,7 @@ mod tests {
                                 .filter(|mesh_rep| mesh_rep.mesh().beamlattice.is_some())
                                 .count();
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }
@@ -114,7 +126,15 @@ mod tests {
                 assert_eq!(beam_lattice_objects, 2);
 
                 // core, prod, material, beam lattice
-                assert_eq!(namespaces.len(), 4);
+                assert_eq!(
+                    namespaces,
+                    [
+                        ThreemfNamespace::Core,
+                        ThreemfNamespace::Prod,
+                        ThreemfNamespace::BeamLattice,
+                        ThreemfNamespace::Material,
+                    ]
+                );
             }
             Err(err) => {
                 panic!("read failed {:?}", err);
@@ -141,11 +161,13 @@ mod tests {
 
         match result {
             Ok(package) => {
+                use threemf2::threemf_namespaces::ThreemfNamespace;
+
                 let mut mesh_objects = 0;
                 let mut beam_lattice_objects = 0;
                 for model_path in package.model_paths() {
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             use threemf2::io::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
@@ -154,7 +176,7 @@ mod tests {
                                 .filter(|mesh_rep| mesh_rep.mesh().beamlattice.is_some())
                                 .count();
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }
@@ -162,7 +184,15 @@ mod tests {
                 assert_eq!(beam_lattice_objects, 2);
 
                 // core, prod, material, beam lattice
-                assert_eq!(namespaces.len(), 4);
+                assert_eq!(
+                    namespaces,
+                    [
+                        ThreemfNamespace::Core,
+                        ThreemfNamespace::Prod,
+                        ThreemfNamespace::BeamLattice,
+                        ThreemfNamespace::Material
+                    ]
+                );
             }
             Err(err) => {
                 panic!("read failed {:?}", err);

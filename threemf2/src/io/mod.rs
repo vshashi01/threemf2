@@ -5,14 +5,13 @@ mod error;
 pub use error::Error;
 
 mod utils;
-pub use utils::parse_xmlns_attributes;
 
 pub mod thumbnail_handle;
 
 pub mod validator;
 mod validator_rules;
 
-/// Represents an XML namespace declaration with its prefix and URI
+/// Represents a generic XML namespace declaration with its prefix and URI
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct XmlNamespace {
     /// The namespace prefix (None for default namespace)
@@ -21,14 +20,6 @@ pub struct XmlNamespace {
     pub uri: String,
 }
 
-/// Stores namespace information for a specific model file
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ModelNamespaces {
-    /// Path to the model file
-    pub path: String,
-    /// List of namespaces declared in that model
-    pub namespaces: Vec<XmlNamespace>,
-}
 #[cfg(any(
     feature = "io-memory-optimized-read",
     feature = "io-speed-optimized-read"
@@ -71,8 +62,3 @@ mod threemf_package_lazy_reader;
     )
 ))]
 pub use threemf_package_lazy_reader::{CachePolicy, ThreemfPackageLazyReader};
-
-#[cfg(feature = "io-write")]
-mod builder;
-#[cfg(feature = "io-write")]
-pub use builder::*;

@@ -112,10 +112,37 @@ fn bench_lib3mf_rs(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_lib3mf(c: &mut Criterion) {
+    let config: Config = serde_json::from_str(CONFIG_JSON).unwrap();
+    let mut group = c.benchmark_group("lib3mf");
+    group.sample_size(10);
+    group.measurement_time(std::time::Duration::from_secs(30));
+
+    for file in &config.files {
+        let path = PathBuf::from(format!("../threemf2-tests/tests/data/{}", file.path))
+            .canonicalize()
+            .unwrap();
+        let name = get_short_name(&file.path);
+
+        #[cfg(feature = "enable-alloc-check")]
+        let _dhat = dhat::Profiler::builder()
+            .file_name(format!("/target/dhat-speed-optimized-{name}.json"))
+            .build();
+        group.bench_with_input(BenchmarkId::new("read", name), &path, |b, path| {
+            b.iter(|| {
+                let file = std::fs::File::open(path).unwrap();
+                if lib3mf::Model::from_reader(file).is_ok() {}
+            });
+        });
+    }
+    group.finish();
+}
+
 #[cfg(feature = "benchmark-all")]
 criterion_group!(
     benches,
     bench_memory_optimized,
+    bench_lib3mf,
     bench_speed_optimized,
     bench_lib3mf_rs
 );

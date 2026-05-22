@@ -127,24 +127,16 @@ use crate::{
         component::{Component, Components},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         metadata::Metadata,
-        model::Model,
+        model::{Model, ThreemfExtensions},
         object::{Object, ObjectKind},
         resources::Resources,
         slice::{self, MeshResolution, Polygon, Segment, Slice, SliceRef, SliceStack},
         transform::Transform,
     },
-    io::XmlNamespace,
-    threemf_namespaces::{
-        BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX,
-        BOOLEAN_NS, BOOLEAN_PREFIX, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS,
-        PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
-    },
+    threemf_namespaces::ThreemfNamespace,
 };
 
-use std::{
-    collections::HashSet,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
 pub use crate::core::model::Unit;
@@ -324,8 +316,8 @@ pub enum ProductionExtensionError {
 /// ```
 pub struct ModelBuilder {
     unit: Option<Unit>,
-    requiredextensions: Vec<XmlNamespace>,
-    recommendedextensions: Vec<XmlNamespace>,
+    requiredextensions: Vec<ThreemfNamespace>,
+    recommendedextensions: Vec<ThreemfNamespace>,
     metadata: Vec<Metadata>,
     resources: ResourcesBuilder,
     build: Option<BuildBuilder>, //in submodels, Build item is not allowed
@@ -465,18 +457,28 @@ impl ModelBuilder {
     ///
     /// Required extensions must be understood by readers to process the file.
     /// Some extensions are automatically added based on features used (e.g., beam lattice).
-    pub fn add_required_extension(&mut self, extension: XmlNamespace) -> &mut Self {
-        self.requiredextensions.push(extension);
-        self
+    pub fn add_required_extension(&mut self, extension: ThreemfNamespace) -> &mut Self {
+        match extension {
+            ThreemfNamespace::Core => self,
+            _ => {
+                self.requiredextensions.push(extension);
+                self
+            }
+        }
     }
 
     /// Add a recommended 3MF extension to the model.
     ///
     /// Recommended extensions can be ignored by readers if not supported.
     /// Some extensions are automatically added based on features used (e.g., triangle sets).
-    pub fn add_recommended_extension(&mut self, extension: XmlNamespace) -> &mut Self {
-        self.recommendedextensions.push(extension);
-        self
+    pub fn add_recommended_extension(&mut self, extension: ThreemfNamespace) -> &mut Self {
+        match extension {
+            ThreemfNamespace::Core => self,
+            _ => {
+                self.recommendedextensions.push(extension);
+                self
+            }
+        }
     }
 
     /// Add metadata key-value pair to the model.
@@ -908,8 +910,8 @@ impl ModelBuilder {
     pub fn build(self) -> Result<Model, ModelError> {
         let required_extensions = self.process_required_extensions();
 
-        let requiredextensions = get_extensions_definition(&required_extensions);
-        let recommendedextensions = get_extensions_definition(&self.recommendedextensions);
+        let requiredextensions = ThreemfExtensions::new(&required_extensions);
+        let recommendedextensions = ThreemfExtensions::new(&self.recommendedextensions);
 
         if self.is_root && self.build.is_none() {
             return Err(ModelError::BuildItemNotSet);
@@ -943,24 +945,21 @@ impl ModelBuilder {
             && self
                 .recommendedextensions
                 .iter()
-                .all(|ns| ns.uri == CORE_TRIANGLESET_NS)
+                .all(|ns| *ns == ThreemfNamespace::CoreTriangleSet)
         {
-            self.recommendedextensions.push(XmlNamespace {
-                prefix: Some(CORE_TRIANGLESET_PREFIX.to_owned()),
-                uri: CORE_TRIANGLESET_NS.to_owned(),
-            });
+            self.recommendedextensions
+                .push(ThreemfNamespace::CoreTriangleSet);
         }
     }
 
-    fn process_required_extensions(&self) -> Vec<XmlNamespace> {
+    fn process_required_extensions(&self) -> Vec<ThreemfNamespace> {
         let mut required_extensions = self.requiredextensions.clone();
         if self.is_production_ext_required {
-            let is_prod_ext_set = required_extensions.iter().find(|ns| ns.uri == PROD_NS);
+            let is_prod_ext_set = required_extensions
+                .iter()
+                .find(|ns| **ns == ThreemfNamespace::Prod);
             if is_prod_ext_set.is_none() {
-                required_extensions.push(XmlNamespace {
-                    prefix: Some(PROD_PREFIX.to_owned()),
-                    uri: PROD_NS.to_owned(),
-                });
+                required_extensions.push(ThreemfNamespace::Prod);
             }
         }
 
@@ -968,11 +967,6 @@ impl ModelBuilder {
         let mut is_beam_lattice_balls_required = false;
 
         for object in &self.resources.objects {
-            //early exit to speed up things
-            if is_beam_lattice_balls_required {
-                break;
-            }
-
             if let Some(mesh) = object.get_mesh()
                 && let Some(beam_lattice) = &mesh.beamlattice
             {
@@ -984,23 +978,17 @@ impl ModelBuilder {
         if is_beam_lattice_required {
             let is_bl_ext_set = required_extensions
                 .iter()
-                .find(|ns| ns.uri == BEAM_LATTICE_NS);
+                .find(|ns| **ns == ThreemfNamespace::BeamLattice);
             if is_bl_ext_set.is_none() {
-                required_extensions.push(XmlNamespace {
-                    prefix: Some(BEAM_LATTICE_PREFIX.to_owned()),
-                    uri: BEAM_LATTICE_NS.to_owned(),
-                });
+                required_extensions.push(ThreemfNamespace::BeamLattice);
             }
 
             if is_beam_lattice_balls_required {
                 let is_bl_balls_ext_set = required_extensions
                     .iter()
-                    .find(|ns| ns.uri == BEAM_LATTICE_BALLS_NS);
+                    .find(|ns| **ns == ThreemfNamespace::BeamLatticeBalls);
                 if is_bl_balls_ext_set.is_none() {
-                    required_extensions.push(XmlNamespace {
-                        prefix: Some(BEAM_LATTICE_BALLS_PREFIX.to_owned()),
-                        uri: BEAM_LATTICE_BALLS_NS.to_owned(),
-                    });
+                    required_extensions.push(ThreemfNamespace::BeamLatticeBalls);
                 }
             }
         }
@@ -1013,12 +1001,11 @@ impl ModelBuilder {
             .any(|obj| obj.get_boolean_shape_object().is_some());
 
         if is_boolean_required {
-            let is_boolean_ext_set = required_extensions.iter().find(|ns| ns.uri == BOOLEAN_NS);
+            let is_boolean_ext_set = required_extensions
+                .iter()
+                .find(|ns| **ns == ThreemfNamespace::Boolean);
             if is_boolean_ext_set.is_none() {
-                required_extensions.push(XmlNamespace {
-                    prefix: Some(BOOLEAN_PREFIX.to_owned()),
-                    uri: BOOLEAN_NS.to_owned(),
-                });
+                required_extensions.push(ThreemfNamespace::Boolean);
             }
         }
 
@@ -1030,12 +1017,11 @@ impl ModelBuilder {
             });
 
         if is_slice_required {
-            let is_slice_ext_set = required_extensions.iter().find(|ns| ns.uri == SLICE_NS);
+            let is_slice_ext_set = required_extensions
+                .iter()
+                .find(|ns| **ns == ThreemfNamespace::Slice);
             if is_slice_ext_set.is_none() {
-                required_extensions.push(XmlNamespace {
-                    prefix: Some(SLICE_PREFIX.to_owned()),
-                    uri: SLICE_NS.to_owned(),
-                });
+                required_extensions.push(ThreemfNamespace::Slice);
             }
         }
 
@@ -1046,28 +1032,6 @@ impl ModelBuilder {
 impl Default for ModelBuilder {
     fn default() -> Self {
         Self::new(Unit::Millimeter, true)
-    }
-}
-
-fn get_extensions_definition(extensions: &[XmlNamespace]) -> Option<String> {
-    if extensions.is_empty() {
-        None
-    } else {
-        let mut extension_string = String::new();
-        let mut unique_namespaces: HashSet<XmlNamespace> = HashSet::new();
-
-        for ns in extensions {
-            unique_namespaces.insert(ns.clone());
-        }
-
-        for ns in unique_namespaces {
-            if let Some(prefix) = &ns.prefix {
-                extension_string.push_str(prefix);
-                extension_string.push(' ');
-            }
-        }
-
-        Some(extension_string)
     }
 }
 
@@ -3237,7 +3201,11 @@ mod tests {
             })
             .unwrap();
         let model = builder.build().unwrap();
-        assert_eq!(model.requiredextensions, Some("p ".to_string()));
+
+        assert_eq!(
+            model.requiredextensions,
+            ThreemfExtensions::new(&[ThreemfNamespace::Prod])
+        );
     }
 
     #[test]
@@ -3333,20 +3301,35 @@ mod tests {
     }
 
     #[test]
-    fn test_extension_tests() {
+    fn test_custom_extensions() {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
-        builder.add_required_extension(crate::io::XmlNamespace {
-            prefix: Some("test".to_string()),
-            uri: "http://example.com/test".to_string(),
+
+        builder.add_required_extension(ThreemfNamespace::Unknown {
+            prefix: "test".to_owned(),
+            uri: "http://example.com/test".to_owned(),
         });
-        builder.add_recommended_extension(crate::io::XmlNamespace {
-            prefix: Some("rec".to_string()),
-            uri: "http://example.com/rec".to_string(),
+
+        builder.add_recommended_extension(ThreemfNamespace::Unknown {
+            prefix: "rec".to_owned(),
+            uri: "http://example.com/rec".to_owned(),
         });
         builder.add_build(None).unwrap();
         let model = builder.build().unwrap();
-        assert_eq!(model.requiredextensions, Some("test ".to_string()));
-        assert_eq!(model.recommendedextensions, Some("rec ".to_string()));
+
+        assert_eq!(
+            model.requiredextensions,
+            ThreemfExtensions::new(&[ThreemfNamespace::Unknown {
+                prefix: "test".to_owned(),
+                uri: "http://example.com/test".to_owned()
+            }])
+        );
+        assert_eq!(
+            model.recommendedextensions,
+            ThreemfExtensions::new(&[ThreemfNamespace::Unknown {
+                prefix: "rec".to_owned(),
+                uri: "http://example.com/rec".to_owned()
+            }])
+        );
     }
 
     #[test]
@@ -3609,7 +3592,10 @@ mod tests {
         assert_eq!(sets[1].triangle_refrange.len(), 2);
 
         //check if Triangle set is in recommended extensions
-        assert_eq!(model.recommendedextensions, Some("t ".to_owned()))
+        assert_eq!(
+            model.recommendedextensions,
+            ThreemfExtensions::new(&[ThreemfNamespace::CoreTriangleSet])
+        );
     }
 
     #[test]
@@ -3933,7 +3919,10 @@ mod tests {
         let mesh = obj.get_mesh().unwrap();
         assert!(mesh.beamlattice.is_some());
 
-        assert_eq!(model.requiredextensions, Some("b ".to_owned()));
+        assert_eq!(
+            model.requiredextensions,
+            ThreemfExtensions::new(&[ThreemfNamespace::BeamLattice,])
+        );
     }
 
     #[test]
@@ -3964,12 +3953,12 @@ mod tests {
         let bl = mesh.beamlattice.as_ref().unwrap();
         assert!(bl.balls.is_some());
 
-        let prefixes = ["b", "b2"];
-        if let Some(exts) = &model.requiredextensions {
-            let split_exts = exts.split_whitespace().collect::<Vec<_>>();
-            for prefix in prefixes {
-                assert!(split_exts.contains(&prefix));
-            }
-        }
+        assert_eq!(
+            model.requiredextensions,
+            ThreemfExtensions::new(&[
+                ThreemfNamespace::BeamLatticeBalls,
+                ThreemfNamespace::BeamLattice,
+            ])
+        )
     }
 }

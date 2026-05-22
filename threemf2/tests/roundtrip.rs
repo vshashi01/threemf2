@@ -14,7 +14,7 @@ mod tests {
             OptionalResourceId,
             build::{Build, Item},
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-            model::{Model, Unit},
+            model::{Model, ThreemfExtensions, Unit},
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
             types::OptionalResourceIndex,
@@ -60,8 +60,8 @@ mod tests {
         let write_package = ThreemfPackage::new(
             Model {
                 unit: Some(Unit::Millimeter),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     object: vec![Object {
@@ -170,10 +170,10 @@ mod tests {
             assert!(lazy_package.root_model_path().contains("3Dmodel.model"));
 
             // Verify root model content
-            let (root_model, ns) = lazy_package.root_model().unwrap();
+            let root_model = lazy_package.root_model().unwrap();
             assert_eq!(root_model.resources.object.len(), 1);
             assert_eq!(root_model.build.item.len(), 1);
-            assert_eq!(ns.len(), 1);
+            assert_eq!(root_model.used_namespaces().len(), 1);
 
             let obj = &root_model.resources.object[0];
             assert_eq!(obj.id, 1);

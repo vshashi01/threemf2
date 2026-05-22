@@ -26,6 +26,8 @@ mod tests {
         match result {
             Ok(package) => {
                 // Verify we can get mesh objects (base geometry)
+
+                use threemf2::threemf_namespaces::ThreemfNamespace;
                 let mesh_obj = get_mesh_objects(&package).collect::<Vec<_>>();
                 assert_eq!(
                     mesh_obj.len(),
@@ -84,9 +86,7 @@ mod tests {
 
                 // Verify namespaces include boolean operations
                 let ns = package.get_namespaces_on_model(None).unwrap();
-                let has_boolean_ns = ns
-                    .iter()
-                    .any(|n| n.uri == threemf2::threemf_namespaces::BOOLEAN_NS);
+                let has_boolean_ns = ns.iter().any(|n| matches!(n, ThreemfNamespace::Boolean));
                 assert!(
                     has_boolean_ns,
                     "Package should include Boolean Operations namespace"
@@ -115,6 +115,8 @@ mod tests {
         match result {
             Ok(package) => {
                 // Verify we can get mesh objects (base geometry)
+
+                use threemf2::threemf_namespaces::ThreemfNamespace;
                 let mesh_obj = get_mesh_objects(&package).collect::<Vec<_>>();
                 assert_eq!(
                     mesh_obj.len(),
@@ -162,9 +164,7 @@ mod tests {
 
                 // Verify namespaces include boolean operations
                 let ns = package.get_namespaces_on_model(None).unwrap();
-                let has_boolean_ns = ns
-                    .iter()
-                    .any(|n| n.uri == threemf2::threemf_namespaces::BOOLEAN_NS);
+                let has_boolean_ns = ns.iter().any(|n| matches!(n, ThreemfNamespace::Boolean));
                 assert!(
                     has_boolean_ns,
                     "Package should include Boolean Operations namespace"
@@ -202,7 +202,7 @@ mod tests {
 
                 for model_path in package.model_paths() {
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             use threemf2::io::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
@@ -223,7 +223,7 @@ mod tests {
                                 }
                             }
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }
@@ -243,7 +243,7 @@ mod tests {
                 // Verify boolean namespace is present
                 let has_boolean_ns = namespaces
                     .iter()
-                    .any(|n| n.uri == threemf2::threemf_namespaces::BOOLEAN_NS);
+                    .any(|n| n.uri() == threemf2::threemf_namespaces::BOOLEAN_NS);
                 assert!(
                     has_boolean_ns,
                     "Package should include Boolean Operations namespace"
@@ -281,7 +281,7 @@ mod tests {
 
                 for model_path in package.model_paths() {
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             use threemf2::io::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
@@ -302,7 +302,7 @@ mod tests {
                                 }
                             }
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }
@@ -322,7 +322,7 @@ mod tests {
                 // Verify boolean namespace is present
                 let has_boolean_ns = namespaces
                     .iter()
-                    .any(|n| n.uri == threemf2::threemf_namespaces::BOOLEAN_NS);
+                    .any(|n| n.uri() == threemf2::threemf_namespaces::BOOLEAN_NS);
                 assert!(
                     has_boolean_ns,
                     "Package should include Boolean Operations namespace"

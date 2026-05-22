@@ -40,7 +40,8 @@ impl ToXml for Transform {
     ) -> Result<(), Error> {
         let prefix = match field {
             Some(id) => {
-                let prefix = serializer.write_start(id.name, id.ns)?;
+                let prefix =
+                    serializer.write_start(id.name, id.ns, None::<instant_xml::ser::Context<0>>)?;
                 serializer.end_start()?;
                 Some((prefix, id.name))
             }
@@ -55,8 +56,8 @@ impl ToXml for Transform {
             .join(" ");
         serializer.write_str(&transform_str)?;
 
-        if let Some((prefix, name)) = prefix {
-            serializer.write_close(prefix, name)?;
+        if let Some((prefix, _)) = prefix {
+            serializer.write_close(prefix)?;
         }
 
         Ok(())
@@ -86,7 +87,7 @@ impl<'xml> FromXml<'xml> for Transform {
             None => return Err(Error::MissingValue("No transform string found")),
         };
 
-        let result = Transform::from(value.into_owned());
+        let result = Transform::from(value.as_ref());
         *into = Some(result);
         Ok(())
     }
@@ -96,18 +97,38 @@ impl<'xml> FromXml<'xml> for Transform {
     const KIND: Kind = Kind::Scalar;
 }
 
-#[cfg(any(feature = "memory-optimized-read", feature = "speed-optimized-read"))]
+// #[cfg(any(feature = "memory-optimized-read", feature = "speed-optimized-read"))]
 impl From<String> for Transform {
     fn from(value: String) -> Self {
-        let values = value
-            .split(" ")
-            .map(|v| lexical_core::parse(v.as_bytes()).unwrap_or_default())
-            .collect::<Vec<f64>>();
-        //ToDo: Consider parallelizing this
-
-        // write now it can always panic something to improve in the future
-        Self(values.try_into().unwrap())
+        Self(parse_transform_matrix(&value))
     }
+}
+
+impl From<&str> for Transform {
+    fn from(value: &str) -> Self {
+        Self(parse_transform_matrix(value))
+    }
+}
+
+// ToDo: Remove panics
+fn parse_transform_matrix(input: &str) -> [f64; 12] {
+    let mut out = [0.0f64; MATRIX_SIZE];
+    let mut i = 0usize;
+
+    for token in input.split_whitespace() {
+        if i >= MATRIX_SIZE {
+            panic!("Transform values does not contain enough values, expected: {MATRIX_SIZE}")
+        }
+        let value = lexical_core::parse::<f64>(token.as_bytes()).unwrap_or_default();
+        out[i] = value;
+        i += 1;
+    }
+
+    if i != MATRIX_SIZE {
+        panic!("Transform contains more values than expected, expected: {MATRIX_SIZE}")
+    }
+
+    out
 }
 
 impl Index<usize> for Transform {

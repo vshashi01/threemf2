@@ -10,7 +10,7 @@ use threemf2::{
         OptionalResourceId, OptionalResourceIndex,
         build::{Build, Item},
         mesh::{self, Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         slice::{self, MeshResolution, Polygon, Segment, Slice, SliceStack},
@@ -20,6 +20,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 mod validation_utils;
@@ -161,8 +162,8 @@ fn validate_simple_slice() {
 
     let model = Model {
         unit: Some(Unit::Millimeter),
-        requiredextensions: Some("s ".to_owned()),
-        recommendedextensions: None,
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Slice]),
+        recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![],
         resources: Resources {
             object: vec![object],
@@ -396,8 +397,8 @@ fn validate_slice_multiple_polygons() {
 
     let model = Model {
         unit: Some(Unit::Millimeter),
-        requiredextensions: None, // FullRes doesn't require slice extension
-        recommendedextensions: Some("s ".to_owned()),
+        requiredextensions: ThreemfExtensions::default(), // FullRes doesn't require slice extension
+        recommendedextensions: ThreemfExtensions::new(&[ThreemfNamespace::Slice]),
         metadata: vec![],
         resources: Resources {
             object: vec![object],

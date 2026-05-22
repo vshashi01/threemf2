@@ -364,7 +364,7 @@ pub struct Beam {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(BEAM_LATTICE_BALLS_NS), rename = "balls")
+    xml(ns(BEAM_LATTICE_BALLS_NS), rename = "balls", force_prefix)
 )]
 pub struct Balls {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
@@ -378,7 +378,7 @@ pub struct Balls {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(BEAM_LATTICE_BALLS_NS), rename = "ball")
+    xml(ns(BEAM_LATTICE_BALLS_NS), rename = "ball", force_prefix)
 )]
 pub struct Ball {
     /// References a zero-based index into the vertices of this mesh.
@@ -609,10 +609,11 @@ mod write_tests {
     #[test]
     pub fn toxml_beamlattice_with_balls_test() {
         let xml_string = format!(
-            r#"<beamlattice xmlns="{}" xmlns:{}="{}" minlength="0.0001" radius="1" {}:ballmode="mixed" {}:ballradius="0.25" cap="sphere"><beams><beam v1="0" v2="1" r1="1.5" r2="1.6" /></beams><{}:balls><ball vindex="0" r="0.5" /></{}:balls></beamlattice>"#,
+            r#"<beamlattice xmlns="{}" xmlns:{}="{}" minlength="0.0001" radius="1" {}:ballmode="mixed" {}:ballradius="0.25" cap="sphere"><beams><beam v1="0" v2="1" r1="1.5" r2="1.6" /></beams><{}:balls><{}:ball vindex="0" r="0.5" /></{}:balls></beamlattice>"#,
             BEAM_LATTICE_NS,
             BEAM_LATTICE_BALLS_PREFIX,
             BEAM_LATTICE_BALLS_NS,
+            BEAM_LATTICE_BALLS_PREFIX,
             BEAM_LATTICE_BALLS_PREFIX,
             BEAM_LATTICE_BALLS_PREFIX,
             BEAM_LATTICE_BALLS_PREFIX,
@@ -698,13 +699,13 @@ mod memory_optimized_read_tests {
             OptionalResourceIndex,
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
-            model::Model,
+            model::{Model, ThreemfExtensions},
             object::{Object, ObjectKind},
             resources::Resources,
         },
         threemf_namespaces::{
             BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX,
-            CORE_NS,
+            CORE_NS, ThreemfNamespace,
         },
     };
 
@@ -965,8 +966,11 @@ mod memory_optimized_read_tests {
             mesh,
             Model {
                 unit: None,
-                requiredextensions: Some("b b2".to_owned()),
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::new(&[
+                    ThreemfNamespace::BeamLattice,
+                    ThreemfNamespace::BeamLatticeBalls
+                ]),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     object: vec![Object {
@@ -1083,13 +1087,13 @@ mod speed_optimized_read_tests {
             OptionalResourceIndex,
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
-            model::Model,
+            model::{Model, ThreemfExtensions},
             object::{Object, ObjectKind},
             resources::Resources,
         },
         threemf_namespaces::{
             BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX,
-            CORE_NS,
+            CORE_NS, ThreemfNamespace,
         },
     };
 
@@ -1440,8 +1444,12 @@ mod speed_optimized_read_tests {
             mesh,
             Model {
                 unit: None,
-                requiredextensions: Some("b b2".to_owned()),
-                recommendedextensions: None,
+                // requiredextensions: Some("b b2".to_owned()),
+                requiredextensions: ThreemfExtensions::new(&[
+                    ThreemfNamespace::BeamLattice,
+                    ThreemfNamespace::BeamLatticeBalls
+                ]),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     object: vec![Object {

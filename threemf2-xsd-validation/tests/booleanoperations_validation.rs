@@ -11,7 +11,7 @@ use threemf2::{
         boolean::{Boolean, BooleanOperation, BooleanShape},
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         transform::Transform,
@@ -22,6 +22,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 mod validation_utils;
@@ -448,8 +449,8 @@ fn validate_simple_boolean_difference() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("bo".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![
@@ -579,8 +580,8 @@ fn validate_simple_boolean_intersection() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("bo".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![
@@ -726,8 +727,8 @@ fn validate_boolean_with_multiple_operands() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("bo".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![
@@ -873,8 +874,8 @@ fn validate_nested_boolean_shapes() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("bo".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![
@@ -1030,8 +1031,8 @@ fn validate_boolean_with_production_extension() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("bo p".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![

@@ -156,7 +156,7 @@ impl From<String> for BlendMethod {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "colorgroup")
+    xml(ns(MATERIAL_NS), rename = "colorgroup", force_prefix)
 )]
 pub struct ColorGroup {
     /// Unique identifier for this color group.
@@ -182,7 +182,7 @@ pub struct ColorGroup {
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "color")
+    xml(ns(MATERIAL_NS), rename = "color", force_prefix)
 )]
 pub struct ColorElement {
     /// The sRGB color value as a hex string (e.g., "#FF0000" or "#FF0000FF").
@@ -204,7 +204,7 @@ pub struct ColorElement {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "texture2dgroup")
+    xml(ns(MATERIAL_NS), rename = "texture2dgroup", force_prefix)
 )]
 pub struct Texture2DGroup {
     /// Unique identifier for this texture coordinate group.
@@ -234,7 +234,10 @@ pub struct Texture2DGroup {
 #[cfg_attr(feature = "speed-optimized-read", serde(rename = "tex2coord"))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone, Copy)]
-#[cfg_attr(feature = "write", xml(ns(MATERIAL_NS), rename = "tex2coord"))]
+#[cfg_attr(
+    feature = "write",
+    xml(ns(MATERIAL_NS), rename = "tex2coord", force_prefix)
+)]
 pub struct Tex2Coord {
     /// Horizontal coordinate (u-axis), increasing right from the origin.
     #[cfg_attr(feature = "write", xml(attribute))]
@@ -313,7 +316,7 @@ impl<'xml> FromXml<'xml> for Tex2Coord {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "compositematerials")
+    xml(ns(MATERIAL_NS), rename = "compositematerials", force_prefix)
 )]
 pub struct CompositeMaterials {
     /// Unique identifier for this composite material group.
@@ -386,16 +389,17 @@ impl ToXml for Composite {
         field: Option<instant_xml::Id<'_>>,
         serializer: &mut instant_xml::Serializer<W>,
     ) -> Result<(), instant_xml::Error> {
-        let ns = match field {
-            Some(id) => {
-                serializer.write_start(id.name, id.ns)?;
-                id.ns
-            }
-            None => {
-                serializer.write_start("composite", MATERIAL_NS)?;
-                "" //return no namespace in this case because there are no prefix for attr
-            }
+        let (name, ns) = match field {
+            Some(id) => (id.name, id.ns),
+            None => ("composite", MATERIAL_NS),
         };
+
+        // Force prefix usage for material namespace
+        let mut cx = instant_xml::ser::Context::<0>::default();
+        cx.default_ns = MATERIAL_NS;
+        cx.force_prefix = true;
+
+        serializer.write_start(name, ns, Some(cx))?;
 
         if !self.values.is_empty() {
             let values_str = self
@@ -480,7 +484,7 @@ impl<'xml> instant_xml::FromXml<'xml> for Composite {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "multiproperties")
+    xml(ns(MATERIAL_NS), rename = "multiproperties", force_prefix)
 )]
 pub struct MultiProperties {
     /// Unique identifier for this multi-property group.
@@ -522,7 +526,7 @@ pub struct MultiProperties {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "multi")
+    xml(ns(MATERIAL_NS), rename = "multi", force_prefix)
 )]
 pub struct Multi {
     /// Space-delimited list of property indices.
@@ -632,7 +636,7 @@ impl TextureContentType {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(MATERIAL_NS), rename = "texture2d")
+    xml(ns(MATERIAL_NS), rename = "texture2d", force_prefix)
 )]
 pub struct Texture2D {
     /// Unique identifier for this texture resource.

@@ -10,10 +10,8 @@ use crate::threemf_namespaces::ThreemfNamespace;
 use crate::{
     core::model::Model,
     io::{
-        XmlNamespace,
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         error::Error,
-        parse_xmlns_attributes,
         relationship::{Relationship, RelationshipType, Relationships},
         thumbnail_handle::ThumbnailHandle,
         utils,
@@ -64,8 +62,6 @@ pub struct ThreemfPackage {
     /// The extensions defined in the [ContentTypes.xml]
     ///  file should match the extensions of the parts in the package.
     pub content_types: ContentTypes,
-
-    namespaces: HashMap<String, Vec<XmlNamespace>>,
 }
 
 impl ThreemfPackage {
@@ -84,27 +80,6 @@ impl ThreemfPackage {
             unknown_parts,
             relationships,
             content_types,
-            namespaces: HashMap::new(),
-        }
-    }
-
-    pub(crate) fn new_with_namespaces_map(
-        root: Model,
-        sub_models: HashMap<String, Model>,
-        thumbnails: HashMap<String, ThumbnailHandle>,
-        unknown_parts: HashMap<String, Vec<u8>>,
-        relationships: HashMap<String, Relationships>,
-        content_types: ContentTypes,
-        namespaces: HashMap<String, Vec<XmlNamespace>>,
-    ) -> Self {
-        Self {
-            root,
-            sub_models,
-            thumbnails,
-            unknown_parts,
-            relationships,
-            content_types,
-            namespaces,
         }
     }
 }
@@ -211,7 +186,7 @@ impl ThreemfPackage {
             let tag_end = model_pos + end_pos + 1;
             let tag_content = &xml[model_pos..tag_end];
 
-            let xmlns_attrs = parse_xmlns_attributes(tag_content);
+            let xmlns_attrs = utils::parse_xmlns_attributes(tag_content);
 
             // Parse all attributes (simple approach: split by spaces)
             let mut all_attrs = Vec::new();
@@ -366,14 +341,24 @@ impl ThreemfPackage {
 
     //only exists in the loading flow and not on the writing flow
     //if a path is not set then its the root model
-    pub fn get_namespaces_on_model(&self, model_path: Option<&str>) -> Option<Vec<XmlNamespace>> {
-        let path = model_path.unwrap_or("root model");
+    pub fn get_namespaces_on_model(
+        &self,
+        model_path: Option<&str>,
+    ) -> Option<Vec<ThreemfNamespace>> {
+        // let path = model_path.unwrap_or("root model");
 
-        if self.namespaces.contains_key(path) {
-            let namespaces = self.namespaces.get(path);
-            namespaces.cloned()
-        } else {
-            None
+        // if self.namespaces.contains_key(path) {
+        //     let namespaces = self.namespaces.get(path);
+        //     namespaces.cloned()
+        // } else {
+        //     None
+        // }
+        match model_path {
+            Some(sub_model_path) => self
+                .sub_models
+                .get(sub_model_path)
+                .map(|sub_model| sub_model.used_namespaces()),
+            None => Some(self.root.used_namespaces()),
         }
     }
 }
@@ -400,13 +385,13 @@ mod processor {
     use crate::{
         core::model::Model,
         io::{
-            ThreemfPackage, XmlNamespace,
+            ThreemfPackage,
             content_types::ContentTypes,
             error::Error,
             relationship::{RelationshipType, Relationships},
             thumbnail_handle::{ImageFormat, ThumbnailHandle},
             utils,
-            zip_utils::XmlDeserializer,
+            zip_utils::{self, XmlDeserializer},
         },
     };
 
@@ -422,7 +407,7 @@ mod processor {
         unknown_parts: HashMap<String, Vec<u8>>,
         relationships: HashMap<String, Relationships>,
         content_types: ContentTypes,
-        namespaces_map: HashMap<String, Vec<XmlNamespace>>,
+        // namespaces_map: HashMap<String, Vec<XmlNamespace>>,
     }
 
     impl ThreemfPackageProcessor {
@@ -437,19 +422,18 @@ mod processor {
                 unknown_parts: HashMap::new(),
                 relationships,
                 content_types,
-                namespaces_map: HashMap::new(),
+                // namespaces_map: HashMap::new(),
             }
         }
 
         pub(crate) fn into_threemf_package(self) -> ThreemfPackage {
-            ThreemfPackage::new_with_namespaces_map(
+            ThreemfPackage::new(
                 self.root.expect("Root model should be set"),
                 self.sub_models,
                 self.thumbnails,
                 self.unknown_parts,
                 self.relationships,
                 self.content_types,
-                self.namespaces_map,
             )
         }
 
@@ -475,7 +459,8 @@ mod processor {
 
                             match rel.relationship_type {
                                 RelationshipType::Thumbnail => {
-                                    let mut bytes = Vec::new();
+                                    let size = file.size() as usize;
+                                    let mut bytes = Vec::with_capacity(size);
                                     file.read_to_end(&mut bytes)?;
 
                                     let format = {
@@ -498,21 +483,18 @@ mod processor {
                                 }
                                 RelationshipType::Model => {
                                     let is_root = rel.target == root_model_path;
-
-                                    let (model, namespaces) =
-                                        deserializer.deserialize_model(&mut file)?;
+                                    let model_string =
+                                        zip_utils::read_zipfile_to_string(&mut file)?;
+                                    let model = deserializer.deserialize_model(&model_string)?;
                                     if is_root {
                                         self.root = Some(model);
-                                        self.namespaces_map
-                                            .insert("root model".to_string(), namespaces);
                                     } else {
                                         self.sub_models.insert(rel.target.to_string(), model);
-                                        self.namespaces_map
-                                            .insert(rel.target.to_string(), namespaces);
                                     }
                                 }
                                 RelationshipType::Unknown(_) => {
-                                    let mut bytes = Vec::new();
+                                    let size = file.size() as usize;
+                                    let mut bytes = Vec::with_capacity(size);
                                     file.read_to_end(&mut bytes)?;
 
                                     self.unknown_parts.insert(rel.target.to_string(), bytes);
@@ -655,15 +637,17 @@ mod tests {
     #[test]
     pub fn write_root_model_test() {
         let bytes = {
-            use crate::core::{OptionalResourceId, OptionalResourceIndex};
+            use crate::core::{
+                OptionalResourceId, OptionalResourceIndex, model::ThreemfExtensions,
+            };
 
             let bytes = Vec::<u8>::new();
             let mut writer = Cursor::new(bytes);
             let threemf = ThreemfPackage::new(
                 Model {
                     unit: Some(model::Unit::Centimeter),
-                    requiredextensions: None,
-                    recommendedextensions: None,
+                    requiredextensions: ThreemfExtensions::default(),
+                    recommendedextensions: ThreemfExtensions::default(),
                     metadata: vec![],
                     resources: Resources {
                         object: vec![Object {
@@ -733,6 +717,8 @@ mod tests {
     #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
     #[test]
     pub fn io_unknown_content_test() {
+        use crate::core::model::ThreemfExtensions;
+
         let test_file_bytes = include_bytes!("../../tests/data/test.txt");
         let mut writer = Cursor::new(Vec::<u8>::new());
         let unknown_target = "/Metadata/test.txt";
@@ -740,8 +726,8 @@ mod tests {
         let package = ThreemfPackage::new(
             Model {
                 unit: Some(model::Unit::Millimeter),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     object: vec![],
@@ -820,7 +806,10 @@ mod tests {
     #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
     #[test]
     pub fn io_thumbnail_content_test() {
-        use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
+        use crate::{
+            core::model::ThreemfExtensions,
+            io::thumbnail_handle::{ImageFormat, ThumbnailHandle},
+        };
 
         let test_file_bytes = include_bytes!("../../tests/data/test_thumbnail.png");
         let thumbnail_rep = ThumbnailHandle {
@@ -834,8 +823,8 @@ mod tests {
         let package = ThreemfPackage::new(
             Model {
                 unit: Some(model::Unit::Millimeter),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     object: vec![],
@@ -922,9 +911,19 @@ mod tests {
         let result = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true);
         match result {
             Ok(threemf) => {
+                use crate::threemf_namespaces::ThreemfNamespace;
+
                 let root_namespaces = threemf.get_namespaces_on_model(None).unwrap();
-                //println!("Namespaces: {:?}", root_namespaces);
-                assert_eq!(root_namespaces.len(), 5);
+                assert_eq!(
+                    root_namespaces,
+                    [
+                        ThreemfNamespace::Core,
+                        ThreemfNamespace::Prod,
+                        ThreemfNamespace::BeamLattice,
+                        ThreemfNamespace::Material,
+                        ThreemfNamespace::Displacement
+                    ]
+                );
             }
             Err(err) => panic!("{:?}", err),
         }
@@ -940,11 +939,20 @@ mod tests {
         let result = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true);
         match result {
             Ok(threemf) => {
+                use crate::threemf_namespaces::ThreemfNamespace;
+
                 let root_namespaces = threemf
                     .get_namespaces_on_model(Some("/3D/Objects/Object(3).model"))
                     .unwrap();
-                //println!("Namespaces: {:?}", root_namespaces);
-                assert_eq!(root_namespaces.len(), 4);
+                assert_eq!(
+                    root_namespaces,
+                    [
+                        ThreemfNamespace::Core,
+                        ThreemfNamespace::Prod,
+                        ThreemfNamespace::BeamLattice,
+                        ThreemfNamespace::Material
+                    ]
+                );
             }
             Err(err) => panic!("{:?}", err),
         }
@@ -962,25 +970,17 @@ mod tests {
         let result = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true);
         match result {
             Ok(threemf) => {
+                use crate::threemf_namespaces::ThreemfNamespace;
+
                 let root_namespaces = threemf.get_namespaces_on_model(None).unwrap();
 
                 // Verify that Boolean Operations namespace is tracked
-                let has_boolean_ns = root_namespaces.iter().any(|ns| ns.uri == BOOLEAN_NS);
                 assert!(
-                    has_boolean_ns,
+                    root_namespaces
+                        .iter()
+                        .any(|ns| matches!(ns, ThreemfNamespace::Boolean)),
                     "Boolean Operations namespace ({})",
                     BOOLEAN_NS
-                );
-
-                // Also verify the namespace prefix
-                let boolean_ns = root_namespaces
-                    .iter()
-                    .find(|ns| ns.uri == BOOLEAN_NS)
-                    .expect("Boolean namespace should be present");
-                assert_eq!(
-                    boolean_ns.prefix.as_deref(),
-                    Some("bo"),
-                    "Boolean namespace should have 'bo' prefix"
                 );
             }
             Err(err) => panic!("{:?}", err),

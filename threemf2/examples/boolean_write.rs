@@ -24,11 +24,12 @@ use threemf2::{
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         metadata::Metadata,
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
     },
     io::ThreemfPackage,
+    threemf_namespaces::ThreemfNamespace,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -366,8 +367,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create the model
     let model = Model {
         unit: Some(Unit::Millimeter),
-        requiredextensions: Some("bo".to_string()), // Boolean extension is required
-        recommendedextensions: None,
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]), // Boolean extension is required
+        recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![
             Metadata {
                 name: "Application".to_string(),
@@ -413,9 +414,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nModel statistics:");
     println!("  Objects: {}", model.resources.object.len());
     println!("  Build items: {}", model.build.item.len());
-    if let Some(ref extensions) = model.requiredextensions {
-        println!("  Required extensions: {}", extensions);
-    }
+    // if let Some(ref extensions) = model.requiredextensions {
+    println!(
+        "  Required extensions: {:?}",
+        model.requiredextensions.get()
+    );
+    // }
 
     // Create 3MF package and write to file
     let package: ThreemfPackage = model.into();

@@ -11,7 +11,7 @@ use threemf2::{
         beamlattice::{Ball, BallMode, Balls, Beam, BeamLattice, Beams, CapMode},
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         types::OptionalResourceIndex,
@@ -21,6 +21,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 mod validation_utils;
@@ -162,8 +163,8 @@ fn validate_simple_beamlattice() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("b".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::BeamLattice]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -332,8 +333,11 @@ fn validate_beamlattice_with_balls() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("b b2".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[
+                ThreemfNamespace::BeamLattice,
+                ThreemfNamespace::BeamLatticeBalls,
+            ]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {

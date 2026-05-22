@@ -3,7 +3,7 @@ use threemf2::{
         OptionalResourceId, OptionalResourceIndex,
         build::{Build, Item},
         mesh::{self, Mesh, Triangle, Triangles, Vertices},
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         slice::{self, MeshResolution, Polygon, Segment, Slice, SliceStack},
@@ -13,6 +13,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 use std::collections::HashMap;
@@ -244,8 +245,8 @@ fn main() {
     // Create the model
     let model = Model {
         unit: Some(Unit::Millimeter),
-        requiredextensions: Some("s ".to_owned()), // Slice extension is required
-        recommendedextensions: None,
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Slice]), // Slice extension is required
+        recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![],
         resources,
         build,

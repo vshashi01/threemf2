@@ -429,6 +429,7 @@ impl Default for ThumbnailGenerator {
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
+    use threemf2::core::model::ThreemfExtensions;
 
     use super::*;
     use threemf2::core::build::Build;
@@ -731,8 +732,8 @@ mod tests {
                 uuid: None,
                 item: vec![],
             },
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
         };
 
         let generator = ThumbnailGenerator::default();

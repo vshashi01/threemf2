@@ -3,7 +3,7 @@ use threemf2::core::{
     build::{Build, Item},
     mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
     metadata::Metadata,
-    model::{Model, Unit},
+    model::{Model, ThreemfExtensions, Unit},
     object::{Object, ObjectKind, ObjectType},
     resources::Resources,
     types::OptionalResourceIndex,
@@ -19,8 +19,8 @@ use std::vec;
 fn main() {
     let model = Model {
         unit: Some(Unit::Inch),
-        requiredextensions: None,
-        recommendedextensions: None,
+        requiredextensions: ThreemfExtensions::default(),
+        recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![Metadata {
             name: "Test metadata".to_string(),
             preserve: None,

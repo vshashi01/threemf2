@@ -1,3 +1,5 @@
 /target
 *.json.gz
+*prof.json
+*.etl
 nul

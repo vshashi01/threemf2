@@ -7,7 +7,7 @@ use zip::ZipArchive;
 
 use crate::core::model::Model;
 use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
-use crate::io::{XmlNamespace, utils};
+use crate::io::utils;
 use crate::io::{
     content_types::{ContentTypes, DefaultContentTypeEnum},
     error::Error,
@@ -43,10 +43,10 @@ pub struct ThreemfPackageLazyReader<R: Read + Seek> {
     root_model_path: String,
 
     // always cached on first access
-    root_model: OnceCell<(Model, Vec<XmlNamespace>)>,
+    root_model: OnceCell<Model>,
 
     // cached based on cachepolicy
-    sub_models: RefCell<HashMap<String, (Model, Vec<XmlNamespace>)>>,
+    sub_models: RefCell<HashMap<String, Model>>,
     thumbnails: RefCell<HashMap<String, ThumbnailHandle>>,
     unknown_parts: RefCell<HashMap<String, Vec<u8>>>,
 }
@@ -164,14 +164,14 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             })
     }
 
-    pub fn root_model(&self) -> Result<&(Model, Vec<XmlNamespace>), Error> {
+    pub fn root_model(&self) -> Result<&Model, Error> {
         self.root_model
             .get_or_try_init(|| self.load_model_from_archive(&self.root_model_path))
     }
 
     pub fn with_model<F, T>(&self, path: &str, f: F) -> Result<T, Error>
     where
-        F: FnOnce(&(Model, Vec<XmlNamespace>)) -> T,
+        F: FnOnce(&Model) -> T,
     {
         if path == self.root_model_path {
             let model = self.root_model()?;
@@ -359,10 +359,11 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         Ok(f(&xml_string))
     }
 
-    fn load_model_from_archive(&self, path: &str) -> Result<(Model, Vec<XmlNamespace>), Error> {
+    fn load_model_from_archive(&self, path: &str) -> Result<Model, Error> {
         let mut archive = self.archive.borrow_mut();
         let mut file = archive.by_name(utils::try_strip_leading_slash(path))?;
-        self.deserializer.deserialize_model(&mut file)
+        let model_string = zip_utils::read_zipfile_to_string(&mut file)?;
+        self.deserializer.deserialize_model(&model_string)
     }
 
     fn load_thumbnail_from_archive(&self, path: &str) -> Result<ThumbnailHandle, Error> {
@@ -454,9 +455,9 @@ mod tests {
         let paths: Vec<_> = package.model_paths().collect();
         assert!(!paths.is_empty());
 
-        let (root_model, root_ns) = package.root_model().unwrap();
+        let root_model = package.root_model().unwrap();
         assert_eq!(root_model.build.item.len(), 2);
-        assert_eq!(root_ns.len(), 3);
+        assert_eq!(root_model.used_namespaces().len(), 3);
     }
 
     #[cfg(feature = "io-memory-optimized-read")]
@@ -477,9 +478,9 @@ mod tests {
         let model_paths: Vec<_> = package.model_paths().collect();
         assert!(model_paths.len() >= 2); // root + at least one sub-model
 
-        let (root_model, root_ns) = package.root_model().unwrap();
+        let root_model = package.root_model().unwrap();
         assert!(!root_model.resources.object.is_empty());
-        assert_eq!(root_ns.len(), 2);
+        assert_eq!(root_model.used_namespaces().len(), 2);
 
         let sub_model_path = "/3D/midway.model";
         let exists = package.with_model(sub_model_path, |_| true);
@@ -529,9 +530,9 @@ mod tests {
 
         assert!(!package.relationships().is_empty());
 
-        let (root_model, root_ns) = package.root_model().unwrap();
+        let root_model = package.root_model().unwrap();
         assert_eq!(root_model.build.item.len(), 2);
-        assert_eq!(root_ns.len(), 3);
+        assert_eq!(root_model.used_namespaces().len(), 3);
     }
 
     #[cfg(feature = "io-memory-optimized-read")]
