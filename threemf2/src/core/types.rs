@@ -1002,6 +1002,45 @@ impl Color {
 }
 
 #[cfg(test)]
+mod uuid_resource_tests {
+    use super::UuidResource;
+
+    #[test]
+    fn uuid_resource_default_is_none() {
+        let value = UuidResource::default();
+        assert!(value.is_none());
+        assert_eq!(value.to_string(), None);
+    }
+
+    #[cfg(not(feature = "uuid"))]
+    #[test]
+    fn uuid_resource_from_string_without_uuid_feature() {
+        let value = UuidResource::from("not-a-uuid");
+        assert!(matches!(value, UuidResource::MaybeUuid(_)));
+        assert_eq!(value.to_string().as_deref(), Some("not-a-uuid"));
+    }
+
+    #[cfg(feature = "uuid")]
+    #[test]
+    fn uuid_resource_from_valid_uuid() {
+        let value = UuidResource::from("550e8400-e29b-41d4-a716-446655440000");
+        assert!(matches!(value, UuidResource::Uuid(_)));
+        assert_eq!(
+            value.to_string().as_deref(),
+            Some("550e8400-e29b-41d4-a716-446655440000")
+        );
+    }
+
+    #[cfg(feature = "uuid")]
+    #[test]
+    fn uuid_resource_from_invalid_uuid() {
+        let value = UuidResource::from("not-a-uuid");
+        assert!(matches!(value, UuidResource::NotUuid(_)));
+        assert_eq!(value.to_string().as_deref(), Some("not-a-uuid"));
+    }
+}
+
+#[cfg(test)]
 mod color_tests {
     use super::Color;
 
