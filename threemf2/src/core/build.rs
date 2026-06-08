@@ -8,7 +8,10 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{transform::Transform, types::{ResourceId, UuidResource}},
+    core::{
+        transform::Transform,
+        types::{ResourceId, UuidResource},
+    },
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
 

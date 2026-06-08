@@ -1280,8 +1280,7 @@ mod memory_optimized_read_tests {
     use crate::core::model::ThreemfExtensions;
     use crate::{
         core::{
-            Color,
-            UuidResource,
+            Color, UuidResource,
             build::{Build, Item},
             component::{Component, Components},
             material::{ColorElement, ColorGroup, Texture2D},

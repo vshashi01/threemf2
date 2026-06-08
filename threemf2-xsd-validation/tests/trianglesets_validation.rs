@@ -7,8 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        OptionalResourceId,
-        UuidResource,
+        OptionalResourceId, UuidResource,
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         model::{Model, ThreemfExtensions, Unit},

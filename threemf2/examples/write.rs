@@ -1,7 +1,6 @@
 use threemf2::{
     core::{
-        OptionalResourceId,
-        UuidResource,
+        OptionalResourceId, UuidResource,
         build::{Build, Item},
         mesh::*,
         metadata::Metadata,
