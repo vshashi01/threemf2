@@ -74,6 +74,7 @@ impl XmlDeserializer {
     }
 }
 
+#[cfg(feature = "io-speed-optimized-read")]
 fn speed_optimized_read(xml_string: &str) -> Model {
     use serde_roxmltree::roxmltree::Document;
 

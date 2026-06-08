@@ -4,9 +4,6 @@ use zip::write::SimpleFileOptions;
 #[cfg(feature = "io-write")]
 use instant_xml::ToXml;
 
-#[cfg(feature = "io-write")]
-use crate::threemf_namespaces::ThreemfNamespace;
-
 use crate::{
     core::model::Model,
     io::{
@@ -16,6 +13,7 @@ use crate::{
         thumbnail_handle::ThumbnailHandle,
         utils,
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 #[cfg(any(
@@ -629,7 +627,7 @@ mod tests {
     pub fn write_root_model_test() {
         let bytes = {
             use crate::core::{
-                OptionalResourceId, OptionalResourceIndex, model::ThreemfExtensions,
+                OptionalResourceId, OptionalResourceIndex, UuidResource, model::ThreemfExtensions,
             };
 
             let bytes = Vec::<u8>::new();
@@ -649,7 +647,7 @@ mod tests {
                             name: Some("Some object".to_owned()),
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
-                            uuid: Some("uuid".to_owned()),
+                            uuid: UuidResource::from("uuid"),
                             slicestackid: OptionalResourceId::none(),
                             slicepath: None,
                             meshresolution: None,
@@ -667,7 +665,7 @@ mod tests {
                         disp2dgroup: Vec::new(),
                     },
                     build: Build {
-                        uuid: None,
+                        uuid: UuidResource::None,
                         item: vec![],
                     },
                 },
@@ -708,7 +706,7 @@ mod tests {
     #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
     #[test]
     pub fn io_unknown_content_test() {
-        use crate::core::model::ThreemfExtensions;
+        use crate::core::{UuidResource, model::ThreemfExtensions};
 
         let test_file_bytes = include_bytes!("../../tests/data/test.txt");
         let mut writer = Cursor::new(Vec::<u8>::new());
@@ -734,7 +732,7 @@ mod tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![],
                 },
             },
@@ -798,7 +796,7 @@ mod tests {
     #[test]
     pub fn io_thumbnail_content_test() {
         use crate::{
-            core::model::ThreemfExtensions,
+            core::{UuidResource, model::ThreemfExtensions},
             io::thumbnail_handle::{ImageFormat, ThumbnailHandle},
         };
 
@@ -831,7 +829,7 @@ mod tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![],
                 },
             },

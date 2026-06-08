@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        OptionalResourceId,
+        OptionalResourceId, UuidResource,
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         metadata::Preserve,
@@ -102,7 +102,7 @@ fn validate_simple_mesh_against_core_xsd() {
                     name: Some("Simple Mesh".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -120,13 +120,13 @@ fn validate_simple_mesh_against_core_xsd() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         },
@@ -259,7 +259,7 @@ fn validate_model_with_metadata_against_core_xsd() {
                     name: Some("Mesh with Metadata".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -277,13 +277,13 @@ fn validate_model_with_metadata_against_core_xsd() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         },
@@ -411,7 +411,7 @@ fn validate_model_with_different_units() {
                         name: Some(format!("Mesh in {:?}", unit)),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: None,
+                        uuid: UuidResource::None,
                         kind: Some(ObjectKind::Mesh(mesh)),
                         meshresolution: None,
                         slicestackid: OptionalResourceId::none(),
@@ -429,13 +429,13 @@ fn validate_model_with_different_units() {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![Item {
                         objectid: 1,
                         transform: None,
                         partnumber: None,
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     }],
                 },
             },

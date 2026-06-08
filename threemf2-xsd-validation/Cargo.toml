@@ -6,6 +6,9 @@ edition = "2024"
 license = "MIT or Apache-2.0"
 description = "XSD validation tests for threemf2 generated 3MF files"
 
+[features]
+uuid = ["threemf2/uuid"]
+
 [dependencies]
 threemf2 = { path = "../threemf2", features = [
     "io-write",

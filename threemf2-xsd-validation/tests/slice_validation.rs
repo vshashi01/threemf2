@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex,
+        OptionalResourceId, OptionalResourceIndex, UuidResource,
         build::{Build, Item},
         mesh::{self, Mesh, Triangle, Triangles, Vertex, Vertices},
         model::{Model, ThreemfExtensions, Unit},
@@ -148,7 +148,7 @@ fn validate_simple_slice() {
         name: Some("TestObject".to_owned()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
-        uuid: None,
+        uuid: UuidResource::None,
         slicestackid: OptionalResourceId::new(1),
         slicepath: None,
         meshresolution: Some(MeshResolution::LowRes),
@@ -179,12 +179,12 @@ fn validate_simple_slice() {
             disp2dgroup: Vec::new(),
         },
         build: Build {
-            uuid: None,
+            uuid: UuidResource::None,
             item: vec![Item {
                 objectid: 1,
                 transform: None,
                 partnumber: None,
-                uuid: None,
+                uuid: UuidResource::None,
                 path: None,
             }],
         },
@@ -337,7 +337,7 @@ fn validate_slice_multiple_polygons() {
         name: Some("MultiPolygonSlice".to_owned()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
-        uuid: None,
+        uuid: UuidResource::None,
         slicestackid: OptionalResourceId::new(1),
         slicepath: None,
         meshresolution: Some(MeshResolution::FullRes),
@@ -414,12 +414,12 @@ fn validate_slice_multiple_polygons() {
             disp2dgroup: Vec::new(),
         },
         build: Build {
-            uuid: None,
+            uuid: UuidResource::None,
             item: vec![Item {
                 objectid: 1,
                 transform: None,
                 partnumber: None,
-                uuid: None,
+                uuid: UuidResource::None,
                 path: None,
             }],
         },

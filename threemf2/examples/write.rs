@@ -1,6 +1,7 @@
 use threemf2::{
     core::{
         OptionalResourceId,
+        UuidResource,
         build::{Build, Item},
         mesh::*,
         metadata::Metadata,
@@ -38,7 +39,7 @@ fn main() {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -77,13 +78,13 @@ fn main() {
             disp2dgroup: Vec::new(),
         },
         build: Build {
-            uuid: None,
+            uuid: UuidResource::None,
             item: vec![Item {
                 objectid: 1,
                 transform: None,
                 partnumber: None,
                 path: None,
-                uuid: None,
+                uuid: UuidResource::None,
             }],
         },
     };

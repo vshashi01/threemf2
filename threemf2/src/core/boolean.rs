@@ -151,7 +151,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex, UuidResource,
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
@@ -324,7 +324,7 @@ mod write_tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -368,7 +368,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex, UuidResource,
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
@@ -528,11 +528,11 @@ mod memory_optimized_read_tests {
                 objecttype: None,
                 thumbnail: None,
                 partnumber: None,
-                name: None,
-                pid: OptionalResourceId::none(),
-                pindex: OptionalResourceIndex::none(),
-                uuid: None,
-                slicestackid: OptionalResourceId::none(),
+            name: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
+            uuid: UuidResource::None,
+            slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
 
@@ -567,7 +567,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex, UuidResource,
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
@@ -727,11 +727,11 @@ mod speed_optimized_read_tests {
                 objecttype: None,
                 thumbnail: None,
                 partnumber: None,
-                name: None,
-                pid: OptionalResourceId::none(),
-                pindex: OptionalResourceIndex::none(),
-                uuid: None,
-                slicestackid: OptionalResourceId::none(),
+            name: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
+            uuid: UuidResource::None,
+            slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
 

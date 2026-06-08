@@ -165,7 +165,7 @@ mod write_tests {
             },
             object::Object,
             slice,
-            types::{Double, ResourceIdCollection, ResourceIndexCollection},
+            types::{Double, ResourceIdCollection, ResourceIndexCollection, UuidResource},
         },
         threemf_namespaces::{
             BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS,
@@ -198,7 +198,7 @@ mod write_tests {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 kind: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
@@ -594,7 +594,7 @@ mod memory_optimized_read_tests {
             },
             object::Object,
             slice,
-            types::{Double, ResourceIdCollection, ResourceIndexCollection},
+            types::{Double, ResourceIdCollection, ResourceIndexCollection, UuidResource},
         },
         threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, SLICE_NS, SLICE_PREFIX},
     };
@@ -620,7 +620,7 @@ mod memory_optimized_read_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
@@ -1010,7 +1010,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            Color, OptionalResourceId, OptionalResourceIndex,
+            Color, OptionalResourceId, OptionalResourceIndex, UuidResource,
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Multi, MultiProperties,
                 Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -1043,7 +1043,7 @@ mod speed_optimized_read_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,

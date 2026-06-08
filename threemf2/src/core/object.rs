@@ -14,7 +14,7 @@ use crate::{
         displacement::DisplacementMesh,
         mesh::Mesh,
         slice::MeshResolution,
-        types::{OptionalResourceId, OptionalResourceIndex, ResourceId},
+        types::{OptionalResourceId, OptionalResourceIndex, ResourceId, UuidResource},
     },
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS, SLICE_NS},
 };
@@ -110,8 +110,8 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS), rename = "UUID")
     )]
-    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
-    pub uuid: Option<String>,
+    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID", default))]
+    pub uuid: UuidResource,
 
     /// Identifies the SliceStack that contains the slice data for this object.
     /// If used alone, the slice data exists in the same file as the object.
@@ -311,7 +311,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -341,7 +341,7 @@ mod write_tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -373,7 +373,7 @@ mod write_tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: Some("someUUID".to_owned()),
+            uuid: UuidResource::from("someUUID"),
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -398,7 +398,7 @@ mod write_tests {
             name: Some("Object Part".to_string()),
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -423,7 +423,7 @@ mod write_tests {
             name: Some("Object Part".to_string()),
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -462,7 +462,7 @@ mod write_tests {
             name: Some("Object Part".to_string()),
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             slicestackid: OptionalResourceId::new(236),
             slicepath: Some("/2D/model_with_slice_stack.model".to_owned()),
             meshresolution: Some(slice::MeshResolution::LowRes),
@@ -471,7 +471,7 @@ mod write_tests {
                     objectid: 23,
                     transform: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             })),
         };
@@ -519,7 +519,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -549,7 +549,7 @@ mod memory_optimized_read_tests {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -577,7 +577,7 @@ mod memory_optimized_read_tests {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: Some("someUUID".to_owned()),
+                uuid: UuidResource::from("someUUID"),
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -604,7 +604,7 @@ mod memory_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -631,7 +631,7 @@ mod memory_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -666,7 +666,7 @@ mod memory_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::new(236),
                 slicepath: None,
                 meshresolution: Some(slice::MeshResolution::LowRes),
@@ -698,7 +698,7 @@ mod memory_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -707,7 +707,7 @@ mod memory_optimized_read_tests {
                         objectid: 23,
                         transform: None,
                         path: None,
-                        uuid: None
+                        uuid: UuidResource::None
                     }]
                 }))
             }
@@ -756,7 +756,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex,
+            OptionalResourceId, OptionalResourceIndex, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -786,7 +786,7 @@ mod speed_optimized_read_tests {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -814,7 +814,7 @@ mod speed_optimized_read_tests {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: Some("someUUID".to_owned()),
+                uuid: UuidResource::from("someUUID"),
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -841,7 +841,7 @@ mod speed_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -868,7 +868,7 @@ mod speed_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -903,7 +903,7 @@ mod speed_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::new(236),
                 slicepath: None,
                 meshresolution: Some(slice::MeshResolution::LowRes),
@@ -935,7 +935,7 @@ mod speed_optimized_read_tests {
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -944,7 +944,7 @@ mod speed_optimized_read_tests {
                         objectid: 23,
                         transform: None,
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     }]
                 }))
             }

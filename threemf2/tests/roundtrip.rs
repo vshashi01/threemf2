@@ -12,6 +12,7 @@ mod tests {
     use threemf2::{
         core::{
             OptionalResourceId,
+            UuidResource,
             build::{Build, Item},
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             model::{Model, ThreemfExtensions, Unit},
@@ -72,7 +73,7 @@ mod tests {
                         name: Some("Mesh".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: None,
+                        uuid: UuidResource::None,
                         kind: Some(ObjectKind::Mesh(mesh.clone())),
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
@@ -90,13 +91,13 @@ mod tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![Item {
                         objectid: 1,
                         transform: None,
                         partnumber: None,
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     }],
                 },
             },

@@ -26,6 +26,7 @@ dhat = "0.3.3"
 
 [features]
 default = []
+uuid = ["threemf2/uuid"]
 # memory-optimized-read-experimental = [
 #     "threemf2/memory-optimized-read-experimental",
 # ]

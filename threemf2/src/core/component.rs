@@ -8,7 +8,7 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{transform::Transform, types::ResourceId},
+    core::{transform::Transform, types::{ResourceId, UuidResource}},
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
 
@@ -60,8 +60,8 @@ pub struct Component {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS), rename = "UUID")
     )]
-    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID"))]
-    pub uuid: Option<String>,
+    #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID", default))]
+    pub uuid: UuidResource,
 }
 
 #[cfg(feature = "write")]
@@ -72,6 +72,7 @@ mod write_tests {
 
     use crate::{
         core::transform::Transform,
+        core::types::UuidResource,
         threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX},
     };
 
@@ -89,7 +90,7 @@ mod write_tests {
                 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
             ])),
             path: None,
-            uuid: None,
+            uuid: UuidResource::None,
         };
         let component_string = to_string(&component).unwrap();
 
@@ -108,7 +109,7 @@ mod write_tests {
                 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
             ])),
             path: Some("//somePath//Component".to_owned()),
-            uuid: Some("someComponentUUID".to_owned()),
+            uuid: UuidResource::from("someComponentUUID"),
         };
         let component_string = to_string(&component).unwrap();
 
@@ -129,13 +130,13 @@ mod write_tests {
                         1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
                     ])),
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 },
                 Component {
                     objectid: 5,
                     transform: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 },
             ],
         };
@@ -153,6 +154,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::transform::Transform,
+        core::types::UuidResource,
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 
@@ -174,7 +176,7 @@ mod memory_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: None,
-                uuid: None,
+                uuid: UuidResource::None,
             }
         )
     }
@@ -196,7 +198,7 @@ mod memory_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: Some("//somePath//Component".to_owned()),
-                uuid: Some("someComponentUUID".to_owned()),
+                uuid: UuidResource::from("someComponentUUID"),
             }
         )
     }
@@ -219,13 +221,13 @@ mod memory_optimized_read_tests {
                             1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
                         ])),
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     },
                     Component {
                         objectid: 5,
                         transform: None,
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     },
                 ],
             }
@@ -241,6 +243,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::transform::Transform,
+        core::types::UuidResource,
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 
@@ -262,7 +265,7 @@ mod speed_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: None,
-                uuid: None,
+                uuid: UuidResource::None,
             }
         )
     }
@@ -284,7 +287,7 @@ mod speed_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: Some("//somePath//Component".to_owned()),
-                uuid: Some("someComponentUUID".to_owned()),
+                uuid: UuidResource::from("someComponentUUID"),
             }
         )
     }
@@ -307,13 +310,13 @@ mod speed_optimized_read_tests {
                             1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
                         ])),
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     },
                     Component {
                         objectid: 5,
                         transform: None,
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     },
                 ],
             }

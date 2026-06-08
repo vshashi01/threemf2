@@ -1,6 +1,6 @@
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex,
+        OptionalResourceId, OptionalResourceIndex, UuidResource,
         beamlattice::{Ball, BallMode, Balls, Beam, BeamLattice, Beams, CapMode},
         build::{Build, Item},
         mesh::{Mesh, Triangles, Vertex, Vertices},
@@ -245,7 +245,7 @@ fn main() {
                 name: Some("Beam Lattice Cube".to_string()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: None,
+                uuid: UuidResource::None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -263,13 +263,13 @@ fn main() {
             disp2dgroup: Vec::new(),
         },
         build: Build {
-            uuid: None,
+            uuid: UuidResource::None,
             item: vec![Item {
                 objectid: 1,
                 transform: None,
                 partnumber: None,
                 path: None,
-                uuid: None,
+                uuid: UuidResource::None,
             }],
         },
     };

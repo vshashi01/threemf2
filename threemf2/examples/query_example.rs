@@ -8,7 +8,10 @@
 //! cargo run --example query_example --no-default-features --features io-write
 //! ```
 
-use threemf2::io::{ThreemfPackage, query::*};
+use threemf2::{
+    core::UuidResource,
+    io::{ThreemfPackage, query::*},
+};
 
 use std::{fs::File, path::PathBuf};
 
@@ -260,24 +263,26 @@ fn section_6_production_extension(package: &ThreemfPackage) {
     if let Some(item) = items_with_uuid.first() {
         println!("\nExample item with UUID:");
         println!("  Object ID: {}", item.objectid());
-        println!("  UUID: {}", item.uuid().unwrap());
+        if let Some(item_uuid) = item.uuid() {
+            println!("  UUID: {}", item_uuid);
 
-        // Try finding by UUID
-        if let Some(found) = get_item_by_uuid(package, item.uuid().unwrap()) {
-            println!("  ✓ Successfully found item by UUID lookup");
-            println!("    References object: {}", found.objectid());
+            // Try finding by UUID
+            if let Some(found) = get_item_by_uuid(package, item_uuid.as_str()) {
+                println!("  ✓ Successfully found item by UUID lookup");
+                println!("    References object: {}", found.objectid());
+            }
         }
     }
 
     // Check for UUIDs on objects
     let objects_with_uuid = get_objects(package)
-        .filter(|o| o.object.uuid.is_some())
+        .filter(|o| !o.object.uuid.is_none())
         .count();
 
     println!("\nObjects with UUIDs: {}", objects_with_uuid);
 
     // Check build UUID
-    if let Some(build_uuid) = &package.root.build.uuid {
+    if let UuidResource::NotUuid(build_uuid) = &package.root.build.uuid {
         println!("Root build UUID: {}", build_uuid);
     }
 
