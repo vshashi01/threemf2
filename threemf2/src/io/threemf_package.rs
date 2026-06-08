@@ -644,7 +644,7 @@ mod tests {
                             objecttype: Some(ObjectType::Model),
                             thumbnail: None,
                             partnumber: None,
-                            name: Some("Some object".to_owned()),
+                            name: Some("Some object".into()),
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
                             uuid: Some(UuidResource::from("uuid")),

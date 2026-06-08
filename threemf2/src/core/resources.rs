@@ -13,7 +13,7 @@ use crate::{
         material::{ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup},
         object::Object,
         slice::SliceStack,
-        types::ResourceId,
+        types::{ResourceId, StrResource},
     },
     threemf_namespaces::{CORE_NS, DISPLACEMENT_NS, MATERIAL_NS, SLICE_NS},
 };
@@ -122,13 +122,13 @@ pub struct Base {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub name: String,
+    pub name: StrResource,
 
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub displaycolor: String, //ToDo: Make this a specific color struct for flexibility
+    pub displaycolor: StrResource, //ToDo: Make this a specific color struct for flexibility
 }
 
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -231,8 +231,8 @@ mod write_tests {
             basematerials: vec![BaseMaterials {
                 id: 1,
                 base: vec![Base {
-                    name: "Base".to_owned(),
-                    displaycolor: "#FEFEFE00".to_owned(),
+                    name: "Base".into(),
+                    displaycolor: "#FEFEFE00".into(),
                 }],
             }],
             slicestack: vec![],
@@ -296,8 +296,8 @@ mod write_tests {
             CORE_NS
         );
         let base = Base {
-            name: "Base".to_string(),
-            displaycolor: "#FEF100".to_string(),
+            name: "Base".into(),
+            displaycolor: "#FEF100".into(),
         };
         let base_string = to_string(&base).unwrap();
 
@@ -314,12 +314,12 @@ mod write_tests {
             id: 256,
             base: vec![
                 Base {
-                    name: "Base 1".to_string(),
-                    displaycolor: "#FEF100".to_string(),
+                    name: "Base 1".into(),
+                    displaycolor: "#FEF100".into(),
                 },
                 Base {
-                    name: "Base 2".to_string(),
-                    displaycolor: "#FEF369".to_string(),
+                    name: "Base 2".into(),
+                    displaycolor: "#FEF369".into(),
                 },
             ],
         };
@@ -483,7 +483,7 @@ mod write_tests {
             multiproperties: vec![MultiProperties {
                 id: 1,
                 pids: ResourceIdCollection::from(vec![10, 20, 30]),
-                blendmethods: Some("mix multiply".to_owned()),
+                blendmethods: Some("mix multiply".into()),
                 multi: vec![
                     Multi {
                         pindices: ResourceIndexCollection::from(vec![0, 0, 0]),
@@ -655,8 +655,8 @@ mod memory_optimized_read_tests {
                 basematerials: vec![BaseMaterials {
                     id: 1,
                     base: vec![Base {
-                        name: "Base".to_owned(),
-                        displaycolor: "#FEFEFE00".to_owned(),
+                        name: "Base".into(),
+                        displaycolor: "#FEFEFE00".into(),
                     }],
                 }],
                 slicestack: vec![],
@@ -717,8 +717,8 @@ mod memory_optimized_read_tests {
         assert_eq!(
             base,
             Base {
-                name: "Base".to_string(),
-                displaycolor: "#FEF100".to_string(),
+                name: "Base".into(),
+                displaycolor: "#FEF100".into(),
             }
         );
     }
@@ -737,12 +737,12 @@ mod memory_optimized_read_tests {
                 id: 256,
                 base: vec![
                     Base {
-                        name: "Base 1".to_string(),
-                        displaycolor: "#FEF100".to_string(),
+                        name: "Base 1".into(),
+                        displaycolor: "#FEF100".into(),
                     },
                     Base {
-                        name: "Base 2".to_string(),
-                        displaycolor: "#FEF369".to_string(),
+                        name: "Base 2".into(),
+                        displaycolor: "#FEF369".into(),
                     },
                 ],
             }
@@ -906,7 +906,7 @@ mod memory_optimized_read_tests {
                 multiproperties: vec![MultiProperties {
                     id: 1,
                     pids: ResourceIdCollection::from(vec![10, 20, 30]),
-                    blendmethods: Some("mix multiply".to_owned()),
+                    blendmethods: Some("mix multiply".into()),
                     multi: vec![
                         Multi {
                             pindices: ResourceIndexCollection::from(vec![0, 0, 0])
@@ -1078,8 +1078,8 @@ mod speed_optimized_read_tests {
                 basematerials: vec![BaseMaterials {
                     id: 1,
                     base: vec![Base {
-                        name: "Base".to_owned(),
-                        displaycolor: "#FEFEFE00".to_owned(),
+                        name: "Base".into(),
+                        displaycolor: "#FEFEFE00".into(),
                     }],
                 }],
                 slicestack: vec![],
@@ -1140,8 +1140,8 @@ mod speed_optimized_read_tests {
         assert_eq!(
             base,
             Base {
-                name: "Base".to_string(),
-                displaycolor: "#FEF100".to_string(),
+                name: "Base".into(),
+                displaycolor: "#FEF100".into(),
             }
         );
     }
@@ -1160,12 +1160,12 @@ mod speed_optimized_read_tests {
                 id: 256,
                 base: vec![
                     Base {
-                        name: "Base 1".to_string(),
-                        displaycolor: "#FEF100".to_string(),
+                        name: "Base 1".into(),
+                        displaycolor: "#FEF100".into(),
                     },
                     Base {
-                        name: "Base 2".to_string(),
-                        displaycolor: "#FEF369".to_string(),
+                        name: "Base 2".into(),
+                        displaycolor: "#FEF369".into(),
                     },
                 ],
             }
@@ -1329,7 +1329,7 @@ mod speed_optimized_read_tests {
                 multiproperties: vec![MultiProperties {
                     id: 1,
                     pids: ResourceIdCollection::from(vec![10, 20, 30]),
-                    blendmethods: Some("mix multiply".to_owned()),
+                    blendmethods: Some("mix multiply".into()),
                     multi: vec![
                         Multi {
                             pindices: ResourceIndexCollection::from(vec![0, 0, 0])

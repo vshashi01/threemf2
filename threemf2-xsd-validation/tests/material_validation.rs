@@ -139,7 +139,7 @@ fn validate_simple_colorgroup() {
                     objecttype: Some(ObjectType::Model),
                     thumbnail: None,
                     partnumber: None,
-                    name: Some("Colored Mesh".to_owned()),
+                    name: Some("Colored Mesh".into()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
@@ -311,7 +311,7 @@ fn validate_texture2d_with_uv_mapping() {
                     objecttype: Some(ObjectType::Model),
                     thumbnail: None,
                     partnumber: None,
-                    name: Some("Textured Mesh".to_owned()),
+                    name: Some("Textured Mesh".into()),
                     pid: OptionalResourceId::new(2), // Reference texture group
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
@@ -434,7 +434,7 @@ fn validate_multi_properties() {
     let multiproperties = MultiProperties {
         id: 4,
         pids: ResourceIdCollection::from(vec![1, 3]), // Layer color group and texture group
-        blendmethods: Some("mix multiply".to_owned()),
+        blendmethods: Some("mix multiply".into()),
         multi: vec![
             Multi {
                 pindices: ResourceIndexCollection::from(vec![0, 0]), // Color 0, Texture coord 0
@@ -516,7 +516,7 @@ fn validate_multi_properties() {
                     objecttype: Some(ObjectType::Model),
                     thumbnail: None,
                     partnumber: None,
-                    name: Some("Multi Property Mesh".to_owned()),
+                    name: Some("Multi Property Mesh".into()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
@@ -686,7 +686,7 @@ fn validate_vertex_color_application() {
                     objecttype: Some(ObjectType::Model),
                     thumbnail: None,
                     partnumber: None,
-                    name: Some("Vertex Colored Quad".to_owned()),
+                    name: Some("Vertex Colored Quad".into()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,

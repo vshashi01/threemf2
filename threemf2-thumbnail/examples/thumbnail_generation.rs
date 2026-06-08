@@ -190,7 +190,7 @@ fn create_cube_model() -> Model {
     let object = Object {
         id: 1,
         kind: Some(ObjectKind::Mesh(mesh)),
-        name: Some("Cube".to_string()),
+        name: Some("Cube".into()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
         thumbnail: None,

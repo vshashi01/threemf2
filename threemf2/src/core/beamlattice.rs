@@ -1,5 +1,5 @@
 use crate::{
-    core::{OptionalResourceId, OptionalResourceIndex, ResourceIndex},
+    core::{OptionalResourceId, OptionalResourceIndex, ResourceIndex, StrResource},
     threemf_namespaces::{BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_NS},
 };
 
@@ -454,7 +454,7 @@ pub struct BeamSet {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub name: Option<String>,
+    pub name: Option<StrResource>,
 
     /// Might be used for external identification of the beam collection data.
     /// The identifier attribute MUST be unique within the beam lattice.
@@ -462,7 +462,7 @@ pub struct BeamSet {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub identifier: Option<String>,
+    pub identifier: Option<StrResource>,
 
     /// References to beams in this set
     #[cfg_attr(feature = "speed-optimized-read", serde(default, rename = "ref"))]

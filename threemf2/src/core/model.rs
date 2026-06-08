@@ -490,7 +490,7 @@ mod write_tests {
             requiredextensions: ThreemfExtensions::default(),
             recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![Metadata {
-                name: "Trial Metadata".to_owned(),
+                name: "Trial Metadata".into(),
                 preserve: None,
                 value: None,
             }],
@@ -502,7 +502,7 @@ mod write_tests {
                     objecttype: Some(ObjectType::Model),
                     thumbnail: None,
                     partnumber: None,
-                    name: Some("test part".to_owned()),
+                    name: Some("test part".into()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
@@ -1130,7 +1130,7 @@ mod write_tests {
                 multiproperties: vec![MultiProperties {
                     id: 4,
                     pids: ResourceIdCollection::from(vec![10, 20]),
-                    blendmethods: Some("mix".to_owned()),
+                    blendmethods: Some("mix".into()),
                     multi: vec![Multi {
                         pindices: ResourceIndexCollection::from(vec![0, 0]),
                     }],
@@ -1310,7 +1310,7 @@ mod memory_optimized_read_tests {
                 requiredextensions: ThreemfExtensions::default(),
                 recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
-                    name: "Trial Metadata".to_owned(),
+                    name: "Trial Metadata".into(),
                     preserve: None,
                     value: None,
                 }],
@@ -1322,7 +1322,7 @@ mod memory_optimized_read_tests {
                         objecttype: Some(ObjectType::Model),
                         thumbnail: None,
                         partnumber: None,
-                        name: Some("test part".to_owned()),
+                        name: Some("test part".into()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
@@ -1378,7 +1378,7 @@ mod memory_optimized_read_tests {
                 requiredextensions: ThreemfExtensions::default(),
                 recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
-                    name: "Trial Metadata".to_owned(),
+                    name: "Trial Metadata".into(),
                     preserve: None,
                     value: None,
                 }],
@@ -1390,7 +1390,7 @@ mod memory_optimized_read_tests {
                         objecttype: Some(ObjectType::Model),
                         thumbnail: None,
                         partnumber: None,
-                        name: Some("test part".to_owned()),
+                        name: Some("test part".into()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: Some(UuidResource::from("someObjectUUID")),
@@ -1554,9 +1554,9 @@ mod speed_optimized_read_tests {
                 requiredextensions: ThreemfExtensions::default(),
                 recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
-                    name: "Trial Metadata".to_owned(),
+                    name: "Trial Metadata".into(),
                     preserve: None,
-                    value: Some("".to_string()), //ToDo: Import output for empty value
+                    value: Some("".into()), //ToDo: Import output for empty value
                 }],
                 resources: Resources {
                     basematerials: vec![],
@@ -1566,7 +1566,7 @@ mod speed_optimized_read_tests {
                         objecttype: Some(ObjectType::Model),
                         thumbnail: None,
                         partnumber: None,
-                        name: Some("test part".to_owned()),
+                        name: Some("test part".into()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
@@ -1622,9 +1622,9 @@ mod speed_optimized_read_tests {
                 requiredextensions: ThreemfExtensions::default(),
                 recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
-                    name: "Trial Metadata".to_owned(),
+                    name: "Trial Metadata".into(),
                     preserve: None,
-                    value: Some("".to_string()), //ToDo: Improve output for empty value
+                    value: Some("".into()), //ToDo: Improve output for empty value
                 }],
                 resources: Resources {
                     basematerials: vec![],
@@ -1634,7 +1634,7 @@ mod speed_optimized_read_tests {
                         objecttype: Some(ObjectType::Model),
                         thumbnail: None,
                         partnumber: None,
-                        name: Some("test part".to_owned()),
+                        name: Some("test part".into()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: Some(UuidResource::from("someObjectUUID")),

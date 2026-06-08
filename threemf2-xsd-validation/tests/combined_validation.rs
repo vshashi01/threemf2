@@ -149,14 +149,14 @@ fn validate_beamlattice_with_trianglesets() {
     let triangle_sets = TriangleSets {
         trianglesets: vec![
             TriangleSet {
-                name: "Beam Lattice Surface".to_owned(),
-                identifier: "urn:3mf:example:beams".to_owned(),
+                name: "Beam Lattice Surface".into(),
+                identifier: "urn:3mf:example:beams".into(),
                 triangle_ref: vec![TriangleRef { index: 0 }],
                 triangle_refrange: vec![],
             },
             TriangleSet {
-                name: "Mesh Surface".to_owned(),
-                identifier: "urn:3mf:example:mesh".to_owned(),
+                name: "Mesh Surface".into(),
+                identifier: "urn:3mf:example:mesh".into(),
                 triangle_ref: vec![TriangleRef { index: 1 }],
                 triangle_refrange: vec![],
             },
@@ -185,7 +185,7 @@ fn validate_beamlattice_with_trianglesets() {
                     objecttype: Some(ObjectType::Model),
                     thumbnail: None,
                     partnumber: None,
-                    name: Some("Beam Lattice with Triangle Sets".to_owned()),
+                    name: Some("Beam Lattice with Triangle Sets".into()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,

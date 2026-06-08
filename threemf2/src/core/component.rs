@@ -10,7 +10,9 @@ use serde::Deserialize;
 use crate::{
     core::{
         transform::Transform,
-        types::{PathResource, ResourceId, UuidResource},
+        types::{
+            PathResource, {ResourceId, UuidResource},
+        },
     },
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
