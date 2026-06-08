@@ -1,18 +1,20 @@
 use zip::ZipArchive;
 
-use crate::io::{
-    XmlNamespace,
-    content_types::{ContentTypes, DefaultContentTypeEnum},
-    error::Error,
-    parse_xmlns_attributes,
-    relationship::Relationships,
+use crate::{
+    core::model::ThreemfExtensions,
+    io::{
+        content_types::{ContentTypes, DefaultContentTypeEnum},
+        error::Error,
+        relationship::Relationships,
+    },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 use crate::core::model::Model;
 
-use std::ffi::OsStr;
 use std::io::{Read, Seek};
 use std::path::Path;
+use std::{collections::HashSet, ffi::OsStr};
 
 /// Enum for different XML deserialization strategies
 #[cfg(any(
@@ -28,64 +30,125 @@ pub(crate) enum XmlDeserializer {
 }
 
 impl XmlDeserializer {
-    pub(crate) fn deserialize_content_types<R: Read>(
+    pub(crate) fn deserialize_content_types(
         &self,
-        mut reader: R,
+        xml_string: &str,
     ) -> Result<ContentTypes, Error> {
         match self {
             #[cfg(feature = "io-memory-optimized-read")]
             XmlDeserializer::MemoryOptimized => {
-                let mut xml_string = String::new();
-                reader.read_to_string(&mut xml_string)?;
-                instant_xml::from_str::<ContentTypes>(&xml_string).map_err(Error::from)
+                instant_xml::from_str::<ContentTypes>(xml_string).map_err(Error::from)
             }
             #[cfg(feature = "io-speed-optimized-read")]
             XmlDeserializer::SpeedOptimized => {
-                let mut xml_string = String::new();
-                reader.read_to_string(&mut xml_string)?;
-                serde_roxmltree::from_str::<ContentTypes>(&xml_string).map_err(Error::from)
+                serde_roxmltree::from_str::<ContentTypes>(xml_string).map_err(Error::from)
             }
         }
     }
 
-    pub(crate) fn deserialize_relationships<R: Read>(
+    pub(crate) fn deserialize_relationships(
         &self,
-        mut reader: R,
+        xml_string: &str,
     ) -> Result<Relationships, Error> {
         match self {
             #[cfg(feature = "io-memory-optimized-read")]
             XmlDeserializer::MemoryOptimized => {
-                let mut xml_string = String::new();
-                reader.read_to_string(&mut xml_string)?;
-                instant_xml::from_str::<Relationships>(&xml_string).map_err(Error::from)
+                instant_xml::from_str::<Relationships>(xml_string).map_err(Error::from)
             }
             #[cfg(feature = "io-speed-optimized-read")]
             XmlDeserializer::SpeedOptimized => {
-                let mut xml_string = String::new();
-                reader.read_to_string(&mut xml_string)?;
-                serde_roxmltree::from_str::<Relationships>(&xml_string).map_err(Error::from)
+                serde_roxmltree::from_str::<Relationships>(xml_string).map_err(Error::from)
             }
         }
     }
 
-    pub(crate) fn deserialize_model<R: Read>(
-        &self,
-        reader: &mut R,
-    ) -> Result<(Model, Vec<XmlNamespace>), Error> {
-        let mut xml_string = String::new();
-        reader.read_to_string(&mut xml_string)?;
-
-        let namespaces = parse_xmlns_attributes(&xml_string);
-
+    pub(crate) fn deserialize_model(&self, xml_string: &str) -> Result<Model, Error> {
         let model = match self {
             #[cfg(feature = "io-memory-optimized-read")]
-            XmlDeserializer::MemoryOptimized => instant_xml::from_str::<Model>(&xml_string)?,
+            XmlDeserializer::MemoryOptimized => instant_xml::from_str::<Model>(xml_string)?,
             #[cfg(feature = "io-speed-optimized-read")]
-            XmlDeserializer::SpeedOptimized => serde_roxmltree::from_str::<Model>(&xml_string)?,
+            XmlDeserializer::SpeedOptimized => speed_optimized_read(xml_string),
         };
 
-        Ok((model, namespaces))
+        Ok(model)
     }
+}
+
+fn speed_optimized_read(xml_string: &str) -> Model {
+    use serde_roxmltree::roxmltree::Document;
+
+    let doc = Document::parse(xml_string).unwrap();
+    let mut model = serde_roxmltree::from_doc::<Model>(&doc).unwrap();
+
+    let mut threemf_namespaces = vec![];
+    let namespaces = doc.root().first_child().unwrap().namespaces();
+    for ns in namespaces.clone() {
+        let threemf_ns = ThreemfNamespace::try_from_uri(ns.uri(), ns.name()).unwrap();
+        threemf_namespaces.push(threemf_ns);
+    }
+
+    let mut new_recommended_extensions = HashSet::new();
+    for ns in model.recommendedextensions.get() {
+        match ns {
+            ThreemfNamespace::Unknown { prefix, uri } => {
+                if let Some(ns) = namespaces
+                    .clone()
+                    .find(|ns| ns.name() == Some(prefix.as_str()))
+                {
+                    let threemf_ns = ThreemfNamespace::try_from_uri(ns.uri(), ns.name()).unwrap();
+                    new_recommended_extensions.insert(threemf_ns);
+                } else {
+                    new_recommended_extensions.insert(ThreemfNamespace::Unknown {
+                        prefix: prefix.to_owned(),
+                        uri: uri.to_owned(),
+                    });
+                }
+            }
+            _ => {
+                new_recommended_extensions.insert(ns.clone());
+            }
+        }
+    }
+
+    let mut new_required_extensions = HashSet::new();
+    for ns in model.requiredextensions.get() {
+        match ns {
+            ThreemfNamespace::Unknown { prefix, uri } => {
+                if let Some(ns) = namespaces
+                    .clone()
+                    .find(|ns| ns.name() == Some(prefix.as_str()))
+                {
+                    let threemf_ns = ThreemfNamespace::try_from_uri(ns.uri(), ns.name()).unwrap();
+                    new_required_extensions.insert(threemf_ns);
+                } else {
+                    new_required_extensions.insert(ThreemfNamespace::Unknown {
+                        prefix: prefix.to_owned(),
+                        uri: uri.to_owned(),
+                    });
+                }
+            }
+            _ => {
+                new_required_extensions.insert(ns.clone());
+            }
+        }
+    }
+
+    let recommended_extensions =
+        ThreemfExtensions::new_from_iter(new_recommended_extensions.iter());
+    let required_extensions = ThreemfExtensions::new_from_iter(new_required_extensions.iter());
+
+    model.recommendedextensions = recommended_extensions;
+    model.requiredextensions = required_extensions;
+    model
+}
+
+pub(crate) fn read_zipfile_to_string<R: Read>(
+    file: &mut zip::read::ZipFile<'_, R>,
+) -> Result<String, Error> {
+    let size_hint = file.size() as usize;
+    let mut xml_string = String::with_capacity(size_hint);
+    file.read_to_string(&mut xml_string)?;
+    Ok(xml_string)
 }
 
 pub(crate) fn setup_archive_and_content_types<R: Read + Seek>(
@@ -109,9 +172,8 @@ fn parse_content_types<R: Read + Seek>(
     let content_types_file = zip.by_name("[Content_Types].xml");
     match content_types_file {
         Ok(mut file) => {
-            let mut xml_string = String::new();
-            file.read_to_string(&mut xml_string)?;
-            let content_types = deserializer.deserialize_content_types(xml_string.as_bytes())?;
+            let xml_string = read_zipfile_to_string(&mut file)?;
+            let content_types = deserializer.deserialize_content_types(&xml_string)?;
             Ok((content_types, xml_string))
         }
         Err(err) => Err(Error::Zip(err)),
@@ -158,10 +220,11 @@ pub(crate) fn discover_relationship_files<R: Read + Seek>(
 }
 
 pub(crate) fn relationships_from_zipfile<R: Read>(
-    file: zip::read::ZipFile<'_, R>,
+    mut file: zip::read::ZipFile<'_, R>,
     deserializer: &XmlDeserializer,
 ) -> Result<Relationships, Error> {
-    deserializer.deserialize_relationships(file)
+    let xml_string = read_zipfile_to_string(&mut file)?;
+    deserializer.deserialize_relationships(&xml_string)
 }
 
 pub(crate) fn relationships_from_zip_by_name<R: Read + Seek>(

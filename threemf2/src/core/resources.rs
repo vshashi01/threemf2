@@ -253,12 +253,13 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_slicestack_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:slicestack id="236" zbottom="0.5"><sliceref slicestackid="154" slicepath="/2D/model.model" /></{}:slicestack></resources>"##,
+            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:slicestack id="236" zbottom="0.5"><{}:sliceref slicestackid="154" slicepath="/2D/model.model" /></{}:slicestack></resources>"##,
             CORE_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             SLICE_PREFIX,
             SLICE_NS,
+            SLICE_PREFIX,
             SLICE_PREFIX,
             SLICE_PREFIX,
         );
@@ -330,12 +331,14 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_colorgroup_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:colorgroup id="1"><color color="#FF0000FF" /><color color="#00FF00FF" /></{}:colorgroup></resources>"##,
+            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:colorgroup id="1"><{}:color color="#FF0000FF" /><{}:color color="#00FF00FF" /></{}:colorgroup></resources>"##,
             CORE_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             SLICE_PREFIX,
             SLICE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX
         );
@@ -370,12 +373,14 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_texture2dgroup_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:texture2dgroup id="2" texid="1"><tex2coord u="0" v="0" /><tex2coord u="1" v="1" /></{}:texture2dgroup></resources>"##,
+            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:texture2dgroup id="2" texid="1"><{}:tex2coord u="0" v="0" /><{}:tex2coord u="1" v="1" /></{}:texture2dgroup></resources>"##,
             CORE_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             SLICE_PREFIX,
             SLICE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX
         );
@@ -413,12 +418,14 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_compositematerials_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:compositematerials id="1" matid="10" matindices="0 1"><composite values="1 0" /><composite values="0.5 0.5" /></{}:compositematerials></resources>"##,
+            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:compositematerials id="1" matid="10" matindices="0 1"><{}:composite values="1 0" /><{}:composite values="0.5 0.5" /></{}:compositematerials></resources>"##,
             CORE_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             SLICE_PREFIX,
             SLICE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX
         );
@@ -455,12 +462,14 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_multiproperties_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:multiproperties id="1" pids="10 20 30" blendmethods="mix multiply"><multi pindices="0 0 0" /><multi pindices="1 2 3" /></{}:multiproperties></resources>"##,
+            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:multiproperties id="1" pids="10 20 30" blendmethods="mix multiply"><{}:multi pindices="0 0 0" /><{}:multi pindices="1 2 3" /></{}:multiproperties></resources>"##,
             CORE_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             SLICE_PREFIX,
             SLICE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX
         );
@@ -528,12 +537,13 @@ mod write_tests {
     #[test]
     pub fn toxml_resources_with_multiple_material_types_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:colorgroup id="1"><color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources>"##,
+            r##"<resources xmlns="{}" xmlns:{}="{}" xmlns:{}="{}"><{}:colorgroup id="1"><{}:color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources>"##,
             CORE_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
             SLICE_PREFIX,
             SLICE_NS,
+            MATERIAL_PREFIX,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX

@@ -11,7 +11,7 @@ use threemf2::{
             Disp2DCoord, Disp2DGroup, Displacement2D, DisplacementMesh, NormVector,
             NormVectorGroup, Triangle, Triangles, Vertex, Vertices,
         },
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
     },
@@ -20,6 +20,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 mod validation_utils;
@@ -32,8 +33,8 @@ const DISPLACEMENT_XSD: &str = include_str!("data/xsd/3mf-displacement-1.0.0.xsd
 fn validate_displacement_model_schema() {
     let model = Model {
         unit: Some(Unit::Millimeter),
-        requiredextensions: Some("d ".to_owned()),
-        recommendedextensions: None,
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Displacement]),
+        recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![],
         resources: Resources {
             object: vec![Object {

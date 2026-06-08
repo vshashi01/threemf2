@@ -31,7 +31,7 @@ use crate::{
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Debug, Clone)]
-#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS, bo=BOOLEAN_NS, s=SLICE_NS), rename="object"))]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS, bo=BOOLEAN_NS, s=SLICE_NS), rename="object", force_prefix))]
 pub struct Object {
     /// A unique identifier for this object
     #[cfg_attr(

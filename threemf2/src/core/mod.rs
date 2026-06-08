@@ -48,4 +48,6 @@ pub use types::{
     ResourceIndex, ResourceIndexCollection,
 };
 
+pub mod builder;
+
 mod constants;

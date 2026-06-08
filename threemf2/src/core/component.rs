@@ -22,7 +22,7 @@ use crate::{
 #[derive(PartialEq, Debug, Clone)]
 #[cfg_attr(
     any(feature = "write", feature = "memory-optimized-read"),
-    xml(ns(CORE_NS), rename = "components")
+    xml(ns(CORE_NS, p=PROD_NS), rename = "components")
 )]
 pub struct Components {
     pub component: Vec<Component>,
@@ -118,8 +118,8 @@ mod write_tests {
     #[test]
     pub fn toxml_components_test() {
         let xml_string = format!(
-            r#"<components xmlns="{}"><component xmlns:{}="{}" objectid="4" transform="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000 35.000000 35.000000 5.100000" /><component xmlns:{}="{}" objectid="5" /></components>"#,
-            CORE_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX, PROD_NS
+            r#"<components xmlns="{}" xmlns:{}="{}"><component objectid="4" transform="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000 35.000000 35.000000 5.100000" /><component objectid="5" /></components>"#,
+            CORE_NS, PROD_PREFIX, PROD_NS,
         );
         let components = Components {
             component: vec![

@@ -11,7 +11,7 @@ use threemf2::{
         build::{Build, Item},
         component::Component,
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         types::OptionalResourceIndex,
@@ -21,6 +21,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 mod validation_utils;
@@ -107,8 +108,8 @@ fn validate_simple_production_model_with_uuids() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("p".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Prod]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -260,8 +261,8 @@ fn validate_production_model_with_components() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("p".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Prod]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![

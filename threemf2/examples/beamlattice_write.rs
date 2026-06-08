@@ -5,11 +5,12 @@ use threemf2::{
         build::{Build, Item},
         mesh::{Mesh, Triangles, Vertex, Vertices},
         metadata::Metadata,
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
     },
     io::ThreemfPackage,
+    threemf_namespaces::ThreemfNamespace,
 };
 
 use std::{io::Cursor, vec};
@@ -225,8 +226,11 @@ fn main() {
     // Create the complete 3MF model
     let model = Model {
         unit: Some(Unit::Millimeter),
-        requiredextensions: Some("b b2".to_string()), // Mark beam lattice extensions as required
-        recommendedextensions: None,
+        requiredextensions: ThreemfExtensions::new(&[
+            ThreemfNamespace::BeamLattice,
+            ThreemfNamespace::BeamLatticeBalls,
+        ]), // Mark beam lattice extensions as required
+        recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![Metadata {
             name: "Beam Lattice Example".to_string(),
             preserve: None,

@@ -2897,7 +2897,7 @@ pub fn get_texture_for_group<'a>(
 #[cfg(feature = "io-memory-optimized-read")]
 #[cfg(test)]
 mod tests {
-    use crate::core::material::TextureContentType;
+    use crate::core::{material::TextureContentType, model::ThreemfExtensions};
 
     use super::*;
 
@@ -3434,8 +3434,8 @@ mod tests {
         // Create an empty model
         let model = crate::core::model::Model {
             unit: None,
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: crate::core::resources::Resources {
                 object: vec![],
@@ -3510,8 +3510,8 @@ mod tests {
         // Create a model with no material resources
         let model = crate::core::model::Model {
             unit: None,
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: crate::core::resources::Resources {
                 object: vec![],

@@ -10,7 +10,7 @@ use threemf2::{
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         metadata::Preserve,
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         types::OptionalResourceIndex,
@@ -90,8 +90,8 @@ fn validate_simple_mesh_against_core_xsd() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -236,8 +236,8 @@ fn validate_model_with_metadata_against_core_xsd() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![
                 Metadata {
                     name: "Title".to_owned(),
@@ -399,8 +399,8 @@ fn validate_model_with_different_units() {
         let write_package = ThreemfPackage::new(
             Model {
                 unit: Some(unit.clone()),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     object: vec![Object {

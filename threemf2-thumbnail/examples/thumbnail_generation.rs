@@ -5,7 +5,10 @@
 //!
 //! Run with: cargo run --example thumbnail_generation --features thumbnail-generation
 
-use threemf2::core::{model::Model, object::ObjectKind};
+use threemf2::core::{
+    model::{Model, ThreemfExtensions},
+    object::ObjectKind,
+};
 use threemf2_thumbnail::{ThumbnailConfig, ThumbnailGenerator};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -229,7 +232,7 @@ fn create_cube_model() -> Model {
         metadata: vec![],
         resources,
         build,
-        recommendedextensions: None,
-        requiredextensions: None,
+        recommendedextensions: ThreemfExtensions::default(),
+        requiredextensions: ThreemfExtensions::default(),
     }
 }

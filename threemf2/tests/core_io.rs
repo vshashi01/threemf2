@@ -158,7 +158,7 @@ mod tests {
                 for model_path in package.model_paths() {
                     total_model_paths += 1;
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             //check if some part with some specific id exists
                             if model.resources.object.iter().any(|o| o.id == 1) {
                                 found_object_by_id = true;
@@ -173,7 +173,7 @@ mod tests {
                                 }
                             }
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }
@@ -225,7 +225,7 @@ mod tests {
                 for model_path in package.model_paths() {
                     total_model_paths += 1;
                     package
-                        .with_model(model_path, |(model, ns)| {
+                        .with_model(model_path, |model| {
                             //check if some part with some specific id exists
                             if model.resources.object.iter().any(|o| o.id == 1) {
                                 found_object_by_id = true;
@@ -240,7 +240,7 @@ mod tests {
                                 }
                             }
 
-                            namespaces.extend_from_slice(ns);
+                            namespaces.extend_from_slice(&model.used_namespaces());
                         })
                         .unwrap();
                 }

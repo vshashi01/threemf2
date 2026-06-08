@@ -14,7 +14,7 @@ use threemf2::{
             Texture2DGroup, TextureContentType, TileStyle,
         },
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         types::{Double, ResourceIdCollection, ResourceIndexCollection},
@@ -24,6 +24,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 mod validation_utils;
@@ -129,8 +130,8 @@ fn validate_simple_colorgroup() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("m".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -301,8 +302,8 @@ fn validate_texture2d_with_uv_mapping() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("m".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -506,8 +507,8 @@ fn validate_multi_properties() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("m".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -676,8 +677,8 @@ fn validate_vertex_color_application() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: Some("m".to_owned()),
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {

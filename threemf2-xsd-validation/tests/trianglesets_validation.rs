@@ -10,7 +10,7 @@ use threemf2::{
         OptionalResourceId,
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, Unit},
+        model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
         triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
@@ -21,6 +21,7 @@ use threemf2::{
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
     },
+    threemf_namespaces::ThreemfNamespace,
 };
 
 mod validation_utils;
@@ -122,8 +123,8 @@ fn validate_simple_trianglesets() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: Some("t".to_owned()),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::new(&[ThreemfNamespace::CoreTriangleSet]),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -267,8 +268,8 @@ fn validate_trianglesets_with_ref_ranges() {
     let write_package = ThreemfPackage::new(
         Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: Some("t".to_owned()),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::new(&[ThreemfNamespace::CoreTriangleSet]),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {

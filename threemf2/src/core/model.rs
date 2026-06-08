@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 #[cfg(feature = "write")]
 use instant_xml::ToXml;
 
@@ -38,13 +40,15 @@ pub struct Model {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub requiredextensions: Option<String>,
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub requiredextensions: ThreemfExtensions,
 
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub recommendedextensions: Option<String>,
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub recommendedextensions: ThreemfExtensions,
 
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub metadata: Vec<Metadata>,
@@ -88,7 +92,146 @@ impl From<String> for Unit {
     }
 }
 
+/// A collection of [`ThreemfNamespace`] specified in the 3mf model file
+/// Only Extension namespaces are allowed.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
+#[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
+pub struct ThreemfExtensions(Vec<ThreemfNamespace>);
+
+impl ThreemfExtensions {
+    /// Creates a new [ThreemfExtensions] collection without duplicate
+    /// extensions and without [`ThreemfNamespace::Core`] included
+    pub fn new(extensions: &[ThreemfNamespace]) -> Self {
+        let mut ordered = extensions
+            .iter()
+            .filter(|ext| **ext != ThreemfNamespace::Core)
+            .cloned()
+            .collect::<Vec<_>>();
+        ordered.sort();
+        ordered.dedup();
+        Self(ordered)
+    }
+
+    /// Creates a new [ThreemfExtensions] collection without duplicate
+    /// extensions and without [`ThreemfNamespace::Core`] included
+    pub fn new_from_iter<'a>(extensions: impl IntoIterator<Item = &'a ThreemfNamespace>) -> Self {
+        let mut ordered = extensions
+            .into_iter()
+            .filter(|ext| **ext != ThreemfNamespace::Core)
+            .cloned()
+            .collect::<Vec<_>>();
+        ordered.sort();
+        ordered.dedup();
+        Self(ordered)
+    }
+
+    /// Returns a slice of the collection
+    pub fn get(&self) -> &[ThreemfNamespace] {
+        &self.0
+    }
+}
+
 #[cfg(feature = "write")]
+impl ToXml for ThreemfExtensions {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let prefix = match field {
+            Some(id) => {
+                let prefix =
+                    serializer.write_start(id.name, id.ns, None::<instant_xml::ser::Context<0>>)?;
+                serializer.end_start()?;
+                Some((prefix, id.name))
+            }
+            None => None,
+        };
+
+        let mut iter = self
+            .0
+            .iter()
+            .map(|ns| {
+                ns.prefix()
+                    .expect("3mf Extensions collection should be specified with valid prefix")
+            })
+            .peekable();
+        while let Some(prefix) = iter.next() {
+            serializer.write_str(prefix)?;
+            if iter.peek().is_some() {
+                serializer.write_str(" ")?;
+            }
+        }
+
+        if let Some((prefix, _)) = prefix {
+            serializer.write_close(prefix)?;
+        }
+
+        Ok(())
+    }
+
+    fn present(&self) -> bool {
+        !self.0.is_empty()
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for ThreemfExtensions {
+    fn matches(id: instant_xml::Id<'_>, field: Option<instant_xml::Id<'_>>) -> bool {
+        match field {
+            Some(field) => id == field,
+            None => false,
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if let Some(value) = deserializer.take_str()? {
+            let mut ns_collection = vec![];
+            for prefix in value.split_whitespace() {
+                if let Some(uri) = deserializer.namespace(prefix)
+                    && let Some(ns) = ThreemfNamespace::try_from_uri(uri, Some(prefix))
+                {
+                    ns_collection.push(ns);
+                }
+            }
+            *into = Self(ns_collection);
+        } else {
+            *into = Self(vec![]);
+        }
+
+        Ok(())
+    }
+
+    type Accumulator = Self;
+
+    const KIND: instant_xml::Kind = instant_xml::Kind::Scalar;
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl instant_xml::Accumulate<ThreemfExtensions> for ThreemfExtensions {
+    fn try_done(self, _: &'static str) -> Result<ThreemfExtensions, instant_xml::Error> {
+        Ok(self)
+    }
+}
+
+impl From<String> for ThreemfExtensions {
+    fn from(value: String) -> Self {
+        let mut ns_collection = vec![];
+        for prefix in value.split_whitespace() {
+            if let Some(ns) = ThreemfNamespace::try_from_prefix(prefix, None) {
+                ns_collection.push(ns);
+            }
+        }
+
+        Self(ns_collection)
+    }
+}
+
 impl Model {
     pub fn used_namespaces(&self) -> Vec<ThreemfNamespace> {
         let mut used = vec![ThreemfNamespace::Core];
@@ -126,6 +269,10 @@ impl Model {
             used.push(ThreemfNamespace::Displacement);
         }
 
+        for ns in self.used_unknown_namespaces() {
+            used.push(ns);
+        }
+
         used
     }
 
@@ -161,11 +308,16 @@ impl Model {
 
     fn uses_beamlattice_ns(&self) -> bool {
         for obj in &self.resources.object {
-            if let Some(kind) = &obj.kind
-                && let ObjectKind::Mesh(mesh) = kind
-                && mesh.beamlattice.is_some()
-            {
-                return true;
+            if let Some(kind) = &obj.kind {
+                if let ObjectKind::Mesh(mesh) = kind
+                    && mesh.beamlattice.is_some()
+                {
+                    return true;
+                } else if let ObjectKind::DisplacementMesh(mesh) = kind
+                    && mesh.beamlattice.is_some()
+                {
+                    return true;
+                }
             }
         }
 
@@ -174,14 +326,22 @@ impl Model {
 
     fn uses_beamlattice_balls_ns(&self) -> bool {
         for obj in &self.resources.object {
-            if let Some(kind) = &obj.kind
-                && let ObjectKind::Mesh(mesh) = kind
-                && let Some(beam_lattice) = &mesh.beamlattice
-                && (beam_lattice.balls.is_some()
-                    || beam_lattice.ballmode.is_some()
-                    || beam_lattice.ballradius.is_some())
-            {
-                return true;
+            if let Some(kind) = &obj.kind {
+                if let ObjectKind::Mesh(mesh) = kind
+                    && let Some(beam_lattice) = &mesh.beamlattice
+                    && (beam_lattice.balls.is_some()
+                        || beam_lattice.ballmode.is_some()
+                        || beam_lattice.ballradius.is_some())
+                {
+                    return true;
+                } else if let ObjectKind::DisplacementMesh(mesh) = kind
+                    && let Some(beam_lattice) = &mesh.beamlattice
+                    && (beam_lattice.balls.is_some()
+                        || beam_lattice.ballmode.is_some()
+                        || beam_lattice.ballradius.is_some())
+                {
+                    return true;
+                }
             }
         }
 
@@ -190,11 +350,16 @@ impl Model {
 
     fn uses_triangleset_ns(&self) -> bool {
         for obj in &self.resources.object {
-            if let Some(kind) = &obj.kind
-                && let ObjectKind::Mesh(mesh) = kind
-                && mesh.trianglesets.is_some()
-            {
-                return true;
+            if let Some(kind) = &obj.kind {
+                if let ObjectKind::Mesh(mesh) = kind
+                    && mesh.trianglesets.is_some()
+                {
+                    return true;
+                } else if let ObjectKind::DisplacementMesh(mesh) = kind
+                    && mesh.trianglesets.is_some()
+                {
+                    return true;
+                }
             }
         }
 
@@ -242,6 +407,28 @@ impl Model {
                 }
             })
     }
+
+    fn used_unknown_namespaces(&self) -> HashSet<ThreemfNamespace> {
+        let mut unknown_set = HashSet::new();
+
+        self.requiredextensions
+            .0
+            .iter()
+            .filter(|ns| matches!(ns, ThreemfNamespace::Unknown { prefix: _, uri: _ }))
+            .for_each(|ns| {
+                unknown_set.insert(ns.clone());
+            });
+
+        self.recommendedextensions
+            .0
+            .iter()
+            .filter(|ns| matches!(ns, ThreemfNamespace::Unknown { prefix: _, uri: _ }))
+            .for_each(|ns| {
+                unknown_set.insert(ns.clone());
+            });
+
+        unknown_set
+    }
 }
 
 #[cfg(feature = "write")]
@@ -263,6 +450,7 @@ mod write_tests {
             },
             mesh::{Mesh, Triangles, Vertices},
             metadata::Metadata,
+            model::ThreemfExtensions,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
             slice::{self},
@@ -299,8 +487,8 @@ mod write_tests {
         );
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![Metadata {
                 name: "Trial Metadata".to_owned(),
                 preserve: None,
@@ -375,8 +563,8 @@ mod write_tests {
     fn test_used_namespaces_simple_model() {
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -429,8 +617,8 @@ mod write_tests {
     fn test_used_namespaces_with_prod() {
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -488,8 +676,8 @@ mod write_tests {
 
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -561,8 +749,8 @@ mod write_tests {
 
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -638,8 +826,8 @@ mod write_tests {
 
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -697,8 +885,8 @@ mod write_tests {
     fn test_used_namespaces_with_boolean_object() {
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![Object {
@@ -755,8 +943,8 @@ mod write_tests {
     fn test_used_namespaces_with_slices() {
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 object: vec![],
@@ -807,8 +995,8 @@ mod write_tests {
 
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -910,8 +1098,8 @@ mod write_tests {
     fn test_used_namespaces_with_material() {
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -976,8 +1164,8 @@ mod write_tests {
     fn test_used_namespaces_with_displacement() {
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -1017,7 +1205,7 @@ mod write_tests {
         // Note: The serializer always includes all namespace declarations
         // The actual order is: core, b, bo, d, m, p, s, t (alphabetical by prefix)
         let xml_string = format!(
-            r##"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            r##"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
             CORE_NS,
             BEAM_LATTICE_PREFIX,
             BEAM_LATTICE_NS,
@@ -1035,12 +1223,13 @@ mod write_tests {
             CORE_TRIANGLESET_NS,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX,
-            MATERIAL_PREFIX
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
         );
         let model = Model {
             unit: Some(Unit::Millimeter),
-            requiredextensions: None,
-            recommendedextensions: None,
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
             metadata: vec![],
             resources: Resources {
                 basematerials: vec![],
@@ -1088,6 +1277,7 @@ mod memory_optimized_read_tests {
     use crate::core::OptionalResourceId;
     use crate::core::OptionalResourceIndex;
     use crate::core::material::TextureContentType;
+    use crate::core::model::ThreemfExtensions;
     use crate::{
         core::{
             Color,
@@ -1116,8 +1306,8 @@ mod memory_optimized_read_tests {
             model,
             Model {
                 unit: None, //ToDo: Set the default value when unit is not supplied.
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
                     name: "Trial Metadata".to_owned(),
                     preserve: None,
@@ -1184,8 +1374,8 @@ mod memory_optimized_read_tests {
             Model {
                 // xmlns: None,
                 unit: Some(Unit::Millimeter),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
                     name: "Trial Metadata".to_owned(),
                     preserve: None,
@@ -1284,8 +1474,8 @@ mod memory_optimized_read_tests {
             model,
             Model {
                 unit: Some(Unit::Millimeter),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     basematerials: vec![],
@@ -1335,6 +1525,7 @@ mod speed_optimized_read_tests {
             component::{Component, Components},
             material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
             metadata::Metadata,
+            model::ThreemfExtensions,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
         },
@@ -1357,8 +1548,8 @@ mod speed_optimized_read_tests {
             Model {
                 // xmlns: None,
                 unit: None, //ToDo: Set the default value when unit is not supplied.
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
                     name: "Trial Metadata".to_owned(),
                     preserve: None,
@@ -1425,8 +1616,8 @@ mod speed_optimized_read_tests {
             Model {
                 // xmlns: None,
                 unit: Some(Unit::Millimeter),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![Metadata {
                     name: "Trial Metadata".to_owned(),
                     preserve: None,
@@ -1534,8 +1725,8 @@ mod speed_optimized_read_tests {
             model,
             Model {
                 unit: Some(Unit::Millimeter),
-                requiredextensions: None,
-                recommendedextensions: None,
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
                 metadata: vec![],
                 resources: Resources {
                     basematerials: vec![],

@@ -13,6 +13,8 @@ mod tests {
     #[cfg(feature = "io-memory-optimized-read")]
     #[test]
     fn read_displacement_package_memory_optimized() {
+        use threemf2::threemf_namespaces::ThreemfNamespace;
+
         let path =
             PathBuf::from("./tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let reader = File::open(path).unwrap();
@@ -32,13 +34,15 @@ mod tests {
         assert!(
             namespaces
                 .iter()
-                .any(|ns| ns.uri == threemf2::threemf_namespaces::DISPLACEMENT_NS)
+                .any(|ns| matches!(ns, ThreemfNamespace::Displacement))
         );
     }
 
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
     fn read_displacement_package_speed_optimized() {
+        use threemf2::threemf_namespaces::ThreemfNamespace;
+
         let path =
             PathBuf::from("./tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
         let reader = File::open(path).unwrap();
@@ -58,7 +62,7 @@ mod tests {
         assert!(
             namespaces
                 .iter()
-                .any(|ns| ns.uri == threemf2::threemf_namespaces::DISPLACEMENT_NS)
+                .any(|ns| matches!(ns, ThreemfNamespace::Displacement))
         );
     }
 
@@ -78,7 +82,7 @@ mod tests {
         .unwrap();
 
         package
-            .with_model("/3D/3dmodel.model", |(model, _namespaces)| {
+            .with_model("/3D/3dmodel.model", |model| {
                 assert_eq!(
                     query::get_displacement_mesh_objects_from_model(model).count(),
                     1

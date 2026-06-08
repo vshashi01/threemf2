@@ -12,7 +12,6 @@ use serde::Deserialize;
 
 use crate::threemf_namespaces::CORE_NS;
 
-//ToDo: Add additional optional fields on Metadata
 /// Key-value metadata associated with a 3MF model or object.
 ///
 /// Metadata provides additional information about the model, such as author,
@@ -43,36 +42,26 @@ impl ToXml for Metadata {
         &self,
         field: Option<instant_xml::Id<'_>>,
         serializer: &mut instant_xml::Serializer<W>,
-    ) -> Result<(), Error> {
-        // let id = field.unwrap_or(instant_xml::Id {
-        //     name: "metadata",
-        //     ns: CORE_NS,
-        // });
-
+    ) -> Result<(), instant_xml::Error> {
         let (name, ns) = match field {
             Some(field) => (field.name, field.ns),
             None => ("metadata", CORE_NS),
         };
 
-        let _ = serializer.write_start(name, ns)?;
+        let mut cx = instant_xml::ser::Context::<0>::default();
+        cx.default_ns = CORE_NS;
 
-        if field.is_none() {
-            let _ = serializer.push(instant_xml::ser::Context {
-                default_ns: CORE_NS,
-                prefixes: [],
-            });
-        }
+        let element = serializer.write_start(name, ns, Some(cx))?;
 
-        serializer.write_attr("name", ns, &self.name)?;
+        serializer.write_attr("name", CORE_NS, &self.name)?;
         if let Some(preserve) = &self.preserve {
-            serializer.write_attr("preserve", ns, &preserve.0)?;
+            serializer.write_attr("preserve", CORE_NS, &preserve.0)?;
         }
 
-        // Write value as text content if present
         if let Some(value) = &self.value {
             serializer.end_start()?;
             serializer.write_str(value)?;
-            serializer.write_close(None, name)?;
+            serializer.write_close(element)?;
         } else {
             serializer.end_empty()?;
         }
