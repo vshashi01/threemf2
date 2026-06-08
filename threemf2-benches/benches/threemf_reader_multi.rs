@@ -95,7 +95,7 @@ fn bench_lib3mf_rs(c: &mut Criterion) {
 
         #[cfg(feature = "enable-alloc-check")]
         let _dhat = dhat::Profiler::builder()
-            .file_name(format!("/target/dhat-speed-optimized-{name}.json"))
+            .file_name(format!("/target/dhat-lib3mf_rs-{name}.json"))
             .build();
         group.bench_with_input(BenchmarkId::new("read", name), &path, |b, path| {
             b.iter(|| {
@@ -126,7 +126,7 @@ fn bench_lib3mf(c: &mut Criterion) {
 
         #[cfg(feature = "enable-alloc-check")]
         let _dhat = dhat::Profiler::builder()
-            .file_name(format!("/target/dhat-speed-optimized-{name}.json"))
+            .file_name(format!("/target/dhat-lib3mf-{name}.json"))
             .build();
         group.bench_with_input(BenchmarkId::new("read", name), &path, |b, path| {
             b.iter(|| {

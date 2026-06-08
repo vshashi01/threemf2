@@ -1368,7 +1368,6 @@ dependencies = [
  "serde-roxmltree",
  "serde_json",
  "thiserror",
- "xmlparser",
  "zip 8.4.0",
 ]
 

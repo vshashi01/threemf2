@@ -232,7 +232,6 @@ impl From<String> for ThreemfExtensions {
     }
 }
 
-// #[cfg(feature = "write")]
 impl Model {
     pub fn used_namespaces(&self) -> Vec<ThreemfNamespace> {
         let mut used = vec![ThreemfNamespace::Core];

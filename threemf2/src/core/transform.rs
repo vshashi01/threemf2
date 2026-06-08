@@ -43,7 +43,7 @@ impl ToXml for Transform {
                 let prefix =
                     serializer.write_start(id.name, id.ns, None::<instant_xml::ser::Context<0>>)?;
                 serializer.end_start()?;
-                Some((prefix, id.name))
+                Some(prefix)
             }
             None => None,
         };
@@ -56,7 +56,7 @@ impl ToXml for Transform {
             .join(" ");
         serializer.write_str(&transform_str)?;
 
-        if let Some((prefix, _)) = prefix {
+        if let Some(prefix) = prefix {
             serializer.write_close(prefix)?;
         }
 
@@ -97,7 +97,6 @@ impl<'xml> FromXml<'xml> for Transform {
     const KIND: Kind = Kind::Scalar;
 }
 
-// #[cfg(any(feature = "memory-optimized-read", feature = "speed-optimized-read"))]
 impl From<String> for Transform {
     fn from(value: String) -> Self {
         Self(parse_transform_matrix(&value))

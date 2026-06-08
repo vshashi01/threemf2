@@ -414,12 +414,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nModel statistics:");
     println!("  Objects: {}", model.resources.object.len());
     println!("  Build items: {}", model.build.item.len());
-    // if let Some(ref extensions) = model.requiredextensions {
     println!(
         "  Required extensions: {:?}",
         model.requiredextensions.get()
     );
-    // }
 
     // Create 3MF package and write to file
     let package: ThreemfPackage = model.into();

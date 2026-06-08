@@ -35,20 +35,15 @@ impl ToXml for TriangleSets {
                 let prefix =
                     serializer.write_start(id.name, id.ns, None::<instant_xml::ser::Context<0>>)?;
                 serializer.end_start()?;
-                Some((prefix, id.name))
+                Some(prefix)
             }
             None => {
                 let mut cx = instant_xml::ser::Context::default();
                 cx.default_ns = CORE_TRIANGLESET_NS;
                 let prefix =
                     serializer.write_start("trianglesets", CORE_TRIANGLESET_NS, Some(cx))?;
-                // serializer.push(instant_xml::ser::Context {
-                //     default_ns: CORE_TRIANGLESET_NS,
-                //     prefixes: [],
-                // })?;
-
                 serializer.end_start()?;
-                Some((prefix, "trianglesets"))
+                Some(prefix)
             }
         };
 
@@ -62,7 +57,7 @@ impl ToXml for TriangleSets {
             )?;
         }
 
-        if let Some((prefix, _)) = prefix {
+        if let Some(prefix) = prefix {
             serializer.write_close(prefix)?;
         }
 

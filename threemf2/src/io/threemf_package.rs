@@ -339,20 +339,11 @@ impl ThreemfPackage {
         Ok(processor.into_threemf_package())
     }
 
-    //only exists in the loading flow and not on the writing flow
-    //if a path is not set then its the root model
+    //if path is set or not found then its the root model
     pub fn get_namespaces_on_model(
         &self,
         model_path: Option<&str>,
     ) -> Option<Vec<ThreemfNamespace>> {
-        // let path = model_path.unwrap_or("root model");
-
-        // if self.namespaces.contains_key(path) {
-        //     let namespaces = self.namespaces.get(path);
-        //     namespaces.cloned()
-        // } else {
-        //     None
-        // }
         match model_path {
             Some(sub_model_path) => self
                 .sub_models

@@ -12,7 +12,6 @@ use serde::Deserialize;
 
 use crate::threemf_namespaces::CORE_NS;
 
-//ToDo: Add additional optional fields on Metadata
 /// Key-value metadata associated with a 3MF model or object.
 ///
 /// Metadata provides additional information about the model, such as author,
