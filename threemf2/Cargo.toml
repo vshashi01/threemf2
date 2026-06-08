@@ -28,6 +28,7 @@ io-write = ["dep:zip", "write"]
 io-memory-optimized-read = ["dep:zip", "memory-optimized-read"]
 io-speed-optimized-read = ["dep:zip", "speed-optimized-read"]
 io-lazy-read = ["dep:once_cell", "io-memory-optimized-read"]
+uuid = ["dep:uuid"]
 # memory-optimized-read-experimental = [
 #     "memory-optimized-read",
 # ] #to dump all experiments
@@ -43,6 +44,7 @@ serde-roxmltree = { version = "0.11.1", optional = true }
 serde = { version = "1.0.228", optional = true, features = ["derive"] }
 once_cell = { version = "1.21.3", optional = true }
 lexical-core = { version = "1.0.6" }
+uuid = { version = "1.23.2", optional = true }
 
 
 [dev-dependencies]
@@ -96,7 +98,7 @@ required-features = ["io-write"]
 [[example]]
 name = "query_example"
 path = "examples/query_example.rs"
-required-features = ["io-memory-optimized-read"]
+required-features = ["io-memory-optimized-read", "uuid"]
 
 [[example]]
 name = "boolean_write"

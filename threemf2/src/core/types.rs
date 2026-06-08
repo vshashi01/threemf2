@@ -16,6 +16,9 @@ use instant_xml::{Error, FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
+#[cfg(feature = "uuid")]
+use uuid::Uuid;
+
 /// 3MF Resource ID type
 /// XSD: ST_ResourceID (xs:positiveInteger, maxExclusive="2147483648")
 /// Used for: object IDs, property group IDs, material IDs
@@ -25,6 +28,146 @@ pub type ResourceId = u32;
 /// XSD: ST_ResourceIndex (xs:nonNegativeInteger, maxExclusive="2147483648")
 /// Used for: vertex indices (v1, v2, v3), property indices (p1, p2, p3, pindex)
 pub type ResourceIndex = u32;
+
+/// Optional UUID resource value used by the Production extension.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub enum UuidResource {
+    /// Attribute not present.
+    #[default]
+    None,
+    /// UUID string present but not validated.
+    #[cfg(not(feature = "uuid"))]
+    MaybeUuid(String),
+    /// UUID string present but failed validation (only when uuid feature enabled).
+    #[cfg(feature = "uuid")]
+    NotUuid(String),
+    /// Valid UUID parsed from the string (only when uuid feature enabled).
+    #[cfg(feature = "uuid")]
+    Uuid(Uuid),
+}
+
+impl UuidResource {
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Self::None => None,
+            #[cfg(not(feature = "uuid"))]
+            Self::MaybeUuid(value) => Some(value.as_str()),
+            #[cfg(feature = "uuid")]
+            Self::NotUuid(value) => Some(value.as_str()),
+            #[cfg(feature = "uuid")]
+            Self::Uuid(_) => None,
+        }
+    }
+
+    pub fn to_string(&self) -> Option<String> {
+        match self {
+            Self::None => None,
+            #[cfg(not(feature = "uuid"))]
+            Self::MaybeUuid(value) => Some(value.clone()),
+            #[cfg(feature = "uuid")]
+            Self::NotUuid(value) => Some(value.clone()),
+            #[cfg(feature = "uuid")]
+            Self::Uuid(value) => Some(value.to_string()),
+        }
+    }
+
+    #[cfg(feature = "uuid")]
+    fn from_string_with_uuid(value: String) -> Self {
+        match Uuid::parse_str(value.as_str()) {
+            Ok(parsed) => Self::Uuid(parsed),
+            Err(_) => Self::NotUuid(value),
+        }
+    }
+
+    #[cfg(not(feature = "uuid"))]
+    fn from_string_with_uuid(value: String) -> Self {
+        Self::MaybeUuid(value)
+    }
+}
+
+impl From<String> for UuidResource {
+    fn from(value: String) -> Self {
+        Self::from_string_with_uuid(value)
+    }
+}
+
+impl From<&str> for UuidResource {
+    fn from(value: &str) -> Self {
+        Self::from_string_with_uuid(value.to_owned())
+    }
+}
+
+#[cfg(feature = "speed-optimized-read")]
+impl<'de> Deserialize<'de> for UuidResource {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = <std::string::String as Deserialize>::deserialize(deserializer)?;
+        Ok(Self::from(value))
+    }
+}
+
+#[cfg(feature = "write")]
+impl ToXml for UuidResource {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<Id<'_>>,
+        serializer: &mut Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        if let Some(value) = self.to_string() {
+            serializer.write_str(&value)?;
+        }
+        Ok(())
+    }
+
+    fn present(&self) -> bool {
+        !self.is_none()
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for UuidResource {
+    fn matches(id: instant_xml::Id<'_>, field: Option<instant_xml::Id<'_>>) -> bool {
+        if let Some(field_id) = field {
+            id == field_id
+        } else {
+            false
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), Error> {
+        if !matches!(into, Self::None) {
+            return Err(Error::DuplicateValue(field));
+        }
+
+        let value = match deserializer.take_str()? {
+            Some(value) => Self::from(value.trim().to_owned()),
+            None => Self::None,
+        };
+
+        *into = value;
+        Ok(())
+    }
+
+    type Accumulator = Self;
+    const KIND: Kind = Kind::Scalar;
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl instant_xml::Accumulate<UuidResource> for UuidResource {
+    fn try_done(self, _: &'static str) -> Result<UuidResource, Error> {
+        Ok(self)
+    }
+}
 
 /// Compact Optional type for ResourceId with [`Option<NonZeroU32>`]
 /// (4 bytes vs 8 bytes for [`Option<u32>`])
@@ -855,6 +998,45 @@ impl Color {
             from_linear_channel(g),
             from_linear_channel(b),
         )
+    }
+}
+
+#[cfg(test)]
+mod uuid_resource_tests {
+    use super::UuidResource;
+
+    #[test]
+    fn uuid_resource_default_is_none() {
+        let value = UuidResource::default();
+        assert!(value.is_none());
+        assert_eq!(value.to_string(), None);
+    }
+
+    #[cfg(not(feature = "uuid"))]
+    #[test]
+    fn uuid_resource_from_string_without_uuid_feature() {
+        let value = UuidResource::from("not-a-uuid");
+        assert!(matches!(value, UuidResource::MaybeUuid(_)));
+        assert_eq!(value.to_string().as_deref(), Some("not-a-uuid"));
+    }
+
+    #[cfg(feature = "uuid")]
+    #[test]
+    fn uuid_resource_from_valid_uuid() {
+        let value = UuidResource::from("550e8400-e29b-41d4-a716-446655440000");
+        assert!(matches!(value, UuidResource::Uuid(_)));
+        assert_eq!(
+            value.to_string().as_deref(),
+            Some("550e8400-e29b-41d4-a716-446655440000")
+        );
+    }
+
+    #[cfg(feature = "uuid")]
+    #[test]
+    fn uuid_resource_from_invalid_uuid() {
+        let value = UuidResource::from("not-a-uuid");
+        assert!(matches!(value, UuidResource::NotUuid(_)));
+        assert_eq!(value.to_string().as_deref(), Some("not-a-uuid"));
     }
 }
 

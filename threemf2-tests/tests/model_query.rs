@@ -2,6 +2,7 @@
 mod tests {
     use instant_xml::from_str;
     use std::path::PathBuf;
+
     use threemf2::core::model::Model;
     use threemf2::io::query::*;
 
@@ -233,7 +234,7 @@ mod tests {
         assert!(item_ref.path().is_none());
         assert_eq!(
             item_ref.uuid(),
-            Some("4e44739e-3ba0-4639-b8ad-1eb80b1cb5a5")
+            Some("4e44739e-3ba0-4639-b8ad-1eb80b1cb5a5".into())
         );
     }
 }

@@ -434,6 +434,7 @@ mod tests {
     use super::*;
     use threemf2::core::build::Build;
     use threemf2::core::resources::Resources;
+    use threemf2::core::types::UuidResource;
     use threemf2::io::ThreemfPackage;
 
     use std::cmp::Ordering;
@@ -729,7 +730,7 @@ mod tests {
                 displacement2d: vec![],
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             },
             requiredextensions: ThreemfExtensions::default(),

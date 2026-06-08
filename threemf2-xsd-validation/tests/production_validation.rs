@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        OptionalResourceId,
+        OptionalResourceId, UuidResource,
         build::{Build, Item},
         component::Component,
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
@@ -120,7 +120,7 @@ fn validate_simple_production_model_with_uuids() {
                     name: Some("Production Model".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: Some("01cbb956-1d24-062d-fbe6-7362e5727594".to_owned()),
+                    uuid: UuidResource::from("01cbb956-1d24-062d-fbe6-7362e5727594"),
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -138,13 +138,13 @@ fn validate_simple_production_model_with_uuids() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: Some("96681a5d-5b0f-e592-8c51-da7ed587cb5f".to_owned()),
+                uuid: UuidResource::from("96681a5d-5b0f-e592-8c51-da7ed587cb5f"),
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: Some("b3de5826-ccb6-3dbc-d6c4-29a2d730766c".to_owned()),
+                    uuid: UuidResource::from("b3de5826-ccb6-3dbc-d6c4-29a2d730766c"),
                 }],
             },
         },
@@ -255,7 +255,7 @@ fn validate_production_model_with_components() {
         objectid: 1,
         transform: None,
         path: None,
-        uuid: Some("comp-uuid-1234-5678-90ab-cdef12345678".to_owned()),
+        uuid: UuidResource::from("comp-uuid-1234-5678-90ab-cdef12345678"),
     };
 
     let write_package = ThreemfPackage::new(
@@ -274,7 +274,7 @@ fn validate_production_model_with_components() {
                         name: Some("Component Part 1".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: Some("uuid-part1-1234-5678-90ab-cdef12345678".to_owned()),
+                        uuid: UuidResource::from("uuid-part1-1234-5678-90ab-cdef12345678"),
                         kind: Some(ObjectKind::Mesh(mesh1)),
                         meshresolution: None,
                         slicestackid: OptionalResourceId::none(),
@@ -288,7 +288,7 @@ fn validate_production_model_with_components() {
                         name: Some("Component Part 2".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: Some("uuid-part2-1234-5678-90ab-cdef12345678".to_owned()),
+                        uuid: UuidResource::from("uuid-part2-1234-5678-90ab-cdef12345678"),
                         kind: Some(ObjectKind::Mesh(mesh2)),
                         meshresolution: None,
                         slicestackid: OptionalResourceId::none(),
@@ -302,7 +302,7 @@ fn validate_production_model_with_components() {
                         name: Some("Assembly".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: Some("uuid-assembly-1234-5678-90ab-cdef12345678".to_owned()),
+                        uuid: UuidResource::from("uuid-assembly-1234-5678-90ab-cdef12345678"),
                         kind: Some(ObjectKind::Components(
                             threemf2::core::component::Components {
                                 component: vec![component],
@@ -325,13 +325,13 @@ fn validate_production_model_with_components() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: Some("build-uuid-1234-5678-90ab-cdef12345678".to_owned()),
+                uuid: UuidResource::from("build-uuid-1234-5678-90ab-cdef12345678"),
                 item: vec![Item {
                     objectid: 3,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: Some("item-uuid-1234-5678-90ab-cdef12345678".to_owned()),
+                    uuid: UuidResource::from("item-uuid-1234-5678-90ab-cdef12345678"),
                 }],
             },
         },

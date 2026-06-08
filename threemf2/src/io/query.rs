@@ -502,7 +502,7 @@ impl<'a> MeshObjectRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.clone(),
+            uuid: o.object.uuid.to_string(),
             origin_model_path: o.path,
         })
     }
@@ -556,7 +556,7 @@ impl<'a> DisplacementMeshObjectRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.clone(),
+            uuid: o.object.uuid.to_string(),
             origin_model_path: o.path,
         })
     }
@@ -796,7 +796,7 @@ impl<'a> ComponentsObjectRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.clone(),
+            uuid: o.object.uuid.to_string(),
             origin_model_path: o.path,
         })
     }
@@ -838,7 +838,7 @@ impl<'a> ComponentsObjectRef<'a> {
                 objectid: c.objectid,
                 transform: c.transform.clone(),
                 path_to_look_for: comp_path,
-                uuid: c.uuid.clone(),
+                uuid: c.uuid.to_string(),
             }
         })
     }
@@ -918,7 +918,7 @@ impl<'a> BooleanShapeRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.clone(),
+            uuid: o.object.uuid.to_string(),
             origin_model_path: o.path,
         })
     }
@@ -1327,8 +1327,8 @@ impl<'a> ItemRef<'a> {
     /// # See Also
     ///
     /// * [`get_item_by_uuid()`] - Find an item by its UUID
-    pub fn uuid(&self) -> Option<&str> {
-        self.item.uuid.as_deref()
+    pub fn uuid(&self) -> Option<String> {
+        self.item.uuid.to_string()
     }
 }
 
@@ -1792,7 +1792,7 @@ pub fn get_items_by_objectid<'a>(
 ///         println!("Item UUID: {}", item_uuid);
 ///         
 ///         // Verify we can find it again
-///         assert!(get_item_by_uuid(&package, item_uuid).is_some());
+///         assert!(get_item_by_uuid(&package, item_uuid.as_str()).is_some());
 ///     }
 /// }
 /// ```
@@ -1802,13 +1802,7 @@ pub fn get_items_by_objectid<'a>(
 /// * [`ItemRef::uuid()`] - Get UUID from an item reference
 /// * [`get_items()`] - Get all items (to find items with UUIDs)
 pub fn get_item_by_uuid<'a>(package: &'a ThreemfPackage, uuid: &str) -> Option<ItemRef<'a>> {
-    get_items(package).find(|item_ref| {
-        if let Some(item_uuid) = &item_ref.item.uuid {
-            item_uuid == uuid
-        } else {
-            false
-        }
-    })
+    get_items(package).find(|item_ref| item_ref.item.uuid.to_string().as_deref() == Some(uuid))
 }
 
 /// A reference to a model within a package, with path information for sub-models.
@@ -2897,7 +2891,7 @@ pub fn get_texture_for_group<'a>(
 #[cfg(feature = "io-memory-optimized-read")]
 #[cfg(test)]
 mod tests {
-    use crate::core::{material::TextureContentType, model::ThreemfExtensions};
+    use crate::core::{UuidResource, material::TextureContentType, model::ThreemfExtensions};
 
     use super::*;
 
@@ -3451,7 +3445,7 @@ mod tests {
                 disp2dgroup: Vec::new(),
             },
             build: crate::core::build::Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             },
         };
@@ -3527,7 +3521,7 @@ mod tests {
                 disp2dgroup: Vec::new(),
             },
             build: crate::core::build::Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             },
         };

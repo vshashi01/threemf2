@@ -141,7 +141,9 @@ use std::ops::{Deref, DerefMut};
 pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
 pub use crate::core::model::Unit;
 pub use crate::core::object::ObjectType;
-use crate::core::types::{OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIndex};
+use crate::core::types::{
+    OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIndex, UuidResource,
+};
 
 /// Errors that can occur when building a [`Model`].
 ///
@@ -298,7 +300,7 @@ pub enum ProductionExtensionError {
 /// // Enable Production extension - requires UUIDs on all objects and items
 /// builder.make_production_extension_required()?;
 ///
-/// builder.add_build(Some("build-uuid-12345".to_string()))?;
+/// builder.add_build(Some(UuidResource::from("build-uuid-12345")))?;
 ///
 /// let obj_id = builder.add_mesh_object(|obj| {
 ///     obj.name("TrackedPart")
@@ -440,7 +442,7 @@ impl ModelBuilder {
             }
 
             if let Some(build) = &self.build {
-                if build.uuid.is_some() {
+                if !build.uuid.is_none() {
                     if build.items.iter().any(|i| i.uuid.is_none()) {
                         return Err(ProductionExtensionError::ItemUuidNotSet);
                     }
@@ -744,9 +746,9 @@ impl ModelBuilder {
     ///
     /// // With Production extension
     /// builder.make_production_extension_required()?;
-    /// builder.add_build(Some("build-12345".to_string()))?;
+    /// builder.add_build(Some(UuidResource::from("build-12345")))?;
     /// ```
-    pub fn add_build(&mut self, uuid: Option<String>) -> Result<&mut Self, ModelError> {
+    pub fn add_build(&mut self, uuid: Option<UuidResource>) -> Result<&mut Self, ModelError> {
         if !self.is_root {
             return Err(ModelError::BuildOnlyAllowedInRootModel);
         }
@@ -925,7 +927,7 @@ impl ModelBuilder {
             builder.build(self.is_production_ext_required)?
         } else {
             Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             }
         };
@@ -1083,19 +1085,19 @@ pub enum BuildError {
 /// by [`ModelBuilder`].
 pub struct BuildBuilder {
     items: Vec<Item>,
-    uuid: Option<String>,
+    uuid: UuidResource,
 }
 
 impl BuildBuilder {
     fn new() -> Self {
         Self {
             items: Vec::new(),
-            uuid: None,
+            uuid: UuidResource::None,
         }
     }
 
-    fn uuid(&mut self, uuid: String) -> &mut Self {
-        self.uuid = Some(uuid);
+    fn uuid(&mut self, uuid: UuidResource) -> &mut Self {
+        self.uuid = uuid;
 
         self
     }
@@ -1129,7 +1131,7 @@ impl BuildBuilder {
         self.can_build(is_production_ext_required)?;
 
         Ok(Build {
-            uuid: None,
+            uuid: self.uuid,
             item: self.items,
         })
     }
@@ -1163,7 +1165,7 @@ pub struct ItemBuilder {
     transform: Option<Transform>,
     partnumber: Option<String>,
     path: Option<String>,
-    uuid: Option<String>,
+    uuid: UuidResource,
 }
 
 impl ItemBuilder {
@@ -1173,7 +1175,7 @@ impl ItemBuilder {
             transform: None,
             partnumber: None,
             path: None,
-            uuid: None,
+            uuid: UuidResource::None,
         }
     }
 
@@ -1218,7 +1220,7 @@ impl ItemBuilder {
     ///
     /// Required when Production extension is enabled.
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
-        self.uuid = Some(uuid.to_owned());
+        self.uuid = UuidResource::from(uuid);
         self
     }
 
@@ -1289,7 +1291,7 @@ pub struct ObjectBuilder<T> {
     name: Option<String>,
     pid: OptionalResourceId,
     pindex: OptionalResourceIndex,
-    uuid: Option<String>,
+    uuid: UuidResource,
 
     // sets if the production ext is required.
     // if yes will ensure UUID is set before building the object
@@ -1316,7 +1318,7 @@ impl<T> ObjectBuilder<T> {
     }
 
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
-        self.uuid = Some(uuid.to_owned());
+        self.uuid = UuidResource::from(uuid);
         self
     }
 }
@@ -1388,7 +1390,7 @@ impl MeshObjectBuilder {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             is_production_ext_required,
         }
     }
@@ -1769,7 +1771,7 @@ impl ComponentsObjectBuilder {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             is_production_ext_required,
         }
     }
@@ -1875,7 +1877,7 @@ impl ComponentsBuilder {
         is_production_ext_required: bool,
     ) -> Result<Components, ComponentsObjectError> {
         if is_production_ext_required {
-            let all_uuid_set = self.components.iter().all(|c| c.uuid.is_some());
+            let all_uuid_set = self.components.iter().all(|c| !c.uuid.is_none());
             if !all_uuid_set {
                 return Err(ComponentsObjectError::ComponentUuidNotSet);
             }
@@ -1909,7 +1911,7 @@ pub struct ComponentBuilder {
     objectid: u32,
     transform: Option<Transform>,
     path: Option<String>,
-    uuid: Option<String>,
+    uuid: UuidResource,
 }
 
 impl ComponentBuilder {
@@ -1918,7 +1920,7 @@ impl ComponentBuilder {
             objectid: object_id.0,
             transform: None,
             path: None,
-            uuid: None,
+            uuid: UuidResource::None,
         }
     }
 
@@ -1931,7 +1933,7 @@ impl ComponentBuilder {
     ///
     /// Required when Production extension is enabled.
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
-        self.uuid = Some(uuid.to_owned());
+        self.uuid = UuidResource::from(uuid);
         self
     }
 
@@ -2021,7 +2023,7 @@ impl BooleanObjectBuilder {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: None,
+            uuid: UuidResource::None,
             is_production_ext_required,
         }
     }
@@ -3186,7 +3188,9 @@ mod tests {
     fn test_production_ext_add_prod_ns_to_required_extensions() {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         builder.make_production_extension_required().unwrap(); //should not return error
-        builder.add_build(Some("build-uuid".to_string())).unwrap();
+        builder
+            .add_build(Some(UuidResource::from("build-uuid")))
+            .unwrap();
         let obj_id = builder
             .add_mesh_object(|obj| {
                 obj.uuid("obj-uuid");
@@ -3212,7 +3216,9 @@ mod tests {
     fn test_production_ext_requires_object_uuid() {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         builder.make_production_extension_required().unwrap(); // should not return error;
-        builder.add_build(Some("build-uuid".to_string())).unwrap();
+        builder
+            .add_build(Some(UuidResource::from("build-uuid")))
+            .unwrap();
         let obj_id = builder.add_mesh_object(|obj| {
             obj.name("test");
             // no uuid
@@ -3236,7 +3242,9 @@ mod tests {
     fn test_production_ext_requires_build_item_uuid() {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         builder.make_production_extension_required().unwrap(); //should not return error
-        builder.add_build(Some("build-uuid".to_string())).unwrap();
+        builder
+            .add_build(Some(UuidResource::from("build-uuid")))
+            .unwrap();
         let obj_id = builder
             .add_mesh_object(|obj| {
                 obj.name("test");
@@ -3292,7 +3300,9 @@ mod tests {
             panic!("{err:?}");
         }
 
-        builder.add_build(Some("build-uuid".to_owned())).unwrap();
+        builder
+            .add_build(Some(UuidResource::from("build-uuid")))
+            .unwrap();
         if let Err(err) = builder.add_build_item_advanced(mesh_obj_id, |i| {
             i.uuid("some-uuid").path("some-path");
         }) {
@@ -3332,6 +3342,7 @@ mod tests {
         );
     }
 
+    #[cfg(not(feature = "uuid"))]
     #[test]
     fn test_build_item_advanced_tests() {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
@@ -3342,7 +3353,9 @@ mod tests {
                 Ok(())
             })
             .unwrap();
-        builder.add_build(Some("build-uuid".to_owned())).unwrap();
+        builder
+            .add_build(Some(UuidResource::from("build-uuid")))
+            .unwrap();
 
         let transform = crate::core::transform::Transform([
             1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
@@ -3362,9 +3375,10 @@ mod tests {
         assert_eq!(item.transform, Some(transform));
         assert_eq!(item.partnumber, Some("part".to_string()));
         assert_eq!(item.path, Some("path".to_string()));
-        assert_eq!(item.uuid, Some("uuid".to_string()));
+        assert_eq!(item.uuid, UuidResource::MaybeUuid("uuid".into()));
     }
 
+    #[cfg(not(feature = "uuid"))]
     #[test]
     fn test_object_builder_tests() {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
@@ -3387,7 +3401,7 @@ mod tests {
         );
         assert_eq!(obj.name, Some("support obj".to_string()));
         assert_eq!(obj.partnumber, Some("part123".to_string()));
-        assert_eq!(obj.uuid, Some("obj-uuid".to_string()));
+        assert_eq!(obj.uuid, UuidResource::MaybeUuid("obj-uuid".into()));
     }
 
     #[test]

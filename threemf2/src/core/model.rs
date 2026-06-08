@@ -277,18 +277,18 @@ impl Model {
     }
 
     fn uses_prod_ns(&self) -> bool {
-        if self.build.uuid.is_some() {
+        if !self.build.uuid.is_none() {
             return true;
         }
 
         for item in &self.build.item {
-            if item.path.is_some() || item.uuid.is_some() {
+            if item.path.is_some() || !item.uuid.is_none() {
                 return true;
             }
         }
 
         for obj in &self.resources.object {
-            if obj.uuid.is_some() {
+            if !obj.uuid.is_none() {
                 return true;
             }
 
@@ -296,7 +296,7 @@ impl Model {
                 && let ObjectKind::Components(comps) = kind
             {
                 for comp in &comps.component {
-                    if comp.path.is_some() || comp.uuid.is_some() {
+                    if comp.path.is_some() || !comp.uuid.is_none() {
                         return true;
                     }
                 }
@@ -440,7 +440,7 @@ mod write_tests {
     use crate::{
         core::{
             Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceIdCollection,
-            ResourceIndexCollection, beamlattice, boolean,
+            ResourceIndexCollection, UuidResource, beamlattice, boolean,
             build::{Build, Item},
             displacement::Displacement2D,
             material::{
@@ -505,7 +505,7 @@ mod write_tests {
                     name: Some("test part".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
@@ -521,13 +521,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 346,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -575,7 +575,7 @@ mod write_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
@@ -598,13 +598,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -631,7 +631,7 @@ mod write_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: Some("test-uuid".to_string()),
+                    uuid: UuidResource::from("test-uuid"),
                     kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
@@ -652,13 +652,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -690,7 +690,7 @@ mod write_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
@@ -725,13 +725,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -763,7 +763,7 @@ mod write_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
@@ -798,13 +798,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -840,7 +840,7 @@ mod write_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
@@ -863,13 +863,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -897,7 +897,7 @@ mod write_tests {
                     name: None,
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::BooleanShape(boolean::BooleanShape {
                         objectid: 1,
                         operation: boolean::BooleanOperation::Intersection,
@@ -921,13 +921,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -977,7 +977,7 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             },
         };
@@ -1010,7 +1010,7 @@ mod write_tests {
                         name: None,
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: Some("test-uuid".to_string()),
+                        uuid: UuidResource::from("test-uuid"),
                         kind: Some(ObjectKind::Mesh(Mesh {
                             vertices: Vertices { vertex: vec![] },
                             triangles: Triangles { triangle: vec![] },
@@ -1045,7 +1045,7 @@ mod write_tests {
                         name: None,
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: Some("test-uuid-boolean".to_owned()),
+                        uuid: UuidResource::from("test-uuid-boolean"),
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
                         meshresolution: None,
@@ -1068,13 +1068,13 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         };
@@ -1148,7 +1148,7 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             },
         };
@@ -1188,7 +1188,7 @@ mod write_tests {
                 disp2dgroup: vec![],
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             },
         };
@@ -1257,7 +1257,7 @@ mod write_tests {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![],
             },
         };
@@ -1280,7 +1280,7 @@ mod memory_optimized_read_tests {
     use crate::core::model::ThreemfExtensions;
     use crate::{
         core::{
-            Color,
+            Color, UuidResource,
             build::{Build, Item},
             component::{Component, Components},
             material::{ColorElement, ColorGroup, Texture2D},
@@ -1324,7 +1324,7 @@ mod memory_optimized_read_tests {
                         name: Some("test part".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: None,
+                        uuid: UuidResource::None,
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
                         meshresolution: None,
@@ -1340,13 +1340,13 @@ mod memory_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![Item {
                         objectid: 346,
                         transform: None,
                         partnumber: None,
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     }],
                 },
             }
@@ -1392,13 +1392,13 @@ mod memory_optimized_read_tests {
                         name: Some("test part".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: Some("someObjectUUID".to_owned()),
+                        uuid: UuidResource::from("someObjectUUID"),
                         kind: Some(ObjectKind::Components(Components {
                             component: vec![Component {
                                 objectid: 1,
                                 transform: None,
                                 path: Some("//somePath//Component".to_owned()),
-                                uuid: Some("someComponentUUID".to_owned()),
+                                uuid: UuidResource::from("someComponentUUID"),
                             }]
                         })),
                         slicestackid: OptionalResourceId::none(),
@@ -1415,13 +1415,13 @@ mod memory_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: Some("someBuildUUID".to_owned()),
+                    uuid: UuidResource::from("someBuildUUID"),
                     item: vec![Item {
                         objectid: 346,
                         transform: None,
                         partnumber: None,
                         path: None,
-                        uuid: Some("someItemUUID".to_owned()),
+                        uuid: UuidResource::from("someItemUUID"),
                     }],
                 },
             }
@@ -1503,7 +1503,7 @@ mod memory_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![],
                 },
             }
@@ -1520,7 +1520,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            Color, OptionalResourceId, OptionalResourceIndex,
+            Color, OptionalResourceId, OptionalResourceIndex, UuidResource,
             build::{Build, Item},
             component::{Component, Components},
             material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
@@ -1566,7 +1566,7 @@ mod speed_optimized_read_tests {
                         name: Some("test part".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: None,
+                        uuid: UuidResource::None,
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
                         meshresolution: None,
@@ -1582,13 +1582,13 @@ mod speed_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![Item {
                         objectid: 346,
                         transform: None,
                         partnumber: None,
                         path: None,
-                        uuid: None,
+                        uuid: UuidResource::None,
                     }],
                 },
             }
@@ -1634,13 +1634,13 @@ mod speed_optimized_read_tests {
                         name: Some("test part".to_owned()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: Some("someObjectUUID".to_owned()),
+                        uuid: UuidResource::from("someObjectUUID"),
                         kind: Some(ObjectKind::Components(Components {
                             component: vec![Component {
                                 objectid: 1,
                                 transform: None,
                                 path: Some("//somePath//Component".to_owned()),
-                                uuid: Some("someComponentUUID".to_owned()),
+                                uuid: UuidResource::from("someComponentUUID"),
                             }]
                         })),
                         slicestackid: OptionalResourceId::none(),
@@ -1665,13 +1665,13 @@ mod speed_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: Some("someBuildUUID".to_owned()),
+                    uuid: UuidResource::from("someBuildUUID"),
                     item: vec![Item {
                         objectid: 346,
                         transform: None,
                         partnumber: None,
                         path: None,
-                        uuid: Some("someItemUUID".to_owned()),
+                        uuid: UuidResource::from("someItemUUID"),
                     }],
                 },
             }
@@ -1754,7 +1754,7 @@ mod speed_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: None,
+                    uuid: UuidResource::None,
                     item: vec![],
                 },
             }

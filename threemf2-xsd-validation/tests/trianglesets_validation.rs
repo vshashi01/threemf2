@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        OptionalResourceId,
+        OptionalResourceId, UuidResource,
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         model::{Model, ThreemfExtensions, Unit},
@@ -135,7 +135,7 @@ fn validate_simple_trianglesets() {
                     name: Some("Mesh with Triangle Sets".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -153,13 +153,13 @@ fn validate_simple_trianglesets() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         },
@@ -280,7 +280,7 @@ fn validate_trianglesets_with_ref_ranges() {
                     name: Some("Mesh with Triangle Set Ranges".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: None,
+                    uuid: UuidResource::None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -298,13 +298,13 @@ fn validate_trianglesets_with_ref_ranges() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: None,
+                uuid: UuidResource::None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: None,
+                    uuid: UuidResource::None,
                 }],
             },
         },
