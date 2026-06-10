@@ -1240,7 +1240,7 @@ impl ItemBuilder {
     }
 
     fn build(self, is_production_ext_enabled: bool) -> Result<Item, ItemError> {
-        if !is_production_ext_enabled && !self.path.is_none() {
+        if !is_production_ext_enabled && self.path.is_some() {
             return Err(ItemError::ItemPathSetWithoutProductionExtension);
         } else if is_production_ext_enabled && self.uuid.is_none() {
             return Err(ItemError::ItemUuidNotSet);

@@ -42,8 +42,8 @@ pub struct PathResource(String);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PathResourceError {
-    Empty,
-    DotSegment,
+    EmptyPathNotAllowed,
+    DotSegmentNotAllowed,
 }
 
 impl PathResource {
@@ -77,14 +77,6 @@ impl TryFrom<String> for PathResource {
     type Error = PathResourceError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        PathResource::new(&value)
-    }
-}
-
-impl TryFrom<&String> for PathResource {
-    type Error = PathResourceError;
-
-    fn try_from(value: &String) -> Result<Self, Self::Error> {
         PathResource::new(&value)
     }
 }
@@ -172,13 +164,13 @@ fn normalize_path_resource(input: &str) -> Result<String, PathResourceError> {
             continue;
         }
         if part == "." || part == ".." {
-            return Err(PathResourceError::DotSegment);
+            return Err(PathResourceError::DotSegmentNotAllowed);
         }
         parts.push(part);
     }
 
     if parts.is_empty() {
-        return Err(PathResourceError::Empty);
+        return Err(PathResourceError::EmptyPathNotAllowed);
     }
 
     let mut out = String::from("/");

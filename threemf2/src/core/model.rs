@@ -282,7 +282,7 @@ impl Model {
         }
 
         for item in &self.build.item {
-            if !item.path.is_none() || !item.uuid.is_none() {
+            if item.path.is_some() || !item.uuid.is_none() {
                 return true;
             }
         }
@@ -296,7 +296,7 @@ impl Model {
                 && let ObjectKind::Components(comps) = kind
             {
                 for comp in &comps.component {
-                    if !comp.path.is_none() || !comp.uuid.is_none() {
+                    if comp.path.is_some() || !comp.uuid.is_none() {
                         return true;
                     }
                 }
@@ -381,7 +381,7 @@ impl Model {
     fn uses_slice_ns(&self) -> bool {
         !self.resources.slicestack.is_empty()
             || self.resources.object.iter().any(|o| {
-                o.slicestackid.is_some() || !o.slicepath.is_none() || o.meshresolution.is_some()
+                o.slicestackid.is_some() || o.slicepath.is_some() || o.meshresolution.is_some()
             })
     }
 

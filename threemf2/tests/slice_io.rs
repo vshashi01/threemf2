@@ -127,7 +127,7 @@ mod tests {
 
                         let root_ref = &root_stack_ref.slicestack.sliceref[0];
                         match slice_stacks.iter().find(|stack_ref| {
-                            stack_ref.path == Some(&root_ref.slicepath.as_str())
+                            stack_ref.path == Some(root_ref.slicepath.as_str())
                                 && stack_ref.slicestack.id == root_ref.slicestackid
                         }) {
                             Some(sub_stack) => {
