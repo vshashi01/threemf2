@@ -5,7 +5,7 @@ use std::io::Cursor;
 
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex, UuidResource,
+        OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
         build::{Build, Item},
         displacement::{
             Disp2DCoord, Disp2DGroup, Displacement2D, DisplacementMesh, NormVector,
@@ -144,7 +144,7 @@ fn validate_displacement_model_schema() {
             texture2d: vec![],
             displacement2d: vec![Displacement2D {
                 id: 3,
-                path: "/3D/Textures/displacement.png".to_owned(),
+                path: PathResource::try_from("/3D/Textures/displacement.png").unwrap(),
                 channel: None,
                 tilestyleu: None,
                 tilestylev: None,

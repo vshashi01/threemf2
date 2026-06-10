@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        Color, OptionalResourceId, OptionalResourceIndex, UuidResource,
+        Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
         build::{Build, Item},
         material::{
             ColorElement, ColorGroup, Filter, Multi, MultiProperties, Tex2Coord, Texture2D,
@@ -213,7 +213,7 @@ fn validate_texture2d_with_uv_mapping() {
     // Create a texture reference
     let texture2d = Texture2D {
         id: 1,
-        path: "/3D/texture.png".to_owned(),
+        path: PathResource::try_from("/3D/texture.png").unwrap(),
         contenttype: TextureContentType::Png,
         tilestyleu: Some(TileStyle::Wrap),
         tilestylev: Some(TileStyle::Mirror),
@@ -403,7 +403,7 @@ fn validate_multi_properties() {
     // Create a texture
     let texture2d = Texture2D {
         id: 2,
-        path: "/3D/texture.png".to_owned(),
+        path: PathResource::try_from("/3D/texture.png").unwrap(),
         contenttype: TextureContentType::Png,
         tilestyleu: None,
         tilestylev: None,

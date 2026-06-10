@@ -282,7 +282,7 @@ impl Model {
         }
 
         for item in &self.build.item {
-            if item.path.is_some() || !item.uuid.is_none() {
+            if !item.path.is_none() || !item.uuid.is_none() {
                 return true;
             }
         }
@@ -296,7 +296,7 @@ impl Model {
                 && let ObjectKind::Components(comps) = kind
             {
                 for comp in &comps.component {
-                    if comp.path.is_some() || !comp.uuid.is_none() {
+                    if !comp.path.is_none() || !comp.uuid.is_none() {
                         return true;
                     }
                 }
@@ -381,7 +381,7 @@ impl Model {
     fn uses_slice_ns(&self) -> bool {
         !self.resources.slicestack.is_empty()
             || self.resources.object.iter().any(|o| {
-                o.slicestackid.is_some() || o.slicepath.is_some() || o.meshresolution.is_some()
+                o.slicestackid.is_some() || !o.slicepath.is_none() || o.meshresolution.is_some()
             })
     }
 
@@ -439,8 +439,8 @@ mod write_tests {
 
     use crate::{
         core::{
-            Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceIdCollection,
-            ResourceIndexCollection, UuidResource, beamlattice, boolean,
+            Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource,
+            ResourceIdCollection, ResourceIndexCollection, UuidResource, beamlattice, boolean,
             build::{Build, Item},
             displacement::Displacement2D,
             material::{
@@ -1034,7 +1034,7 @@ mod write_tests {
                             }),
                         })),
                         slicestackid: OptionalResourceId::new(236),
-                        slicepath: Some("/2D/stack_model.model".to_owned()),
+                        slicepath: Some(PathResource::try_from("/2D/stack_model.model").unwrap()),
                         meshresolution: Some(slice::MeshResolution::LowRes),
                     },
                     Object {
@@ -1137,7 +1137,7 @@ mod write_tests {
                 }],
                 texture2d: vec![Texture2D {
                     id: 5,
-                    path: "/3D/texture.png".to_owned(),
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
                     contenttype: TextureContentType::Png,
                     tilestyleu: Some(TileStyle::Wrap),
                     tilestylev: Some(TileStyle::Mirror),
@@ -1178,7 +1178,7 @@ mod write_tests {
                 texture2d: vec![],
                 displacement2d: vec![Displacement2D {
                     id: 10,
-                    path: "/3D/Textures/disp.png".to_owned(),
+                    path: PathResource::try_from("/3D/Textures/disp.png").unwrap(),
                     channel: None,
                     tilestyleu: None,
                     tilestylev: None,
@@ -1246,7 +1246,7 @@ mod write_tests {
                 multiproperties: Vec::new(),
                 texture2d: vec![Texture2D {
                     id: 2,
-                    path: "/3D/texture.png".to_owned(),
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
                     contenttype: TextureContentType::Png,
                     tilestyleu: None,
                     tilestylev: None,
@@ -1276,6 +1276,7 @@ mod memory_optimized_read_tests {
 
     use crate::core::OptionalResourceId;
     use crate::core::OptionalResourceIndex;
+    use crate::core::PathResource;
     use crate::core::material::TextureContentType;
     use crate::core::model::ThreemfExtensions;
     use crate::{
@@ -1397,7 +1398,9 @@ mod memory_optimized_read_tests {
                             component: vec![Component {
                                 objectid: 1,
                                 transform: None,
-                                path: Some("//somePath//Component".to_owned()),
+                                path: Some(
+                                    PathResource::try_from("//somePath//Component").unwrap()
+                                ),
                                 uuid: UuidResource::from("someComponentUUID"),
                             }]
                         })),
@@ -1492,7 +1495,7 @@ mod memory_optimized_read_tests {
                     multiproperties: Vec::new(),
                     texture2d: vec![Texture2D {
                         id: 2,
-                        path: "/3D/texture.png".to_owned(),
+                        path: PathResource::try_from("/3D/texture.png").unwrap(),
                         contenttype: TextureContentType::Png,
                         tilestyleu: None,
                         tilestylev: None,
@@ -1520,7 +1523,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            Color, OptionalResourceId, OptionalResourceIndex, UuidResource,
+            Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
             build::{Build, Item},
             component::{Component, Components},
             material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
@@ -1639,7 +1642,9 @@ mod speed_optimized_read_tests {
                             component: vec![Component {
                                 objectid: 1,
                                 transform: None,
-                                path: Some("//somePath//Component".to_owned()),
+                                path: Some(
+                                    PathResource::try_from("//somePath//Component").unwrap()
+                                ),
                                 uuid: UuidResource::from("someComponentUUID"),
                             }]
                         })),
@@ -1650,7 +1655,7 @@ mod speed_optimized_read_tests {
                         //     component: vec![Component {
                         //         objectid: 1,
                         //         transform: None,
-                        //         path: Some("//somePath//Component".to_owned()),
+                        //         path: Some(PathResource::try_from("//somePath//Component").unwrap()),
                         //         uuid: Some("someComponentUUID".to_owned()),
                         //     }]
                         // }),
@@ -1743,7 +1748,7 @@ mod speed_optimized_read_tests {
                     multiproperties: Vec::new(),
                     texture2d: vec![Texture2D {
                         id: 2,
-                        path: "/3D/texture.png".to_owned(),
+                        path: PathResource::try_from("/3D/texture.png").unwrap(),
                         contenttype: TextureContentType::Png,
                         tilestyleu: None,
                         tilestylev: None,

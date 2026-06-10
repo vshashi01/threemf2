@@ -44,8 +44,8 @@ pub mod displacement;
 pub mod types;
 
 pub use types::{
-    Color, Double, OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIdCollection,
-    ResourceIndex, ResourceIndexCollection, UuidResource,
+    Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId,
+    ResourceIdCollection, ResourceIndex, ResourceIndexCollection, UuidResource,
 };
 
 pub mod builder;

@@ -10,7 +10,7 @@ use serde::Deserialize;
 use crate::{
     core::{
         transform::Transform,
-        types::{ResourceId, UuidResource},
+        types::{PathResource, ResourceId, UuidResource},
     },
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
@@ -65,7 +65,7 @@ pub struct Item {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS))
     )]
-    pub path: Option<String>,
+    pub path: Option<PathResource>,
 
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -81,7 +81,10 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
-    use crate::threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX};
+    use crate::{
+        core::PathResource,
+        threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX},
+    };
 
     use super::{Build, Item};
     use crate::core::types::UuidResource;
@@ -107,14 +110,14 @@ mod write_tests {
     #[test]
     pub fn toxml_production_item_test() {
         let xml_string = format!(
-            r#"<item xmlns="{}" xmlns:{}="{}" objectid="6" partnumber="part_1" {}:path="//somePath//Item" {}:UUID="someUUID" />"#,
+            r#"<item xmlns="{}" xmlns:{}="{}" objectid="6" partnumber="part_1" {}:path="/somePath/Item" {}:UUID="someUUID" />"#,
             CORE_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX, PROD_PREFIX
         );
         let item = Item {
             objectid: 6,
             partnumber: Some("part_1".to_string()),
             transform: None,
-            path: Some("//somePath//Item".to_owned()),
+            path: Some(PathResource::try_from("//somePath//Item").unwrap()),
             uuid: UuidResource::from("someUUID"),
         };
         let item_string = to_string(&item).unwrap();
@@ -190,8 +193,7 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::transform::Transform,
-        core::types::UuidResource,
+        core::{PathResource, transform::Transform, types::UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 
@@ -236,7 +238,7 @@ mod memory_optimized_read_tests {
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
-                path: Some("//somePath//Item".to_owned()),
+                path: Some(PathResource::try_from("//somePath//Item").unwrap()),
                 uuid: UuidResource::from("someUUID"),
             }
         );
@@ -320,8 +322,7 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::transform::Transform,
-        core::types::UuidResource,
+        core::{PathResource, transform::Transform, types::UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 
@@ -366,7 +367,7 @@ mod speed_optimized_read_tests {
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
-                path: Some("//somePath//Item".to_owned()),
+                path: Some(PathResource::try_from("//somePath//Item").unwrap()),
                 uuid: UuidResource::from("someUUID"),
             }
         );

@@ -10,7 +10,7 @@ use serde::Deserialize;
 use crate::{
     core::{
         transform::Transform,
-        types::{ResourceId, UuidResource},
+        types::{PathResource, ResourceId, UuidResource},
     },
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
@@ -57,7 +57,7 @@ pub struct Component {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS))
     )]
-    pub path: Option<String>,
+    pub path: Option<PathResource>,
 
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -74,8 +74,7 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::transform::Transform,
-        core::types::UuidResource,
+        core::{PathResource, transform::Transform, types::UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX},
     };
 
@@ -103,7 +102,7 @@ mod write_tests {
     #[test]
     pub fn toxml_production_component_test() {
         let xml_string = format!(
-            r#"<component xmlns="{}" xmlns:{}="{}" objectid="3" transform="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000 35.000000 35.000000 5.100000" {}:path="//somePath//Component" {}:UUID="someComponentUUID" />"#,
+            r#"<component xmlns="{}" xmlns:{}="{}" objectid="3" transform="1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000 35.000000 35.000000 5.100000" {}:path="/somePath/Component" {}:UUID="someComponentUUID" />"#,
             CORE_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX, PROD_PREFIX
         );
         let component = Component {
@@ -111,7 +110,7 @@ mod write_tests {
             transform: Some(Transform([
                 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
             ])),
-            path: Some("//somePath//Component".to_owned()),
+            path: Some(PathResource::try_from("//somePath//Component").unwrap()),
             uuid: UuidResource::from("someComponentUUID"),
         };
         let component_string = to_string(&component).unwrap();
@@ -156,8 +155,7 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::transform::Transform,
-        core::types::UuidResource,
+        core::{PathResource, transform::Transform, types::UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 
@@ -200,7 +198,7 @@ mod memory_optimized_read_tests {
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
-                path: Some("//somePath//Component".to_owned()),
+                path: Some(PathResource::try_from("//somePath//Component").unwrap()),
                 uuid: UuidResource::from("someComponentUUID"),
             }
         )
@@ -245,8 +243,7 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::transform::Transform,
-        core::types::UuidResource,
+        core::{PathResource, transform::Transform, types::UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 
@@ -289,7 +286,7 @@ mod speed_optimized_read_tests {
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
-                path: Some("//somePath//Component".to_owned()),
+                path: Some(PathResource::try_from("//somePath//Component").unwrap()),
                 uuid: UuidResource::from("someComponentUUID"),
             }
         )

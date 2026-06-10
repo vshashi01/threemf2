@@ -181,7 +181,7 @@ fn validate_object_to_slicestack_references(
 
     for obj_ref in obj_refs {
         if slicestack_refs.iter().any(|stack_ref| {
-            stack_ref.path == obj_ref.object.slicepath.as_deref()
+            stack_ref.path == obj_ref.object.slicepath.as_ref().map(|p| p.as_str())
                 && stack_ref.slicestack.id == obj_ref.object.slicestackid.unwrap_or(u32::MAX)
         }) {
             issues.push(ValidationIssue::new(Severity::Error, format!("Unable to find slicestack with id: {:?} in model path: {:?} referenced by Object with object id: {:?} in model path: {:?}", obj_ref.object.slicestackid, obj_ref.object.slicepath, obj_ref.object.id, obj_ref.path)));

@@ -142,7 +142,8 @@ pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
 pub use crate::core::model::Unit;
 pub use crate::core::object::ObjectType;
 use crate::core::types::{
-    OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIndex, UuidResource,
+    OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIndex,
+    UuidResource,
 };
 
 /// Errors that can occur when building a [`Model`].
@@ -1164,7 +1165,7 @@ pub struct ItemBuilder {
     objectid: ObjectId,
     transform: Option<Transform>,
     partnumber: Option<String>,
-    path: Option<String>,
+    path: Option<PathResource>,
     uuid: UuidResource,
 }
 
@@ -1229,12 +1230,17 @@ impl ItemBuilder {
     /// Only allowed when Production extension is enabled. The path specifies
     /// an alternative model file where the referenced object can be found.
     pub fn path(&mut self, path: &str) -> &mut Self {
-        self.path = Some(path.to_owned());
-        self
+        match PathResource::try_from(path) {
+            Ok(path) => {
+                self.path = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
     }
 
     fn build(self, is_production_ext_enabled: bool) -> Result<Item, ItemError> {
-        if !is_production_ext_enabled && self.path.is_some() {
+        if !is_production_ext_enabled && !self.path.is_none() {
             return Err(ItemError::ItemPathSetWithoutProductionExtension);
         } else if is_production_ext_enabled && self.uuid.is_none() {
             return Err(ItemError::ItemUuidNotSet);
@@ -1286,7 +1292,7 @@ pub struct ObjectBuilder<T> {
     entity: T,
     object_id: ObjectId,
     objecttype: Option<ObjectType>,
-    thumbnail: Option<String>,
+    thumbnail: Option<PathResource>,
     partnumber: Option<String>,
     name: Option<String>,
     pid: OptionalResourceId,
@@ -1910,7 +1916,7 @@ impl ComponentsBuilder {
 pub struct ComponentBuilder {
     objectid: u32,
     transform: Option<Transform>,
-    path: Option<String>,
+    path: Option<PathResource>,
     uuid: UuidResource,
 }
 
@@ -1942,8 +1948,13 @@ impl ComponentBuilder {
     /// Only allowed when Production extension is enabled. The path specifies
     /// an alternative model file where the referenced object can be found.
     pub fn path(&mut self, path: &str) -> &mut Self {
-        self.path = Some(path.to_owned());
-        self
+        match PathResource::try_from(path) {
+            Ok(path) => {
+                self.path = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
     }
 
     fn build(self) -> Component {
@@ -2060,7 +2071,7 @@ pub struct BooleanShapeBuilder {
     base_object_id: Option<ObjectId>,
     operation: BooleanOperation,
     base_transform: Option<Transform>,
-    base_path: Option<String>,
+    base_path: Option<PathResource>,
     booleans: Vec<BooleanOp>,
 }
 
@@ -2114,8 +2125,13 @@ impl BooleanShapeBuilder {
     ///
     /// - `path`: Path to the model file containing the base object
     pub fn base_path(&mut self, path: &str) -> &mut Self {
-        self.base_path = Some(path.to_owned());
-        self
+        match PathResource::try_from(path) {
+            Ok(path) => {
+                self.base_path = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
     }
 
     /// Add a boolean operand with the default configuration.
@@ -2174,7 +2190,7 @@ impl BooleanShapeBuilder {
 pub struct BooleanBuilder {
     objectid: ObjectId,
     transform: Option<Transform>,
-    path: Option<String>,
+    path: Option<PathResource>,
 }
 
 impl BooleanBuilder {
@@ -2204,8 +2220,13 @@ impl BooleanBuilder {
     ///
     /// - `path`: Path to the model file containing the operand object
     pub fn path(&mut self, path: &str) -> &mut Self {
-        self.path = Some(path.to_owned());
-        self
+        match PathResource::try_from(path) {
+            Ok(path) => {
+                self.path = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
     }
 
     fn build(self) -> BooleanOp {
@@ -2882,7 +2903,7 @@ impl SliceStackBuilder {
     pub fn add_sliceref(&mut self, slicestackid: ResourceId, slicepath: &str) -> &mut Self {
         self.slicerefs.push(SliceRef {
             slicestackid,
-            slicepath: slicepath.to_owned(),
+            slicepath: PathResource::try_from(slicepath).expect("Invalid PathResource"),
         });
         self
     }
@@ -3364,7 +3385,7 @@ mod tests {
             .add_build_item_advanced(obj_id, |i| {
                 i.transform(transform.clone())
                     .partnumber("part")
-                    .path("path")
+                    .path("/path/path.model")
                     .uuid("uuid");
             })
             .unwrap();
@@ -3374,7 +3395,10 @@ mod tests {
         assert_eq!(item.objectid, 1);
         assert_eq!(item.transform, Some(transform));
         assert_eq!(item.partnumber, Some("part".to_string()));
-        assert_eq!(item.path, Some("path".to_string()));
+        assert_eq!(
+            item.path,
+            Some(PathResource::try_from("/path/path.model").unwrap())
+        );
         assert_eq!(item.uuid, UuidResource::MaybeUuid("uuid".into()));
     }
 

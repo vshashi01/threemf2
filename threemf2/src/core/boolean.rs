@@ -8,7 +8,10 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{transform::Transform, types::ResourceId},
+    core::{
+        transform::Transform,
+        types::{PathResource, ResourceId},
+    },
     threemf_namespaces::BOOLEAN_NS,
 };
 
@@ -57,7 +60,8 @@ pub struct BooleanShape {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub path: Option<String>,
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub path: Option<PathResource>,
 
     /// The sequence of boolean operations to apply to the base object.
     /// Must contain at least one boolean operation.
@@ -104,7 +108,8 @@ pub struct Boolean {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub path: Option<String>,
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub path: Option<PathResource>,
 }
 
 /// Specifies the type of boolean operation to perform.

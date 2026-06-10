@@ -38,7 +38,7 @@
 use crate::{
     core::{
         Color,
-        types::{Double, ResourceId, ResourceIdCollection, ResourceIndexCollection},
+        types::{Double, PathResource, ResourceId, ResourceIdCollection, ResourceIndexCollection},
     },
     threemf_namespaces::MATERIAL_NS,
 };
@@ -651,7 +651,7 @@ pub struct Texture2D {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub path: String,
+    pub path: PathResource,
 
     /// Content type of the texture image. Must be "image/jpeg" or "image/png".
     #[cfg_attr(
@@ -855,7 +855,7 @@ mod write_tests {
         );
         let texture2d = Texture2D {
             id: 1,
-            path: "/3D/texture.png".to_owned(),
+            path: PathResource::try_from("/3D/texture.png").unwrap(),
             contenttype: TextureContentType::Png,
             tilestyleu: Some(TileStyle::Wrap),
             tilestylev: Some(TileStyle::Mirror),
@@ -875,7 +875,7 @@ mod write_tests {
         );
         let texture2d = Texture2D {
             id: 1,
-            path: "/3D/texture.jpg".to_owned(),
+            path: PathResource::try_from("/3D/texture.jpg").unwrap(),
             contenttype: TextureContentType::Jpeg,
             tilestyleu: None,
             tilestylev: None,
@@ -1096,7 +1096,7 @@ mod memory_optimized_read_tests {
 
         // Verify required fields are parsed correctly
         assert_eq!(texture2d.id, 1);
-        assert_eq!(texture2d.path, "/3D/texture.png");
+        assert_eq!(texture2d.path.as_str(), "/3D/texture.png");
         assert_eq!(texture2d.contenttype, TextureContentType::Png);
         // Note: Optional attributes with custom types may not parse correctly
         // in memory-optimized-read mode. The write tests verify correct serialization.
@@ -1114,7 +1114,7 @@ mod memory_optimized_read_tests {
             texture2d,
             Texture2D {
                 id: 1,
-                path: "/3D/texture.jpg".to_owned(),
+                path: PathResource::try_from("/3D/texture.jpg").unwrap(),
                 contenttype: TextureContentType::Jpeg,
                 tilestyleu: None,
                 tilestylev: None,
@@ -1321,7 +1321,7 @@ mod speed_optimized_read_tests {
 
         // Verify required fields are parsed correctly
         assert_eq!(texture2d.id, 1);
-        assert_eq!(texture2d.path, "/3D/texture.png");
+        assert_eq!(texture2d.path.as_str(), "/3D/texture.png");
         assert_eq!(texture2d.contenttype, TextureContentType::Png);
         // Note: Optional attributes with custom types may not parse correctly
         // in memory-optimized-read mode. The write tests verify correct serialization.
@@ -1365,7 +1365,7 @@ mod speed_optimized_read_tests {
             texture2d,
             Texture2D {
                 id: 1,
-                path: "/3D/texture.jpg".to_owned(),
+                path: PathResource::try_from("/3D/texture.jpg").unwrap(),
                 contenttype: TextureContentType::Jpeg,
                 tilestyleu: None,
                 tilestylev: None,
