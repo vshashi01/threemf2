@@ -157,7 +157,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            Color, OptionalResourceId, OptionalResourceIndex,
+            Color, OptionalResourceId, OptionalResourceIndex, PathResource,
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
                 MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -272,7 +272,7 @@ mod write_tests {
                 slice: vec![],
                 sliceref: vec![slice::SliceRef {
                     slicestackid: 154,
-                    slicepath: "/2D/model.model".to_owned(),
+                    slicepath: PathResource::try_from("/2D/model.model").unwrap(),
                 }],
             }],
             colorgroup: Vec::new(),
@@ -519,7 +519,7 @@ mod write_tests {
             multiproperties: Vec::new(),
             texture2d: vec![Texture2D {
                 id: 1,
-                path: "/3D/texture.png".to_owned(),
+                path: PathResource::try_from("/3D/texture.png").unwrap(),
                 contenttype: TextureContentType::Png,
                 tilestyleu: Some(TileStyle::Wrap),
                 tilestylev: Some(TileStyle::Mirror),
@@ -563,7 +563,7 @@ mod write_tests {
             multiproperties: Vec::new(),
             texture2d: vec![Texture2D {
                 id: 2,
-                path: "/3D/texture.png".to_owned(),
+                path: PathResource::try_from("/3D/texture.png").unwrap(),
                 contenttype: TextureContentType::Png,
                 tilestyleu: None,
                 tilestylev: None,
@@ -587,7 +587,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            Color, OptionalResourceId, OptionalResourceIndex,
+            Color, OptionalResourceId, OptionalResourceIndex, PathResource,
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Multi, MultiProperties,
                 Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -691,7 +691,7 @@ mod memory_optimized_read_tests {
                     slice: vec![],
                     sliceref: vec![slice::SliceRef {
                         slicestackid: 2,
-                        slicepath: "/2D/slices.model".to_owned(),
+                        slicepath: PathResource::try_from("/2D/slices.model").unwrap(),
                     }],
                 }],
                 colorgroup: Vec::new(),
@@ -944,7 +944,7 @@ mod memory_optimized_read_tests {
                 multiproperties: Vec::new(),
                 texture2d: vec![Texture2D {
                     id: 1,
-                    path: "/3D/texture.png".to_owned(),
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
                     contenttype: TextureContentType::Png,
                     tilestyleu: None,
                     tilestylev: None,
@@ -988,7 +988,7 @@ mod memory_optimized_read_tests {
                 multiproperties: Vec::new(),
                 texture2d: vec![Texture2D {
                     id: 2,
-                    path: "/3D/texture.png".to_owned(),
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
                     contenttype: TextureContentType::Png,
                     tilestyleu: None,
                     tilestylev: None,
@@ -1010,7 +1010,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            Color, OptionalResourceId, OptionalResourceIndex, UuidResource,
+            Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Multi, MultiProperties,
                 Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -1098,7 +1098,7 @@ mod speed_optimized_read_tests {
     #[test]
     pub fn fromxml_resources_with_slicestack_test() {
         let xml_string = format!(
-            r##"<resources xmlns="{}" xmlns:{}="{}"><{}:slicestack id="236" zbottom="0.5"><sliceref slicestackid="154" slicepath="/2D/model.model" /></{}:slicestack></resources>"##,
+            r##"<resources xmlns="{}" xmlns:{}="{}"><{}:slicestack id="236" zbottom="0.5"><sliceref slicestackid="154" slicepath="/2D/slices.model" /></{}:slicestack></resources>"##,
             CORE_NS, SLICE_PREFIX, SLICE_NS, SLICE_PREFIX, SLICE_PREFIX,
         );
         let resources = from_str::<Resources>(&xml_string).unwrap();
@@ -1114,7 +1114,7 @@ mod speed_optimized_read_tests {
                     slice: vec![],
                     sliceref: vec![slice::SliceRef {
                         slicestackid: 154,
-                        slicepath: "/2D/model.model".to_owned(),
+                        slicepath: PathResource::try_from("/2D/slices.model").unwrap(),
                     }],
                 }],
                 colorgroup: Vec::new(),
@@ -1367,7 +1367,7 @@ mod speed_optimized_read_tests {
                 multiproperties: Vec::new(),
                 texture2d: vec![Texture2D {
                     id: 1,
-                    path: "/3D/texture.png".to_owned(),
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
                     contenttype: TextureContentType::Png,
                     tilestyleu: None,
                     tilestylev: None,
@@ -1411,7 +1411,7 @@ mod speed_optimized_read_tests {
                 multiproperties: Vec::new(),
                 texture2d: vec![Texture2D {
                     id: 2,
-                    path: "/3D/texture.png".to_owned(),
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
                     contenttype: TextureContentType::Png,
                     tilestyleu: None,
                     tilestylev: None,

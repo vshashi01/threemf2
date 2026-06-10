@@ -14,7 +14,9 @@ use crate::{
         displacement::DisplacementMesh,
         mesh::Mesh,
         slice::MeshResolution,
-        types::{OptionalResourceId, OptionalResourceIndex, ResourceId, UuidResource},
+        types::{
+            OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, UuidResource,
+        },
     },
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS, SLICE_NS},
 };
@@ -56,7 +58,8 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub thumbnail: Option<String>,
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub thumbnail: Option<PathResource>,
 
     /// Optional string defining the part number for this object.
     #[cfg_attr(
@@ -135,7 +138,7 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(SLICE_NS))
     )]
-    pub slicepath: Option<String>,
+    pub slicepath: Option<PathResource>,
 
     /// Indicates the intended resolution of mesh models when slice data is present.
     /// "fullres" means the mesh can regenerate the slices; "lowres" means it cannot.
@@ -311,7 +314,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, UuidResource,
+            OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -387,13 +390,13 @@ mod write_tests {
     #[test]
     pub fn toxml_intermediate_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
+            r#"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part"></object>"#,
             CORE_NS, BOOLEAN_PREFIX, BOOLEAN_NS, PROD_PREFIX, PROD_NS, SLICE_PREFIX, SLICE_NS
         );
         let object = Object {
             id: 4,
             objecttype: Some(ObjectType::Model),
-            thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+            thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
             pid: OptionalResourceId::none(),
@@ -413,12 +416,12 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{CORE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{SLICE_PREFIX}="{SLICE_NS}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            r##"<object xmlns="{CORE_NS}" xmlns:{BOOLEAN_PREFIX}="{BOOLEAN_NS}" xmlns:{PROD_PREFIX}="{PROD_NS}" xmlns:{SLICE_PREFIX}="{SLICE_NS}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part"><mesh xmlns:{BEAM_LATTICE_PREFIX}="{BEAM_LATTICE_NS}" xmlns:{CORE_TRIANGLESET_PREFIX}="{CORE_TRIANGLESET_NS}"><vertices></vertices><triangles></triangles></mesh></object>"##,
         );
         let object = Object {
             id: 4,
             objecttype: Some(ObjectType::Model),
-            thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+            thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
             pid: OptionalResourceId::none(),
@@ -442,7 +445,7 @@ mod write_tests {
     #[test]
     pub fn toxml_advanced_component_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:slicepath="/2D/model_with_slice_stack.model" {}:meshresolution="lowres"><components><component objectid="23" /></components></object>"##,
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:slicepath="/2D/model_with_slice_stack.model" {}:meshresolution="lowres"><components><component objectid="23" /></components></object>"##,
             CORE_NS,
             BOOLEAN_PREFIX,
             BOOLEAN_NS,
@@ -457,14 +460,14 @@ mod write_tests {
         let object = Object {
             id: 4,
             objecttype: Some(ObjectType::Model),
-            thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+            thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
             partnumber: Some("part_1".to_string()),
             name: Some("Object Part".to_string()),
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: UuidResource::None,
             slicestackid: OptionalResourceId::new(236),
-            slicepath: Some("/2D/model_with_slice_stack.model".to_owned()),
+            slicepath: Some(PathResource::try_from("/2D/model_with_slice_stack.model").unwrap()),
             meshresolution: Some(slice::MeshResolution::LowRes),
             kind: Some(ObjectKind::Components(Components {
                 component: vec![Component {
@@ -519,7 +522,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, UuidResource,
+            OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -599,7 +602,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
@@ -626,7 +629,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
@@ -661,7 +664,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),
@@ -693,7 +696,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),
@@ -756,7 +759,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, UuidResource,
+            OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -836,7 +839,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
@@ -863,7 +866,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::new(123),
@@ -898,7 +901,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),
@@ -930,7 +933,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some("\\thumbnail\\part_thumbnail.png".to_string()),
+                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
                 partnumber: Some("part_1".to_string()),
                 name: Some("Object Part".to_string()),
                 pid: OptionalResourceId::none(),

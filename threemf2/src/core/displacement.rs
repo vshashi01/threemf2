@@ -14,7 +14,10 @@ use crate::{
     core::{
         beamlattice::BeamLattice,
         triangle_set::TriangleSets,
-        types::{Double, OptionalResourceId, OptionalResourceIndex, ResourceId, ResourceIndex},
+        types::{
+            Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId,
+            ResourceIndex,
+        },
     },
     threemf_namespaces::{BEAM_LATTICE_NS, CORE_TRIANGLESET_NS, DISPLACEMENT_NS},
 };
@@ -40,7 +43,7 @@ pub struct Displacement2D {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub path: String,
+    pub path: PathResource,
 
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
@@ -939,7 +942,7 @@ mod write_tests {
         );
         let displacement2d = Displacement2D {
             id: 1,
-            path: "/3D/Textures/displacement.png".to_owned(),
+            path: PathResource::try_from("/3D/Textures/displacement.png").unwrap(),
             channel: None,
             tilestyleu: None,
             tilestylev: None,
@@ -958,7 +961,7 @@ mod write_tests {
         );
         let displacement2d = Displacement2D {
             id: 2,
-            path: "/textures/disp.png".to_owned(),
+            path: PathResource::try_from("/textures/disp.png").unwrap(),
             channel: Some(ChannelName::R),
             tilestyleu: Some(TileStyle::Mirror),
             tilestylev: Some(TileStyle::Clamp),
@@ -1183,7 +1186,7 @@ mod memory_optimized_read_tests {
             displacement2d,
             Displacement2D {
                 id: 1,
-                path: "/3D/Textures/displacement.png".to_owned(),
+                path: PathResource::try_from("/3D/Textures/displacement.png").unwrap(),
                 channel: None,
                 tilestyleu: None,
                 tilestylev: None,
@@ -1202,7 +1205,7 @@ mod memory_optimized_read_tests {
 
         // Verify required fields are parsed correctly
         assert_eq!(displacement2d.id, 2);
-        assert_eq!(displacement2d.path, "/textures/disp.png");
+        assert_eq!(displacement2d.path.as_str(), "/textures/disp.png");
         // Note: Optional attributes with custom types may not parse correctly
         // in memory-optimized-read mode. The write tests verify correct serialization.
     }
@@ -1444,7 +1447,7 @@ mod speed_optimized_read_tests {
             displacement2d,
             Displacement2D {
                 id: 1,
-                path: "/3D/Textures/displacement.png".to_owned(),
+                path: PathResource::try_from("/3D/Textures/displacement.png").unwrap(),
                 channel: None,
                 tilestyleu: None,
                 tilestylev: None,
@@ -1463,7 +1466,7 @@ mod speed_optimized_read_tests {
 
         // Verify required fields are parsed correctly
         assert_eq!(displacement2d.id, 2);
-        assert_eq!(displacement2d.path, "/textures/disp.png");
+        assert_eq!(displacement2d.path.as_str(), "/textures/disp.png");
         // Note: Optional attributes with custom types may not parse correctly
         // in memory-optimized-read mode. The write tests verify correct serialization.
     }

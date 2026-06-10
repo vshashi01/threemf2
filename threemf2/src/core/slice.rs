@@ -44,7 +44,7 @@
 use crate::{
     core::{
         OptionalResourceId, OptionalResourceIndex, ResourceIndex,
-        types::{Double, ResourceId},
+        types::{Double, PathResource, ResourceId},
     },
     threemf_namespaces::SLICE_NS,
 };
@@ -173,7 +173,7 @@ pub struct SliceRef {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub slicepath: String,
+    pub slicepath: PathResource,
 }
 
 /// Individual 2D slice layer representing a horizontal cross-section.
@@ -485,7 +485,7 @@ mod write_tests {
     use instant_xml::{ToXml, to_string};
     use pretty_assertions::assert_eq;
 
-    use crate::threemf_namespaces::SLICE_NS;
+    use crate::{core::PathResource, threemf_namespaces::SLICE_NS};
 
     use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
 
@@ -599,7 +599,7 @@ mod write_tests {
         );
         let sliceref = SliceRef {
             slicestackid: 2,
-            slicepath: "/2D/slices.model".to_owned(),
+            slicepath: PathResource::try_from("/2D/slices.model").unwrap(),
         };
         let sliceref_string = to_string(&sliceref).unwrap();
 
@@ -659,11 +659,11 @@ mod write_tests {
             sliceref: vec![
                 SliceRef {
                     slicestackid: 2,
-                    slicepath: "/2D/slices1.model".to_owned(),
+                    slicepath: PathResource::try_from("/2D/slices1.model").unwrap(),
                 },
                 SliceRef {
                     slicestackid: 3,
-                    slicepath: "/2D/slices2.model".to_owned(),
+                    slicepath: PathResource::try_from("/2D/slices2.model").unwrap(),
                 },
             ],
         };
@@ -679,7 +679,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::core::{OptionalResourceId, OptionalResourceIndex};
+    use crate::core::{OptionalResourceId, OptionalResourceIndex, PathResource};
     use crate::threemf_namespaces::SLICE_NS;
 
     use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
@@ -769,7 +769,7 @@ mod memory_optimized_read_tests {
             sliceref,
             SliceRef {
                 slicestackid: 2,
-                slicepath: "/2D/slices.model".to_owned(),
+                slicepath: PathResource::try_from("/2D/slices.model").unwrap(),
             }
         );
     }
@@ -806,7 +806,7 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::core::{OptionalResourceId, OptionalResourceIndex};
+    use crate::core::{OptionalResourceId, OptionalResourceIndex, PathResource};
     use crate::threemf_namespaces::SLICE_NS;
 
     use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
@@ -896,7 +896,7 @@ mod speed_optimized_read_tests {
             sliceref,
             SliceRef {
                 slicestackid: 2,
-                slicepath: "/2D/slices.model".to_owned(),
+                slicepath: PathResource::try_from("/2D/slices.model").unwrap(),
             }
         );
     }

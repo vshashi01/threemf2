@@ -5,6 +5,7 @@
 //! - ResourceIndex = ST_ResourceIndex: Vertex indices, property indices (0 to 2^31-1)
 //! - Double = ST_Number: All number inputs in the form of 64-byte float number
 
+use std::fmt;
 use std::num::NonZeroU32;
 
 #[cfg(feature = "write")]
@@ -28,6 +29,154 @@ pub type ResourceId = u32;
 /// XSD: ST_ResourceIndex (xs:nonNegativeInteger, maxExclusive="2147483648")
 /// Used for: vertex indices (v1, v2, v3), property indices (p1, p2, p3, pindex)
 pub type ResourceIndex = u32;
+
+/// Path to a resource inside the 3MF package.
+///
+/// Normalization rules:
+/// - Backslashes are converted to forward slashes.
+/// - Multiple slashes collapse into a single slash.
+/// - A leading slash is enforced.
+/// - Dot segments ("." or "..") are rejected.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PathResource(String);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PathResourceError {
+    EmptyPathNotAllowed,
+    DotSegmentNotAllowed,
+}
+
+impl PathResource {
+    pub fn new(value: &str) -> Result<Self, PathResourceError> {
+        match normalize_path_resource(value) {
+            Ok(normalized) => Ok(Self(normalized)),
+            Err(err) => Err(err),
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+impl fmt::Display for PathResource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl TryFrom<&str> for PathResource {
+    type Error = PathResourceError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        PathResource::new(value)
+    }
+}
+
+impl TryFrom<String> for PathResource {
+    type Error = PathResourceError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        PathResource::new(&value)
+    }
+}
+
+impl From<PathResource> for String {
+    fn from(value: PathResource) -> Self {
+        value.0
+    }
+}
+
+#[cfg(feature = "speed-optimized-read")]
+impl<'de> Deserialize<'de> for PathResource {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = <std::string::String as Deserialize>::deserialize(deserializer)?;
+        if value.trim().is_empty() {
+            return Err(serde::de::Error::custom("Empty PathResource"));
+        }
+        PathResource::try_from(value).map_err(|_| serde::de::Error::custom("Invalid PathResource"))
+    }
+}
+
+#[cfg(feature = "write")]
+impl ToXml for PathResource {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<Id<'_>>,
+        serializer: &mut Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        serializer.write_str(&self.0)?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for PathResource {
+    fn matches(id: instant_xml::Id<'_>, field: Option<instant_xml::Id<'_>>) -> bool {
+        if let Some(field_id) = field {
+            id == field_id
+        } else {
+            false
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), Error> {
+        if into.is_some() {
+            return Err(Error::DuplicateValue(field));
+        }
+
+        let value = match deserializer.take_str()? {
+            Some(value) => value,
+            None => {
+                *into = None;
+                return Err(Error::MissingValue("PathResource value is not specified"));
+            }
+        };
+
+        if value.trim().is_empty() {
+            return Err(Error::MissingValue("Empty PathResource value"));
+        }
+
+        let value = PathResource::try_from(value.as_ref())
+            .map_err(|_| Error::MissingValue("Invalid PathResource value"))?;
+
+        *into = Some(value);
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: Kind = Kind::Scalar;
+}
+
+fn normalize_path_resource(input: &str) -> Result<String, PathResourceError> {
+    let replaced = input.replace('\\', "/");
+    let mut parts: Vec<&str> = Vec::new();
+
+    for part in replaced.split('/') {
+        if part.is_empty() {
+            continue;
+        }
+        if part == "." || part == ".." {
+            return Err(PathResourceError::DotSegmentNotAllowed);
+        }
+        parts.push(part);
+    }
+
+    if parts.is_empty() {
+        return Err(PathResourceError::EmptyPathNotAllowed);
+    }
+
+    let mut out = String::from("/");
+    out.push_str(&parts.join("/"));
+    Ok(out)
+}
 
 /// Optional UUID resource value used by the Production extension.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
