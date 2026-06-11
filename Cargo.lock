@@ -663,9 +663,9 @@ dependencies = [
 
 [[package]]
 name = "instant-xml"
-version = "0.7.4"
+version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5aab9a4682ad90fdb1dae4f2edbf1533f4a43d4dea366eb7447aca52489e9b4"
+checksum = "8863a17b9487acadbfc6a54f1215b67695dcc56d760c69cc08a16ad5e8fd5d0e"
 dependencies = [
  "instant-xml-macros",
  "thiserror",
