@@ -276,13 +276,13 @@ fn section_6_production_extension(package: &ThreemfPackage) {
 
     // Check for UUIDs on objects
     let objects_with_uuid = get_objects(package)
-        .filter(|o| !o.object.uuid.is_none())
+        .filter(|o| o.object.uuid.is_some())
         .count();
 
     println!("\nObjects with UUIDs: {}", objects_with_uuid);
 
     // Check build UUID
-    if let UuidResource::NotUuid(build_uuid) = &package.root.build.uuid {
+    if let Some(UuidResource::NotUuid(build_uuid)) = &package.root.build.uuid {
         println!("Root build UUID: {}", build_uuid);
     }
 

@@ -443,7 +443,7 @@ impl ModelBuilder {
             }
 
             if let Some(build) = &self.build {
-                if !build.uuid.is_none() {
+                if build.uuid.is_some() {
                     if build.items.iter().any(|i| i.uuid.is_none()) {
                         return Err(ProductionExtensionError::ItemUuidNotSet);
                     }
@@ -928,7 +928,7 @@ impl ModelBuilder {
             builder.build(self.is_production_ext_required)?
         } else {
             Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![],
             }
         };
@@ -1086,19 +1086,19 @@ pub enum BuildError {
 /// by [`ModelBuilder`].
 pub struct BuildBuilder {
     items: Vec<Item>,
-    uuid: UuidResource,
+    uuid: Option<UuidResource>,
 }
 
 impl BuildBuilder {
     fn new() -> Self {
         Self {
             items: Vec::new(),
-            uuid: UuidResource::None,
+            uuid: None,
         }
     }
 
     fn uuid(&mut self, uuid: UuidResource) -> &mut Self {
-        self.uuid = uuid;
+        self.uuid = Some(uuid);
 
         self
     }
@@ -1166,7 +1166,7 @@ pub struct ItemBuilder {
     transform: Option<Transform>,
     partnumber: Option<String>,
     path: Option<PathResource>,
-    uuid: UuidResource,
+    uuid: Option<UuidResource>,
 }
 
 impl ItemBuilder {
@@ -1176,7 +1176,7 @@ impl ItemBuilder {
             transform: None,
             partnumber: None,
             path: None,
-            uuid: UuidResource::None,
+            uuid: None,
         }
     }
 
@@ -1221,7 +1221,7 @@ impl ItemBuilder {
     ///
     /// Required when Production extension is enabled.
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
-        self.uuid = UuidResource::from(uuid);
+        self.uuid = Some(UuidResource::from(uuid));
         self
     }
 
@@ -1297,7 +1297,7 @@ pub struct ObjectBuilder<T> {
     name: Option<String>,
     pid: OptionalResourceId,
     pindex: OptionalResourceIndex,
-    uuid: UuidResource,
+    uuid: Option<UuidResource>,
 
     // sets if the production ext is required.
     // if yes will ensure UUID is set before building the object
@@ -1324,7 +1324,7 @@ impl<T> ObjectBuilder<T> {
     }
 
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
-        self.uuid = UuidResource::from(uuid);
+        self.uuid = Some(UuidResource::from(uuid));
         self
     }
 }
@@ -1396,7 +1396,7 @@ impl MeshObjectBuilder {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             is_production_ext_required,
         }
     }
@@ -1777,7 +1777,7 @@ impl ComponentsObjectBuilder {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             is_production_ext_required,
         }
     }
@@ -1883,7 +1883,7 @@ impl ComponentsBuilder {
         is_production_ext_required: bool,
     ) -> Result<Components, ComponentsObjectError> {
         if is_production_ext_required {
-            let all_uuid_set = self.components.iter().all(|c| !c.uuid.is_none());
+            let all_uuid_set = self.components.iter().all(|c| c.uuid.is_some());
             if !all_uuid_set {
                 return Err(ComponentsObjectError::ComponentUuidNotSet);
             }
@@ -1917,7 +1917,7 @@ pub struct ComponentBuilder {
     objectid: u32,
     transform: Option<Transform>,
     path: Option<PathResource>,
-    uuid: UuidResource,
+    uuid: Option<UuidResource>,
 }
 
 impl ComponentBuilder {
@@ -1926,7 +1926,7 @@ impl ComponentBuilder {
             objectid: object_id.0,
             transform: None,
             path: None,
-            uuid: UuidResource::None,
+            uuid: None,
         }
     }
 
@@ -1939,7 +1939,7 @@ impl ComponentBuilder {
     ///
     /// Required when Production extension is enabled.
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
-        self.uuid = UuidResource::from(uuid);
+        self.uuid = Some(UuidResource::from(uuid));
         self
     }
 
@@ -2034,7 +2034,7 @@ impl BooleanObjectBuilder {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             is_production_ext_required,
         }
     }
@@ -3399,7 +3399,7 @@ mod tests {
             item.path,
             Some(PathResource::try_from("/path/path.model").unwrap())
         );
-        assert_eq!(item.uuid, UuidResource::MaybeUuid("uuid".into()));
+        assert_eq!(item.uuid, Some(UuidResource::MaybeUuid("uuid".into())));
     }
 
     #[cfg(not(feature = "uuid"))]
@@ -3425,7 +3425,7 @@ mod tests {
         );
         assert_eq!(obj.name, Some("support obj".to_string()));
         assert_eq!(obj.partnumber, Some("part123".to_string()));
-        assert_eq!(obj.uuid, UuidResource::MaybeUuid("obj-uuid".into()));
+        assert_eq!(obj.uuid, Some(UuidResource::MaybeUuid("obj-uuid".into())));
     }
 
     #[test]

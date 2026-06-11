@@ -19,7 +19,7 @@ use std::io::BufWriter;
 
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex, UuidResource,
+        OptionalResourceId, OptionalResourceIndex,
         boolean::{Boolean, BooleanOperation, BooleanShape},
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
@@ -327,7 +327,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         name: Some("Cube".to_string()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
-        uuid: UuidResource::None,
+        uuid: None,
         slicestackid: OptionalResourceId::none(),
         slicepath: None,
         meshresolution: None,
@@ -342,7 +342,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         name: Some("Sphere".to_string()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
-        uuid: UuidResource::None,
+        uuid: None,
         slicestackid: OptionalResourceId::none(),
         slicepath: None,
         meshresolution: None,
@@ -357,7 +357,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         name: Some("CubeMinusSphere".to_string()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
-        uuid: UuidResource::None,
+        uuid: None,
         slicestackid: OptionalResourceId::none(),
         slicepath: None,
         meshresolution: None,
@@ -395,13 +395,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             disp2dgroup: Vec::new(),
         },
         build: Build {
-            uuid: UuidResource::None,
+            uuid: None,
             item: vec![Item {
                 objectid: 3, // Build the boolean result
                 transform: None,
                 partnumber: None,
                 path: None,
-                uuid: UuidResource::None,
+                uuid: None,
             }],
         },
     };

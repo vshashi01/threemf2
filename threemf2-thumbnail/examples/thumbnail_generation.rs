@@ -6,7 +6,6 @@
 //! Run with: cargo run --example thumbnail_generation --features thumbnail-generation
 
 use threemf2::core::{
-    UuidResource,
     model::{Model, ThreemfExtensions},
     object::ObjectKind,
 };
@@ -196,7 +195,7 @@ fn create_cube_model() -> Model {
         pindex: OptionalResourceIndex::none(),
         thumbnail: None,
         partnumber: None,
-        uuid: UuidResource::None,
+        uuid: None,
         objecttype: None,
         meshresolution: None,
         slicestackid: OptionalResourceId::none(),
@@ -218,12 +217,12 @@ fn create_cube_model() -> Model {
     };
 
     let build = Build {
-        uuid: UuidResource::None,
+        uuid: None,
         item: vec![Item {
             objectid: 1,
             transform: None,
             partnumber: None,
-            uuid: UuidResource::None,
+            uuid: None,
             path: None,
         }],
     };

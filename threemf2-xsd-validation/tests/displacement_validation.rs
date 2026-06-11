@@ -5,7 +5,7 @@ use std::io::Cursor;
 
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
+        OptionalResourceId, OptionalResourceIndex, PathResource,
         build::{Build, Item},
         displacement::{
             Disp2DCoord, Disp2DGroup, Displacement2D, DisplacementMesh, NormVector,
@@ -45,7 +45,7 @@ fn validate_displacement_model_schema() {
                 name: Some("Disp".to_owned()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: UuidResource::None,
+                uuid: None,
                 kind: Some(ObjectKind::DisplacementMesh(DisplacementMesh {
                     vertices: Vertices {
                         vertex: vec![
@@ -199,13 +199,13 @@ fn validate_displacement_model_schema() {
             }],
         },
         build: Build {
-            uuid: UuidResource::None,
+            uuid: None,
             item: vec![Item {
                 objectid: 1,
                 transform: None,
                 partnumber: None,
                 path: None,
-                uuid: UuidResource::None,
+                uuid: None,
             }],
         },
     };

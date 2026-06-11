@@ -1,6 +1,6 @@
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex, UuidResource,
+        OptionalResourceId, OptionalResourceIndex,
         build::{Build, Item},
         mesh::{self, Mesh, Triangle, Triangles, Vertices},
         model::{Model, ThreemfExtensions, Unit},
@@ -203,7 +203,7 @@ fn main() {
         name: Some("SlicedCube".to_owned()),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
-        uuid: UuidResource::None,
+        uuid: None,
         slicestackid: OptionalResourceId::new(1), // References slice stack with id=1
         slicepath: None,                          // Slice stack is in the same file
         meshresolution: Some(MeshResolution::LowRes), // Mesh is low resolution
@@ -232,13 +232,13 @@ fn main() {
 
     // Create build section
     let build = Build {
-        uuid: UuidResource::None,
+        uuid: None,
         item: vec![Item {
             objectid: 1,
             transform: None,
             partnumber: None,
             path: None,
-            uuid: UuidResource::None,
+            uuid: None,
         }],
     };
 

@@ -730,7 +730,7 @@ mod tests {
                 displacement2d: vec![],
             },
             build: Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![],
             },
             requiredextensions: ThreemfExtensions::default(),

@@ -48,7 +48,11 @@ mod tests {
                 assert!(object_by_id.is_some());
 
                 let can_find_build_item_by_uuid = package.root.build.item.iter().find(|i| {
-                    i.uuid.to_string().as_deref() == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
+                    i.uuid
+                        .as_ref()
+                        .map(|uuid| uuid.to_string().unwrap())
+                        .as_deref()
+                        == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
                 });
                 assert!(can_find_build_item_by_uuid.is_some());
             }
@@ -98,7 +102,11 @@ mod tests {
                 assert!(object_by_id.is_some());
 
                 let can_find_build_item_by_uuid = package.root.build.item.iter().find(|i| {
-                    i.uuid.to_string().as_deref() == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
+                    i.uuid
+                        .as_ref()
+                        .map(|uuid| uuid.to_string().unwrap())
+                        .as_deref()
+                        == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
                 });
                 assert!(can_find_build_item_by_uuid.is_some());
             }
@@ -156,7 +164,11 @@ mod tests {
                                 total_objects += 1;
                                 if obj.get_mesh().is_some() {
                                     mesh_objects += 1;
-                                    if obj.uuid.to_string().as_deref()
+                                    if obj
+                                        .uuid
+                                        .as_ref()
+                                        .map(|uuid| uuid.to_string().unwrap())
+                                        .as_deref()
                                         == Some("79f98073-4eaa-4737-b065-041b98fb50a6")
                                     {
                                         found_object_by_uuid = true;
@@ -180,7 +192,11 @@ mod tests {
                 // Check build item UUID in root model
                 let root_model = package.root_model().unwrap();
                 let can_find_build_item_by_uuid = root_model.build.item.iter().find(|i| {
-                    i.uuid.to_string().as_deref() == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
+                    i.uuid
+                        .as_ref()
+                        .map(|uuid| uuid.to_string().unwrap())
+                        .as_deref()
+                        == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
                 });
                 assert!(can_find_build_item_by_uuid.is_some());
 
@@ -241,7 +257,11 @@ mod tests {
                                 total_objects += 1;
                                 if obj.get_mesh().is_some() {
                                     mesh_objects += 1;
-                                    if obj.uuid.to_string().as_deref()
+                                    if obj
+                                        .uuid
+                                        .as_ref()
+                                        .map(|uuid| uuid.to_string().unwrap())
+                                        .as_deref()
                                         == Some("79f98073-4eaa-4737-b065-041b98fb50a6")
                                     {
                                         found_object_by_uuid = true;
@@ -265,7 +285,11 @@ mod tests {
                 // Check build item UUID in root model
                 let root_model = package.root_model().unwrap();
                 let can_find_build_item_by_uuid = root_model.build.item.iter().find(|i| {
-                    i.uuid.to_string().as_deref() == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
+                    i.uuid
+                        .as_ref()
+                        .map(|uuid| uuid.to_string().unwrap())
+                        .as_deref()
+                        == Some("637f47fa-39e6-4363-b3a9-100329fc5d9c")
                 });
                 assert!(can_find_build_item_by_uuid.is_some());
 

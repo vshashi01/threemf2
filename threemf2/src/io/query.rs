@@ -502,7 +502,7 @@ impl<'a> MeshObjectRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.to_string(),
+            uuid: o.object.uuid.as_ref().map(|uuid| uuid.to_string().unwrap()),
             origin_model_path: o.path,
         })
     }
@@ -556,7 +556,7 @@ impl<'a> DisplacementMeshObjectRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.to_string(),
+            uuid: o.object.uuid.as_ref().map(|uuid| uuid.to_string().unwrap()),
             origin_model_path: o.path,
         })
     }
@@ -796,7 +796,7 @@ impl<'a> ComponentsObjectRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.to_string(),
+            uuid: o.object.uuid.as_ref().map(|uuid| uuid.to_string().unwrap()),
             origin_model_path: o.path,
         })
     }
@@ -838,7 +838,7 @@ impl<'a> ComponentsObjectRef<'a> {
                 objectid: c.objectid,
                 transform: c.transform.clone(),
                 path_to_look_for: comp_path,
-                uuid: c.uuid.to_string(),
+                uuid: c.uuid.as_ref().map(|uuid| uuid.to_string().unwrap()),
             }
         })
     }
@@ -918,7 +918,7 @@ impl<'a> BooleanShapeRef<'a> {
             name: o.object.name.clone(),
             pid: o.object.pid,
             pindex: o.object.pindex,
-            uuid: o.object.uuid.to_string(),
+            uuid: o.object.uuid.as_ref().map(|uuid| uuid.to_string().unwrap()),
             origin_model_path: o.path,
         })
     }
@@ -1331,7 +1331,10 @@ impl<'a> ItemRef<'a> {
     ///
     /// * [`get_item_by_uuid()`] - Find an item by its UUID
     pub fn uuid(&self) -> Option<String> {
-        self.item.uuid.to_string()
+        self.item
+            .uuid
+            .as_ref()
+            .map(|uuid| uuid.to_string().unwrap())
     }
 }
 
@@ -1805,7 +1808,15 @@ pub fn get_items_by_objectid<'a>(
 /// * [`ItemRef::uuid()`] - Get UUID from an item reference
 /// * [`get_items()`] - Get all items (to find items with UUIDs)
 pub fn get_item_by_uuid<'a>(package: &'a ThreemfPackage, uuid: &str) -> Option<ItemRef<'a>> {
-    get_items(package).find(|item_ref| item_ref.item.uuid.to_string().as_deref() == Some(uuid))
+    get_items(package).find(|item_ref| {
+        item_ref
+            .item
+            .uuid
+            .as_ref()
+            .map(|uuid| uuid.to_string().unwrap())
+            .as_deref()
+            == Some(uuid)
+    })
 }
 
 /// A reference to a model within a package, with path information for sub-models.
@@ -2894,7 +2905,7 @@ pub fn get_texture_for_group<'a>(
 #[cfg(feature = "io-memory-optimized-read")]
 #[cfg(test)]
 mod tests {
-    use crate::core::{UuidResource, material::TextureContentType, model::ThreemfExtensions};
+    use crate::core::{material::TextureContentType, model::ThreemfExtensions};
 
     use super::*;
 
@@ -3448,7 +3459,7 @@ mod tests {
                 disp2dgroup: Vec::new(),
             },
             build: crate::core::build::Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![],
             },
         };
@@ -3524,7 +3535,7 @@ mod tests {
                 disp2dgroup: Vec::new(),
             },
             build: crate::core::build::Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![],
             },
         };
