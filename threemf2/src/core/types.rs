@@ -179,11 +179,8 @@ fn normalize_path_resource(input: &str) -> Result<String, PathResourceError> {
 }
 
 /// Optional UUID resource value used by the Production extension.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum UuidResource {
-    /// Attribute not present.
-    #[default]
-    None,
     /// UUID string present but not validated.
     #[cfg(not(feature = "uuid"))]
     MaybeUuid(String),
@@ -196,13 +193,8 @@ pub enum UuidResource {
 }
 
 impl UuidResource {
-    pub fn is_none(&self) -> bool {
-        matches!(self, Self::None)
-    }
-
     pub fn as_str(&self) -> Option<&str> {
         match self {
-            Self::None => None,
             #[cfg(not(feature = "uuid"))]
             Self::MaybeUuid(value) => Some(value.as_str()),
             #[cfg(feature = "uuid")]
@@ -214,7 +206,6 @@ impl UuidResource {
 
     pub fn to_string(&self) -> Option<String> {
         match self {
-            Self::None => None,
             #[cfg(not(feature = "uuid"))]
             Self::MaybeUuid(value) => Some(value.clone()),
             #[cfg(feature = "uuid")]
@@ -225,28 +216,28 @@ impl UuidResource {
     }
 
     #[cfg(feature = "uuid")]
-    fn from_string_with_uuid(value: String) -> Self {
-        match Uuid::parse_str(value.as_str()) {
+    fn from_string_with_uuid(value: &str) -> Self {
+        match Uuid::parse_str(value) {
             Ok(parsed) => Self::Uuid(parsed),
-            Err(_) => Self::NotUuid(value),
+            Err(_) => Self::NotUuid(value.to_owned()),
         }
     }
 
     #[cfg(not(feature = "uuid"))]
-    fn from_string_with_uuid(value: String) -> Self {
-        Self::MaybeUuid(value)
+    fn from_string_with_uuid(value: &str) -> Self {
+        Self::MaybeUuid(value.to_owned())
     }
 }
 
 impl From<String> for UuidResource {
     fn from(value: String) -> Self {
-        Self::from_string_with_uuid(value)
+        Self::from_string_with_uuid(value.as_str())
     }
 }
 
 impl From<&str> for UuidResource {
     fn from(value: &str) -> Self {
-        Self::from_string_with_uuid(value.to_owned())
+        Self::from_string_with_uuid(value)
     }
 }
 
@@ -273,10 +264,6 @@ impl ToXml for UuidResource {
         }
         Ok(())
     }
-
-    fn present(&self) -> bool {
-        !self.is_none()
-    }
 }
 
 #[cfg(feature = "memory-optimized-read")]
@@ -294,29 +281,28 @@ impl<'xml> FromXml<'xml> for UuidResource {
         field: &'static str,
         deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
     ) -> Result<(), Error> {
-        if !matches!(into, Self::None) {
+        if into.is_some() {
             return Err(Error::DuplicateValue(field));
         }
 
-        let value = match deserializer.take_str()? {
-            Some(value) => Self::from(value.trim().to_owned()),
-            None => Self::None,
-        };
+        let value = deserializer
+            .take_str()?
+            .map(|value| Self::from(value.trim()));
 
         *into = value;
         Ok(())
     }
 
-    type Accumulator = Self;
+    type Accumulator = Option<Self>;
     const KIND: Kind = Kind::Scalar;
 }
 
-#[cfg(feature = "memory-optimized-read")]
-impl instant_xml::Accumulate<UuidResource> for UuidResource {
-    fn try_done(self, _: &'static str) -> Result<UuidResource, Error> {
-        Ok(self)
-    }
-}
+// #[cfg(feature = "memory-optimized-read")]
+// impl instant_xml::Accumulate<UuidResource> for UuidResource {
+//     fn try_done(self, _: &'static str) -> Result<UuidResource, Error> {
+//         Ok(self)
+//     }
+// }
 
 /// Compact Optional type for ResourceId with [`Option<NonZeroU32>`]
 /// (4 bytes vs 8 bytes for [`Option<u32>`])
@@ -1153,13 +1139,6 @@ impl Color {
 #[cfg(test)]
 mod uuid_resource_tests {
     use super::UuidResource;
-
-    #[test]
-    fn uuid_resource_default_is_none() {
-        let value = UuidResource::default();
-        assert!(value.is_none());
-        assert_eq!(value.to_string(), None);
-    }
 
     #[cfg(not(feature = "uuid"))]
     #[test]

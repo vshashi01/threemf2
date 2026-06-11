@@ -647,7 +647,7 @@ mod tests {
                             name: Some("Some object".to_owned()),
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
-                            uuid: UuidResource::from("uuid"),
+                            uuid: Some(UuidResource::from("uuid")),
                             slicestackid: OptionalResourceId::none(),
                             slicepath: None,
                             meshresolution: None,
@@ -665,7 +665,7 @@ mod tests {
                         disp2dgroup: Vec::new(),
                     },
                     build: Build {
-                        uuid: UuidResource::None,
+                        uuid: None,
                         item: vec![],
                     },
                 },
@@ -706,7 +706,7 @@ mod tests {
     #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
     #[test]
     pub fn io_unknown_content_test() {
-        use crate::core::{UuidResource, model::ThreemfExtensions};
+        use crate::core::model::ThreemfExtensions;
 
         let test_file_bytes = include_bytes!("../../tests/data/test.txt");
         let mut writer = Cursor::new(Vec::<u8>::new());
@@ -732,7 +732,7 @@ mod tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: UuidResource::None,
+                    uuid: None,
                     item: vec![],
                 },
             },
@@ -796,7 +796,7 @@ mod tests {
     #[test]
     pub fn io_thumbnail_content_test() {
         use crate::{
-            core::{UuidResource, model::ThreemfExtensions},
+            core::model::ThreemfExtensions,
             io::thumbnail_handle::{ImageFormat, ThumbnailHandle},
         };
 
@@ -829,7 +829,7 @@ mod tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: UuidResource::None,
+                    uuid: None,
                     item: vec![],
                 },
             },

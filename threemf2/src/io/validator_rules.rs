@@ -317,7 +317,7 @@ mod tests {
         model::ThreemfExtensions,
         object::{Object, ObjectKind},
         resources::{BaseMaterials, Resources},
-        types::{OptionalResourceId, UuidResource},
+        types::OptionalResourceId,
     };
 
     fn create_test_model(resources: Resources, build: Build) -> Model {
@@ -340,7 +340,7 @@ mod tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -357,7 +357,7 @@ mod tests {
             name: None,
             pid: OptionalResourceId::new(pid),
             pindex: crate::core::types::OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -367,7 +367,7 @@ mod tests {
 
     fn create_empty_build() -> Build {
         Build {
-            uuid: UuidResource::None,
+            uuid: None,
             item: Vec::new(),
         }
     }
@@ -577,7 +577,7 @@ mod tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::new(0),
-            uuid: UuidResource::None,
+            uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -666,7 +666,7 @@ mod tests {
     // Helper functions for Build and Component tests
     fn create_test_build_with_items(items: Vec<crate::core::build::Item>) -> Build {
         Build {
-            uuid: UuidResource::None,
+            uuid: None,
             item: items,
         }
     }
@@ -677,7 +677,7 @@ mod tests {
             transform: None,
             partnumber: None,
             path: None,
-            uuid: UuidResource::None,
+            uuid: None,
         }
     }
 
@@ -686,7 +686,7 @@ mod tests {
             objectid,
             transform: None,
             path: None,
-            uuid: UuidResource::None,
+            uuid: None,
         }
     }
 
@@ -702,7 +702,7 @@ mod tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -721,7 +721,7 @@ mod tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: crate::core::types::OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,

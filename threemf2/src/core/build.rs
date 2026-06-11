@@ -30,7 +30,7 @@ pub struct Build {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS), rename = "UUID")
     )]
-    pub uuid: UuidResource,
+    pub uuid: Option<UuidResource>,
 
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub item: Vec<Item>,
@@ -72,7 +72,7 @@ pub struct Item {
         xml(attribute, ns(PROD_NS), rename = "UUID")
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID", default))]
-    pub uuid: UuidResource,
+    pub uuid: Option<UuidResource>,
 }
 
 #[cfg(feature = "write")]
@@ -100,7 +100,7 @@ mod write_tests {
             partnumber: Some("part_1".to_string()),
             transform: None,
             path: None,
-            uuid: UuidResource::None,
+            uuid: None,
         };
         let item_string = to_string(&item).unwrap();
 
@@ -118,7 +118,7 @@ mod write_tests {
             partnumber: Some("part_1".to_string()),
             transform: None,
             path: Some(PathResource::try_from("//somePath//Item").unwrap()),
-            uuid: UuidResource::from("someUUID"),
+            uuid: Some(UuidResource::from("someUUID")),
         };
         let item_string = to_string(&item).unwrap();
 
@@ -132,21 +132,21 @@ mod write_tests {
             CORE_NS, PROD_PREFIX, PROD_NS
         );
         let build = Build {
-            uuid: UuidResource::None,
+            uuid: None,
             item: vec![
                 Item {
                     objectid: 6,
                     partnumber: Some("part_1".to_string()),
                     transform: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 },
                 Item {
                     objectid: 6,
                     partnumber: Some("part_2".to_string()),
                     transform: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 },
             ],
         };
@@ -162,21 +162,21 @@ mod write_tests {
             CORE_NS, PROD_PREFIX, PROD_NS, PROD_PREFIX, PROD_PREFIX, PROD_PREFIX
         );
         let build = Build {
-            uuid: UuidResource::from("someUUID"),
+            uuid: Some(UuidResource::from("someUUID")),
             item: vec![
                 Item {
                     objectid: 6,
                     partnumber: Some("part_1".to_string()),
                     transform: None,
                     path: None,
-                    uuid: UuidResource::from("someItemUUID1"),
+                    uuid: Some(UuidResource::from("someItemUUID1")),
                 },
                 Item {
                     objectid: 6,
                     partnumber: Some("part_2".to_string()),
                     transform: None,
                     path: None,
-                    uuid: UuidResource::from("someItemUUID2"),
+                    uuid: Some(UuidResource::from("someItemUUID2")),
                 },
             ],
         };
@@ -216,7 +216,7 @@ mod memory_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
                 path: None,
-                uuid: UuidResource::None,
+                uuid: None,
             }
         );
     }
@@ -239,7 +239,7 @@ mod memory_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
                 path: Some(PathResource::try_from("//somePath//Item").unwrap()),
-                uuid: UuidResource::from("someUUID"),
+                uuid: Some(UuidResource::from("someUUID")),
             }
         );
     }
@@ -255,21 +255,21 @@ mod memory_optimized_read_tests {
         assert_eq!(
             build_string,
             Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![
                     Item {
                         objectid: 6,
                         partnumber: Some("part_1".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                     Item {
                         objectid: 6,
                         partnumber: Some("part_2".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                 ],
             }
@@ -293,21 +293,21 @@ mod memory_optimized_read_tests {
         assert_eq!(
             build_string,
             Build {
-                uuid: UuidResource::from("someBuildUUID"),
+                uuid: Some(UuidResource::from("someBuildUUID")),
                 item: vec![
                     Item {
                         objectid: 6,
                         partnumber: Some("part_1".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::from("someItemUUID1"),
+                        uuid: Some(UuidResource::from("someItemUUID1")),
                     },
                     Item {
                         objectid: 6,
                         partnumber: Some("part_2".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::from("someItemUUID2"),
+                        uuid: Some(UuidResource::from("someItemUUID2")),
                     },
                 ],
             }
@@ -345,7 +345,7 @@ mod speed_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
                 path: None,
-                uuid: UuidResource::None,
+                uuid: None,
             }
         );
     }
@@ -368,7 +368,7 @@ mod speed_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
                 path: Some(PathResource::try_from("//somePath//Item").unwrap()),
-                uuid: UuidResource::from("someUUID"),
+                uuid: Some(UuidResource::from("someUUID")),
             }
         );
     }
@@ -384,21 +384,21 @@ mod speed_optimized_read_tests {
         assert_eq!(
             build_string,
             Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![
                     Item {
                         objectid: 6,
                         partnumber: Some("part_1".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                     Item {
                         objectid: 6,
                         partnumber: Some("part_2".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                 ],
             }
@@ -422,21 +422,21 @@ mod speed_optimized_read_tests {
         assert_eq!(
             build_string,
             Build {
-                uuid: UuidResource::from("someBuildUUID"),
+                uuid: Some(UuidResource::from("someBuildUUID")),
                 item: vec![
                     Item {
                         objectid: 6,
                         partnumber: Some("part_1".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::from("someItemUUID1"),
+                        uuid: Some(UuidResource::from("someItemUUID1")),
                     },
                     Item {
                         objectid: 6,
                         partnumber: Some("part_2".to_string()),
                         transform: None,
                         path: None,
-                        uuid: UuidResource::from("someItemUUID2"),
+                        uuid: Some(UuidResource::from("someItemUUID2")),
                     },
                 ],
             }

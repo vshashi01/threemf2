@@ -156,7 +156,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, UuidResource,
+            OptionalResourceId, OptionalResourceIndex,
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
@@ -329,7 +329,7 @@ mod write_tests {
             name: None,
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
-            uuid: UuidResource::None,
+            uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
@@ -373,7 +373,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, UuidResource,
+            OptionalResourceId, OptionalResourceIndex,
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
@@ -536,7 +536,7 @@ mod memory_optimized_read_tests {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: UuidResource::None,
+                uuid: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -572,7 +572,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, UuidResource,
+            OptionalResourceId, OptionalResourceIndex,
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
@@ -735,7 +735,7 @@ mod speed_optimized_read_tests {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: UuidResource::None,
+                uuid: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,

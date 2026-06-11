@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
+        Color, OptionalResourceId, OptionalResourceIndex, PathResource,
         build::{Build, Item},
         material::{
             ColorElement, ColorGroup, Filter, Multi, MultiProperties, Tex2Coord, Texture2D,
@@ -142,7 +142,7 @@ fn validate_simple_colorgroup() {
                     name: Some("Colored Mesh".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: UuidResource::None,
+                    uuid: None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -160,13 +160,13 @@ fn validate_simple_colorgroup() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 }],
             },
         },
@@ -314,7 +314,7 @@ fn validate_texture2d_with_uv_mapping() {
                     name: Some("Textured Mesh".to_owned()),
                     pid: OptionalResourceId::new(2), // Reference texture group
                     pindex: OptionalResourceIndex::none(),
-                    uuid: UuidResource::None,
+                    uuid: None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -332,13 +332,13 @@ fn validate_texture2d_with_uv_mapping() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 }],
             },
         },
@@ -519,7 +519,7 @@ fn validate_multi_properties() {
                     name: Some("Multi Property Mesh".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: UuidResource::None,
+                    uuid: None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -537,13 +537,13 @@ fn validate_multi_properties() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 }],
             },
         },
@@ -689,7 +689,7 @@ fn validate_vertex_color_application() {
                     name: Some("Vertex Colored Quad".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: UuidResource::None,
+                    uuid: None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -707,13 +707,13 @@ fn validate_vertex_color_application() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 }],
             },
         },

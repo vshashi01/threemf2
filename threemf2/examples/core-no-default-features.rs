@@ -1,5 +1,5 @@
 use threemf2::core::{
-    OptionalResourceId, UuidResource,
+    OptionalResourceId,
     build::{Build, Item},
     mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
     metadata::Metadata,
@@ -35,7 +35,7 @@ fn main() {
                 name: None,
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
-                uuid: UuidResource::None,
+                uuid: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
@@ -74,13 +74,13 @@ fn main() {
             disp2dgroup: Vec::new(),
         },
         build: Build {
-            uuid: UuidResource::None,
+            uuid: None,
             item: vec![Item {
                 objectid: 1,
                 transform: None,
                 partnumber: None,
                 path: None,
-                uuid: UuidResource::None,
+                uuid: None,
             }],
         },
     };

@@ -64,7 +64,7 @@ pub struct Component {
         xml(attribute, ns(PROD_NS), rename = "UUID")
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID", default))]
-    pub uuid: UuidResource,
+    pub uuid: Option<UuidResource>,
 }
 
 #[cfg(feature = "write")]
@@ -92,7 +92,7 @@ mod write_tests {
                 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
             ])),
             path: None,
-            uuid: UuidResource::None,
+            uuid: None,
         };
         let component_string = to_string(&component).unwrap();
 
@@ -111,7 +111,7 @@ mod write_tests {
                 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
             ])),
             path: Some(PathResource::try_from("//somePath//Component").unwrap()),
-            uuid: UuidResource::from("someComponentUUID"),
+            uuid: Some(UuidResource::from("someComponentUUID")),
         };
         let component_string = to_string(&component).unwrap();
 
@@ -132,13 +132,13 @@ mod write_tests {
                         1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
                     ])),
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 },
                 Component {
                     objectid: 5,
                     transform: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 },
             ],
         };
@@ -177,7 +177,7 @@ mod memory_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: None,
-                uuid: UuidResource::None,
+                uuid: None,
             }
         )
     }
@@ -199,7 +199,7 @@ mod memory_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: Some(PathResource::try_from("//somePath//Component").unwrap()),
-                uuid: UuidResource::from("someComponentUUID"),
+                uuid: Some(UuidResource::from("someComponentUUID")),
             }
         )
     }
@@ -222,13 +222,13 @@ mod memory_optimized_read_tests {
                             1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
                         ])),
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                     Component {
                         objectid: 5,
                         transform: None,
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                 ],
             }
@@ -265,7 +265,7 @@ mod speed_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: None,
-                uuid: UuidResource::None,
+                uuid: None,
             }
         )
     }
@@ -287,7 +287,7 @@ mod speed_optimized_read_tests {
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.10
                 ])),
                 path: Some(PathResource::try_from("//somePath//Component").unwrap()),
-                uuid: UuidResource::from("someComponentUUID"),
+                uuid: Some(UuidResource::from("someComponentUUID")),
             }
         )
     }
@@ -310,13 +310,13 @@ mod speed_optimized_read_tests {
                             1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1,
                         ])),
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                     Component {
                         objectid: 5,
                         transform: None,
                         path: None,
-                        uuid: UuidResource::None,
+                        uuid: None,
                     },
                 ],
             }

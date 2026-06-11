@@ -696,7 +696,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex, UuidResource,
+            OptionalResourceIndex,
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::{Model, ThreemfExtensions},
@@ -981,7 +981,7 @@ mod memory_optimized_read_tests {
                         name: None,
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: UuidResource::None,
+                        uuid: None,
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
                         meshresolution: None,
@@ -1068,7 +1068,7 @@ mod memory_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: UuidResource::None,
+                    uuid: None,
                     item: vec![]
                 }
             }
@@ -1084,7 +1084,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceIndex, UuidResource,
+            OptionalResourceIndex,
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::{Model, ThreemfExtensions},
@@ -1460,7 +1460,7 @@ mod speed_optimized_read_tests {
                         name: None,
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
-                        uuid: UuidResource::None,
+                        uuid: None,
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
                         meshresolution: None,
@@ -1547,7 +1547,7 @@ mod speed_optimized_read_tests {
                     disp2dgroup: Vec::new(),
                 },
                 build: Build {
-                    uuid: UuidResource::None,
+                    uuid: None,
                     item: vec![]
                 }
             }

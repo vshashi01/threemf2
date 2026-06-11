@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
-        OptionalResourceId, UuidResource,
+        OptionalResourceId,
         beamlattice::{Ball, BallMode, Balls, Beam, BeamLattice, Beams, CapMode},
         build::{Build, Item},
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
@@ -188,7 +188,7 @@ fn validate_beamlattice_with_trianglesets() {
                     name: Some("Beam Lattice with Triangle Sets".to_owned()),
                     pid: OptionalResourceId::none(),
                     pindex: OptionalResourceIndex::none(),
-                    uuid: UuidResource::None,
+                    uuid: None,
                     kind: Some(ObjectKind::Mesh(mesh)),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
@@ -206,13 +206,13 @@ fn validate_beamlattice_with_trianglesets() {
                 disp2dgroup: Vec::new(),
             },
             build: Build {
-                uuid: UuidResource::None,
+                uuid: None,
                 item: vec![Item {
                     objectid: 1,
                     transform: None,
                     partnumber: None,
                     path: None,
-                    uuid: UuidResource::None,
+                    uuid: None,
                 }],
             },
         },
