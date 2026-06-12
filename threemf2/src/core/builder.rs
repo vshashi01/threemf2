@@ -3368,7 +3368,7 @@ mod tests {
     fn test_build_item_advanced_tests() {
         use crate::core::StrResource;
 
-      let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         let _ = builder.make_production_extension_required();
         let obj_id = builder
             .add_mesh_object(|obj| {

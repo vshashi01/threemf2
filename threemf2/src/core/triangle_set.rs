@@ -7,7 +7,10 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::{core::types::{ResourceIndex, StrResource}, threemf_namespaces::CORE_TRIANGLESET_NS};
+use crate::{
+    core::types::{ResourceIndex, StrResource},
+    threemf_namespaces::CORE_TRIANGLESET_NS,
+};
 
 /// Collection of Triangle Set. See [`TriangleSet`] for more details.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
