@@ -42,7 +42,7 @@ fn validate_displacement_model_schema() {
                 objecttype: Some(ObjectType::Model),
                 thumbnail: None,
                 partnumber: None,
-                name: Some("Disp".to_owned()),
+                name: Some("Disp".into()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,

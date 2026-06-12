@@ -45,6 +45,7 @@ serde = { version = "1.0.228", optional = true, features = ["derive"] }
 once_cell = { version = "1.21.3", optional = true }
 lexical-core = { version = "1.0.6" }
 uuid = { version = "1.23.2", optional = true }
+compact_str = { version = "0.9.0", features = ["serde"] }
 
 
 [dev-dependencies]

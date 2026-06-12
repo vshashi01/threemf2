@@ -495,9 +495,9 @@ impl ModelBuilder {
     /// - `value`: The metadata value (or `None` for an empty value)
     pub fn add_metadata(&mut self, name: &str, value: Option<&str>) -> &mut Self {
         self.metadata.push(Metadata {
-            name: name.to_owned(),
+            name: name.into(),
             preserve: None,
-            value: value.map(|v| v.to_owned()),
+            value: value.map(Into::into),
         });
         self
     }
@@ -1248,7 +1248,7 @@ impl ItemBuilder {
         Ok(Item {
             objectid: self.objectid.0,
             transform: self.transform,
-            partnumber: self.partnumber,
+            partnumber: self.partnumber.map(Into::into),
             path: self.path,
             uuid: self.uuid,
         })
@@ -1412,8 +1412,8 @@ impl MeshObjectBuilder {
             id: self.object_id.0,
             objecttype: self.objecttype,
             thumbnail: self.thumbnail,
-            partnumber: self.partnumber,
-            name: self.name,
+            partnumber: self.partnumber.map(Into::into),
+            name: self.name.map(Into::into),
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
@@ -1795,8 +1795,8 @@ impl ComponentsObjectBuilder {
             id: self.object_id.0,
             objecttype: self.objecttype,
             thumbnail: self.thumbnail,
-            partnumber: self.partnumber,
-            name: self.name,
+            partnumber: self.partnumber.map(Into::into),
+            name: self.name.map(Into::into),
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
@@ -2050,8 +2050,8 @@ impl BooleanObjectBuilder {
             id: self.object_id.0,
             objecttype: self.objecttype,
             thumbnail: self.thumbnail,
-            partnumber: self.partnumber,
-            name: self.name,
+            partnumber: self.partnumber.map(Into::into),
+            name: self.name.map(Into::into),
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
@@ -2312,8 +2312,8 @@ impl TriangleSetsBuilder {
             .collect();
 
         self.sets.push(TriangleSet {
-            name: name.to_owned(),
-            identifier: identifier.to_owned(),
+            name: name.into(),
+            identifier: identifier.into(),
             triangle_ref,
             triangle_refrange,
         });
@@ -2778,8 +2778,8 @@ impl BeamSetBuilder {
 
     fn build(self) -> BeamSet {
         BeamSet {
-            name: self.name,
-            identifier: self.identifier,
+            name: self.name.map(Into::into),
+            identifier: self.identifier.map(Into::into),
             refs: self
                 .beam_refs
                 .into_iter()
@@ -3123,9 +3123,9 @@ mod tests {
 
         assert_eq!(model.unit, Some(Unit::Millimeter));
         assert_eq!(model.metadata.len(), 1);
-        assert_eq!(model.metadata[0].name, "Application");
+        assert_eq!(model.metadata[0].name.as_ref(), "Application");
         assert_eq!(model.resources.object.len(), 1);
-        assert_eq!(model.resources.object[0].name, Some("Cube".to_owned()));
+        assert_eq!(model.resources.object[0].name.as_deref(), Some("Cube"));
         assert_eq!(model.build.item.len(), 1);
         assert_eq!(model.build.item[0].objectid, 1);
     }
@@ -3366,6 +3366,8 @@ mod tests {
     #[cfg(not(feature = "uuid"))]
     #[test]
     fn test_build_item_advanced_tests() {
+        use crate::core::StrResource;
+
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         let _ = builder.make_production_extension_required();
         let obj_id = builder
@@ -3394,7 +3396,7 @@ mod tests {
         let item = &model.build.item[0];
         assert_eq!(item.objectid, 1);
         assert_eq!(item.transform, Some(transform));
-        assert_eq!(item.partnumber, Some("part".to_string()));
+        assert_eq!(item.partnumber, Some(StrResource::new("part")));
         assert_eq!(
             item.path,
             Some(PathResource::try_from("/path/path.model").unwrap())
@@ -3405,6 +3407,8 @@ mod tests {
     #[cfg(not(feature = "uuid"))]
     #[test]
     fn test_object_builder_tests() {
+        use crate::core::StrResource;
+
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         let obj_id = builder
             .add_mesh_object(|obj| {
@@ -3423,8 +3427,8 @@ mod tests {
             obj.objecttype,
             Some(crate::core::object::ObjectType::Support)
         );
-        assert_eq!(obj.name, Some("support obj".to_string()));
-        assert_eq!(obj.partnumber, Some("part123".to_string()));
+        assert_eq!(obj.name, Some(StrResource::new("support obj")));
+        assert_eq!(obj.partnumber, Some(StrResource::new("part123")));
         assert_eq!(obj.uuid, Some(UuidResource::MaybeUuid("obj-uuid".into())));
     }
 
@@ -3588,12 +3592,12 @@ mod tests {
         builder.add_build(None).unwrap();
         let model = builder.build().unwrap();
         assert_eq!(model.metadata.len(), 3);
-        assert_eq!(model.metadata[0].name, "key1");
-        assert_eq!(model.metadata[0].value, Some("value1".to_string()));
-        assert_eq!(model.metadata[1].name, "key2");
+        assert_eq!(model.metadata[0].name.as_ref(), "key1");
+        assert_eq!(model.metadata[0].value.as_deref(), Some("value1"));
+        assert_eq!(model.metadata[1].name.as_ref(), "key2");
         assert_eq!(model.metadata[1].value, None);
-        assert_eq!(model.metadata[2].name, "key3");
-        assert_eq!(model.metadata[2].value, Some("value3".to_string()));
+        assert_eq!(model.metadata[2].name.as_ref(), "key3");
+        assert_eq!(model.metadata[2].value.as_deref(), Some("value3"));
     }
 
     #[test]
@@ -3617,15 +3621,15 @@ mod tests {
         assert!(mesh.trianglesets.is_some());
         let sets = &mesh.trianglesets.as_ref().unwrap().trianglesets;
         assert_eq!(sets.len(), 2);
-        assert_eq!(sets[0].name, "Set1");
-        assert_eq!(sets[0].identifier, "id1");
+        assert_eq!(sets[0].name.as_ref(), "Set1");
+        assert_eq!(sets[0].identifier.as_ref(), "id1");
         assert_eq!(sets[0].triangle_ref.len(), 1);
         assert_eq!(sets[0].triangle_ref[0].index, 0);
         assert_eq!(sets[0].triangle_refrange.len(), 1);
         assert_eq!(sets[0].triangle_refrange[0].startindex, 1);
         assert_eq!(sets[0].triangle_refrange[0].endindex, 5);
-        assert_eq!(sets[1].name, "Set2");
-        assert_eq!(sets[1].identifier, "id2");
+        assert_eq!(sets[1].name.as_ref(), "Set2");
+        assert_eq!(sets[1].identifier.as_ref(), "id2");
         assert_eq!(sets[1].triangle_ref.len(), 0);
         assert_eq!(sets[1].triangle_refrange.len(), 2);
 
@@ -3722,8 +3726,8 @@ mod tests {
 
         let beamset = builder.build();
 
-        assert_eq!(beamset.name, Some("Test Set".to_owned()));
-        assert_eq!(beamset.identifier, Some("test-set-001".to_owned()));
+        assert_eq!(beamset.name, Some("Test Set".into()));
+        assert_eq!(beamset.identifier, Some("test-set-001".into()));
         assert_eq!(beamset.refs.len(), 4);
         assert_eq!(beamset.refs[0].index, 0);
         assert_eq!(beamset.refs[3].index, 3);
@@ -3893,9 +3897,9 @@ mod tests {
         assert!(beamlattice.beamsets.is_some());
         let beamsets = beamlattice.beamsets.as_ref().unwrap();
         assert_eq!(beamsets.beamset.len(), 2);
-        assert_eq!(beamsets.beamset[0].name, Some("Bottom".to_owned()));
+        assert_eq!(beamsets.beamset[0].name, Some("Bottom".into()));
         assert_eq!(beamsets.beamset[0].refs.len(), 2);
-        assert_eq!(beamsets.beamset[1].name, Some("Top".to_owned()));
+        assert_eq!(beamsets.beamset[1].name, Some("Top".into()));
         assert_eq!(beamsets.beamset[1].refs.len(), 2);
     }
 

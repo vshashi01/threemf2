@@ -45,7 +45,7 @@ pub mod types;
 
 pub use types::{
     Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId,
-    ResourceIdCollection, ResourceIndex, ResourceIndexCollection, UuidResource,
+    ResourceIdCollection, ResourceIndex, ResourceIndexCollection, StrResource, UuidResource,
 };
 
 pub mod builder;

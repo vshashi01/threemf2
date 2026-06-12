@@ -7,7 +7,10 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::{core::types::ResourceIndex, threemf_namespaces::CORE_TRIANGLESET_NS};
+use crate::{
+    core::types::{ResourceIndex, StrResource},
+    threemf_namespaces::CORE_TRIANGLESET_NS,
+};
 
 /// Collection of Triangle Set. See [`TriangleSet`] for more details.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
@@ -79,11 +82,11 @@ pub struct TriangleSet {
     /// Name of this set.
     #[cfg_attr(feature = "memory-optimized-read", xml(attribute))]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "name"))]
-    pub name: String,
+    pub name: StrResource,
 
     /// A string based unique identifier of this set.
     #[cfg_attr(feature = "memory-optimized-read", xml(attribute))]
-    pub identifier: String,
+    pub identifier: StrResource,
 
     /// A collection of Triangle references. See [`TriangleRef`] for more details.
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "ref", default))]
@@ -237,8 +240,8 @@ mod write_tests {
             trianglesets: Some(TriangleSets {
                 trianglesets: vec![
                     TriangleSet {
-                        name: "Triangle Set 1".to_owned(),
-                        identifier: "someUniqueID1".to_owned(),
+                        name: "Triangle Set 1".into(),
+                        identifier: "someUniqueID1".into(),
                         triangle_ref: vec![TriangleRef { index: 2 }],
                         triangle_refrange: vec![TriangleRefRange {
                             startindex: 22,
@@ -246,8 +249,8 @@ mod write_tests {
                         }],
                     },
                     TriangleSet {
-                        name: "Triangle Set 2".to_owned(),
-                        identifier: "someUniqueID2".to_owned(),
+                        name: "Triangle Set 2".into(),
+                        identifier: "someUniqueID2".into(),
                         triangle_ref: vec![],
                         triangle_refrange: vec![
                             TriangleRefRange {
@@ -278,8 +281,8 @@ mod write_tests {
         let trianglesets = TriangleSets {
             trianglesets: vec![
                 TriangleSet {
-                    name: "Triangle Set 1".to_owned(),
-                    identifier: "someUniqueID1".to_owned(),
+                    name: "Triangle Set 1".into(),
+                    identifier: "someUniqueID1".into(),
                     triangle_ref: vec![TriangleRef { index: 2 }],
                     triangle_refrange: vec![TriangleRefRange {
                         startindex: 22,
@@ -287,8 +290,8 @@ mod write_tests {
                     }],
                 },
                 TriangleSet {
-                    name: "Triangle Set 2".to_owned(),
-                    identifier: "someUniqueID2".to_owned(),
+                    name: "Triangle Set 2".into(),
+                    identifier: "someUniqueID2".into(),
                     triangle_ref: vec![],
                     triangle_refrange: vec![
                         TriangleRefRange {
@@ -371,8 +374,8 @@ mod memory_optimized_read_tests {
                 trianglesets: Some(TriangleSets {
                     trianglesets: vec![
                         TriangleSet {
-                            name: "Triangle Set 1".to_owned(),
-                            identifier: "someUniqueID1".to_owned(),
+                            name: "Triangle Set 1".into(),
+                            identifier: "someUniqueID1".into(),
                             triangle_ref: vec![TriangleRef { index: 2 }],
                             triangle_refrange: vec![TriangleRefRange {
                                 startindex: 22,
@@ -380,8 +383,8 @@ mod memory_optimized_read_tests {
                             }],
                         },
                         TriangleSet {
-                            name: "Triangle Set 2".to_owned(),
-                            identifier: "someUniqueID2".to_owned(),
+                            name: "Triangle Set 2".into(),
+                            identifier: "someUniqueID2".into(),
                             triangle_ref: vec![],
                             triangle_refrange: vec![
                                 TriangleRefRange {
@@ -414,8 +417,8 @@ mod memory_optimized_read_tests {
             TriangleSets {
                 trianglesets: vec![
                     TriangleSet {
-                        name: "Triangle Set 1".to_owned(),
-                        identifier: "someUniqueID1".to_owned(),
+                        name: "Triangle Set 1".into(),
+                        identifier: "someUniqueID1".into(),
                         triangle_ref: vec![TriangleRef { index: 2 }],
                         triangle_refrange: vec![TriangleRefRange {
                             startindex: 22,
@@ -423,8 +426,8 @@ mod memory_optimized_read_tests {
                         }],
                     },
                     TriangleSet {
-                        name: "Triangle Set 2".to_owned(),
-                        identifier: "someUniqueID2".to_owned(),
+                        name: "Triangle Set 2".into(),
+                        identifier: "someUniqueID2".into(),
                         triangle_ref: vec![],
                         triangle_refrange: vec![
                             TriangleRefRange {
@@ -504,8 +507,8 @@ mod speed_optimized_read_tests {
                 trianglesets: Some(TriangleSets {
                     trianglesets: vec![
                         TriangleSet {
-                            name: "Triangle Set 1".to_owned(),
-                            identifier: "someUniqueID1".to_owned(),
+                            name: "Triangle Set 1".into(),
+                            identifier: "someUniqueID1".into(),
                             triangle_ref: vec![TriangleRef { index: 2 }],
                             triangle_refrange: vec![TriangleRefRange {
                                 startindex: 22,
@@ -513,8 +516,8 @@ mod speed_optimized_read_tests {
                             }],
                         },
                         TriangleSet {
-                            name: "Triangle Set 2".to_owned(),
-                            identifier: "someUniqueID2".to_owned(),
+                            name: "Triangle Set 2".into(),
+                            identifier: "someUniqueID2".into(),
                             triangle_ref: vec![],
                             triangle_refrange: vec![
                                 TriangleRefRange {
@@ -547,8 +550,8 @@ mod speed_optimized_read_tests {
             TriangleSets {
                 trianglesets: vec![
                     TriangleSet {
-                        name: "Triangle Set 1".to_owned(),
-                        identifier: "someUniqueID1".to_owned(),
+                        name: "Triangle Set 1".into(),
+                        identifier: "someUniqueID1".into(),
                         triangle_ref: vec![TriangleRef { index: 2 }],
                         triangle_refrange: vec![TriangleRefRange {
                             startindex: 22,
@@ -556,8 +559,8 @@ mod speed_optimized_read_tests {
                         }],
                     },
                     TriangleSet {
-                        name: "Triangle Set 2".to_owned(),
-                        identifier: "someUniqueID2".to_owned(),
+                        name: "Triangle Set 2".into(),
+                        identifier: "someUniqueID2".into(),
                         triangle_ref: vec![],
                         triangle_refrange: vec![
                             TriangleRefRange {
@@ -583,8 +586,8 @@ mod speed_optimized_read_tests {
         assert_eq!(
             trianglesets,
             TriangleSet {
-                name: "Triangle Set 1".to_owned(),
-                identifier: "someUniqueID1".to_owned(),
+                name: "Triangle Set 1".into(),
+                identifier: "someUniqueID1".into(),
                 triangle_ref: vec![TriangleRef { index: 2 }],
                 triangle_refrange: vec![TriangleRefRange {
                     startindex: 22,

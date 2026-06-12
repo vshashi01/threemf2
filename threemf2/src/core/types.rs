@@ -5,8 +5,9 @@
 //! - ResourceIndex = ST_ResourceIndex: Vertex indices, property indices (0 to 2^31-1)
 //! - Double = ST_Number: All number inputs in the form of 64-byte float number
 
-use std::fmt;
-use std::num::NonZeroU32;
+use std::{borrow::Borrow, fmt, num::NonZeroU32, ops::Deref, str::FromStr};
+
+use compact_str::CompactString;
 
 #[cfg(feature = "write")]
 use instant_xml::{Id, Serializer, ToXml};
@@ -15,7 +16,7 @@ use instant_xml::{Id, Serializer, ToXml};
 use instant_xml::{Error, FromXml, Kind};
 
 #[cfg(feature = "speed-optimized-read")]
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
@@ -30,6 +31,122 @@ pub type ResourceId = u32;
 /// Used for: vertex indices (v1, v2, v3), property indices (p1, p2, p3, pindex)
 pub type ResourceIndex = u32;
 
+/// Compact string wrapper used for model resource values.
+#[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "speed-optimized-read", derive(Serialize, Deserialize))]
+pub struct StrResource(CompactString);
+
+impl StrResource {
+    pub fn new(value: impl Into<CompactString>) -> Self {
+        Self(value.into())
+    }
+}
+
+impl Deref for StrResource {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_str()
+    }
+}
+
+impl AsRef<str> for StrResource {
+    fn as_ref(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+impl Borrow<str> for StrResource {
+    fn borrow(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+impl fmt::Display for StrResource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.0.as_str())
+    }
+}
+
+impl From<&str> for StrResource {
+    fn from(value: &str) -> Self {
+        Self(CompactString::new(value))
+    }
+}
+
+impl From<String> for StrResource {
+    fn from(value: String) -> Self {
+        Self(CompactString::from(value))
+    }
+}
+
+impl From<CompactString> for StrResource {
+    fn from(value: CompactString) -> Self {
+        Self(value)
+    }
+}
+
+impl From<StrResource> for String {
+    fn from(value: StrResource) -> Self {
+        value.0.into_string()
+    }
+}
+
+impl FromStr for StrResource {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::from(s))
+    }
+}
+
+#[cfg(feature = "write")]
+impl ToXml for StrResource {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<Id<'_>>,
+        serializer: &mut Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        serializer.write_str(self.0.as_str())?;
+        Ok(())
+    }
+
+    fn present(&self) -> bool {
+        true
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for StrResource {
+    #[inline]
+    fn matches(id: instant_xml::Id<'_>, field: Option<instant_xml::Id<'_>>) -> bool {
+        if let Some(field_id) = field {
+            id == field_id
+        } else {
+            false
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), Error> {
+        if into.is_some() {
+            return Err(Error::DuplicateValue(field));
+        }
+
+        if let Some(value) = deserializer.take_str()? {
+            *into = Some(StrResource::from(value.as_ref()));
+        }
+
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: Kind = Kind::Scalar;
+}
+
 /// Path to a resource inside the 3MF package.
 ///
 /// Normalization rules:
@@ -38,7 +155,7 @@ pub type ResourceIndex = u32;
 /// - A leading slash is enforced.
 /// - Dot segments ("." or "..") are rejected.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PathResource(String);
+pub struct PathResource(StrResource);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PathResourceError {
@@ -49,13 +166,13 @@ pub enum PathResourceError {
 impl PathResource {
     pub fn new(value: &str) -> Result<Self, PathResourceError> {
         match normalize_path_resource(value) {
-            Ok(normalized) => Ok(Self(normalized)),
+            Ok(normalized) => Ok(Self(StrResource::new(normalized))),
             Err(err) => Err(err),
         }
     }
 
     pub fn as_str(&self) -> &str {
-        self.0.as_str()
+        &self.0.0
     }
 }
 
@@ -83,7 +200,7 @@ impl TryFrom<String> for PathResource {
 
 impl From<PathResource> for String {
     fn from(value: PathResource) -> Self {
-        value.0
+        value.0.0.into_string()
     }
 }
 
@@ -183,10 +300,10 @@ fn normalize_path_resource(input: &str) -> Result<String, PathResourceError> {
 pub enum UuidResource {
     /// UUID string present but not validated.
     #[cfg(not(feature = "uuid"))]
-    MaybeUuid(String),
+    MaybeUuid(StrResource),
     /// UUID string present but failed validation (only when uuid feature enabled).
     #[cfg(feature = "uuid")]
-    NotUuid(String),
+    NotUuid(StrResource),
     /// Valid UUID parsed from the string (only when uuid feature enabled).
     #[cfg(feature = "uuid")]
     Uuid(Uuid),
@@ -196,9 +313,9 @@ impl UuidResource {
     pub fn as_str(&self) -> Option<&str> {
         match self {
             #[cfg(not(feature = "uuid"))]
-            Self::MaybeUuid(value) => Some(value.as_str()),
+            Self::MaybeUuid(value) => Some(value),
             #[cfg(feature = "uuid")]
-            Self::NotUuid(value) => Some(value.as_str()),
+            Self::NotUuid(value) => Some(value),
             #[cfg(feature = "uuid")]
             Self::Uuid(_) => None,
         }
@@ -207,9 +324,9 @@ impl UuidResource {
     pub fn to_string(&self) -> Option<String> {
         match self {
             #[cfg(not(feature = "uuid"))]
-            Self::MaybeUuid(value) => Some(value.clone()),
+            Self::MaybeUuid(value) => Some(value.to_string()),
             #[cfg(feature = "uuid")]
-            Self::NotUuid(value) => Some(value.clone()),
+            Self::NotUuid(value) => Some(value.to_string()),
             #[cfg(feature = "uuid")]
             Self::Uuid(value) => Some(value.to_string()),
         }
@@ -219,13 +336,13 @@ impl UuidResource {
     fn from_string_with_uuid(value: &str) -> Self {
         match Uuid::parse_str(value) {
             Ok(parsed) => Self::Uuid(parsed),
-            Err(_) => Self::NotUuid(value.to_owned()),
+            Err(_) => Self::NotUuid(StrResource::new(value)),
         }
     }
 
     #[cfg(not(feature = "uuid"))]
     fn from_string_with_uuid(value: &str) -> Self {
-        Self::MaybeUuid(value.to_owned())
+        Self::MaybeUuid(StrResource::new(value))
     }
 }
 
@@ -1244,4 +1361,10 @@ mod color_tests {
         assert!((original.g as i16 - back.g as i16).abs() <= 1);
         assert!((original.b as i16 - back.b as i16).abs() <= 1);
     }
+}
+
+#[test]
+fn str_resource_option_size() {
+    use std::mem::size_of;
+    assert_eq!(size_of::<Option<StrResource>>(), size_of::<StrResource>());
 }

@@ -15,7 +15,8 @@ use crate::{
         mesh::Mesh,
         slice::MeshResolution,
         types::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, UuidResource,
+            OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, StrResource,
+            UuidResource,
         },
     },
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS, SLICE_NS},
@@ -66,14 +67,14 @@ pub struct Object {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub partnumber: Option<String>,
+    pub partnumber: Option<StrResource>,
 
     /// Optional string defining the name for this object.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub name: Option<String>,
+    pub name: Option<StrResource>,
 
     /// Reference to the property group element with the
     /// matching id attribute value (e.g. Basematerials).
@@ -314,7 +315,7 @@ mod write_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
+            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -397,8 +398,8 @@ mod write_tests {
             id: 4,
             objecttype: Some(ObjectType::Model),
             thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-            partnumber: Some("part_1".to_string()),
-            name: Some("Object Part".to_string()),
+            partnumber: Some(StrResource::new("part_1")),
+            name: Some(StrResource::new("Object Part")),
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
@@ -422,8 +423,8 @@ mod write_tests {
             id: 4,
             objecttype: Some(ObjectType::Model),
             thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-            partnumber: Some("part_1".to_string()),
-            name: Some("Object Part".to_string()),
+            partnumber: Some(StrResource::new("part_1")),
+            name: Some(StrResource::new("Object Part")),
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
@@ -461,8 +462,8 @@ mod write_tests {
             id: 4,
             objecttype: Some(ObjectType::Model),
             thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-            partnumber: Some("part_1".to_string()),
-            name: Some("Object Part".to_string()),
+            partnumber: Some(StrResource::new("part_1")),
+            name: Some(StrResource::new("Object Part")),
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
@@ -522,7 +523,7 @@ mod memory_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
+            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -603,8 +604,8 @@ mod memory_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
@@ -630,8 +631,8 @@ mod memory_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
@@ -665,8 +666,8 @@ mod memory_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
@@ -697,8 +698,8 @@ mod memory_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
@@ -759,7 +760,7 @@ mod speed_optimized_read_tests {
 
     use crate::{
         core::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
+            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
@@ -840,8 +841,8 @@ mod speed_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
@@ -867,8 +868,8 @@ mod speed_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
                 pindex: OptionalResourceIndex::new(123),
                 uuid: None,
@@ -902,8 +903,8 @@ mod speed_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,
@@ -934,8 +935,8 @@ mod speed_optimized_read_tests {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
-                partnumber: Some("part_1".to_string()),
-                name: Some("Object Part".to_string()),
+                partnumber: Some(StrResource::new("part_1")),
+                name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,

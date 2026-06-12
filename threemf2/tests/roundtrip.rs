@@ -69,7 +69,7 @@ mod tests {
                         objecttype: Some(ObjectType::Model),
                         thumbnail: None,
                         partnumber: None,
-                        name: Some("Mesh".to_owned()),
+                        name: Some("Mesh".into()),
                         pid: OptionalResourceId::none(),
                         pindex: OptionalResourceIndex::none(),
                         uuid: None,
@@ -177,7 +177,7 @@ mod tests {
 
             let obj = &root_model.resources.object[0];
             assert_eq!(obj.id, 1);
-            assert_eq!(obj.name, Some("Mesh".to_owned()));
+            assert_eq!(obj.name.as_deref(), Some("Mesh"));
             assert!(obj.get_mesh().is_some());
         }
     }

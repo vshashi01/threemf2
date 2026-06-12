@@ -232,7 +232,7 @@ fn main() {
         ]), // Mark beam lattice extensions as required
         recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![Metadata {
-            name: "Beam Lattice Example".to_string(),
+            name: "Beam Lattice Example".into(),
             preserve: None,
             value: None,
         }],
@@ -241,8 +241,8 @@ fn main() {
                 id: 1,
                 objecttype: Some(ObjectType::Model),
                 thumbnail: None,
-                partnumber: Some("beam-lattice-example".to_string()),
-                name: Some("Beam Lattice Cube".to_string()),
+                partnumber: Some("beam-lattice-example".into()),
+                name: Some("Beam Lattice Cube".into()),
                 pid: OptionalResourceId::none(),
                 pindex: OptionalResourceIndex::none(),
                 uuid: None,

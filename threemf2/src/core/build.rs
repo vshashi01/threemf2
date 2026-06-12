@@ -10,7 +10,9 @@ use serde::Deserialize;
 use crate::{
     core::{
         transform::Transform,
-        types::{PathResource, ResourceId, UuidResource},
+        types::{
+            PathResource, StrResource, {ResourceId, UuidResource},
+        },
     },
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
@@ -59,7 +61,7 @@ pub struct Item {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub partnumber: Option<String>,
+    pub partnumber: Option<StrResource>,
 
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -97,7 +99,7 @@ mod write_tests {
         );
         let item = Item {
             objectid: 6,
-            partnumber: Some("part_1".to_string()),
+            partnumber: Some("part_1".into()),
             transform: None,
             path: None,
             uuid: None,
@@ -115,7 +117,7 @@ mod write_tests {
         );
         let item = Item {
             objectid: 6,
-            partnumber: Some("part_1".to_string()),
+            partnumber: Some("part_1".into()),
             transform: None,
             path: Some(PathResource::try_from("//somePath//Item").unwrap()),
             uuid: Some(UuidResource::from("someUUID")),
@@ -136,14 +138,14 @@ mod write_tests {
             item: vec![
                 Item {
                     objectid: 6,
-                    partnumber: Some("part_1".to_string()),
+                    partnumber: Some("part_1".into()),
                     transform: None,
                     path: None,
                     uuid: None,
                 },
                 Item {
                     objectid: 6,
-                    partnumber: Some("part_2".to_string()),
+                    partnumber: Some("part_2".into()),
                     transform: None,
                     path: None,
                     uuid: None,
@@ -166,14 +168,14 @@ mod write_tests {
             item: vec![
                 Item {
                     objectid: 6,
-                    partnumber: Some("part_1".to_string()),
+                    partnumber: Some("part_1".into()),
                     transform: None,
                     path: None,
                     uuid: Some(UuidResource::from("someItemUUID1")),
                 },
                 Item {
                     objectid: 6,
-                    partnumber: Some("part_2".to_string()),
+                    partnumber: Some("part_2".into()),
                     transform: None,
                     path: None,
                     uuid: Some(UuidResource::from("someItemUUID2")),
@@ -211,7 +213,7 @@ mod memory_optimized_read_tests {
             item,
             Item {
                 objectid: 6,
-                partnumber: Some("part_1".to_string()),
+                partnumber: Some("part_1".into()),
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
@@ -234,7 +236,7 @@ mod memory_optimized_read_tests {
             item,
             Item {
                 objectid: 6,
-                partnumber: Some("part_1".to_string()),
+                partnumber: Some("part_1".into()),
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
@@ -259,14 +261,14 @@ mod memory_optimized_read_tests {
                 item: vec![
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_1".to_string()),
+                        partnumber: Some("part_1".into()),
                         transform: None,
                         path: None,
                         uuid: None,
                     },
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_2".to_string()),
+                        partnumber: Some("part_2".into()),
                         transform: None,
                         path: None,
                         uuid: None,
@@ -297,14 +299,14 @@ mod memory_optimized_read_tests {
                 item: vec![
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_1".to_string()),
+                        partnumber: Some("part_1".into()),
                         transform: None,
                         path: None,
                         uuid: Some(UuidResource::from("someItemUUID1")),
                     },
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_2".to_string()),
+                        partnumber: Some("part_2".into()),
                         transform: None,
                         path: None,
                         uuid: Some(UuidResource::from("someItemUUID2")),
@@ -340,7 +342,7 @@ mod speed_optimized_read_tests {
             item,
             Item {
                 objectid: 6,
-                partnumber: Some("part_1".to_string()),
+                partnumber: Some("part_1".into()),
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
@@ -363,7 +365,7 @@ mod speed_optimized_read_tests {
             item,
             Item {
                 objectid: 6,
-                partnumber: Some("part_1".to_string()),
+                partnumber: Some("part_1".into()),
                 transform: Some(Transform([
                     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 35.0, 35.0, 5.1
                 ])),
@@ -388,14 +390,14 @@ mod speed_optimized_read_tests {
                 item: vec![
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_1".to_string()),
+                        partnumber: Some("part_1".into()),
                         transform: None,
                         path: None,
                         uuid: None,
                     },
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_2".to_string()),
+                        partnumber: Some("part_2".into()),
                         transform: None,
                         path: None,
                         uuid: None,
@@ -426,14 +428,14 @@ mod speed_optimized_read_tests {
                 item: vec![
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_1".to_string()),
+                        partnumber: Some("part_1".into()),
                         transform: None,
                         path: None,
                         uuid: Some(UuidResource::from("someItemUUID1")),
                     },
                     Item {
                         objectid: 6,
-                        partnumber: Some("part_2".to_string()),
+                        partnumber: Some("part_2".into()),
                         transform: None,
                         path: None,
                         uuid: Some(UuidResource::from("someItemUUID2")),

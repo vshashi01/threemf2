@@ -22,7 +22,7 @@ fn main() {
         requiredextensions: ThreemfExtensions::default(),
         recommendedextensions: ThreemfExtensions::default(),
         metadata: vec![Metadata {
-            name: "Test metadata".to_string(),
+            name: "Test metadata".into(),
             preserve: None,
             value: None,
         }],

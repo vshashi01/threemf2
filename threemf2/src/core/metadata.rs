@@ -10,7 +10,7 @@ use instant_xml::{FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::threemf_namespaces::CORE_NS;
+use crate::{core::types::StrResource, threemf_namespaces::CORE_NS};
 
 /// Key-value metadata associated with a 3MF model or object.
 ///
@@ -26,14 +26,14 @@ use crate::threemf_namespaces::CORE_NS;
 )]
 pub struct Metadata {
     #[cfg_attr(any(feature = "memory-optimized-read"), xml(attribute))]
-    pub name: String,
+    pub name: StrResource,
 
     #[cfg_attr(any(feature = "memory-optimized-read"), xml(attribute))]
     pub preserve: Option<Preserve>,
 
     #[cfg_attr(any(feature = "memory-optimized-read"), xml(direct))]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "#content"))]
-    pub value: Option<String>,
+    pub value: Option<StrResource>,
 }
 
 #[cfg(feature = "write")]
@@ -143,9 +143,9 @@ mod write_tests {
             CORE_NS
         );
         let metadata = Metadata {
-            name: "Copyright".to_string(),
+            name: "Copyright".into(),
             preserve: None,
-            value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".to_string()),
+            value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".into()),
         };
         let metadata_string = to_string(&metadata).unwrap();
 
@@ -156,7 +156,7 @@ mod write_tests {
     pub fn toxml_simple_metadata_test() {
         let xml_string = format!(r#"<metadata xmlns="{}" name="From Test" />"#, CORE_NS);
         let metadata = Metadata {
-            name: "From Test".to_string(),
+            name: "From Test".into(),
             preserve: None,
             value: None,
         };
@@ -172,9 +172,9 @@ mod write_tests {
             CORE_NS
         );
         let metadata = Metadata {
-            name: "From Test".to_string(),
+            name: "From Test".into(),
             preserve: Some(Preserve(true)),
-            value: Some("This is a metadata".to_string()),
+            value: Some("This is a metadata".into()),
         };
         let metadata_string = to_string(&metadata).unwrap();
 
@@ -190,14 +190,14 @@ mod write_tests {
         let metadatagroup = MetadataGroup {
             metadata: vec![
                 Metadata {
-                    name: "From Test".to_string(),
+                    name: "From Test".into(),
                     preserve: None,
-                    value: Some("".to_string()),
+                    value: Some("".into()),
                 },
                 Metadata {
-                    name: "From Test 2".to_string(),
+                    name: "From Test 2".into(),
                     preserve: None,
-                    value: Some("".to_string()),
+                    value: Some("".into()),
                 },
             ],
         };
@@ -228,9 +228,9 @@ mod memory_optimized_read_tests {
         assert_eq!(
             metadata,
             Metadata {
-                name: "Copyright".to_string(),
+                name: "Copyright".into(),
                 preserve: None,
-                value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".to_string())
+                value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".into())
             }
         )
     }
@@ -243,7 +243,7 @@ mod memory_optimized_read_tests {
         assert_eq!(
             metadata,
             Metadata {
-                name: "From Test".to_string(),
+                name: "From Test".into(),
                 preserve: None,
                 value: None,
             }
@@ -263,12 +263,12 @@ mod memory_optimized_read_tests {
             MetadataGroup {
                 metadata: vec![
                     Metadata {
-                        name: "From Test".to_string(),
+                        name: "From Test".into(),
                         preserve: None,
                         value: None,
                     },
                     Metadata {
-                        name: "From Test 2".to_string(),
+                        name: "From Test 2".into(),
                         preserve: None,
                         value: None,
                     }
@@ -299,9 +299,9 @@ mod speed_optimized_read_tests {
         assert_eq!(
             metadata,
             Metadata {
-                name: "Copyright".to_string(),
+                name: "Copyright".into(),
                 preserve: None,
-                value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".to_string())
+                value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".into())
             }
         )
     }
@@ -314,9 +314,9 @@ mod speed_optimized_read_tests {
         assert_eq!(
             metadata,
             Metadata {
-                name: "From Test".to_string(),
+                name: "From Test".into(),
                 preserve: None,
-                value: Some("".to_owned()),
+                value: Some("".into()),
             }
         )
     }
@@ -334,14 +334,14 @@ mod speed_optimized_read_tests {
             MetadataGroup {
                 metadata: vec![
                     Metadata {
-                        name: "From Test".to_string(),
+                        name: "From Test".into(),
                         preserve: None,
-                        value: Some("".to_owned()),
+                        value: Some("".into()),
                     },
                     Metadata {
-                        name: "From Test 2".to_string(),
+                        name: "From Test 2".into(),
                         preserve: None,
-                        value: Some("".to_owned()),
+                        value: Some("".into()),
                     }
                 ]
             }

@@ -38,7 +38,10 @@
 use crate::{
     core::{
         Color,
-        types::{Double, PathResource, ResourceId, ResourceIdCollection, ResourceIndexCollection},
+        types::{
+            Double, PathResource, ResourceId, ResourceIdCollection, ResourceIndexCollection,
+            StrResource,
+        },
     },
     threemf_namespaces::MATERIAL_NS,
 };
@@ -508,7 +511,7 @@ pub struct MultiProperties {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
-    pub blendmethods: Option<String>,
+    pub blendmethods: Option<StrResource>,
 
     /// Multi-property index combinations, ordered by implicit 0-based index.
     #[cfg_attr(feature = "speed-optimized-read", serde(default, rename = "multi"))]
@@ -832,7 +835,7 @@ mod write_tests {
         let multiproperties = MultiProperties {
             id: 1,
             pids: ResourceIdCollection::from(vec![10, 20, 30]),
-            blendmethods: Some("mix multiply".to_owned()),
+            blendmethods: Some("mix multiply".into()),
             multi: vec![
                 Multi {
                     pindices: ResourceIndexCollection::from(vec![0, 0, 0]),
@@ -1073,7 +1076,7 @@ mod memory_optimized_read_tests {
             MultiProperties {
                 id: 1,
                 pids: ResourceIdCollection::from(vec![10, 20, 30]),
-                blendmethods: Some("mix multiply".to_owned()),
+                blendmethods: Some("mix multiply".into()),
                 multi: vec![
                     Multi {
                         pindices: ResourceIndexCollection::from(vec![0, 0, 0])
@@ -1298,7 +1301,7 @@ mod speed_optimized_read_tests {
             MultiProperties {
                 id: 1,
                 pids: ResourceIdCollection::from(vec![10, 20, 30]),
-                blendmethods: Some("mix multiply".to_owned()),
+                blendmethods: Some("mix multiply".into()),
                 multi: vec![
                     Multi {
                         pindices: ResourceIndexCollection::from(vec![0, 0, 0])
