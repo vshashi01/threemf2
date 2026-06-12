@@ -34,7 +34,7 @@ uuid = ["dep:uuid"]
 # ] #to dump all experiments
 
 [dependencies]
-instant-xml = { version = "0.7.4", optional = true }
+instant-xml = { version = "0.7.5", optional = true }
 # instant-xml = { version = "0.7.4", path = "../../../../instant-xml/instant-xml/instant-xml", optional = true }
 thiserror = { version = "2.0.3" }
 zip = { version = "8.4.0", default-features = false, features = [
