@@ -2,7 +2,7 @@ use threemf2::io::ThreemfPackage;
 
 use std::{fs::File, path::PathBuf};
 
-/// This is an example showing speed optimized reading
+/// This is an example showing speed optimized reading (deprecated)
 /// Run with:
 /// `cargo run --example io_speed_optimized_read --features io-speed-optimized-read`
 ///

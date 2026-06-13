@@ -260,6 +260,9 @@ impl ThreemfPackage {
     }
 
     #[cfg(feature = "io-speed-optimized-read")]
+    #[deprecated(
+        note = "speed-optimized-read is deprecated; use from_reader_with_memory_optimized_deserializer"
+    )]
     pub fn from_reader_with_speed_optimized_deserializer<R: Read + io::Seek>(
         reader: R,
         process_sub_models: bool,
