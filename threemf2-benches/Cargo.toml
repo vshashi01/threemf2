@@ -11,7 +11,7 @@ instant-xml = { version = "0.7.5" }
 serde-roxmltree = { version = "0.11.1" }
 threemf2 = { path = "../threemf2", features = [
     "io-memory-optimized-read",
-    "io-speed-optimized-read",
+    "io-speed-optimized-read", # deprecated
     "io-write",
 ] }
 lib3mf-core = { version = "0.4.0", features = ["parallel"] }

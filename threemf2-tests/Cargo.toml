@@ -9,7 +9,7 @@ license = "MIT or Apache-2.0"
 threemf2 = { path = "../threemf2", features = [
     "io-write",
     "io-memory-optimized-read",
-    "io-speed-optimized-read",
+    "io-speed-optimized-read", # deprecated
     "io-lazy-read",
 ] }
 

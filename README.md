@@ -50,7 +50,7 @@ threemf2 provides:
 Choose the right loading strategy for your use case:
 
 - **Memory-Optimized**: Lower memory usage, good for large files. This is the default.
-- **Speed-Optimized**: Faster parsing, higher memory usage
+- **Speed-Optimized (deprecated)**: Faster parsing, higher memory usage
 - **Lazy Loading**: Defers loading until accessed, best for inspection-only use cases
 
 Key types and files:
@@ -67,13 +67,13 @@ This crate uses optional Cargo features to control functionality. Enable only wh
 
 - `write` — Enable writing 3MF data (adds `ToXml` derive to all 3MF types using `instant_xml`)
 - `memory-optimized-read` — Enable memory-efficient reading (adds `FromXml` derive to all 3MF types using `instant_xml`)
-- `speed-optimized-read` — Enable fast reading (adds `serde::Deserialize` derive to all 3MF types using `serde_roxmltree`)
+- `speed-optimized-read` (deprecated) — Enable fast reading (adds `serde::Deserialize` derive to all 3MF types using `serde_roxmltree`)
 
 ### Package I/O Features
 
 - `io-write` — Package writing with ZIP creation (requires `write`)
 - `io-memory-optimized-read` — Package reading with memory optimization (requires `memory-optimized-read`)
-- `io-speed-optimized-read` — Package reading with speed optimization (requires `speed-optimized-read`)
+- `io-speed-optimized-read` (deprecated) — Package reading with speed optimization (requires `speed-optimized-read`)
 - `io-lazy-read` — Lazy loading functionality (requires `io-memory-optimized-read`)
 
 ### Default Features
@@ -92,7 +92,7 @@ threemf2 = { version = "0.1", features = ["io-lazy-read"] }
 # Memory-constrained environments
 threemf2 = { version = "0.1", features = ["io-lazy-read"], default-features = false }
 
-# High-performance reading
+# High-performance reading (deprecated)
 threemf2 = { version = "0.1", features = ["io-speed-optimized-read"] }
 ```
 
@@ -104,7 +104,7 @@ The [threemf2/examples/](threemf2/examples/) directory contains runnable example
 - **`builder_example.rs`** - Using ModelBuilder for ergonomic model construction
 - **`unpack.rs`** - Lazy loading with `ThreemfPackageLazyReader`
 - **`io_memory_optimized_read.rs`** - Memory-efficient reading
-- **`io_speed_optimized_read.rs`** - High-performance reading
+- **`io_speed_optimized_read.rs`** - High-performance reading (deprecated)
 - **`string_extraction.rs`** - Access raw XML content
 - **`beamlattice_write.rs`** - Working with beam lattice extensions
 

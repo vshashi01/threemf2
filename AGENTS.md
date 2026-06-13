@@ -4,7 +4,7 @@
 - **Build**: `cargo build --all-features`
 - **Test all**: `cargo test --all-features`
 - **Test lazy reader**: `cargo test --features io-lazy-read`
-- **Run benchmarks**: `cargo bench --features "io-memory-optimized-read,io-speed-optimized-read"`
+- **Run benchmarks**: `cargo bench --features "io-memory-optimized-read,io-speed-optimized-read"` (speed-optimized-read is deprecated)
 - **Run examples**: `cargo run --example write --features io-write`
 - **Lint/Format check**: `cargo fmt --all -- --check && cargo clippy --all-targets --all-features -- -D warnings`
 - **Format code**: `cargo fmt --all`
@@ -31,7 +31,7 @@
 - `benches/`: Performance benchmarks
 
 ## Feature Flags Overview
-- `io-*`: Package I/O operations (write, memory-optimized-read, speed-optimized-read, lazy-read)
+- `io-*`: Package I/O operations (write, memory-optimized-read, speed-optimized-read [deprecated], lazy-read)
 - `*-optimized-read`: XML deserialization strategies (memory vs speed trade-offs)
 - `io-lazy-read`: Lazy loading functionality (defers loading until accessed)
 - Default: `io-write`, `io-memory-optimized-read`, `io-lazy-read`, `write`, `memory-optimized-read`

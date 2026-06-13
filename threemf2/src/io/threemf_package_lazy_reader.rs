@@ -419,6 +419,9 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
     ///
     /// * `reader` - A readable and seekable source (e.g., `File`)
     /// * `cache_policy` - Whether to cache loaded data (`CachePolicy::NoCache` is default)
+    #[deprecated(
+        note = "speed-optimized-read is deprecated; use from_reader_with_memory_optimized_deserializer"
+    )]
     pub fn from_reader_with_speed_optimized_deserializer(
         reader: R,
         cache_policy: CachePolicy,
