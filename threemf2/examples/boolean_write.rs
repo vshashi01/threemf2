@@ -26,6 +26,7 @@ use threemf2::{
         metadata::Metadata,
         model::{Model, ThreemfExtensions, Unit},
         object::{Object, ObjectKind, ObjectType},
+        query::get_model_view,
         resources::Resources,
     },
     io::ThreemfPackage,
@@ -412,11 +413,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  Added boolean result to build plate");
 
     println!("\nModel statistics:");
-    println!("  Objects: {}", model.resources.object.len());
-    println!("  Build items: {}", model.build.item.len());
+    let model_view = get_model_view(&model);
+    println!("  Objects: {}", model_view.object_count());
+    println!("  Build items: {}", model_view.build_item_count());
     println!(
         "  Required extensions: {:?}",
-        model.requiredextensions.get()
+        model_view.required_extensions()
     );
 
     // Create 3MF package and write to file

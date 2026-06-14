@@ -5,6 +5,7 @@ use threemf2::core::{
     metadata::Metadata,
     model::{Model, ThreemfExtensions, Unit},
     object::{Object, ObjectKind, ObjectType},
+    query::get_model_view,
     resources::Resources,
     types::OptionalResourceIndex,
 };
@@ -85,5 +86,8 @@ fn main() {
         },
     };
 
-    println!("Number of build items: {}", model.build.item.len());
+    println!(
+        "Number of build items: {}",
+        get_model_view(&model).build_item_count()
+    );
 }

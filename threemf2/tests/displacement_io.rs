@@ -6,7 +6,9 @@
 #[cfg(test)]
 mod tests {
 
-    use threemf2::io::{ThreemfPackage, query};
+    use threemf2::core::query as core_query;
+    use threemf2::io::ThreemfPackage;
+    use threemf2::io::query as io_query;
 
     use std::{fs::File, path::PathBuf};
 
@@ -22,13 +24,13 @@ mod tests {
         let package =
             ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true).unwrap();
 
-        assert_eq!(query::get_displacement_mesh_objects(&package).count(), 1);
-        for object in query::get_displacement_mesh_objects(&package) {
-            assert!(object.mesh().beamlattice.is_some())
+        assert_eq!(io_query::get_displacement_mesh_objects(&package).count(), 1);
+        for object in io_query::get_displacement_mesh_objects(&package) {
+            assert!(object.view.has_beamlattice())
         }
-        assert!(query::get_displacement2d_by_id(3, &package.root).is_some());
-        assert!(query::get_normvectorgroup_by_id(4, &package.root).is_some());
-        assert!(query::get_disp2dgroup_by_id(5, &package.root).is_some());
+        assert!(core_query::get_displacement2d_by_id(3, &package.root).is_some());
+        assert!(core_query::get_normvectorgroup_by_id(4, &package.root).is_some());
+        assert!(core_query::get_disp2dgroup_by_id(5, &package.root).is_some());
 
         let namespaces = package.get_namespaces_on_model(None).unwrap();
         assert!(
@@ -50,13 +52,13 @@ mod tests {
         let package =
             ThreemfPackage::from_reader_with_speed_optimized_deserializer(reader, true).unwrap();
 
-        assert_eq!(query::get_displacement_mesh_objects(&package).count(), 1);
-        for object in query::get_displacement_mesh_objects(&package) {
-            assert!(object.mesh().beamlattice.is_some())
+        assert_eq!(io_query::get_displacement_mesh_objects(&package).count(), 1);
+        for object in io_query::get_displacement_mesh_objects(&package) {
+            assert!(object.view.has_beamlattice())
         }
-        assert!(query::get_displacement2d_by_id(3, &package.root).is_some());
-        assert!(query::get_normvectorgroup_by_id(4, &package.root).is_some());
-        assert!(query::get_disp2dgroup_by_id(5, &package.root).is_some());
+        assert!(core_query::get_displacement2d_by_id(3, &package.root).is_some());
+        assert!(core_query::get_normvectorgroup_by_id(4, &package.root).is_some());
+        assert!(core_query::get_disp2dgroup_by_id(5, &package.root).is_some());
 
         let namespaces = package.get_namespaces_on_model(None).unwrap();
         assert!(
@@ -84,12 +86,12 @@ mod tests {
         package
             .with_model("/3D/3dmodel.model", |model| {
                 assert_eq!(
-                    query::get_displacement_mesh_objects_from_model(model).count(),
+                    core_query::get_displacement_mesh_objects_from_model(model).count(),
                     1
                 );
-                assert!(query::get_displacement2d_by_id(3, model).is_some());
-                assert!(query::get_normvectorgroup_by_id(4, model).is_some());
-                assert!(query::get_disp2dgroup_by_id(5, model).is_some());
+                assert!(core_query::get_displacement2d_by_id(3, model).is_some());
+                assert!(core_query::get_normvectorgroup_by_id(4, model).is_some());
+                assert!(core_query::get_disp2dgroup_by_id(5, model).is_some());
             })
             .unwrap();
     }

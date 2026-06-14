@@ -31,6 +31,49 @@ const MATRIX_SIZE: usize = 12;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Transform(pub [f64; MATRIX_SIZE]);
 
+impl Transform {
+    /// Returns a 4x4 column-major matrix.
+    ///
+    /// Input layout (row-major 4x3):
+    /// [ m00, m01, m02,
+    ///   m10, m11, m12,
+    ///   m20, m21, m22,
+    ///   m30, m31, m32 ]
+    ///
+    /// Output layout (column-major 4x4):
+    /// [ m00, m10, m20, m30,
+    ///   m01, m11, m21, m31,
+    ///   m02, m12, m22, m32,
+    ///   0,   0,   0,   1 ]
+    pub fn to_column_major_matrix(&self) -> [f64; 16] {
+        let m = &self.0;
+        [
+            m[0], m[3], m[6], m[9], m[1], m[4], m[7], m[10], m[2], m[5], m[8], m[11], 0.0, 0.0,
+            0.0, 1.0,
+        ]
+    }
+
+    /// Creates a Transform from a 4x4 column-major matrix.
+    ///
+    /// Expected input layout (column-major 4x4):
+    /// [ m00, m10, m20, m30,
+    ///   m01, m11, m21, m31,
+    ///   m02, m12, m22, m32,
+    ///   m03, m13, m23, m33 ]
+    ///
+    /// We ignore the last row/column (m03, m13, m23, m33) and
+    /// keep the affine 3x3 + translation in Transform's 4x3 layout.
+    pub fn from_column_major_matrix(matrix: [f64; 16]) -> Self {
+        let m = &matrix;
+        Transform([
+            m[0], m[4], m[8], // m00, m01, m02
+            m[1], m[5], m[9], // m10, m11, m12
+            m[2], m[6], m[10], // m20, m21, m22
+            m[3], m[7], m[11], // m30, m31, m32 (translation)
+        ])
+    }
+}
+
 #[cfg(feature = "write")]
 impl ToXml for Transform {
     fn serialize<W: std::fmt::Write + ?Sized>(

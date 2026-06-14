@@ -1,4 +1,8 @@
-use threemf2::{core::model::Model, io::CachePolicy, io::ThreemfPackageLazyReader};
+use threemf2::{
+    core::{model::Model, query::get_model_view},
+    io::CachePolicy,
+    io::ThreemfPackageLazyReader,
+};
 
 use std::{fs::File, path::PathBuf};
 
@@ -25,7 +29,10 @@ fn main() {
             });
             assert!(result_from_model.is_ok());
             match model {
-                Some(model) => println!("Number of build items: {}", model.build.item.len()),
+                Some(model) => println!(
+                    "Number of build items: {}",
+                    get_model_view(&model).build_item_count()
+                ),
                 None => println!("Error deserializing the model"),
             }
         }

@@ -1,4 +1,7 @@
-use threemf2::core::builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit};
+use threemf2::core::{
+    builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit},
+    query::{get_mesh_objects_from_model, get_model_view},
+};
 
 /// This example demonstrates how to use the BeamLatticeBuilder with ModelBuilder
 /// to create 3MF models with beam lattice structures.
@@ -116,43 +119,40 @@ fn main() {
             println!("✓ Beam lattice model created successfully!");
             println!();
             println!("Model Properties:");
-            println!("  Unit: {:?}", model.unit);
-            println!("  Metadata count: {}", model.metadata.len());
-            println!("  Objects count: {}", model.resources.object.len());
-            println!("  Build items count: {}", model.build.item.len());
+            let model_view = get_model_view(&model);
+            println!("  Unit: {:?}", model_view.unit());
+            println!("  Metadata count: {}", model_view.metadata_count());
+            println!("  Objects count: {}", model_view.object_count());
+            println!("  Build items count: {}", model_view.build_item_count());
             println!();
 
-            if let Some(obj) = model.resources.object.first() {
-                println!("Object: {:?}", obj.name);
-                if let Some(mesh) = &obj.get_mesh() {
-                    println!("  Vertices: {}", mesh.vertices.vertex.len());
-                    println!("  Triangles: {}", mesh.triangles.triangle.len());
+            if let Some(mesh) = get_mesh_objects_from_model(&model).next() {
+                println!("Vertices: {}", mesh.vertex_count());
+                println!("Triangles: {}", mesh.triangle_count());
 
-                    if let Some(bl) = &mesh.beamlattice {
-                        println!();
-                        println!("Beam Lattice Properties:");
-                        println!("  Min length: {}", bl.minlength);
-                        println!("  Default radius: {}", bl.radius);
-                        println!("  Ball mode: {:?}", bl.ballmode);
-                        println!("  Ball radius: {:?}", bl.ballradius);
-                        println!("  Cap mode: {:?}", bl.cap);
-                        println!("  Beams: {}", bl.beams.beam.len());
+                if let Some(lattice) = mesh.lattice() {
+                    let data = lattice.data();
+                    println!();
+                    println!("Beam Lattice Properties:");
+                    println!("  Min length: {}", data.minlength);
+                    println!("  Default radius: {}", data.radius);
+                    println!("  Ball mode: {:?}", data.ball_mode);
+                    println!("  Ball radius: {:?}", data.ball_radius);
+                    println!("  Clipping mode: {:?}", data.clippingmode);
+                    println!("  Beams: {}", data.beam_count);
+                    println!("  Balls: {}", data.ball_count);
 
-                        if let Some(balls) = &bl.balls {
-                            println!("  Balls: {}", balls.ball.len());
-                        }
-
-                        if let Some(beamsets) = &bl.beamsets {
-                            println!("  Beam sets: {}", beamsets.beamset.len());
-                            for (i, bs) in beamsets.beamset.iter().enumerate() {
-                                println!(
-                                    "    Set {}: {:?} ({} beams, {} balls)",
-                                    i,
-                                    bs.name,
-                                    bs.refs.len(),
-                                    bs.ballref.len()
-                                );
-                            }
+                    if let Some(beamsets) = lattice.beamsets() {
+                        let beamset_count = lattice.beamset_count();
+                        println!("  Beam sets: {}", beamset_count);
+                        for (i, bs) in beamsets.enumerate() {
+                            println!(
+                                "    Set {}: {:?} ({} beams, {} balls)",
+                                i,
+                                bs.name(),
+                                bs.beam_refs().count(),
+                                bs.ball_refs().count()
+                            );
                         }
                     }
                 }

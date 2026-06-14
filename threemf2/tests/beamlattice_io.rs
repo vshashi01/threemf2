@@ -28,7 +28,7 @@ mod tests {
                 assert_eq!(mesh_obj.len(), 5);
 
                 let beam_lattice_obj = get_mesh_objects(&package)
-                    .filter(|mesh_ref| mesh_ref.mesh().beamlattice.is_some())
+                    .filter(|mesh_ref| mesh_ref.view.has_beamlattice())
                     .count();
                 assert_eq!(beam_lattice_obj, 2);
 
@@ -63,7 +63,7 @@ mod tests {
 
                 let beam_lattice_obj = mesh_obj
                     .iter()
-                    .filter(|mesh_rep| mesh_rep.mesh().beamlattice.is_some())
+                    .filter(|mesh_rep| mesh_rep.view.has_beamlattice())
                     .count();
                 assert_eq!(beam_lattice_obj, 2);
 
@@ -110,12 +110,12 @@ mod tests {
                 for model_path in package.model_paths() {
                     package
                         .with_model(model_path, |model| {
-                            use threemf2::io::query;
+                            use threemf2::core::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
 
                             beam_lattice_objects = query::get_mesh_objects_from_model(model)
-                                .filter(|mesh_rep| mesh_rep.mesh().beamlattice.is_some())
+                                .filter(|mesh_rep| mesh_rep.has_beamlattice())
                                 .count();
 
                             namespaces.extend_from_slice(&model.used_namespaces());
@@ -168,12 +168,12 @@ mod tests {
                 for model_path in package.model_paths() {
                     package
                         .with_model(model_path, |model| {
-                            use threemf2::io::query;
+                            use threemf2::core::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
 
                             beam_lattice_objects = query::get_mesh_objects_from_model(model)
-                                .filter(|mesh_rep| mesh_rep.mesh().beamlattice.is_some())
+                                .filter(|mesh_rep| mesh_rep.has_beamlattice())
                                 .count();
 
                             namespaces.extend_from_slice(&model.used_namespaces());

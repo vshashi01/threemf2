@@ -1,4 +1,4 @@
-use threemf2::io::ThreemfPackage;
+use threemf2::{core::query::get_model_view, io::ThreemfPackage};
 
 use std::{fs::File, path::PathBuf};
 
@@ -14,7 +14,10 @@ fn main() {
 
     match result {
         Ok(package) => {
-            println!("Number of build items: {}", package.root.build.item.len())
+            println!(
+                "Number of build items: {}",
+                get_model_view(&package.root).build_item_count()
+            )
         }
         Err(err) => println!("Error reading the file: {:?}", err),
     }

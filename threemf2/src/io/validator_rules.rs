@@ -3,9 +3,10 @@
 //! This module contains the concrete implementations for each validation rule.
 
 use crate::core::model::Model;
-use crate::io::query::{ComponentsObjectRef, ItemRef, ObjectRef, SliceStackRef};
+use crate::core::query as core_query;
+use crate::io::ThreemfPackage;
+use crate::io::query as io_query;
 use crate::io::validator::{Severity, ValidationIssue, ValidationRule};
-use crate::io::{ThreemfPackage, query};
 use std::collections::HashSet;
 
 /// Runs a single validation rule against a model.
@@ -53,25 +54,25 @@ fn validate_component_references(
     model: &Model,
     package: Option<&ThreemfPackage>,
 ) -> Vec<ValidationIssue> {
-    let comp_objs = get_component_objects_it(model, package);
-    let objs = get_objects_it(model, package).collect::<Vec<_>>();
+    let comp_objs = get_component_objects(model, package);
+    let objs = get_objects(model, package);
 
     let mut issues = vec![];
     for obj in comp_objs {
-        for comp in obj.components() {
+        for comp in &obj.components {
             if !objs
                 .iter()
-                .filter(|o| o.path == comp.path_to_look_for.as_deref())
-                .any(|o| o.object.id == comp.objectid)
+                .filter(|o| o.origin_model_path == comp.path.as_deref())
+                .any(|o| o.id == comp.object_id)
             {
                 issues.push(ValidationIssue {
                     severity: Severity::Warning,
                     message: format!(
                         "A Component in Components Object with Id: {} at path: {} is referencing an unknown Object with Id: {} at path: {:?}",
                         obj.id,
-                        obj.origin_model_path.unwrap_or("root"),
-                        comp.objectid,
-                        comp.path_to_look_for.as_deref().unwrap_or("root")
+                        obj.origin_model_path.clone().unwrap_or("root".to_owned()),
+                        comp.object_id,
+                        comp.path.clone().unwrap_or("root".to_owned())
                     ),
                 });
             }
@@ -85,12 +86,12 @@ fn validate_build_item_references(
     model: &Model,
     package: Option<&ThreemfPackage>,
 ) -> Vec<ValidationIssue> {
-    let items = get_build_items_it(model, package);
-    let objects = get_objects_it(model, package).collect::<Vec<_>>();
+    let items = get_build_items(model, package);
+    let objects = get_objects(model, package);
 
     let mut issues = vec![];
 
-    if package.is_some() && get_build_items_it(model, package).count() == 0 {
+    if package.is_some() && items.is_empty() {
         issues.push(ValidationIssue {
             severity: Severity::Error,
             message: "Package does not contain any Build Items".to_owned(),
@@ -100,15 +101,15 @@ fn validate_build_item_references(
     for item in items {
         if !objects
             .iter()
-            .filter(|o| o.path == item.path())
-            .any(|o| o.object.id == item.objectid())
+            .filter(|o| o.origin_model_path == item.path.as_deref())
+            .any(|o| o.id == item.object_id)
         {
             issues.push(ValidationIssue {
                 severity: Severity::Warning,
                 message: format!(
                     "A Build Item is referencing an unknown Object with Id: {} at path: {:?}",
-                    item.objectid(),
-                    item.path().unwrap_or("root")
+                    item.object_id,
+                    item.path.unwrap_or("root".to_owned())
                 ),
             });
         }
@@ -129,10 +130,10 @@ fn validate_object_id_reference(
     let mut seen_ids = HashSet::new();
     const MAX_RESOURCE_ID: u32 = 2_147_483_647;
 
-    let obj_refs = get_objects_it(model, package);
+    let obj_refs = get_objects(model, package);
 
     for obj_ref in obj_refs {
-        let id = obj_ref.object.id;
+        let id = obj_ref.id;
 
         // Check ID starts at 1
         if id == 0 {
@@ -140,7 +141,7 @@ fn validate_object_id_reference(
                 Severity::Error,
                 format!(
                     "Object ID cannot be 0. Object IDs must start at 1. Found at path: {}",
-                    obj_ref.path.unwrap_or("root")
+                    obj_ref.origin_model_path.unwrap_or("root")
                 ),
             ));
             continue;
@@ -176,86 +177,161 @@ fn validate_object_to_slicestack_references(
 ) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
 
-    let obj_refs = get_objects_it(model, package);
-    let slicestack_refs = get_slicestacks_it(model, package).collect::<Vec<_>>();
+    let obj_refs = get_objects(model, package);
+    let slicestack_refs = get_slicestacks(model, package);
 
     for obj_ref in obj_refs {
         if slicestack_refs.iter().any(|stack_ref| {
-            stack_ref.path == obj_ref.object.slicepath.as_ref().map(|p| p.as_str())
-                && stack_ref.slicestack.id == obj_ref.object.slicestackid.unwrap_or(u32::MAX)
+            stack_ref.path == obj_ref.slicepath.as_deref()
+                && stack_ref.id == obj_ref.slicestack_id.unwrap_or(u32::MAX)
         }) {
-            issues.push(ValidationIssue::new(Severity::Error, format!("Unable to find slicestack with id: {:?} in model path: {:?} referenced by Object with object id: {:?} in model path: {:?}", obj_ref.object.slicestackid, obj_ref.object.slicepath, obj_ref.object.id, obj_ref.path)));
+            issues.push(ValidationIssue::new(
+                Severity::Error,
+                format!(
+                    "Unable to find slicestack with id: {:?} in model path: {:?} referenced by Object with object id: {:?} in model path: {:?}",
+                    obj_ref.slicestack_id,
+                    obj_ref.slicepath,
+                    obj_ref.id,
+                    obj_ref.origin_model_path
+                ),
+            ));
         }
     }
 
     issues
 }
 
-enum IteratorType<I1, I2> {
-    FromPackage(I1),
-    FromModel(I2),
+struct ObjectInfo<'a> {
+    id: u32,
+    origin_model_path: Option<&'a str>,
+    slicepath: Option<String>,
+    slicestack_id: Option<u32>,
+    pid: crate::core::OptionalResourceId,
+    pindex: crate::core::OptionalResourceIndex,
 }
 
-impl<I1, I2, T> Iterator for IteratorType<I1, I2>
-where
-    I1: Iterator<Item = T>,
-    I2: Iterator<Item = T>,
-{
-    type Item = T;
+struct BuildItemInfo {
+    object_id: u32,
+    path: Option<String>,
+}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            IteratorType::FromPackage(it) => it.next(),
-            IteratorType::FromModel(it) => it.next(),
-        }
+struct ComponentInfo {
+    object_id: u32,
+    path: Option<String>,
+}
+
+struct ComponentsObjectInfo {
+    id: u32,
+    origin_model_path: Option<String>,
+    components: Vec<ComponentInfo>,
+}
+
+struct SliceStackInfo<'a> {
+    id: u32,
+    path: Option<&'a str>,
+}
+
+fn get_objects<'a>(model: &'a Model, package: Option<&'a ThreemfPackage>) -> Vec<ObjectInfo<'a>> {
+    if let Some(package) = package {
+        io_query::get_objects(package)
+            .map(|o| ObjectInfo {
+                id: o.view.id(),
+                origin_model_path: o.origin_model_path,
+                slicepath: o.view.slicepath().map(|p| p.to_owned()),
+                slicestack_id: o.view.slicestack_id(),
+                pid: o.view.pid(),
+                pindex: o.view.pindex(),
+            })
+            .collect()
+    } else {
+        core_query::get_objects_from_model(model)
+            .map(|o| ObjectInfo {
+                id: o.id(),
+                origin_model_path: None,
+                slicepath: o.slicepath().map(|p| p.to_owned()),
+                slicestack_id: o.slicestack_id(),
+                pid: o.pid(),
+                pindex: o.pindex(),
+            })
+            .collect()
     }
 }
 
-fn get_objects_it<'a>(
+fn get_build_items<'a>(
     model: &'a Model,
     package: Option<&'a ThreemfPackage>,
-) -> IteratorType<impl Iterator<Item = ObjectRef<'a>>, impl Iterator<Item = ObjectRef<'a>>> {
+) -> Vec<BuildItemInfo> {
     if let Some(package) = package {
-        IteratorType::FromPackage(query::get_objects(package))
+        io_query::get_items(package)
+            .map(|i| BuildItemInfo {
+                object_id: i.view.object_id(),
+                path: i.view.path().map(|p| p.to_owned()),
+            })
+            .collect()
     } else {
-        IteratorType::FromModel(query::get_objects_from_model(model))
+        core_query::get_items_from_model(model)
+            .map(|i| BuildItemInfo {
+                object_id: i.object_id(),
+                path: i.path().map(|p| p.to_owned()),
+            })
+            .collect()
     }
 }
 
-fn get_build_items_it<'a>(
+fn get_component_objects<'a>(
     model: &'a Model,
     package: Option<&'a ThreemfPackage>,
-) -> IteratorType<impl Iterator<Item = ItemRef<'a>>, impl Iterator<Item = ItemRef<'a>>> {
+) -> Vec<ComponentsObjectInfo> {
     if let Some(package) = package {
-        IteratorType::FromPackage(query::get_items(package))
+        io_query::get_components_objects(package)
+            .map(|c| ComponentsObjectInfo {
+                id: c.view.id(),
+                origin_model_path: c.origin_model_path.map(|p| p.to_owned()),
+                components: c
+                    .view
+                    .components()
+                    .map(|comp| ComponentInfo {
+                        object_id: comp.object_id(),
+                        path: comp.path().map(|p| p.to_owned()),
+                    })
+                    .collect(),
+            })
+            .collect()
     } else {
-        IteratorType::FromModel(query::get_items_from_model(model))
+        core_query::get_components_objects_from_model(model)
+            .map(|c| ComponentsObjectInfo {
+                id: c.id(),
+                origin_model_path: None,
+                components: c
+                    .components()
+                    .map(|comp| ComponentInfo {
+                        object_id: comp.object_id(),
+                        path: comp.path().map(|p| p.to_owned()),
+                    })
+                    .collect(),
+            })
+            .collect()
     }
 }
 
-fn get_component_objects_it<'a>(
+fn get_slicestacks<'a>(
     model: &'a Model,
     package: Option<&'a ThreemfPackage>,
-) -> IteratorType<
-    impl Iterator<Item = ComponentsObjectRef<'a>>,
-    impl Iterator<Item = ComponentsObjectRef<'a>>,
-> {
+) -> Vec<SliceStackInfo<'a>> {
     if let Some(package) = package {
-        IteratorType::FromPackage(query::get_components_objects(package))
+        io_query::get_slice_stacks(package)
+            .map(|s| SliceStackInfo {
+                id: s.view.id(),
+                path: s.origin_model_path,
+            })
+            .collect()
     } else {
-        IteratorType::FromModel(query::get_components_objects_from_model(model))
-    }
-}
-
-fn get_slicestacks_it<'a>(
-    model: &'a Model,
-    package: Option<&'a ThreemfPackage>,
-) -> IteratorType<impl Iterator<Item = SliceStackRef<'a>>, impl Iterator<Item = SliceStackRef<'a>>>
-{
-    if let Some(package) = package {
-        IteratorType::FromPackage(query::get_slice_stacks(package))
-    } else {
-        IteratorType::FromModel(query::get_slice_stacks_from_model(model))
+        core_query::get_slice_stacks_from_model(model)
+            .map(|s| SliceStackInfo {
+                id: s.id(),
+                path: None,
+            })
+            .collect()
     }
 }
 
@@ -275,32 +351,32 @@ fn validate_resource_id_reference(
         .map(|bm| bm.id)
         .collect();
 
-    let obj_refs = get_objects_it(model, package);
+    let obj_refs = get_objects(model, package);
     // Check all objects' pid references
     for obj_ref in obj_refs {
-        if let Some(pid) = obj_ref.object.pid.get() {
+        if let Some(pid) = obj_ref.pid.get() {
             // Check pid points to existing BaseMaterials
             if !valid_basematerials_ids.contains(&pid) {
                 issues.push(ValidationIssue::new(
                     Severity::Error,
                     format!(
                         "Object {} references pid={} but no BaseMaterials with that ID exists.",
-                        obj_ref.object.id, pid
+                        obj_ref.id, pid
                     ),
                 ));
             }
         }
     }
 
-    let obj_refs = get_objects_it(model, package);
+    let obj_refs = get_objects(model, package);
     // Check pindex consistency: if pindex is specified, pid must be specified too
     for obj_ref in obj_refs {
-        if obj_ref.object.pindex.is_some() && obj_ref.object.pid.is_none() {
+        if obj_ref.pindex.is_some() && obj_ref.pid.is_none() {
             issues.push(ValidationIssue::new(
                 Severity::Error,
                 format!(
                     "Object {} has pindex but no pid. pindex requires pid to be specified.",
-                    obj_ref.object.id
+                    obj_ref.id
                 ),
             ));
         }
