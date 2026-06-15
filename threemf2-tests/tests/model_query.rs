@@ -2,6 +2,10 @@
 mod tests {
     use instant_xml::from_str;
     use std::path::PathBuf;
+    use threemf2::core::query::{
+        get_components_objects_from_model, get_items_from_model, get_mesh_objects_from_model,
+        get_object_from_model, get_objects_from_model,
+    };
 
     use threemf2::core::model::Model;
     use threemf2::io::query::*;
@@ -17,8 +21,8 @@ mod tests {
 
         match object_ref {
             Some(obj_ref) => {
-                assert!(obj_ref.object.get_mesh().is_some());
-                assert_eq!(obj_ref.object.id, 1);
+                assert!(obj_ref.is_mesh());
+                assert_eq!(obj_ref.id(), 1);
             }
             None => panic!("Object ref not found"),
         }
@@ -65,7 +69,7 @@ mod tests {
         let model = from_str::<Model>(&text).unwrap();
 
         let objects = get_mesh_objects_from_model(&model)
-            .filter(|mesh_ref| mesh_ref.mesh().beamlattice.is_some())
+            .filter(|mesh_ref| mesh_ref.has_beamlattice())
             .count();
         assert_eq!(objects, 2)
     }
@@ -82,42 +86,6 @@ mod tests {
     }
 
     #[test]
-    fn test_get_objects_from_model_ref() {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/lfs/mesh-composedpart-beamlattice.model");
-        let text = std::fs::read_to_string(path).unwrap();
-        let model = from_str::<Model>(&text).unwrap();
-        let model_ref = ModelRef {
-            model: &model,
-            path: Some("test_path"),
-        };
-
-        let objects = get_objects_from_model_ref(model_ref).collect::<Vec<_>>();
-        assert_eq!(objects.len(), 6);
-        for obj in objects {
-            assert_eq!(obj.path, Some("test_path"));
-        }
-    }
-
-    #[test]
-    fn test_get_mesh_objects_from_model_ref() {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/lfs/mesh-composedpart-beamlattice.model");
-        let text = std::fs::read_to_string(path).unwrap();
-        let model = from_str::<Model>(&text).unwrap();
-        let model_ref = ModelRef {
-            model: &model,
-            path: None,
-        };
-
-        let objects = get_mesh_objects_from_model_ref(model_ref).collect::<Vec<_>>();
-        assert_eq!(objects.len(), 5);
-        for obj in objects {
-            assert!(obj.object.get_mesh().is_some());
-        }
-    }
-
-    #[test]
     fn test_mesh_object_ref_impl() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("tests/data/lfs/mesh-composedpart-beamlattice.model");
@@ -127,8 +95,9 @@ mod tests {
         let mesh_objects = get_mesh_objects_from_model(&model).collect::<Vec<_>>();
         assert!(!mesh_objects.is_empty());
         let mesh_ref = &mesh_objects[0];
-        assert_eq!(mesh_ref.id, 1);
-        assert!(!mesh_ref.mesh().vertices.vertex.is_empty());
+        assert_eq!(mesh_ref.id(), 1);
+        assert_eq!(mesh_ref.vertices().count(), 8);
+        assert_eq!(mesh_ref.triangles().count(), 12);
     }
 
     #[test]
@@ -141,11 +110,11 @@ mod tests {
         let composedpart_objects = get_components_objects_from_model(&model).collect::<Vec<_>>();
         assert!(!composedpart_objects.is_empty());
         let composed_part = &composedpart_objects[0];
-        assert_eq!(composed_part.id, 4);
+        assert_eq!(composed_part.id(), 4);
         assert_eq!(composed_part.components().count(), 2);
 
         for comp in composed_part.components() {
-            assert!(comp.objectid > 0);
+            assert!(comp.object_id() > 0);
         }
     }
 
@@ -157,21 +126,12 @@ mod tests {
         let model = from_str::<Model>(&text).unwrap();
 
         let beam_objects = get_mesh_objects_from_model(&model)
-            .filter(|mesh_ref| mesh_ref.mesh().beamlattice.is_some())
+            .filter(|mesh_ref| mesh_ref.has_beamlattice())
             .collect::<Vec<_>>();
         assert!(!beam_objects.is_empty());
         let mesh_ref = &beam_objects[0];
-        assert_eq!(mesh_ref.id, 5);
-        assert!(
-            !mesh_ref
-                .mesh()
-                .beamlattice
-                .as_ref()
-                .unwrap()
-                .beams
-                .beam
-                .is_empty()
-        );
+        assert_eq!(mesh_ref.id(), 5);
+        assert!(mesh_ref.lattice().is_some());
     }
 
     #[test]
@@ -198,24 +158,8 @@ mod tests {
 
         let items = get_items_from_model(&model).collect::<Vec<_>>();
         assert_eq!(items.len(), 4);
-        assert_eq!(items[0].objectid(), 1);
-        assert!(items[0].origin_model_path.is_none());
-    }
-
-    #[test]
-    fn test_get_items_from_model_ref() {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/data/lfs/mesh-composedpart-beamlattice.model");
-        let text = std::fs::read_to_string(path).unwrap();
-        let model = from_str::<Model>(&text).unwrap();
-        let model_ref = ModelRef {
-            model: &model,
-            path: Some("sub/model.model"),
-        };
-
-        let items = get_items_from_model_ref(model_ref).collect::<Vec<_>>();
-        assert_eq!(items.len(), 4);
-        assert_eq!(items[0].origin_model_path, Some("sub/model.model"));
+        assert_eq!(items[0].object_id(), 1);
+        // assert!(items[0].origin_model_path.is_none());
     }
 
     #[test]
@@ -228,9 +172,9 @@ mod tests {
         let items = get_items_from_model(&model).collect::<Vec<_>>();
         assert_eq!(items.len(), 4);
         let item_ref = &items[0];
-        assert_eq!(item_ref.objectid(), 1);
+        assert_eq!(item_ref.object_id(), 1);
         assert!(item_ref.transform().is_some());
-        assert_eq!(item_ref.partnumber(), Some("Pyramid"));
+        assert_eq!(item_ref.part_number(), Some("Pyramid"));
         assert!(item_ref.path().is_none());
         assert_eq!(
             item_ref.uuid(),

@@ -477,6 +477,24 @@ impl From<&[u8]> for OptionalResourceId {
     }
 }
 
+impl From<Option<NonZeroU32>> for OptionalResourceId {
+    fn from(value: Option<NonZeroU32>) -> Self {
+        Self(value)
+    }
+}
+
+impl From<OptionalResourceId> for Option<NonZeroU32> {
+    fn from(value: OptionalResourceId) -> Self {
+        value.0
+    }
+}
+
+impl From<OptionalResourceId> for Option<u32> {
+    fn from(value: OptionalResourceId) -> Self {
+        value.0.map(|v| v.get())
+    }
+}
+
 #[cfg(feature = "write")]
 impl ToXml for OptionalResourceId {
     fn serialize<W: std::fmt::Write + ?Sized>(

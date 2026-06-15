@@ -40,45 +40,47 @@ mod tests {
                 assert_eq!(boolean_shapes.len(), 2, "Expected 2 boolean shapes");
 
                 // Verify first boolean shape (Intersected - Object 6)
-                let intersected = boolean_shapes.iter().find(|b| b.id == 6);
+                let intersected = boolean_shapes.iter().find(|b| b.view.id() == 6);
                 assert!(intersected.is_some(), "Should find boolean shape with ID 6");
                 if let Some(shape) = intersected {
                     assert!(
-                        shape.is_intersection(),
+                        shape.view.is_intersection(),
                         "Object 6 should be Intersection operation"
                     );
                     assert_eq!(
-                        shape.base_objectid(),
+                        shape.view.base_objectid(),
                         4,
                         "Object 6 base should be Object 4 (Cube)"
                     );
-                    let operands: Vec<_> = shape.booleans().collect();
+                    let operands: Vec<_> = shape.view.booleans().collect();
                     assert_eq!(operands.len(), 1, "Object 6 should have 1 operand");
                     assert_eq!(
-                        operands[0].objectid, 5,
+                        operands[0].object_id(),
+                        5,
                         "Operand should reference Object 5 (Sphere)"
                     );
                 }
 
                 // Verify second boolean shape (Full part - Object 8)
-                let full_part = boolean_shapes.iter().find(|b| b.id == 8);
+                let full_part = boolean_shapes.iter().find(|b| b.view.id() == 8);
                 assert!(full_part.is_some(), "Should find boolean shape with ID 8");
                 if let Some(shape) = full_part {
                     assert!(
-                        shape.is_difference(),
+                        shape.view.is_difference(),
                         "Object 8 should be Difference operation"
                     );
                     assert_eq!(
-                        shape.base_objectid(),
+                        shape.view.base_objectid(),
                         6,
                         "Object 8 base should be Object 6 (nested boolean)"
                     );
-                    let operands: Vec<_> = shape.booleans().collect();
+                    let operands: Vec<_> = shape.view.booleans().collect();
                     assert_eq!(operands.len(), 3, "Object 8 should have 3 operands");
                     // All 3 operands should reference the cylinder (Object 3)
                     for operand in &operands {
                         assert_eq!(
-                            operand.objectid, 3,
+                            operand.object_id(),
+                            3,
                             "Operand should reference Object 3 (Cylinder)"
                         );
                     }
@@ -129,36 +131,36 @@ mod tests {
                 assert_eq!(boolean_shapes.len(), 2, "Expected 2 boolean shapes");
 
                 // Verify first boolean shape (Intersected - Object 6)
-                let intersected = boolean_shapes.iter().find(|b| b.id == 6);
+                let intersected = boolean_shapes.iter().find(|b| b.view.id() == 6);
                 assert!(intersected.is_some(), "Should find boolean shape with ID 6");
                 if let Some(shape) = intersected {
                     assert!(
-                        shape.is_intersection(),
+                        shape.view.is_intersection(),
                         "Object 6 should be Intersection operation"
                     );
                     assert_eq!(
-                        shape.base_objectid(),
+                        shape.view.base_objectid(),
                         4,
                         "Object 6 base should be Object 4 (Cube)"
                     );
-                    let operands: Vec<_> = shape.booleans().collect();
+                    let operands: Vec<_> = shape.view.booleans().collect();
                     assert_eq!(operands.len(), 1, "Object 6 should have 1 operand");
                 }
 
                 // Verify second boolean shape (Full part - Object 8)
-                let full_part = boolean_shapes.iter().find(|b| b.id == 8);
+                let full_part = boolean_shapes.iter().find(|b| b.view.id() == 8);
                 assert!(full_part.is_some(), "Should find boolean shape with ID 8");
                 if let Some(shape) = full_part {
                     assert!(
-                        shape.is_difference(),
+                        shape.view.is_difference(),
                         "Object 8 should be Difference operation"
                     );
                     assert_eq!(
-                        shape.base_objectid(),
+                        shape.view.base_objectid(),
                         6,
                         "Object 8 base should be Object 6 (nested boolean)"
                     );
-                    let operands: Vec<_> = shape.booleans().collect();
+                    let operands: Vec<_> = shape.view.booleans().collect();
                     assert_eq!(operands.len(), 3, "Object 8 should have 3 operands");
                 }
 
@@ -203,7 +205,7 @@ mod tests {
                 for model_path in package.model_paths() {
                     package
                         .with_model(model_path, |model| {
-                            use threemf2::io::query;
+                            use threemf2::core::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
                             boolean_shapes =
@@ -211,12 +213,12 @@ mod tests {
 
                             // Check for specific boolean shapes
                             for boolean_ref in query::get_boolean_shape_objects_from_model(model) {
-                                if boolean_ref.id == 6 && boolean_ref.is_intersection() {
+                                if boolean_ref.id() == 6 && boolean_ref.is_intersection() {
                                     intersected_found = true;
                                     let operands: Vec<_> = boolean_ref.booleans().collect();
                                     assert_eq!(operands.len(), 1);
                                 }
-                                if boolean_ref.id == 8 && boolean_ref.is_difference() {
+                                if boolean_ref.id() == 8 && boolean_ref.is_difference() {
                                     full_part_found = true;
                                     let operands: Vec<_> = boolean_ref.booleans().collect();
                                     assert_eq!(operands.len(), 3);
@@ -282,7 +284,7 @@ mod tests {
                 for model_path in package.model_paths() {
                     package
                         .with_model(model_path, |model| {
-                            use threemf2::io::query;
+                            use threemf2::core::query;
 
                             mesh_objects = query::get_mesh_objects_from_model(model).count();
                             boolean_shapes =
@@ -290,12 +292,12 @@ mod tests {
 
                             // Check for specific boolean shapes
                             for boolean_ref in query::get_boolean_shape_objects_from_model(model) {
-                                if boolean_ref.id == 6 && boolean_ref.is_intersection() {
+                                if boolean_ref.id() == 6 && boolean_ref.is_intersection() {
                                     intersected_found = true;
                                     let operands: Vec<_> = boolean_ref.booleans().collect();
                                     assert_eq!(operands.len(), 1);
                                 }
-                                if boolean_ref.id == 8 && boolean_ref.is_difference() {
+                                if boolean_ref.id() == 8 && boolean_ref.is_difference() {
                                     full_part_found = true;
                                     let operands: Vec<_> = boolean_ref.booleans().collect();
                                     assert_eq!(operands.len(), 3);

@@ -42,31 +42,32 @@ mod tests {
 
                 match slice_stacks
                     .iter()
-                    .find(|stack_ref| stack_ref.path.is_none())
+                    .find(|stack_ref| stack_ref.origin_model_path.is_none())
                 {
                     Some(root_stack_ref) => {
-                        assert_eq!(root_stack_ref.slicestack.sliceref.len(), 1);
-                        let root_ref = &root_stack_ref.slicestack.sliceref[0];
+                        assert_eq!(root_stack_ref.view.sliceref_count(), 1);
+                        let root_ref = root_stack_ref.view.slicerefs().next().unwrap();
                         match slice_stacks.iter().find(|stack_ref| {
-                            stack_ref.path == Some(root_ref.slicepath.as_str())
-                                && stack_ref.slicestack.id == root_ref.slicestackid
+                            stack_ref.origin_model_path == Some(root_ref.slicepath())
+                                && stack_ref.view.id() == root_ref.slicestack_id()
                         }) {
                             Some(sub_stack) => {
-                                assert!(sub_stack.slicestack.has_owned_slices());
-                                assert_eq!(sub_stack.slicestack.slice.len(), 50);
-                                for slice in &sub_stack.slicestack.slice {
-                                    if let Some(vertices) = &slice.vertices {
-                                        assert!(vertices.vertex.len() > 1);
-                                        assert!(!slice.polygon.is_empty());
-                                        for polygon in &slice.polygon {
-                                            assert!(polygon.segment.len() > 1)
+                                assert!(sub_stack.view.has_owned_slices());
+                                assert_eq!(sub_stack.view.slice_count(), 50);
+                                for slice in sub_stack.view.slices() {
+                                    if let Some(count) = slice.vertex_count() {
+                                        assert!(count > 1);
+                                        assert!(slice.polygon_count() > 0);
+                                        for polygon in slice.polygons() {
+                                            assert!(polygon.segment_count() > 1)
                                         }
                                     }
                                 }
                             }
                             None => panic!(
                                 "Couldn't find the appropriate stack with Id: {} in model path: {}",
-                                root_ref.slicestackid, root_ref.slicepath
+                                root_ref.slicestack_id(),
+                                root_ref.slicepath()
                             ),
                         }
                     }
@@ -120,25 +121,25 @@ mod tests {
 
                 match slice_stacks
                     .iter()
-                    .find(|stack_ref| stack_ref.path.is_none())
+                    .find(|stack_ref| stack_ref.origin_model_path.is_none())
                 {
                     Some(root_stack_ref) => {
-                        assert_eq!(root_stack_ref.slicestack.sliceref.len(), 1);
+                        assert_eq!(root_stack_ref.view.sliceref_count(), 1);
 
-                        let root_ref = &root_stack_ref.slicestack.sliceref[0];
+                        let root_ref = root_stack_ref.view.slicerefs().next().unwrap();
                         match slice_stacks.iter().find(|stack_ref| {
-                            stack_ref.path == Some(root_ref.slicepath.as_str())
-                                && stack_ref.slicestack.id == root_ref.slicestackid
+                            stack_ref.origin_model_path == Some(root_ref.slicepath())
+                                && stack_ref.view.id() == root_ref.slicestack_id()
                         }) {
                             Some(sub_stack) => {
-                                assert!(sub_stack.slicestack.has_owned_slices());
-                                assert_eq!(sub_stack.slicestack.slice.len(), 50);
-                                for slice in &sub_stack.slicestack.slice {
-                                    if let Some(vertices) = &slice.vertices {
-                                        assert!(vertices.vertex.len() > 1);
-                                        assert!(!slice.polygon.is_empty());
-                                        for polygon in &slice.polygon {
-                                            assert!(polygon.segment.len() > 1)
+                                assert!(sub_stack.view.has_owned_slices());
+                                assert_eq!(sub_stack.view.slice_count(), 50);
+                                for slice in sub_stack.view.slices() {
+                                    if let Some(count) = slice.vertex_count() {
+                                        assert!(count > 1);
+                                        assert!(slice.polygon_count() > 0);
+                                        for polygon in slice.polygons() {
+                                            assert!(polygon.segment_count() > 1)
                                         }
                                     }
 
@@ -147,7 +148,8 @@ mod tests {
                             }
                             None => panic!(
                                 "Couldn't find the appropriate stack with Id: {} in model path: {}",
-                                root_ref.slicestackid, root_ref.slicepath
+                                root_ref.slicestack_id(),
+                                root_ref.slicepath()
                             ),
                         }
                     }

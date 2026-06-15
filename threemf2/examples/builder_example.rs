@@ -1,4 +1,7 @@
-use threemf2::core::builder::{ModelBuilder, ObjectType, Unit};
+use threemf2::core::{
+    builder::{ModelBuilder, ObjectType, Unit},
+    query::{get_mesh_objects_from_model, get_model_view, get_objects_from_model},
+};
 use threemf2::io::ThreemfPackage;
 
 /// This example shows how to build 3MF Model using ModelBuilder.
@@ -77,17 +80,19 @@ fn main() {
     match model {
         Ok(model) => {
             println!("Model created successfully!");
-            println!("Unit: {:?}", model.unit);
-            println!("Metadata count: {}", model.metadata.len());
-            println!("Objects count: {}", model.resources.object.len());
-            println!("Build items count: {}", model.build.item.len());
+            let model_view = get_model_view(&model);
+            println!("Unit: {:?}", model_view.unit());
+            println!("Metadata count: {}", model_view.metadata_count());
+            println!("Objects count: {}", model_view.object_count());
+            println!("Build items count: {}", model_view.build_item_count());
 
-            if let Some(obj) = model.resources.object.first() {
-                println!("First object name: {:?}", obj.name);
-                if let Some(mesh) = &obj.get_mesh() {
-                    println!("Vertices: {}", mesh.vertices.vertex.len());
-                    println!("Triangles: {}", mesh.triangles.triangle.len());
-                }
+            if let Some(obj) = get_objects_from_model(&model).next() {
+                println!("First object name: {:?}", obj.name());
+            }
+
+            if let Some(mesh) = get_mesh_objects_from_model(&model).next() {
+                println!("Vertices: {}", mesh.vertex_count());
+                println!("Triangles: {}", mesh.triangle_count());
             }
 
             //to create a 3MF Package easily just convert model into a package

@@ -42,8 +42,8 @@ mod tests {
                 // let object_by_id = get_object_ref_from_id(1, &package, None, None);
                 let object_by_id = objects
                     .iter()
-                    .filter(|r| r.path.is_none())
-                    .find(|r| r.object.id == 1);
+                    .filter(|r| r.origin_model_path.is_none())
+                    .find(|r| r.view.id() == 1);
                 assert!(object_by_id.is_some());
 
                 assert_eq!(2, package.root.build.item.len());
@@ -100,8 +100,8 @@ mod tests {
                 // let object_by_id = get_object_ref_from_id(1, &package, None, None);
                 let object_by_id = objects
                     .iter()
-                    .filter(|r| r.path.is_none())
-                    .find(|r| r.object.id == 1);
+                    .filter(|r| r.origin_model_path.is_none())
+                    .find(|r| r.view.id() == 1);
                 assert!(object_by_id.is_some());
 
                 assert_eq!(2, package.root.build.item.len());

@@ -32,9 +32,9 @@ mod tests {
                 assert_eq!(objects.len(), 4);
 
                 let mesh_objects = get_mesh_objects(&package).collect::<Vec<_>>();
-                let can_find_object_by_uuid = mesh_objects
-                    .iter()
-                    .find(|o| o.uuid.as_deref() == Some("79f98073-4eaa-4737-b065-041b98fb50a6"));
+                let can_find_object_by_uuid = mesh_objects.iter().find(|o| {
+                    o.view.uuid().as_deref() == Some("79f98073-4eaa-4737-b065-041b98fb50a6")
+                });
                 assert_eq!(mesh_objects.len(), 3);
                 assert!(can_find_object_by_uuid.is_some());
 
@@ -43,8 +43,8 @@ mod tests {
 
                 let object_by_id = objects
                     .iter()
-                    .filter(|r| matches!(r.path, Some("/3D/Objects/Object.model")))
-                    .find(|r| r.object.id == 1);
+                    .filter(|r| matches!(r.origin_model_path, Some("/3D/Objects/Object.model")))
+                    .find(|r| r.view.id() == 1);
                 assert!(object_by_id.is_some());
 
                 let can_find_build_item_by_uuid = package.root.build.item.iter().find(|i| {
@@ -86,9 +86,9 @@ mod tests {
                 assert_eq!(objects.len(), 4);
 
                 let mesh_objects = get_mesh_objects(&package).collect::<Vec<_>>();
-                let can_find_object_by_uuid = mesh_objects
-                    .iter()
-                    .find(|o| o.uuid.as_deref() == Some("79f98073-4eaa-4737-b065-041b98fb50a6"));
+                let can_find_object_by_uuid = mesh_objects.iter().find(|o| {
+                    o.view.uuid().as_deref() == Some("79f98073-4eaa-4737-b065-041b98fb50a6")
+                });
                 assert_eq!(mesh_objects.len(), 3);
                 assert!(can_find_object_by_uuid.is_some());
 
@@ -97,8 +97,8 @@ mod tests {
 
                 let object_by_id = objects
                     .iter()
-                    .filter(|r| matches!(r.path, Some("/3D/Objects/Object.model")))
-                    .find(|r| r.object.id == 1);
+                    .filter(|r| matches!(r.origin_model_path, Some("/3D/Objects/Object.model")))
+                    .find(|r| r.view.id() == 1);
                 assert!(object_by_id.is_some());
 
                 let can_find_build_item_by_uuid = package.root.build.item.iter().find(|i| {
