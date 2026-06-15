@@ -551,6 +551,14 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map(|t| [t.p1.into(), t.p2.into(), t.p3.into(), t.pid.into()])
     }
 
+    pub fn triangles_displacement_data(&self) -> impl Iterator<Item = [Option<u32>; 4]> {
+        self.mesh
+            .triangles
+            .triangle
+            .iter()
+            .map(|t| [t.d1.into(), t.d2.into(), t.d3.into(), t.did.into()])
+    }
+
     pub fn triangle_set_count(&self) -> usize {
         self.mesh
             .trianglesets

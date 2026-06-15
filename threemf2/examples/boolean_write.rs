@@ -5,8 +5,8 @@
 //!
 //! The example creates:
 //! - A cube mesh (base object)
-//! - A sphere mesh (operand)
-//! - A boolean shape that subtracts the sphere from the cube
+//! - A smaller cube mesh (operand)
+//! - A boolean shape that subtracts the smaller cube from the base cube
 //!
 //! # Running the example
 //!
@@ -19,415 +19,99 @@ use std::io::BufWriter;
 
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex,
-        boolean::{Boolean, BooleanOperation, BooleanShape},
-        build::{Build, Item},
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        metadata::Metadata,
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
+        boolean::BooleanOperation,
+        builder::{ModelBuilder, ObjectType, Unit},
         query::get_model_view,
-        resources::Resources,
     },
     io::ThreemfPackage,
-    threemf_namespaces::ThreemfNamespace,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Creating 3MF file with boolean operations...");
 
-    // Create a simple cube mesh (base object for boolean operation)
-    let cube_mesh_1 = Mesh {
-        vertices: Vertices {
-            vertex: vec![
-                // Bottom face (z = 0)
-                Vertex::new(-5.0, -5.0, 0.0), // 0
-                Vertex::new(5.0, -5.0, 0.0),  // 1
-                Vertex::new(5.0, 5.0, 0.0),   // 2
-                Vertex::new(-5.0, 5.0, 0.0),  // 3
-                // Top face (z = 10)
-                Vertex::new(-5.0, -5.0, 10.0), // 4
-                Vertex::new(5.0, -5.0, 10.0),  // 5
-                Vertex::new(5.0, 5.0, 10.0),   // 6
-                Vertex::new(-5.0, 5.0, 10.0),  // 7
-            ],
-        },
-        triangles: Triangles {
-            triangle: vec![
-                // Bottom face
-                Triangle {
-                    v1: 0,
-                    v2: 1,
-                    v3: 2,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 2,
-                    v3: 3,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                // Top face
-                Triangle {
-                    v1: 4,
-                    v2: 6,
-                    v3: 5,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 4,
-                    v2: 7,
-                    v3: 6,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                // Front face
-                Triangle {
-                    v1: 0,
-                    v2: 5,
-                    v3: 1,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 4,
-                    v3: 5,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                // Back face
-                Triangle {
-                    v1: 2,
-                    v2: 7,
-                    v3: 3,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 2,
-                    v2: 6,
-                    v3: 7,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                // Left face
-                Triangle {
-                    v1: 0,
-                    v2: 7,
-                    v3: 4,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 3,
-                    v3: 7,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                // Right face
-                Triangle {
-                    v1: 1,
-                    v2: 6,
-                    v3: 2,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 1,
-                    v2: 5,
-                    v3: 6,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-            ],
-        },
-        trianglesets: None,
-        beamlattice: None,
-    };
+    let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+    builder
+        .add_metadata("Application", Some("Boolean Example"))
+        .add_metadata("Description", Some("Cube 1 minus Cube 2 using CSG"))
+        .add_build(None)?;
 
-    // Create another cube mesh (operand for boolean operation)
-    let cube_mesh_2 = Mesh {
-        vertices: Vertices {
-            vertex: vec![
-                // Bottom face (z = 3)
-                Vertex::new(-2.0, -2.0, 3.0), // 0
-                Vertex::new(2.0, -2.0, 3.0),  // 1
-                Vertex::new(2.0, 2.0, 3.0),   // 2
-                Vertex::new(-2.0, 2.0, 3.0),  // 3
-                // Top face (z = 7)
-                Vertex::new(-2.0, -2.0, 7.0), // 4
-                Vertex::new(2.0, -2.0, 7.0),  // 5
-                Vertex::new(2.0, 2.0, 7.0),   // 6
-                Vertex::new(-2.0, 2.0, 7.0),  // 7
-            ],
-        },
-        triangles: Triangles {
-            triangle: vec![
-                Triangle {
-                    v1: 0,
-                    v2: 1,
-                    v3: 2,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 2,
-                    v3: 3,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 4,
-                    v2: 6,
-                    v3: 5,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 4,
-                    v2: 7,
-                    v3: 6,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 5,
-                    v3: 1,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 4,
-                    v3: 5,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 2,
-                    v2: 7,
-                    v3: 3,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 2,
-                    v2: 6,
-                    v3: 7,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 7,
-                    v3: 4,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 0,
-                    v2: 3,
-                    v3: 7,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 1,
-                    v2: 6,
-                    v3: 2,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Triangle {
-                    v1: 1,
-                    v2: 5,
-                    v3: 6,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    p3: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-            ],
-        },
-        trianglesets: None,
-        beamlattice: None,
-    };
+    let cube_triangles: [[usize; 3]; 12] = [
+        [0, 1, 2],
+        [0, 2, 3],
+        [4, 6, 5],
+        [4, 7, 6],
+        [0, 5, 1],
+        [0, 4, 5],
+        [2, 7, 3],
+        [2, 6, 7],
+        [0, 7, 4],
+        [0, 3, 7],
+        [1, 6, 2],
+        [1, 5, 6],
+    ];
 
-    // Create the boolean shape: cube minus sphere (difference operation)
-    let boolean_shape = BooleanShape {
-        objectid: 1, // References cube object
-        operation: BooleanOperation::Difference,
-        transform: None,
-        path: None,
-        booleans: vec![Boolean {
-            objectid: 2, // References sphere object
-            transform: None,
-            path: None,
-        }],
-    };
+    let cube_id = builder.add_mesh_object(|obj| {
+        obj.name("Cube")
+            .object_type(ObjectType::Model)
+            .add_vertices(&[
+                [-5.0, -5.0, 0.0],
+                [5.0, -5.0, 0.0],
+                [5.0, 5.0, 0.0],
+                [-5.0, 5.0, 0.0],
+                [-5.0, -5.0, 10.0],
+                [5.0, -5.0, 10.0],
+                [5.0, 5.0, 10.0],
+                [-5.0, 5.0, 10.0],
+            ]);
 
-    // Create objects
-    let cube_object_1 = Object {
-        id: 1,
-        objecttype: Some(ObjectType::Model),
-        thumbnail: None,
-        partnumber: None,
-        name: Some("Cube".into()),
-        pid: OptionalResourceId::none(),
-        pindex: OptionalResourceIndex::none(),
-        uuid: None,
-        slicestackid: OptionalResourceId::none(),
-        slicepath: None,
-        meshresolution: None,
-        kind: Some(ObjectKind::Mesh(cube_mesh_1)),
-    };
+        obj.add_triangles(&cube_triangles);
+        Ok(())
+    })?;
 
-    let cube_object_2 = Object {
-        id: 2,
-        objecttype: Some(ObjectType::Model),
-        thumbnail: None,
-        partnumber: None,
-        name: Some("Sphere".into()),
-        pid: OptionalResourceId::none(),
-        pindex: OptionalResourceIndex::none(),
-        uuid: None,
-        slicestackid: OptionalResourceId::none(),
-        slicepath: None,
-        meshresolution: None,
-        kind: Some(ObjectKind::Mesh(cube_mesh_2)),
-    };
+    let inner_id = builder.add_mesh_object(|obj| {
+        obj.name("InnerCube")
+            .object_type(ObjectType::Model)
+            .add_vertices(&[
+                [-2.0, -2.0, 3.0],
+                [2.0, -2.0, 3.0],
+                [2.0, 2.0, 3.0],
+                [-2.0, 2.0, 3.0],
+                [-2.0, -2.0, 7.0],
+                [2.0, -2.0, 7.0],
+                [2.0, 2.0, 7.0],
+                [-2.0, 2.0, 7.0],
+            ]);
 
-    let result_object = Object {
-        id: 3,
-        objecttype: Some(ObjectType::Model),
-        thumbnail: None,
-        partnumber: None,
-        name: Some("CubeMinusSphere".into()),
-        pid: OptionalResourceId::none(),
-        pindex: OptionalResourceIndex::none(),
-        uuid: None,
-        slicestackid: OptionalResourceId::none(),
-        slicepath: None,
-        meshresolution: None,
-        kind: Some(ObjectKind::BooleanShape(boolean_shape)),
-    };
+        obj.add_triangles(&cube_triangles);
+        Ok(())
+    })?;
 
-    // Create the model
-    let model = Model {
-        unit: Some(Unit::Millimeter),
-        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]), // Boolean extension is required
-        recommendedextensions: ThreemfExtensions::default(),
-        metadata: vec![
-            Metadata {
-                name: "Application".into(),
-                preserve: None,
-                value: Some("Boolean Example".into()),
-            },
-            Metadata {
-                name: "Description".into(),
-                preserve: None,
-                value: Some("Cube 1 minus Cube 1 using CSG".into()),
-            },
-        ],
-        resources: Resources {
-            object: vec![cube_object_1, cube_object_2, result_object],
-            basematerials: vec![],
-            slicestack: vec![],
-            colorgroup: Vec::new(),
-            texture2dgroup: Vec::new(),
-            compositematerials: Vec::new(),
-            multiproperties: Vec::new(),
-            texture2d: Vec::new(),
-            displacement2d: Vec::new(),
-            normvectorgroup: Vec::new(),
-            disp2dgroup: Vec::new(),
-        },
-        build: Build {
-            uuid: None,
-            item: vec![Item {
-                objectid: 3, // Build the boolean result
-                transform: None,
-                partnumber: None,
-                path: None,
-                uuid: None,
-            }],
-        },
-    };
+    let result_id = builder.add_booleanshape_object(|obj| {
+        obj.name("CubeMinusCube");
+        obj.base_object(cube_id, BooleanOperation::Difference);
+        obj.add_boolean(inner_id);
+        Ok(())
+    })?;
 
-    println!("  Created cube mesh 1 (object id: 1)");
-    println!("  Created cube mesh 2 (object id: 2)");
-    println!("  Created boolean shape: cube 1 - cube 2 (object id: 3)");
+    builder.add_build_item(result_id)?;
+
+    println!("  Created cube mesh (object id: {})", cube_id.0);
+    println!("  Created inner cube mesh (object id: {})", inner_id.0);
+    println!("  Created boolean shape (object id: {})", result_id.0);
     println!("  Added boolean result to build plate");
+
+    let model = builder.build()?;
 
     println!("\nModel statistics:");
     let model_view = get_model_view(&model);
     println!("  Objects: {}", model_view.object_count());
     println!("  Build items: {}", model_view.build_item_count());
-    println!(
-        "  Required extensions: {:?}",
-        model_view.required_extensions()
-    );
+    println!("  Required extensions: {:?}", model_view.required_extensions());
 
-    // Create 3MF package and write to file
     let package: ThreemfPackage = model.into();
-
     let output_path = "boolean_example.3mf";
     let file = File::create(output_path)?;
     let writer = BufWriter::new(file);
-
     package.write(writer)?;
 
     println!("\nSuccessfully wrote 3MF file: {}", output_path);

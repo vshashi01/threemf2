@@ -11,7 +11,8 @@ use std::{fs::File, path::PathBuf};
 /// `cargo run --example unpack --no-default-features --features io-lazy-read`
 ///
 fn main() {
-    let path = PathBuf::from("./tests/data/mesh-composedpart-separate-model-files.3mf");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/data/mesh-composedpart-separate-model-files.3mf");
     let reader = File::open(path).unwrap();
 
     let result = ThreemfPackageLazyReader::from_reader_with_memory_optimized_deserializer(

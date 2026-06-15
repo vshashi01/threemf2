@@ -8,7 +8,8 @@ use std::{fs::File, path::PathBuf};
 /// Note: io_memory-optimized-read is part of the default features also
 ///
 fn main() {
-    let path = PathBuf::from("./tests/data/third-party/mgx-core-prod-beamlattice-material.3mf");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
     let reader = File::open(path).unwrap();
 
     let result = ThreemfPackage::from_reader_with_memory_optimized_deserializer(reader, true);

@@ -7,7 +7,7 @@ use threemf2::io::{CachePolicy, Error, ThreemfPackageLazyReader};
 /// Run with:
 /// `cargo run --example string_extraction --features io-lazy-read`
 fn main() {
-    let path = PathBuf::from("./tests/data/third-party/P_XPX_0702_02.3mf");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/P_XPX_0702_02.3mf");
     let reader = File::open(path).unwrap();
 
     let package = ThreemfPackageLazyReader::from_reader_with_memory_optimized_deserializer(

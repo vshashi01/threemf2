@@ -19,7 +19,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== 3MF Query API Example ===\n");
 
     // Load a test package with multiple models
-    let path = PathBuf::from("tests/data/mesh-composedpart-beamlattice-separate-model-files.3mf");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/data/mesh-composedpart-beamlattice-separate-model-files.3mf");
     let file = File::open(&path)?;
     let package = ThreemfPackage::from_reader_with_memory_optimized_deserializer(file, true)?;
 

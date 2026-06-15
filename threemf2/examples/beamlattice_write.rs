@@ -1,17 +1,5 @@
-use threemf2::{
-    core::{
-        OptionalResourceId, OptionalResourceIndex,
-        beamlattice::{Ball, BallMode, Balls, Beam, BeamLattice, Beams, CapMode},
-        build::{Build, Item},
-        mesh::{Mesh, Triangles, Vertex, Vertices},
-        metadata::Metadata,
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-    },
-    io::ThreemfPackage,
-    threemf_namespaces::ThreemfNamespace,
-};
+use threemf2::core::builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit};
+use threemf2::io::ThreemfPackage;
 
 use std::{io::Cursor, vec};
 
@@ -22,257 +10,73 @@ use std::{io::Cursor, vec};
 /// `cargo run --example beamlattice_write --no-default-features --features io-write`
 ///
 fn main() {
-    // Create vertices for a simple cube structure
-    let vertices = Vertices {
-        vertex: vec![
-            Vertex::new(45.0, 55.0, 55.0),
-            Vertex::new(45.0, 45.0, 55.0),
-            Vertex::new(45.0, 55.0, 45.0),
-            Vertex::new(45.0, 45.0, 45.0),
-            Vertex::new(55.0, 55.0, 45.0),
-            Vertex::new(55.0, 55.0, 55.0),
-            Vertex::new(55.0, 45.0, 55.0),
-            Vertex::new(55.0, 45.0, 45.0),
-        ],
-    };
+    let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+    builder
+        .add_metadata("Beam Lattice Example", None)
+        .add_build(None)
+        .unwrap();
 
-    // Create beams connecting the vertices
-    let beams = Beams {
-        beam: vec![
-            Beam {
-                v1: 0,
-                v2: 1,
-                r1: Some(1.5),
-                r2: Some(1.6),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 2,
-                v2: 0,
-                r1: Some(3.0),
-                r2: Some(1.5),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 1,
-                v2: 3,
-                r1: Some(1.6),
-                r2: Some(3.0),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 3,
-                v2: 2,
-                r1: Some(3.0),
-                r2: None,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 2,
-                v2: 4,
-                r1: Some(3.0),
-                r2: Some(2.0),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 4,
-                v2: 5,
-                r1: Some(2.0),
-                r2: None,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 5,
-                v2: 6,
-                r1: Some(2.0),
-                r2: None,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 7,
-                v2: 6,
-                r1: Some(2.0),
-                r2: None,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 1,
-                v2: 6,
-                r1: Some(1.6),
-                r2: Some(2.0),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 7,
-                v2: 4,
-                r1: Some(2.0),
-                r2: None,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 7,
-                v2: 3,
-                r1: Some(2.0),
-                r2: Some(3.0),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-            Beam {
-                v1: 0,
-                v2: 5,
-                r1: Some(1.5),
-                r2: Some(2.0),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-                cap1: None,
-                cap2: None,
-            },
-        ],
-    };
+    let beam_defs = vec![
+        (0, 1, Some(1.5), Some(1.6)),
+        (2, 0, Some(3.0), Some(1.5)),
+        (1, 3, Some(1.6), Some(3.0)),
+        (3, 2, Some(3.0), None),
+        (2, 4, Some(3.0), Some(2.0)),
+        (4, 5, Some(2.0), None),
+        (5, 6, Some(2.0), None),
+        (7, 6, Some(2.0), None),
+        (1, 6, Some(1.6), Some(2.0)),
+        (7, 4, Some(2.0), None),
+        (7, 3, Some(2.0), Some(3.0)),
+        (0, 5, Some(1.5), Some(2.0)),
+    ];
 
-    // Create balls at some vertices for a mixed ball mode example
-    let balls = Some(Balls {
-        ball: vec![
-            Ball {
-                vindex: 0,
-                r: Some(0.5),
-                p: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            },
-            Ball {
-                vindex: 5,
-                r: None,
-                p: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            }, // Uses default ballradius
-            Ball {
-                vindex: 7,
-                r: Some(0.5),
-                p: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            },
-        ],
-    });
+    let ball_defs = vec![(0, Some(0.5)), (5, None), (7, Some(0.5))];
 
-    // Create the beam lattice
-    let beam_lattice = BeamLattice {
-        minlength: 0.0001,
-        radius: 1.0,
-        ballmode: Some(BallMode::Mixed),
-        ballradius: Some(0.25),
-        clippingmode: None,
-        clippingmesh: OptionalResourceId::none(),
-        representationmesh: OptionalResourceId::none(),
-        pid: OptionalResourceId::none(),
-        pindex: OptionalResourceIndex::none(),
-        cap: Some(CapMode::Sphere),
-        beams,
-        balls,
-        beamsets: None,
-    };
+    let object_id = builder
+        .add_mesh_object(|obj| {
+            obj.object_type(ObjectType::Model)
+                .part_number("beam-lattice-example")
+                .name("Beam Lattice Cube");
 
-    // Create a mesh with the beam lattice (no triangles for lattice-only object)
-    let mesh = Mesh {
-        vertices,
-        triangles: Triangles { triangle: vec![] },
-        trianglesets: None,
-        beamlattice: Some(beam_lattice),
-    };
+            obj.add_vertices(&[
+                [45.0, 55.0, 55.0],
+                [45.0, 45.0, 55.0],
+                [45.0, 55.0, 45.0],
+                [45.0, 45.0, 45.0],
+                [55.0, 55.0, 45.0],
+                [55.0, 55.0, 55.0],
+                [55.0, 45.0, 55.0],
+                [55.0, 45.0, 45.0],
+            ]);
 
-    // Create the complete 3MF model
-    let model = Model {
-        unit: Some(Unit::Millimeter),
-        requiredextensions: ThreemfExtensions::new(&[
-            ThreemfNamespace::BeamLattice,
-            ThreemfNamespace::BeamLatticeBalls,
-        ]), // Mark beam lattice extensions as required
-        recommendedextensions: ThreemfExtensions::default(),
-        metadata: vec![Metadata {
-            name: "Beam Lattice Example".into(),
-            preserve: None,
-            value: None,
-        }],
-        resources: Resources {
-            object: vec![Object {
-                id: 1,
-                objecttype: Some(ObjectType::Model),
-                thumbnail: None,
-                partnumber: Some("beam-lattice-example".into()),
-                name: Some("Beam Lattice Cube".into()),
-                pid: OptionalResourceId::none(),
-                pindex: OptionalResourceIndex::none(),
-                uuid: None,
-                slicestackid: OptionalResourceId::none(),
-                slicepath: None,
-                meshresolution: None,
-                kind: Some(ObjectKind::Mesh(mesh)),
-            }],
-            basematerials: vec![],
-            slicestack: vec![],
-            colorgroup: Vec::new(),
-            texture2dgroup: Vec::new(),
-            compositematerials: Vec::new(),
-            multiproperties: Vec::new(),
-            texture2d: Vec::new(),
-            displacement2d: Vec::new(),
-            normvectorgroup: Vec::new(),
-            disp2dgroup: Vec::new(),
-        },
-        build: Build {
-            uuid: None,
-            item: vec![Item {
-                objectid: 1,
-                transform: None,
-                partnumber: None,
-                path: None,
-                uuid: None,
-            }],
-        },
-    };
+            obj.add_beam_lattice(|bl| {
+                bl.minlength(0.0001)
+                    .radius(1.0)
+                    .ballmode(BallMode::Mixed)
+                    .ballradius(0.25)
+                    .cap(CapMode::Sphere);
+
+                for (v1, v2, r1, r2) in &beam_defs {
+                    bl.add_beam_advanced(*v1, *v2, |b| {
+                        let b = if let Some(radius) = r1 { b.radius_1(*radius) } else { b };
+                        if let Some(radius) = r2 { b.radius_2(*radius) } else { b }
+                    });
+                }
+
+                for (vindex, radius) in &ball_defs {
+                    bl.add_ball_advanced(*vindex, |b| {
+                        if let Some(radius) = radius { b.radius(*radius) } else { b }
+                    });
+                }
+            });
+
+            Ok(())
+        })
+        .unwrap();
+
+    builder.add_build_item(object_id).unwrap();
+    let model = builder.build().unwrap();
 
     let package: ThreemfPackage = model.into();
 
