@@ -5,7 +5,9 @@ use std::io::{Read, Seek};
 use once_cell::unsync::OnceCell;
 use zip::ZipArchive;
 
+use crate::core::PathResource;
 use crate::core::model::Model;
+use crate::io::Error::ThumbnailError;
 use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 use crate::io::utils;
 use crate::io::{
@@ -39,16 +41,16 @@ pub struct ThreemfPackageLazyReader<R: Read + Seek> {
 
     // always eagerly loaded
     content_types: ContentTypes,
-    relationships: HashMap<String, Relationships>,
-    root_model_path: String,
+    relationships: HashMap<PathResource, Relationships>,
+    root_model_path: PathResource,
 
     // always cached on first access
     root_model: OnceCell<Model>,
 
     // cached based on cachepolicy
-    sub_models: RefCell<HashMap<String, Model>>,
-    thumbnails: RefCell<HashMap<String, ThumbnailHandle>>,
-    unknown_parts: RefCell<HashMap<String, Vec<u8>>>,
+    sub_models: RefCell<HashMap<PathResource, Model>>,
+    thumbnails: RefCell<HashMap<PathResource, ThumbnailHandle>>,
+    unknown_parts: RefCell<HashMap<PathResource, Vec<u8>>>,
 }
 
 impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
@@ -72,7 +74,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             }
         };
 
-        let mut relationships = HashMap::<String, Relationships>::new();
+        let mut relationships = HashMap::new();
         let root_rels: Relationships = zip_utils::relationships_from_zip_by_name(
             &mut zip,
             &root_rels_filename,
@@ -88,14 +90,14 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
 
         relationships.insert(root_rels_filename.to_owned(), root_rels);
 
-        let rel_files =
-            zip_utils::discover_relationship_files(&mut zip, rels_ext, &root_rels_filename)?;
+        let rel_files = zip_utils::discover_relationship_files(
+            &mut zip,
+            rels_ext,
+            root_rels_filename.as_str(),
+        )?;
         for rel_file_path in rel_files {
-            let rels = zip_utils::relationships_from_zip_by_name(
-                &mut zip,
-                &rel_file_path[1..],
-                &deserializer,
-            )?;
+            let rels =
+                zip_utils::relationships_from_zip_by_name(&mut zip, &rel_file_path, &deserializer)?;
             relationships.insert(rel_file_path, rels);
         }
 
@@ -117,34 +119,34 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         &self.content_types
     }
 
-    pub fn relationships(&self) -> &HashMap<String, Relationships> {
+    pub fn relationships(&self) -> &HashMap<PathResource, Relationships> {
         &self.relationships
     }
 
-    pub fn root_model_path(&self) -> &str {
+    pub fn root_model_path(&self) -> &PathResource {
         &self.root_model_path
     }
 
-    pub fn model_paths(&self) -> impl Iterator<Item = &str> {
+    pub fn model_paths(&self) -> impl Iterator<Item = &PathResource> {
         self.relationships
             .values()
             .flat_map(|r| &r.relationships)
             .filter_map(|rel| {
                 if matches!(rel.relationship_type, RelationshipType::Model) {
-                    Some(rel.target.as_str())
+                    Some(&rel.target)
                 } else {
                     None
                 }
             })
     }
 
-    pub fn thumbnail_paths(&self) -> impl Iterator<Item = &str> {
+    pub fn thumbnail_paths(&self) -> impl Iterator<Item = &PathResource> {
         self.relationships
             .values()
             .flat_map(|r| &r.relationships)
             .filter_map(|rel| {
                 if matches!(rel.relationship_type, RelationshipType::Thumbnail) {
-                    Some(rel.target.as_str())
+                    Some(&rel.target)
                 } else {
                     None
                 }
@@ -169,11 +171,11 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             .get_or_try_init(|| self.load_model_from_archive(&self.root_model_path))
     }
 
-    pub fn with_model<F, T>(&self, path: &str, f: F) -> Result<T, Error>
+    pub fn with_model<F, T>(&self, path: &PathResource, f: F) -> Result<T, Error>
     where
         F: FnOnce(&Model) -> T,
     {
-        if path == self.root_model_path {
+        if path == &self.root_model_path {
             let model = self.root_model()?;
             return Ok(f(model));
         }
@@ -183,11 +185,11 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             .values()
             .flat_map(|r| &r.relationships)
             .any(|rel| {
-                rel.target == path && matches!(rel.relationship_type, RelationshipType::Model)
+                &rel.target == path && matches!(rel.relationship_type, RelationshipType::Model)
             });
 
         if !is_model {
-            return Err(Error::ResourceNotFound(path.to_owned()));
+            return Err(Error::ResourceNotFound(path.to_string()));
         }
 
         match self.cache_policy {
@@ -201,7 +203,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
                     Ok(f(model))
                 } else {
                     let model = self.load_model_from_archive(path)?;
-                    self.sub_models.borrow_mut().insert(path.to_string(), model);
+                    self.sub_models.borrow_mut().insert(path.clone(), model);
                     let cache = self.sub_models.borrow();
                     let model = cache.get(path).unwrap();
                     Ok(f(model))
@@ -216,7 +218,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
                 } else {
                     // Load and cache
                     let model = self.load_model_from_archive(path)?;
-                    self.sub_models.borrow_mut().insert(path.to_string(), model);
+                    self.sub_models.borrow_mut().insert(path.clone(), model);
                     let cache = self.sub_models.borrow();
                     let model = cache.get(path).unwrap();
                     Ok(f(model))
@@ -225,7 +227,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         }
     }
 
-    pub fn with_thumbnail<F, T>(&self, path: &str, f: F) -> Result<T, Error>
+    pub fn with_thumbnail<F, T>(&self, path: &PathResource, f: F) -> Result<T, Error>
     where
         F: FnOnce(&ThumbnailHandle) -> T,
     {
@@ -235,11 +237,11 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             .values()
             .flat_map(|r| &r.relationships)
             .any(|rel| {
-                rel.target == path && matches!(rel.relationship_type, RelationshipType::Thumbnail)
+                &rel.target == path && matches!(rel.relationship_type, RelationshipType::Thumbnail)
             });
 
         if !is_thumbnail {
-            return Err(Error::ResourceNotFound(path.to_owned()));
+            return Err(Error::ResourceNotFound(path.to_string()));
         }
 
         if self.thumbnails.borrow().contains_key(path) {
@@ -248,7 +250,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             Ok(f(image))
         } else {
             let image = self.load_thumbnail_from_archive(path)?;
-            self.thumbnails.borrow_mut().insert(path.to_string(), image);
+            self.thumbnails.borrow_mut().insert(path.clone(), image);
             let cache = self.thumbnails.borrow();
             let image = cache.get(path).unwrap();
             Ok(f(image))
@@ -258,7 +260,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
     /// Get an unknown part by path (lazy loaded, cached based on policy)
     ///
     /// Returns `None` if no unknown part exists at the given path.
-    pub fn with_unknown_part<F, T>(&self, path: &str, f: F) -> Result<T, Error>
+    pub fn with_unknown_part<F, T>(&self, path: &PathResource, f: F) -> Result<T, Error>
     where
         F: FnOnce(&[u8]) -> T,
     {
@@ -268,11 +270,11 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             .values()
             .flat_map(|r| &r.relationships)
             .any(|rel| {
-                rel.target == path && matches!(rel.relationship_type, RelationshipType::Unknown(_))
+                &rel.target == path && matches!(rel.relationship_type, RelationshipType::Unknown(_))
             });
 
         if !is_unknown {
-            return Err(Error::ResourceNotFound(path.to_owned()));
+            return Err(Error::ResourceNotFound(path.to_string()));
         }
 
         // Check cache (works for both policies since we need to return a reference)
@@ -283,9 +285,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         } else {
             // Load and cache
             let bytes = self.load_unknown_part_from_archive(path)?;
-            self.unknown_parts
-                .borrow_mut()
-                .insert(path.to_string(), bytes);
+            self.unknown_parts.borrow_mut().insert(path.clone(), bytes);
             let cache = self.unknown_parts.borrow();
             let bytes = cache.get(path).unwrap();
             Ok(f(bytes))
@@ -295,7 +295,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
     /// Access raw XML content of a model by path (pull-based, reads from ZIP each time)
     ///
     /// Returns an error if no model exists at the given path.
-    pub fn with_model_xml<F, T>(&self, path: &str, f: F) -> Result<T, Error>
+    pub fn with_model_xml<F, T>(&self, path: &PathResource, f: F) -> Result<T, Error>
     where
         F: FnOnce(&str) -> T,
     {
@@ -305,7 +305,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             .values()
             .flat_map(|r| &r.relationships)
             .any(|rel| {
-                rel.target == path && matches!(rel.relationship_type, RelationshipType::Model)
+                &rel.target == path && matches!(rel.relationship_type, RelationshipType::Model)
             });
 
         if !is_model {
@@ -314,7 +314,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
 
         // Read XML directly from ZIP archive
         let mut archive = self.archive.borrow_mut();
-        let mut file = archive.by_name(utils::try_strip_leading_slash(path))?;
+        let mut file = archive.by_name(path.as_str_without_leading_slash())?;
         let mut xml_string = String::new();
         file.read_to_string(&mut xml_string)?;
 
@@ -324,7 +324,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
     /// Access raw XML content of relationships by path (pull-based, reads from ZIP each time)
     ///
     /// Returns an error if no relationships file exists at the given path.
-    pub fn with_relationships_xml<F, T>(&self, path: &str, f: F) -> Result<T, Error>
+    pub fn with_relationships_xml<F, T>(&self, path: &PathResource, f: F) -> Result<T, Error>
     where
         F: FnOnce(&str) -> T,
     {
@@ -338,7 +338,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
 
         // Read relationships XML directly from ZIP
         let mut archive = self.archive.borrow_mut();
-        let mut file = archive.by_name(utils::try_strip_leading_slash(path))?;
+        let mut file = archive.by_name(path.as_str_without_leading_slash())?;
         let mut xml_string = String::new();
         file.read_to_string(&mut xml_string)?;
 
@@ -359,16 +359,16 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         Ok(f(&xml_string))
     }
 
-    fn load_model_from_archive(&self, path: &str) -> Result<Model, Error> {
+    fn load_model_from_archive(&self, path: &PathResource) -> Result<Model, Error> {
         let mut archive = self.archive.borrow_mut();
-        let mut file = archive.by_name(utils::try_strip_leading_slash(path))?;
+        let mut file = archive.by_name(path.as_str_without_leading_slash())?;
         let model_string = zip_utils::read_zipfile_to_string(&mut file)?;
         self.deserializer.deserialize_model(&model_string)
     }
 
-    fn load_thumbnail_from_archive(&self, path: &str) -> Result<ThumbnailHandle, Error> {
+    fn load_thumbnail_from_archive(&self, path: &PathResource) -> Result<ThumbnailHandle, Error> {
         let mut archive = self.archive.borrow_mut();
-        let mut file = archive.by_name(utils::try_strip_leading_slash(path))?;
+        let mut file = archive.by_name(path.as_str_without_leading_slash())?;
         let mut bytes: Vec<u8> = vec![];
         file.read_to_end(&mut bytes)?;
 
@@ -379,7 +379,9 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             {
                 ImageFormat::from_ext(ext)
             } else {
-                ImageFormat::Unknown
+                return Err(ThumbnailError(format!(
+                    "Referenced thumbnail path: {path} is not a valid archive path to thumbnail data"
+                )));
             }
         };
 
@@ -390,9 +392,9 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         Ok(thumbnail_rep)
     }
 
-    fn load_unknown_part_from_archive(&self, path: &str) -> Result<Vec<u8>, Error> {
+    fn load_unknown_part_from_archive(&self, path: &PathResource) -> Result<Vec<u8>, Error> {
         let mut archive = self.archive.borrow_mut();
-        let mut file = archive.by_name(utils::try_strip_leading_slash(path))?;
+        let mut file = archive.by_name(path.as_str_without_leading_slash())?;
         let mut bytes: Vec<u8> = vec![];
         file.read_to_end(&mut bytes)?;
         Ok(bytes)
@@ -453,7 +455,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(package.relationships().len(), 1);
-        assert!(package.root_model_path().contains("3dmodel.model"));
+        assert!(package.root_model_path().as_str().contains("3dmodel.model"));
 
         let paths: Vec<_> = package.model_paths().collect();
         assert!(!paths.is_empty());
@@ -485,12 +487,12 @@ mod tests {
         assert!(!root_model.resources.object.is_empty());
         assert_eq!(root_model.used_namespaces().len(), 2);
 
-        let sub_model_path = "/3D/midway.model";
-        let exists = package.with_model(sub_model_path, |_| true);
+        let sub_model_path = PathResource::new("/3D/midway.model", true).unwrap();
+        let exists = package.with_model(&sub_model_path, |_| true);
         assert!(exists.is_ok());
 
-        let sub_model_path = "/SomeThing/ThatDoesNotExist.model";
-        let exists = package.with_model(sub_model_path, |_| true);
+        let sub_model_path = PathResource::new("/SomeThing/ThatDoesNotExist.model", true).unwrap();
+        let exists = package.with_model(&sub_model_path, |_| true);
         assert!(exists.is_err());
     }
 
@@ -552,24 +554,30 @@ mod tests {
 
         // Test model XML extraction
         package
-            .with_model_xml("/3D/3dmodel.model", |xml| {
-                assert!(xml.contains("<model"));
-                assert!(xml.contains("</model>"));
-                assert!(xml.contains("xmlns"));
-            })
+            .with_model_xml(
+                &PathResource::new("/3D/3dmodel.model", true).unwrap(),
+                |xml| {
+                    assert!(xml.contains("<model"));
+                    assert!(xml.contains("</model>"));
+                    assert!(xml.contains("xmlns"));
+                },
+            )
             .unwrap();
 
         // Test sub-model XML extraction
         package
-            .with_model_xml("/3D/midway.model", |xml| {
-                assert!(xml.contains("<model"));
-                assert!(xml.contains("</model>"));
-            })
+            .with_model_xml(
+                &PathResource::new("/3D/midway.model", true).unwrap(),
+                |xml| {
+                    assert!(xml.contains("<model"));
+                    assert!(xml.contains("</model>"));
+                },
+            )
             .unwrap();
 
         // Test relationships XML extraction
         package
-            .with_relationships_xml("_rels/.rels", |xml| {
+            .with_relationships_xml(&PathResource::new("_rels/.rels", true).unwrap(), |xml| {
                 assert!(xml.contains("<Relationships"));
                 assert!(xml.contains("<Relationship"));
             })
@@ -577,9 +585,12 @@ mod tests {
 
         // Test sub-model relationships XML extraction
         package
-            .with_relationships_xml("/3D/_rels/3dmodel.model.rels", |xml| {
-                assert!(xml.contains("<Relationships"));
-            })
+            .with_relationships_xml(
+                &PathResource::new("/3D/_rels/3dmodel.model.rels", true).unwrap(),
+                |xml| {
+                    assert!(xml.contains("<Relationships"));
+                },
+            )
             .unwrap();
 
         // Test content types XML extraction
@@ -591,10 +602,16 @@ mod tests {
             .unwrap();
 
         // Test invalid paths return errors
-        let invalid_result = package.with_model_xml("/invalid/path.model", |_| ());
+        let invalid_result = package.with_model_xml(
+            &PathResource::new("/invalid/path.model", true).unwrap(),
+            |_| (),
+        );
         assert!(matches!(invalid_result, Err(Error::ResourceNotFound(_))));
 
-        let invalid_rels = package.with_relationships_xml("/invalid/rels.xml", |_| ());
+        let invalid_rels = package.with_relationships_xml(
+            &PathResource::new("/invalid/rels.xml", true).unwrap(),
+            |_| (),
+        );
         assert!(matches!(invalid_rels, Err(Error::ResourceNotFound(_))));
     }
 }

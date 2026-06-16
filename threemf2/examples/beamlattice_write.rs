@@ -1,5 +1,5 @@
 use threemf2::core::builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit};
-use threemf2::io::ThreemfPackage;
+use threemf2::io::ThreemfPackageBuilder;
 
 use std::{io::Cursor, vec};
 
@@ -59,14 +59,26 @@ fn main() {
 
                 for (v1, v2, r1, r2) in &beam_defs {
                     bl.add_beam_advanced(*v1, *v2, |b| {
-                        let b = if let Some(radius) = r1 { b.radius_1(*radius) } else { b };
-                        if let Some(radius) = r2 { b.radius_2(*radius) } else { b }
+                        let b = if let Some(radius) = r1 {
+                            b.radius_1(*radius)
+                        } else {
+                            b
+                        };
+                        if let Some(radius) = r2 {
+                            b.radius_2(*radius)
+                        } else {
+                            b
+                        }
                     });
                 }
 
                 for (vindex, radius) in &ball_defs {
                     bl.add_ball_advanced(*vindex, |b| {
-                        if let Some(radius) = radius { b.radius(*radius) } else { b }
+                        if let Some(radius) = radius {
+                            b.radius(*radius)
+                        } else {
+                            b
+                        }
                     });
                 }
             });
@@ -78,7 +90,9 @@ fn main() {
     builder.add_build_item(object_id).unwrap();
     let model = builder.build().unwrap();
 
-    let package: ThreemfPackage = model.into();
+    let mut package_builder = ThreemfPackageBuilder::new();
+    package_builder.set_root_model(model);
+    let package = package_builder.build().expect("Error building package");
 
     let mut bytes: Vec<u8> = vec![];
     let writer = Cursor::new(&mut bytes);

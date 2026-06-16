@@ -3,7 +3,6 @@
 //! Tests validation of 3MF models with material extension structures against
 //! the Material extension XSD schemas.
 
-use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
@@ -19,11 +18,7 @@ use threemf2::{
         resources::Resources,
         types::{Double, ResourceIdCollection, ResourceIndexCollection},
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
+    io::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -127,75 +122,52 @@ fn validate_simple_colorgroup() {
         beamlattice: None,
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![Object {
-                    id: 1,
-                    objecttype: Some(ObjectType::Model),
-                    thumbnail: None,
-                    partnumber: None,
-                    name: Some("Colored Mesh".into()),
-                    pid: OptionalResourceId::none(),
-                    pindex: OptionalResourceIndex::none(),
-                    uuid: None,
-                    kind: Some(ObjectKind::Mesh(mesh)),
-                    meshresolution: None,
-                    slicestackid: OptionalResourceId::none(),
-                    slicepath: None,
-                }],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![colorgroup],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
+    let model = Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![Object {
+                id: 1,
+                objecttype: Some(ObjectType::Model),
+                thumbnail: None,
+                partnumber: None,
+                name: Some("Colored Mesh".into()),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                item: vec![Item {
-                    objectid: 1,
-                    transform: None,
-                    partnumber: None,
-                    path: None,
-                    uuid: None,
-                }],
-            },
+                kind: Some(ObjectKind::Mesh(mesh)),
+                meshresolution: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+            }],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![colorgroup],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 1,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
         },
-    );
+    };
+
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let write_package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -299,75 +271,52 @@ fn validate_texture2d_with_uv_mapping() {
         beamlattice: None,
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![Object {
-                    id: 1,
-                    objecttype: Some(ObjectType::Model),
-                    thumbnail: None,
-                    partnumber: None,
-                    name: Some("Textured Mesh".into()),
-                    pid: OptionalResourceId::new(2), // Reference texture group
-                    pindex: OptionalResourceIndex::none(),
-                    uuid: None,
-                    kind: Some(ObjectKind::Mesh(mesh)),
-                    meshresolution: None,
-                    slicestackid: OptionalResourceId::none(),
-                    slicepath: None,
-                }],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![texture2dgroup],
-                multiproperties: vec![],
-                texture2d: vec![texture2d],
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
+    let model = Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![Object {
+                id: 1,
+                objecttype: Some(ObjectType::Model),
+                thumbnail: None,
+                partnumber: None,
+                name: Some("Textured Mesh".into()),
+                pid: OptionalResourceId::new(2), // Reference texture group
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                item: vec![Item {
-                    objectid: 1,
-                    transform: None,
-                    partnumber: None,
-                    path: None,
-                    uuid: None,
-                }],
-            },
+                kind: Some(ObjectKind::Mesh(mesh)),
+                meshresolution: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+            }],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![texture2dgroup],
+            multiproperties: vec![],
+            texture2d: vec![texture2d],
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 1,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
         },
-    );
+    };
+
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let write_package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -504,75 +453,52 @@ fn validate_multi_properties() {
         beamlattice: None,
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![Object {
-                    id: 1,
-                    objecttype: Some(ObjectType::Model),
-                    thumbnail: None,
-                    partnumber: None,
-                    name: Some("Multi Property Mesh".into()),
-                    pid: OptionalResourceId::none(),
-                    pindex: OptionalResourceIndex::none(),
-                    uuid: None,
-                    kind: Some(ObjectKind::Mesh(mesh)),
-                    meshresolution: None,
-                    slicestackid: OptionalResourceId::none(),
-                    slicepath: None,
-                }],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![colorgroup],
-                compositematerials: vec![],
-                texture2dgroup: vec![texture2dgroup],
-                multiproperties: vec![multiproperties],
-                texture2d: vec![texture2d],
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
+    let model = Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![Object {
+                id: 1,
+                objecttype: Some(ObjectType::Model),
+                thumbnail: None,
+                partnumber: None,
+                name: Some("Multi Property Mesh".into()),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                item: vec![Item {
-                    objectid: 1,
-                    transform: None,
-                    partnumber: None,
-                    path: None,
-                    uuid: None,
-                }],
-            },
+                kind: Some(ObjectKind::Mesh(mesh)),
+                meshresolution: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+            }],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![colorgroup],
+            compositematerials: vec![],
+            texture2dgroup: vec![texture2dgroup],
+            multiproperties: vec![multiproperties],
+            texture2d: vec![texture2d],
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 1,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
         },
-    );
+    };
+
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let write_package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -674,75 +600,52 @@ fn validate_vertex_color_application() {
         beamlattice: None,
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![Object {
-                    id: 1,
-                    objecttype: Some(ObjectType::Model),
-                    thumbnail: None,
-                    partnumber: None,
-                    name: Some("Vertex Colored Quad".into()),
-                    pid: OptionalResourceId::none(),
-                    pindex: OptionalResourceIndex::none(),
-                    uuid: None,
-                    kind: Some(ObjectKind::Mesh(mesh)),
-                    meshresolution: None,
-                    slicestackid: OptionalResourceId::none(),
-                    slicepath: None,
-                }],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![colorgroup],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
+    let model = Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Material]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![Object {
+                id: 1,
+                objecttype: Some(ObjectType::Model),
+                thumbnail: None,
+                partnumber: None,
+                name: Some("Vertex Colored Quad".into()),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                item: vec![Item {
-                    objectid: 1,
-                    transform: None,
-                    partnumber: None,
-                    path: None,
-                    uuid: None,
-                }],
-            },
+                kind: Some(ObjectKind::Mesh(mesh)),
+                meshresolution: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+            }],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![colorgroup],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 1,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
         },
-    );
+    };
+
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let write_package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     write_package

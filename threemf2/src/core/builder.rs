@@ -4230,13 +4230,13 @@ mod tests {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
 
         builder.add_required_extension(ThreemfNamespace::Unknown {
-            prefix: "test".to_owned(),
-            uri: "http://example.com/test".to_owned(),
+            prefix: "test".into(),
+            uri: "http://example.com/test".into(),
         });
 
         builder.add_recommended_extension(ThreemfNamespace::Unknown {
-            prefix: "rec".to_owned(),
-            uri: "http://example.com/rec".to_owned(),
+            prefix: "rec".into(),
+            uri: "http://example.com/rec".into(),
         });
         builder.add_build(None).unwrap();
         let model = builder.build().unwrap();
@@ -4244,15 +4244,15 @@ mod tests {
         assert_eq!(
             model.requiredextensions,
             ThreemfExtensions::new(&[ThreemfNamespace::Unknown {
-                prefix: "test".to_owned(),
-                uri: "http://example.com/test".to_owned()
+                prefix: "test".into(),
+                uri: "http://example.com/test".into()
             }])
         );
         assert_eq!(
             model.recommendedextensions,
             ThreemfExtensions::new(&[ThreemfNamespace::Unknown {
-                prefix: "rec".to_owned(),
-                uri: "http://example.com/rec".to_owned()
+                prefix: "rec".into(),
+                uri: "http://example.com/rec".into()
             }])
         );
     }

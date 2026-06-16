@@ -10,6 +10,8 @@ use instant_xml::{FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
+use crate::core::{PathResource, StrResource};
+
 const RELATIONSHIP_NS: &str = "http://schemas.openxmlformats.org/package/2006/relationships";
 
 /// Represents a relationship of a single part in the 3mf package along with its [RelationshipType]
@@ -29,7 +31,7 @@ pub struct Relationship {
         xml(attribute, rename = "Id")
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Id"))]
-    pub id: String,
+    pub id: StrResource,
 
     /// Target path of the part in the archive.
     #[cfg_attr(
@@ -37,7 +39,7 @@ pub struct Relationship {
         xml(attribute, rename = "Target")
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Target"))]
-    pub target: String,
+    pub target: PathResource,
 
     /// The actual relationship of the target part
     #[cfg_attr(
@@ -76,7 +78,7 @@ pub enum RelationshipType {
 
     /// Represents an unknown part currently by this library
     /// The namespaces of the relationship type is stored in the tuple.
-    Unknown(String),
+    Unknown(StrResource),
 }
 
 const THUMBNAIL_TYPE_NS: &str =
@@ -127,7 +129,7 @@ impl<'xml> FromXml<'xml> for RelationshipType {
         match value.into_owned().as_ref() {
             THUMBNAIL_TYPE_NS => *into = Some(Self::Thumbnail),
             MODEL_TYPE_NS => *into = Some(Self::Model),
-            value => *into = Some(Self::Unknown(value.to_owned())),
+            value => *into = Some(Self::Unknown(value.into())),
         }
 
         Ok(())
@@ -143,7 +145,7 @@ impl From<String> for RelationshipType {
         match value.as_ref() {
             THUMBNAIL_TYPE_NS => Self::Thumbnail,
             MODEL_TYPE_NS => Self::Model,
-            value => Self::Unknown(value.to_owned()),
+            value => Self::Unknown(value.into()),
         }
     }
 }
@@ -154,6 +156,8 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
+    use crate::core::PathResource;
+
     use super::{
         MODEL_TYPE_NS, RELATIONSHIP_NS, Relationship, RelationshipType, Relationships,
         THUMBNAIL_TYPE_NS,
@@ -162,25 +166,25 @@ mod write_tests {
     #[test]
     pub fn toxml_relationships_test() {
         let xml_string = format!(
-            r#"<Relationships xmlns="{}"><Relationship Id="someId" Target="//somePath//Of//Resources" Type="{}" /><Relationship Id="someId1" Target="//somePath//Of//Resources" Type="{}" /><Relationship Id="someId2" Target="//somePath//Of//Unknown" Type="unknown" /></Relationships>"#,
+            r#"<Relationships xmlns="{}"><Relationship Id="someId" Target="/somePath/Of/Resources" Type="{}" /><Relationship Id="someId1" Target="/somePath/Of/Resources" Type="{}" /><Relationship Id="someId2" Target="/somePath/Of/Unknown" Type="unknown" /></Relationships>"#,
             RELATIONSHIP_NS, MODEL_TYPE_NS, THUMBNAIL_TYPE_NS
         );
         let relationships = Relationships {
             relationships: vec![
                 Relationship {
-                    id: "someId".to_owned(),
-                    target: "//somePath//Of//Resources".to_owned(),
+                    id: "someId".into(),
+                    target: PathResource::new("/somePath/Of/Resources", true).unwrap(),
                     relationship_type: RelationshipType::Model,
                 },
                 Relationship {
-                    id: "someId1".to_owned(),
-                    target: "//somePath//Of//Resources".to_owned(),
+                    id: "someId1".into(),
+                    target: PathResource::new("/somePath/Of/Resources", true).unwrap(),
                     relationship_type: RelationshipType::Thumbnail,
                 },
                 Relationship {
-                    id: "someId2".to_owned(),
-                    target: "//somePath//Of//Unknown".to_owned(),
-                    relationship_type: RelationshipType::Unknown("unknown".to_owned()),
+                    id: "someId2".into(),
+                    target: PathResource::new("//somePath//Of/Unknown", false).unwrap(),
+                    relationship_type: RelationshipType::Unknown("unknown".into()),
                 },
             ],
         };
@@ -196,6 +200,8 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
+    use crate::core::PathResource;
+
     use super::{
         MODEL_TYPE_NS, RELATIONSHIP_NS, Relationship, RelationshipType, Relationships,
         THUMBNAIL_TYPE_NS,
@@ -214,19 +220,19 @@ mod memory_optimized_read_tests {
             Relationships {
                 relationships: vec![
                     Relationship {
-                        id: "someId".to_owned(),
-                        target: "//somePath//Of//Resources".to_owned(),
+                        id: "someId".into(),
+                        target: PathResource::new("/somePath/Of/Resources", true).unwrap(),
                         relationship_type: RelationshipType::Model,
                     },
                     Relationship {
-                        id: "someId1".to_owned(),
-                        target: "//somePath//Of//Resources".to_owned(),
+                        id: "someId1".into(),
+                        target: PathResource::new("/somePath/Of/Resources", true).unwrap(),
                         relationship_type: RelationshipType::Thumbnail,
                     },
                     Relationship {
-                        id: "someId2".to_owned(),
-                        target: "//somePath//Of//Unknown".to_owned(),
-                        relationship_type: RelationshipType::Unknown("unknown".to_owned()),
+                        id: "someId2".into(),
+                        target: PathResource::new("//somePath//Of/Unknown", false).unwrap(),
+                        relationship_type: RelationshipType::Unknown("unknown".into()),
                     },
                 ],
             }
@@ -240,6 +246,8 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
+    use crate::core::PathResource;
+
     use super::{
         MODEL_TYPE_NS, RELATIONSHIP_NS, Relationship, RelationshipType, Relationships,
         THUMBNAIL_TYPE_NS,
@@ -258,19 +266,19 @@ mod speed_optimized_read_tests {
             Relationships {
                 relationships: vec![
                     Relationship {
-                        id: "someId".to_owned(),
-                        target: "//somePath//Of//Resources".to_owned(),
+                        id: "someId".into(),
+                        target: PathResource::new("/somePath/Of/Resources", true).unwrap(),
                         relationship_type: RelationshipType::Model,
                     },
                     Relationship {
-                        id: "someId1".to_owned(),
-                        target: "//somePath//Of//Resources".to_owned(),
+                        id: "someId1".into(),
+                        target: PathResource::new("/somePath/Of/Resources", true).unwrap(),
                         relationship_type: RelationshipType::Thumbnail,
                     },
                     Relationship {
-                        id: "someId2".to_owned(),
-                        target: "//somePath//Of//Unknown".to_owned(),
-                        relationship_type: RelationshipType::Unknown("unknown".to_owned()),
+                        id: "someId2".into(),
+                        target: PathResource::new("//somePath//Of/Unknown", false).unwrap(),
+                        relationship_type: RelationshipType::Unknown("unknown".into()),
                     },
                 ],
             }

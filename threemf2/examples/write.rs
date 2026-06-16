@@ -1,5 +1,5 @@
 use threemf2::core::builder::{ModelBuilder, ObjectType, Unit};
-use threemf2::io::ThreemfPackage;
+use threemf2::io::ThreemfPackageBuilder;
 
 use std::{io::Cursor, vec};
 
@@ -27,7 +27,9 @@ fn main() {
     builder.add_build_item(obj_id).unwrap();
 
     let model = builder.build().unwrap();
-    let package: ThreemfPackage = model.into();
+    let mut package_builder = ThreemfPackageBuilder::new();
+    package_builder.set_root_model(model);
+    let package = package_builder.build().expect("Error building package");
 
     let mut bytes: Vec<u8> = vec![];
     let writer = Cursor::new(&mut bytes);

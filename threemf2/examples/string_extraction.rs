@@ -1,5 +1,8 @@
 use std::{fs::File, path::PathBuf};
-use threemf2::io::{CachePolicy, Error, ThreemfPackageLazyReader};
+use threemf2::{
+    core::PathResource,
+    io::{CachePolicy, Error, ThreemfPackageLazyReader},
+};
 
 /// This example demonstrates extracting raw XML strings from a 3MF package
 /// using the pull-based reader with string extraction methods.
@@ -27,7 +30,7 @@ fn main() {
 
     println!("2. Root Relationships XML:");
     package
-        .with_relationships_xml("_rels/.rels", |xml| {
+        .with_relationships_xml(&PathResource::new("_rels/.rels", true).unwrap(), |xml| {
             println!("{}\n", xml);
         })
         .unwrap();
@@ -41,20 +44,29 @@ fn main() {
 
     println!("4. Sub-model XML (first 200 chars):");
     package
-        .with_model_xml("/3D/midway.model", |xml| {
-            println!("{}...\n", &xml[..xml.len().min(200)]);
-        })
+        .with_model_xml(
+            &PathResource::new("/3D/midway.model", true).unwrap(),
+            |xml| {
+                println!("{}...\n", &xml[..xml.len().min(200)]);
+            },
+        )
         .unwrap();
 
     // Show that invalid paths return errors
     println!("5. Invalid path handling:");
-    match package.with_model_xml("/invalid/path.model", |_| "found") {
+    match package.with_model_xml(
+        &PathResource::new("/invalid/path.model", true).unwrap(),
+        |_| "found",
+    ) {
         Ok(result) => println!("Unexpected success: {}", result),
         Err(Error::ResourceNotFound(msg)) => println!("Model not found: {}\n", msg),
         Err(other) => println!("Other error: {:?}\n", other),
     }
 
-    match package.with_relationships_xml("/invalid/rels.xml", |_| "found") {
+    match package.with_relationships_xml(
+        &PathResource::new("/invalid/rels.xml", true).unwrap(),
+        |_| "found",
+    ) {
         Ok(result) => println!("Unexpected success: {}", result),
         Err(Error::ResourceNotFound(msg)) => println!("Relationships not found: {}\n", msg),
         Err(other) => println!("Other error: {:?}\n", other),

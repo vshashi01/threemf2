@@ -2,7 +2,7 @@ use threemf2::core::{
     builder::{ModelBuilder, ObjectType, Unit},
     query::{get_mesh_objects_from_model, get_model_view, get_objects_from_model},
 };
-use threemf2::io::ThreemfPackage;
+use threemf2::io::ThreemfPackageBuilder;
 
 /// This example shows how to build 3MF Model using ModelBuilder.
 /// Use this to reduce the boilerplate needed to setup 3MF Models.
@@ -95,8 +95,10 @@ fn main() {
                 println!("Triangles: {}", mesh.triangle_count());
             }
 
-            //to create a 3MF Package easily just convert model into a package
-            let _: ThreemfPackage = model.into();
+            //to create a 3MF Package easily use the package builder
+            let mut package_builder = ThreemfPackageBuilder::new();
+            package_builder.set_root_model(model);
+            let _package = package_builder.build().expect("Error building package");
         }
         Err(err) => panic!("{err:?}"),
     }

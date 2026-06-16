@@ -18,6 +18,7 @@ use instant_xml::{Error, FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::{Deserialize, Serialize};
 
+use thiserror::Error;
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
 
@@ -149,23 +150,32 @@ impl<'xml> FromXml<'xml> for StrResource {
 
 /// Path to a resource inside the 3MF package.
 ///
-/// Normalization rules:
 /// - Backslashes are converted to forward slashes.
 /// - Multiple slashes collapse into a single slash.
 /// - A leading slash is enforced.
-/// - Dot segments ("." or "..") are rejected.
+/// - All path should be a path to a file and not a folder
+/// - Dot segments ("." or "..") are not allowed.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PathResource(StrResource);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum PathResourceError {
+    #[error("Empty path is not a valid Path Resource")]
     EmptyPathNotAllowed,
+
+    #[error("Relative path is not a valid Path Resource")]
     DotSegmentNotAllowed,
+
+    #[error("Path Resource is required to be a file extension")]
+    PathMustBeAFileWithExtension,
 }
 
 impl PathResource {
-    pub fn new(value: &str) -> Result<Self, PathResourceError> {
-        match normalize_path_resource(value) {
+    pub fn new(
+        value: impl Into<CompactString>,
+        path_must_have_extension: bool,
+    ) -> Result<Self, PathResourceError> {
+        match normalize_path_resource(value, path_must_have_extension) {
             Ok(normalized) => Ok(Self(StrResource::new(normalized))),
             Err(err) => Err(err),
         }
@@ -173,6 +183,14 @@ impl PathResource {
 
     pub fn as_str(&self) -> &str {
         &self.0.0
+    }
+
+    pub fn as_str_without_leading_slash(&self) -> &str {
+        if self.as_str().starts_with('/') {
+            &self.as_str()[1..]
+        } else {
+            self.as_str()
+        }
     }
 }
 
@@ -186,7 +204,7 @@ impl TryFrom<&str> for PathResource {
     type Error = PathResourceError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        PathResource::new(value)
+        PathResource::new(value, false)
     }
 }
 
@@ -194,7 +212,7 @@ impl TryFrom<String> for PathResource {
     type Error = PathResourceError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        PathResource::new(&value)
+        PathResource::new(&value, false)
     }
 }
 
@@ -272,27 +290,58 @@ impl<'xml> FromXml<'xml> for PathResource {
     const KIND: Kind = Kind::Scalar;
 }
 
-fn normalize_path_resource(input: &str) -> Result<String, PathResourceError> {
-    let replaced = input.replace('\\', "/");
-    let mut parts: Vec<&str> = Vec::new();
+fn normalize_path_resource(
+    input: impl Into<CompactString>,
+    path_must_have_extension: bool,
+) -> Result<CompactString, PathResourceError> {
+    //ToDo: Remove the allocation here
+    let original = input.into();
+    let replaced = original.replace('\\', "/");
+    let mut final_path = CompactString::new("");
 
-    for part in replaced.split('/') {
-        if part.is_empty() {
-            continue;
+    if replaced.split('/').count() == 1 {
+        //this is a file in the current working directory
+        if path_must_have_extension && replaced.rsplit('.').next().is_none() {
+            return Err(PathResourceError::PathMustBeAFileWithExtension);
+        } else {
+            final_path.push_str(&replaced);
         }
-        if part == "." || part == ".." {
-            return Err(PathResourceError::DotSegmentNotAllowed);
+    } else {
+        let mut peekable = replaced.split('/').peekable();
+        let mut visited_first_item = false;
+        while let Some(part) = peekable.next() {
+            let next_available = peekable.peek().is_some();
+            if path_must_have_extension && !next_available {
+                // this is the final part so it should be a file name with extension split with period
+                if part.rsplit('.').next().is_none() {
+                    return Err(PathResourceError::PathMustBeAFileWithExtension);
+                } else {
+                    final_path.push_str(part);
+                    // this is the last item in the list
+                }
+            } else if part.is_empty() {
+                continue;
+            } else if part == "." || part == ".." {
+                return Err(PathResourceError::DotSegmentNotAllowed);
+            } else {
+                if !visited_first_item && next_available {
+                    final_path.push('/');
+                    visited_first_item = true;
+                }
+                final_path.push_str(part);
+                if next_available {
+                    final_path.push('/');
+                }
+                // visited_valid_parts += 1;
+            }
         }
-        parts.push(part);
     }
 
-    if parts.is_empty() {
+    if final_path.is_empty() {
         return Err(PathResourceError::EmptyPathNotAllowed);
     }
 
-    let mut out = String::from("/");
-    out.push_str(&parts.join("/"));
-    Ok(out)
+    Ok(final_path)
 }
 
 /// Optional UUID resource value used by the Production extension.

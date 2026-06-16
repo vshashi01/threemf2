@@ -1,6 +1,8 @@
 use thiserror::Error;
 use zip::result::ZipError;
 
+use crate::core::types::PathResourceError;
+
 /// An error that can occur while writing a 3MF file
 #[derive(Debug, Error)]
 pub enum Error {
@@ -27,6 +29,9 @@ pub enum Error {
 
     #[error("Resource not found: {0}")]
     ResourceNotFound(String),
+
+    #[error("Path Respurce error")]
+    PathResourceError(#[from] PathResourceError),
 
     #[cfg(feature = "speed-optimized-read")]
     #[error("Deserialization error from serde-roxmltree")]

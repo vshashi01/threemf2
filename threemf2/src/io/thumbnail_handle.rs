@@ -1,8 +1,10 @@
+use crate::core::StrResource;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImageFormat {
     Png,
     Jpeg,
-    Unknown,
+    Unknown(StrResource),
 }
 
 impl ImageFormat {
@@ -10,7 +12,15 @@ impl ImageFormat {
         match ext.to_lowercase().as_ref() {
             "png" => Self::Png,
             "jpg" | "jpeg" => Self::Jpeg,
-            _ => Self::Unknown,
+            _ => Self::Unknown(ext.into()),
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            ImageFormat::Png => "png",
+            ImageFormat::Jpeg => "jpeg",
+            ImageFormat::Unknown(ext) => ext,
         }
     }
 }
@@ -35,6 +45,6 @@ mod tests {
         assert_eq!(png, ImageFormat::Png);
         assert_eq!(jpg, ImageFormat::Jpeg);
         assert_eq!(jpeg, ImageFormat::Jpeg);
-        assert_eq!(unknown, ImageFormat::Unknown);
+        assert_eq!(unknown, ImageFormat::Unknown("tiff".into()));
     }
 }

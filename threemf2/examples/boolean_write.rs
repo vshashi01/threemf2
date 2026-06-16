@@ -14,8 +14,7 @@
 //! cargo run --example boolean_write --features "io-write"
 //! ```
 
-use std::fs::File;
-use std::io::BufWriter;
+use std::io::Cursor;
 
 use threemf2::{
     core::{
@@ -23,7 +22,7 @@ use threemf2::{
         builder::{ModelBuilder, ObjectType, Unit},
         query::get_model_view,
     },
-    io::ThreemfPackage,
+    io::ThreemfPackageBuilder,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -106,15 +105,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let model_view = get_model_view(&model);
     println!("  Objects: {}", model_view.object_count());
     println!("  Build items: {}", model_view.build_item_count());
-    println!("  Required extensions: {:?}", model_view.required_extensions());
+    println!(
+        "  Required extensions: {:?}",
+        model_view.required_extensions()
+    );
 
-    let package: ThreemfPackage = model.into();
-    let output_path = "boolean_example.3mf";
-    let file = File::create(output_path)?;
-    let writer = BufWriter::new(file);
-    package.write(writer)?;
+    let mut package_builder = ThreemfPackageBuilder::new();
+    package_builder.set_root_model(model);
+    let package = package_builder.build().expect("Error building package");
+    let mut buffer = Cursor::new(Vec::new());
+    package.write(&mut buffer)?;
 
-    println!("\nSuccessfully wrote 3MF file: {}", output_path);
+    println!(
+        "\nSuccessfully wrote 3MF data to buffer: {} bytes",
+        buffer.get_ref().len()
+    );
     println!("\nNote: This example uses simple cubes to approximate geometry.");
 
     Ok(())

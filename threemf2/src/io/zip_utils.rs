@@ -1,7 +1,8 @@
+use compact_str::format_compact;
 use zip::ZipArchive;
 
 use crate::{
-    core::model::ThreemfExtensions,
+    core::{PathResource, StrResource, model::ThreemfExtensions},
     io::{
         content_types::{ContentTypes, DefaultContentTypeEnum},
         error::Error,
@@ -92,10 +93,7 @@ fn speed_optimized_read(xml_string: &str) -> Model {
     for ns in model.recommendedextensions.get() {
         match ns {
             ThreemfNamespace::Unknown { prefix, uri } => {
-                if let Some(ns) = namespaces
-                    .clone()
-                    .find(|ns| ns.name() == Some(prefix.as_str()))
-                {
+                if let Some(ns) = namespaces.clone().find(|ns| ns.name() == Some(prefix)) {
                     let threemf_ns = ThreemfNamespace::try_from_uri(ns.uri(), ns.name()).unwrap();
                     new_recommended_extensions.insert(threemf_ns);
                 } else {
@@ -115,10 +113,7 @@ fn speed_optimized_read(xml_string: &str) -> Model {
     for ns in model.requiredextensions.get() {
         match ns {
             ThreemfNamespace::Unknown { prefix, uri } => {
-                if let Some(ns) = namespaces
-                    .clone()
-                    .find(|ns| ns.name() == Some(prefix.as_str()))
-                {
+                if let Some(ns) = namespaces.clone().find(|ns| ns.name() == Some(prefix)) {
                     let threemf_ns = ThreemfNamespace::try_from_uri(ns.uri(), ns.name()).unwrap();
                     new_required_extensions.insert(threemf_ns);
                 } else {
@@ -155,15 +150,21 @@ pub(crate) fn read_zipfile_to_string<R: Read>(
 pub(crate) fn setup_archive_and_content_types<R: Read + Seek>(
     reader: R,
     deserializer: XmlDeserializer,
-) -> Result<(ZipArchive<R>, ContentTypes, String, String), Error> {
+) -> Result<(ZipArchive<R>, ContentTypes, String, PathResource), Error> {
     let mut zip = ZipArchive::new(reader)?;
 
     let (content_types, content_types_string) = parse_content_types(&mut zip, deserializer)?;
     let rels_ext = determine_relationships_extension(&content_types);
 
-    let root_rels_filename = "_rels/.{extension}".replace("{extension}", &rels_ext);
+    //let root_rels_filename = "_rels/.{extension}".replace("{extension}", &rels_ext);
+    let root_rels_filename = format_compact!("_rels/.{}", rels_ext);
 
-    Ok((zip, content_types, content_types_string, root_rels_filename))
+    match PathResource::new(root_rels_filename, true) {
+        Ok(path) => Ok((zip, content_types, content_types_string, path)),
+        Err(err) => Err(Error::PathResourceError(err)),
+    }
+
+    //Ok((zip, content_types, content_types_string, root_rels_filename))
 }
 
 fn parse_content_types<R: Read + Seek>(
@@ -181,13 +182,13 @@ fn parse_content_types<R: Read + Seek>(
     }
 }
 
-fn determine_relationships_extension(content_types: &ContentTypes) -> String {
+fn determine_relationships_extension(content_types: &ContentTypes) -> StrResource {
     content_types
         .defaults
         .iter()
         .find(|t| t.content_type == DefaultContentTypeEnum::Relationship)
         .map(|rels| rels.extension.clone())
-        .unwrap_or_else(|| "rels".to_string())
+        .unwrap_or_else(|| "rels".into())
 }
 
 /// Find all relationship files in the archive (excluding the root relationships file)
@@ -195,7 +196,7 @@ pub(crate) fn discover_relationship_files<R: Read + Seek>(
     zip: &mut ZipArchive<R>,
     rels_ext: &str,
     root_rels_filename: &str,
-) -> Result<Vec<String>, Error> {
+) -> Result<Vec<PathResource>, Error> {
     let mut rel_files = Vec::new();
 
     for i in 0..zip.len() {
@@ -211,9 +212,12 @@ pub(crate) fn discover_relationship_files<R: Read + Seek>(
                 .map(|c| c.as_os_str().to_string_lossy())
                 .collect::<Vec<_>>()
                 .join("/");
-            let final_path = format!("/{zip_name}");
+            let final_path = format_compact!("/{zip_name}");
 
-            rel_files.push(final_path);
+            match PathResource::new(final_path, true) {
+                Ok(path) => rel_files.push(path),
+                Err(err) => return Err(Error::PathResourceError(err)),
+            }
         }
     }
 
@@ -230,10 +234,10 @@ pub(crate) fn relationships_from_zipfile<R: Read>(
 
 pub(crate) fn relationships_from_zip_by_name<R: Read + Seek>(
     zip: &mut ZipArchive<R>,
-    zip_filename: &str,
+    zip_filename: &PathResource,
     deserializer: &XmlDeserializer,
 ) -> Result<Relationships, Error> {
-    let rels_file = zip.by_name(zip_filename);
+    let rels_file = zip.by_name(zip_filename.as_str_without_leading_slash());
     match rels_file {
         Ok(file) => relationships_from_zipfile(file, deserializer),
         Err(err) => Err(Error::Zip(err)),

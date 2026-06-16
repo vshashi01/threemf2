@@ -2,7 +2,6 @@
 //!
 //! Tests validation of 3MF models that use multiple extensions simultaneously.
 
-use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
@@ -16,11 +15,7 @@ use threemf2::{
         triangle_set::{TriangleRef, TriangleSet, TriangleSets},
         types::OptionalResourceIndex,
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
+    io::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -170,78 +165,55 @@ fn validate_beamlattice_with_trianglesets() {
         beamlattice: Some(beamlattice),
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[
-                ThreemfNamespace::BeamLattice,
-                ThreemfNamespace::BeamLatticeBalls,
-            ]),
-            recommendedextensions: ThreemfExtensions::new(&[ThreemfNamespace::CoreTriangleSet]),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![Object {
-                    id: 1,
-                    objecttype: Some(ObjectType::Model),
-                    thumbnail: None,
-                    partnumber: None,
-                    name: Some("Beam Lattice with Triangle Sets".into()),
-                    pid: OptionalResourceId::none(),
-                    pindex: OptionalResourceIndex::none(),
-                    uuid: None,
-                    kind: Some(ObjectKind::Mesh(mesh)),
-                    meshresolution: None,
-                    slicestackid: OptionalResourceId::none(),
-                    slicepath: None,
-                }],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
+    let model = Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[
+            ThreemfNamespace::BeamLattice,
+            ThreemfNamespace::BeamLatticeBalls,
+        ]),
+        recommendedextensions: ThreemfExtensions::new(&[ThreemfNamespace::CoreTriangleSet]),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![Object {
+                id: 1,
+                objecttype: Some(ObjectType::Model),
+                thumbnail: None,
+                partnumber: None,
+                name: Some("Beam Lattice with Triangle Sets".into()),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                item: vec![Item {
-                    objectid: 1,
-                    transform: None,
-                    partnumber: None,
-                    path: None,
-                    uuid: None,
-                }],
-            },
+                kind: Some(ObjectKind::Mesh(mesh)),
+                meshresolution: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+            }],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 1,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
         },
-    );
+    };
+
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let write_package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     write_package

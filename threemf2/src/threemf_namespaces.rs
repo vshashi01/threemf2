@@ -1,3 +1,5 @@
+use crate::core::StrResource;
+
 ////////////////////////////////////////////////////////////////////////////////////
 ///  Namespaces & Prefixes related to the Core specification and its extensions
 pub const CORE_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
@@ -72,7 +74,10 @@ pub enum ThreemfNamespace {
     Displacement,
 
     /// Unknown namespace
-    Unknown { prefix: String, uri: String },
+    Unknown {
+        prefix: StrResource,
+        uri: StrResource,
+    },
 }
 
 impl ThreemfNamespace {
@@ -122,8 +127,8 @@ impl ThreemfNamespace {
             MATERIAL_NS => Some(Self::Material),
             DISPLACEMENT_NS => Some(Self::Displacement),
             _ => assigned_prefix.map(|prefix| Self::Unknown {
-                prefix: prefix.to_owned(),
-                uri: uri.to_owned(),
+                prefix: prefix.into(),
+                uri: uri.into(),
             }),
         }
     }
@@ -141,12 +146,12 @@ impl ThreemfNamespace {
             DISPLACEMENT_PREFIX => Some(Self::Displacement),
             _ => match specified_uri {
                 Some(uri) => Some(Self::Unknown {
-                    prefix: prefix.to_owned(),
-                    uri: uri.to_owned(),
+                    prefix: prefix.into(),
+                    uri: uri.into(),
                 }),
                 None => Some(Self::Unknown {
-                    prefix: prefix.to_owned(),
-                    uri: "".to_owned(),
+                    prefix: prefix.into(),
+                    uri: "".into(),
                 }),
             },
         }

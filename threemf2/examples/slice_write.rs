@@ -3,15 +3,10 @@ use threemf2::{
         builder::{ModelBuilder, ObjectType, Unit},
         slice::MeshResolution,
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
+    io::ThreemfPackageBuilder,
 };
 
-use std::collections::HashMap;
-use std::{io::Cursor, vec};
+use std::io::Cursor;
 
 /// This example shows how to create and write a 3MF file with slice extension data.
 /// This demonstrates the Slice Extension support in threemf2.
@@ -78,38 +73,9 @@ fn main() {
     builder.add_build_item(object_id).unwrap();
     let model = builder.build().unwrap();
 
-    let content_types = ContentTypes {
-        defaults: vec![
-            DefaultContentTypes {
-                extension: "rels".to_owned(),
-                content_type: DefaultContentTypeEnum::Relationship,
-            },
-            DefaultContentTypes {
-                extension: "model".to_owned(),
-                content_type: DefaultContentTypeEnum::Model,
-            },
-        ],
-    };
-
-    let relationships = HashMap::from([(
-        "_rels/.rels".to_owned(),
-        Relationships {
-            relationships: vec![Relationship {
-                id: "rel0".to_owned(),
-                target: "3D/3Dmodel.model".to_owned(),
-                relationship_type: RelationshipType::Model,
-            }],
-        },
-    )]);
-
-    let package = ThreemfPackage::new(
-        model,
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        relationships,
-        content_types,
-    );
+    let mut package_builder = ThreemfPackageBuilder::new();
+    package_builder.set_root_model(model);
+    let package = package_builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     package.write(&mut buf).expect("Error writing 3MF package");

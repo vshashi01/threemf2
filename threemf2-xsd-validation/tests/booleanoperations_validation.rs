@@ -3,7 +3,6 @@
 //! Tests validation of 3MF models with boolean operations against
 //! the Boolean Operations extension XSD schemas.
 
-use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
@@ -17,11 +16,7 @@ use threemf2::{
         transform::Transform,
         types::{OptionalResourceIndex, UuidResource},
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
+    io::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -44,6 +39,12 @@ fn validate_boolean_model(model_xml: &str) {
         ],
         "Boolean Operations Schema",
     );
+}
+
+fn build_package(model: Model) -> threemf2::io::ThreemfPackage {
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    builder.build().expect("Error building package")
 }
 
 fn validate_boolean_with_production_model(model_xml: &str) {
@@ -446,105 +447,78 @@ fn validate_simple_boolean_difference() {
         }],
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![
-                    Object {
-                        id: 1,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Cube".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(cube_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 2,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Sphere".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(sphere_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 3,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("CubeMinusSphere".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::BooleanShape(boolean_shape)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                ],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
-                uuid: None,
-                item: vec![Item {
-                    objectid: 3,
-                    transform: None,
+    let write_package = build_package(Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![
+                Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
                     partnumber: None,
-                    path: None,
+                    name: Some("Cube".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                }],
-            },
-        },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
+                    kind: Some(ObjectKind::Mesh(cube_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
+                Object {
+                    id: 2,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Sphere".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(sphere_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                },
+                Object {
+                    id: 3,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("CubeMinusSphere".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::BooleanShape(boolean_shape)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
             ],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-    );
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 3,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
+        },
+    });
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -577,105 +551,78 @@ fn validate_simple_boolean_intersection() {
         }],
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![
-                    Object {
-                        id: 1,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Cube".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(cube_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 2,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Sphere".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(sphere_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 3,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("CubeIntersectSphere".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::BooleanShape(boolean_shape)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                ],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
-                uuid: None,
-                item: vec![Item {
-                    objectid: 3,
-                    transform: None,
+    let write_package = build_package(Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![
+                Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
                     partnumber: None,
-                    path: None,
+                    name: Some("Cube".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                }],
-            },
-        },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
+                    kind: Some(ObjectKind::Mesh(cube_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
+                Object {
+                    id: 2,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Sphere".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(sphere_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                },
+                Object {
+                    id: 3,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("CubeIntersectSphere".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::BooleanShape(boolean_shape)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
             ],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-    );
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 3,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
+        },
+    });
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -724,105 +671,78 @@ fn validate_boolean_with_multiple_operands() {
         ],
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![
-                    Object {
-                        id: 1,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Cube".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(cube_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 2,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Cylinder".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(cylinder_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 3,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("CubeMinusThreeCylinders".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::BooleanShape(boolean_shape)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                ],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
-                uuid: None,
-                item: vec![Item {
-                    objectid: 3,
-                    transform: None,
+    let write_package = build_package(Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![
+                Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
                     partnumber: None,
-                    path: None,
+                    name: Some("Cube".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                }],
-            },
-        },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
+                    kind: Some(ObjectKind::Mesh(cube_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
+                Object {
+                    id: 2,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Cylinder".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(cylinder_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                },
+                Object {
+                    id: 3,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("CubeMinusThreeCylinders".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::BooleanShape(boolean_shape)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
             ],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-    );
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 3,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
+        },
+    });
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -871,133 +791,106 @@ fn validate_nested_boolean_shapes() {
         }],
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![
-                    Object {
-                        id: 1,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Cube".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(cube_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 2,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Sphere".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(sphere_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 3,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Intersected".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::BooleanShape(intersected_shape)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 4,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Cylinder".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(cylinder_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 5,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("FinalPart".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::BooleanShape(final_shape)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                ],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
-                uuid: None,
-                item: vec![Item {
-                    objectid: 5,
-                    transform: None,
+    let write_package = build_package(Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![
+                Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
                     partnumber: None,
-                    path: None,
+                    name: Some("Cube".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                }],
-            },
-        },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
+                    kind: Some(ObjectKind::Mesh(cube_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
+                Object {
+                    id: 2,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Sphere".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(sphere_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                },
+                Object {
+                    id: 3,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Intersected".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::BooleanShape(intersected_shape)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                },
+                Object {
+                    id: 4,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Cylinder".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(cylinder_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                },
+                Object {
+                    id: 5,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("FinalPart".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::BooleanShape(final_shape)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
             ],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-    );
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 5,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
+        },
+    });
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -1029,115 +922,88 @@ fn validate_boolean_with_production_extension() {
         }],
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![
-                    Object {
-                        id: 1,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Cube".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: Some(UuidResource::NotUuid(
-                            "11111111-1111-1111-1111-111111111111".into(),
-                        )),
-                        kind: Some(ObjectKind::Mesh(cube_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 2,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Sphere".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: Some(UuidResource::NotUuid(
-                            "22222222-2222-2222-2222-222222222222".into(),
-                        )),
-                        kind: Some(ObjectKind::Mesh(sphere_mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                    Object {
-                        id: 3,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("BooleanShapeWithUUID".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: Some(UuidResource::NotUuid(
-                            "33333333-3333-3333-3333-333333333333".into(),
-                        )),
-                        kind: Some(ObjectKind::BooleanShape(boolean_shape)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    },
-                ],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
-                uuid: Some(UuidResource::NotUuid(
-                    "44444444-4444-4444-4444-444444444444".into(),
-                )),
-                item: vec![Item {
-                    objectid: 3,
-                    transform: None,
+    let write_package = build_package(Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Boolean]),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![
+                Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
                     partnumber: None,
-                    path: None,
+                    name: Some("Cube".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: Some(UuidResource::NotUuid(
-                        "55555555-5555-5555-5555-555555555555".into(),
+                        "11111111-1111-1111-1111-111111111111".into(),
                     )),
-                }],
-            },
-        },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
+                    kind: Some(ObjectKind::Mesh(cube_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
+                Object {
+                    id: 2,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Sphere".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: Some(UuidResource::NotUuid(
+                        "22222222-2222-2222-2222-222222222222".into(),
+                    )),
+                    kind: Some(ObjectKind::Mesh(sphere_mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                },
+                Object {
+                    id: 3,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("BooleanShapeWithUUID".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: Some(UuidResource::NotUuid(
+                        "33333333-3333-3333-3333-333333333333".into(),
+                    )),
+                    kind: Some(ObjectKind::BooleanShape(boolean_shape)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
                 },
             ],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-    );
+        build: Build {
+            uuid: Some(UuidResource::NotUuid(
+                "44444444-4444-4444-4444-444444444444".into(),
+            )),
+            item: vec![Item {
+                objectid: 3,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: Some(UuidResource::NotUuid(
+                    "55555555-5555-5555-5555-555555555555".into(),
+                )),
+            }],
+        },
+    });
 
     let mut buf = Cursor::new(Vec::new());
     write_package
