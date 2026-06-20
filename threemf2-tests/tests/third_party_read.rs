@@ -72,7 +72,7 @@ mod tests {
                 Ok(threemf) => {
                     assert!(!threemf.content_types().defaults.is_empty());
                     assert!(!threemf.relationships().is_empty());
-                    assert_eq!(threemf.root_model_path(), "/3D/3dmodel.model");
+                    assert_eq!(threemf.root_model_path().as_str(), "/3D/3dmodel.model");
                 }
                 Err(err) => {
                     panic!(

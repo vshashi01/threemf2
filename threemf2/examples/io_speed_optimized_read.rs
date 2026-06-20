@@ -7,7 +7,8 @@ use std::{fs::File, path::PathBuf};
 /// `cargo run --example io_speed_optimized_read --features io-speed-optimized-read`
 ///
 fn main() {
-    let path = PathBuf::from("./tests/data/third-party/mgx-core-prod-beamlattice-material.3mf");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");
     let reader = File::open(path).unwrap();
 
     let result = ThreemfPackage::from_reader_with_speed_optimized_deserializer(reader, true);

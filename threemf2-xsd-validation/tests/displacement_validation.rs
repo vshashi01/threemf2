@@ -1,6 +1,5 @@
 //! Displacement extension XSD validation tests
 
-use std::collections::HashMap;
 use std::io::Cursor;
 
 use threemf2::{
@@ -15,11 +14,7 @@ use threemf2::{
         object::{Object, ObjectKind, ObjectType},
         resources::Resources,
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
+    io::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -210,34 +205,9 @@ fn validate_displacement_model_schema() {
         },
     };
 
-    let package = ThreemfPackage::new(
-        model,
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
-        },
-    );
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     package.write(&mut buf).expect("Error writing package");

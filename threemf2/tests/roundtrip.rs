@@ -19,14 +19,10 @@ mod tests {
             resources::Resources,
             types::OptionalResourceIndex,
         },
-        io::{
-            ThreemfPackage,
-            content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-            relationship::{Relationship, RelationshipType, Relationships},
-        },
+        io::{ThreemfPackage, ThreemfPackageBuilder},
     };
 
-    use std::{collections::HashMap, io::Cursor};
+    use std::io::Cursor;
 
     #[test]
     fn roundtrip_threemfpackage_test() {
@@ -57,78 +53,54 @@ mod tests {
             beamlattice: None,
         };
 
-        let write_package = ThreemfPackage::new(
-            Model {
-                unit: Some(Unit::Millimeter),
-                requiredextensions: ThreemfExtensions::default(),
-                recommendedextensions: ThreemfExtensions::default(),
-                metadata: vec![],
-                resources: Resources {
-                    object: vec![Object {
-                        id: 1,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some("Mesh".into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(mesh.clone())),
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                        meshresolution: None,
-                    }],
-                    basematerials: vec![],
-                    slicestack: vec![],
-                    colorgroup: Vec::new(),
-                    texture2dgroup: Vec::new(),
-                    compositematerials: Vec::new(),
-                    multiproperties: Vec::new(),
-                    texture2d: Vec::new(),
-                    displacement2d: Vec::new(),
-                    normvectorgroup: Vec::new(),
-                    disp2dgroup: Vec::new(),
-                },
-                build: Build {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("Mesh".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                    item: vec![Item {
-                        objectid: 1,
-                        transform: None,
-                        partnumber: None,
-                        path: None,
-                        uuid: None,
-                    }],
-                },
+                    kind: Some(ObjectKind::Mesh(mesh.clone())),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                basematerials: vec![],
+                slicestack: vec![],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
-            HashMap::new(),
-            HashMap::new(),
-            HashMap::new(),
-            HashMap::from([(
-                "_rels/.rels".to_owned(),
-                Relationships {
-                    relationships: vec![Relationship {
-                        id: "rel0".to_owned(),
-                        target: "3D/3Dmodel.model".to_owned(),
-                        relationship_type: RelationshipType::Model,
-                    }],
-                },
-            )]),
-            ContentTypes {
-                defaults: vec![
-                    DefaultContentTypes {
-                        extension: "rels".to_owned(),
-                        content_type: DefaultContentTypeEnum::Relationship,
-                    },
-                    DefaultContentTypes {
-                        extension: "model".to_owned(),
-                        content_type: DefaultContentTypeEnum::Model,
-                    },
-                ],
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
             },
-        );
+        };
+
+        let mut builder = ThreemfPackageBuilder::new();
+        builder.set_root_model(model);
+        let write_package = builder.build().expect("Error building package");
 
         let mut buf = Cursor::new(Vec::new());
-
         write_package
             .write(&mut buf)
             .expect("Error writing package");
@@ -167,7 +139,12 @@ mod tests {
 
             // Verify basic structure
             assert_eq!(lazy_package.relationships().len(), 1);
-            assert!(lazy_package.root_model_path().contains("3Dmodel.model"));
+            assert!(
+                lazy_package
+                    .root_model_path()
+                    .as_str()
+                    .contains("3Dmodel.model")
+            );
 
             // Verify root model content
             let root_model = lazy_package.root_model().unwrap();

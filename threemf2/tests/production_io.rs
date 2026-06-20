@@ -154,7 +154,7 @@ mod tests {
                     package
                         .with_model(model_path, |model| {
                             //check if some part with some id exists in a specific sub-model
-                            if model_path == "/3D/Objects/Object.model"
+                            if model_path.as_str() == "/3D/Objects/Object.model"
                                 && model.resources.object.iter().any(|o| o.id == 1)
                             {
                                 found_object_by_id = true;
@@ -247,7 +247,7 @@ mod tests {
                     package
                         .with_model(model_path, |model| {
                             //check if some part with some id exists in a specific sub-model
-                            if model_path == "/3D/Objects/Object.model"
+                            if model_path.as_str() == "/3D/Objects/Object.model"
                                 && model.resources.object.iter().any(|o| o.id == 1)
                             {
                                 found_object_by_id = true;

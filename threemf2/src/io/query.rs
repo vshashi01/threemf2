@@ -72,7 +72,7 @@ pub fn iter_models<'a>(package: &'a ThreemfPackage) -> impl Iterator<Item = Mode
     })
     .chain(package.sub_models.iter().map(|(path, model)| ModelRef {
         model,
-        path: Some(path),
+        path: Some(path.as_str()),
     }))
 }
 

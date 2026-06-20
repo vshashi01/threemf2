@@ -10,6 +10,8 @@ use instant_xml::{FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
+use crate::core::StrResource;
+
 /// Content types for the Open Packaging Conventions (OPC).
 /// Contains a collection of [DefaultContentTypes].
 /// [DefaultContentTypes] contains the [DefaultContentTypeEnum] specifying the content type.
@@ -48,7 +50,7 @@ pub enum DefaultContentTypeEnum {
 
     // Represents a Content Type that is not currently known to this library
     // content namespace is stored in the tuple.
-    Unknown(String),
+    Unknown(StrResource),
 }
 
 const RELATIONSHIP_NS: &str = "application/vnd.openxmlformats-package.relationships+xml";
@@ -116,7 +118,7 @@ impl From<String> for DefaultContentTypeEnum {
             MODEL_NS => Self::Model,
             PNG_NS => Self::ImagePng,
             JPEG_NS => Self::ImageJPEG,
-            value => Self::Unknown(value.to_owned()),
+            value => Self::Unknown(StrResource::from(value)),
         }
     }
 }
@@ -137,7 +139,7 @@ pub struct DefaultContentTypes {
         xml(attribute, rename = "Extension")
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Extension"))]
-    pub extension: String,
+    pub extension: StrResource,
 
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -169,25 +171,25 @@ mod write_tests {
         let content = ContentTypes {
             defaults: vec![
                 DefaultContentTypes {
-                    extension: "rels".to_owned(),
+                    extension: "rels".into(),
                     content_type: DefaultContentTypeEnum::Relationship,
                 },
                 DefaultContentTypes {
-                    extension: "model".to_owned(),
+                    extension: "model".into(),
                     content_type: DefaultContentTypeEnum::Model,
                 },
                 DefaultContentTypes {
-                    extension: "png".to_owned(),
+                    extension: "png".into(),
                     content_type: DefaultContentTypeEnum::ImagePng,
                 },
                 DefaultContentTypes {
-                    extension: "jpg".to_owned(),
+                    extension: "jpg".into(),
                     content_type: DefaultContentTypeEnum::ImageJPEG,
                 },
                 DefaultContentTypes {
-                    extension: "unknown".to_owned(),
+                    extension: "unknown".into(),
                     content_type: DefaultContentTypeEnum::Unknown(
-                        "//some//unknown//content".to_owned(),
+                        "//some//unknown//content".into(),
                     ),
                 },
             ],
@@ -223,19 +225,19 @@ mod memory_optimized_read_tests {
             ContentTypes {
                 defaults: vec![
                     DefaultContentTypes {
-                        extension: "rels".to_owned(),
+                        extension: "rels".into(),
                         content_type: DefaultContentTypeEnum::Relationship,
                     },
                     DefaultContentTypes {
-                        extension: "model".to_owned(),
+                        extension: "model".into(),
                         content_type: DefaultContentTypeEnum::Model,
                     },
                     DefaultContentTypes {
-                        extension: "png".to_owned(),
+                        extension: "png".into(),
                         content_type: DefaultContentTypeEnum::ImagePng,
                     },
                     DefaultContentTypes {
-                        extension: "jpg".to_owned(),
+                        extension: "jpg".into(),
                         content_type: DefaultContentTypeEnum::ImageJPEG,
                     },
                 ],
@@ -256,17 +258,17 @@ mod memory_optimized_read_tests {
             ContentTypes {
                 defaults: vec![
                     DefaultContentTypes {
-                        extension: "rels".to_owned(),
+                        extension: "rels".into(),
                         content_type: DefaultContentTypeEnum::Relationship,
                     },
                     DefaultContentTypes {
-                        extension: "model".to_owned(),
+                        extension: "model".into(),
                         content_type: DefaultContentTypeEnum::Model,
                     },
                     DefaultContentTypes {
-                        extension: "unknown".to_owned(),
+                        extension: "unknown".into(),
                         content_type: DefaultContentTypeEnum::Unknown(
-                            "some/unknown/content".to_owned()
+                            "some/unknown/content".into(),
                         ),
                     }
                 ]
@@ -280,6 +282,8 @@ mod memory_optimized_read_tests {
 mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
+
+    use crate::core::StrResource;
 
     use super::{
         CONTENT_TYPES_NS, ContentTypes, DefaultContentTypeEnum, DefaultContentTypes, JPEG_NS,
@@ -300,19 +304,19 @@ mod speed_optimized_read_tests {
             ContentTypes {
                 defaults: vec![
                     DefaultContentTypes {
-                        extension: "rels".to_owned(),
+                        extension: "rels".into(),
                         content_type: DefaultContentTypeEnum::Relationship,
                     },
                     DefaultContentTypes {
-                        extension: "model".to_owned(),
+                        extension: "model".into(),
                         content_type: DefaultContentTypeEnum::Model,
                     },
                     DefaultContentTypes {
-                        extension: "png".to_owned(),
+                        extension: "png".into(),
                         content_type: DefaultContentTypeEnum::ImagePng,
                     },
                     DefaultContentTypes {
-                        extension: "jpg".to_owned(),
+                        extension: "jpg".into(),
                         content_type: DefaultContentTypeEnum::ImageJPEG,
                     },
                 ],
@@ -333,18 +337,18 @@ mod speed_optimized_read_tests {
             ContentTypes {
                 defaults: vec![
                     DefaultContentTypes {
-                        extension: "rels".to_owned(),
+                        extension: "rels".into(),
                         content_type: DefaultContentTypeEnum::Relationship,
                     },
                     DefaultContentTypes {
-                        extension: "model".to_owned(),
+                        extension: "model".into(),
                         content_type: DefaultContentTypeEnum::Model,
                     },
                     DefaultContentTypes {
-                        extension: "unknown".to_owned(),
-                        content_type: DefaultContentTypeEnum::Unknown(
-                            "some/unknown/content".to_owned()
-                        ),
+                        extension: "unknown".into(),
+                        content_type: DefaultContentTypeEnum::Unknown(StrResource::from(
+                            "some/unknown/content"
+                        ),),
                     }
                 ]
             }

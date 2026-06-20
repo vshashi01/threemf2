@@ -8,6 +8,11 @@ mod utils;
 
 pub mod thumbnail_handle;
 
+#[cfg(feature = "io-write")]
+pub mod builder;
+#[cfg(feature = "io-write")]
+pub use builder::ThreemfPackageBuilder;
+
 pub mod validator;
 mod validator_rules;
 

@@ -3,7 +3,6 @@
 //! Tests validation of 3MF models with slice data against
 //! the Slice extension XSD schema.
 
-use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
@@ -15,11 +14,7 @@ use threemf2::{
         resources::Resources,
         slice::{self, MeshResolution, Polygon, Segment, Slice, SliceStack},
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
+    io::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -192,34 +187,9 @@ fn validate_simple_slice() {
 
     // Write to buffer
     let mut buf = Cursor::new(Vec::new());
-    let package = ThreemfPackage::new(
-        model,
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
-        },
-    );
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let package = builder.build().expect("Error building package");
     package.write(&mut buf).expect("Error writing");
 
     // Extract and validate
@@ -427,34 +397,9 @@ fn validate_slice_multiple_polygons() {
 
     // Write and validate
     let mut buf = Cursor::new(Vec::new());
-    let package = ThreemfPackage::new(
-        model,
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
-        },
-    );
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let package = builder.build().expect("Error building package");
     package.write(&mut buf).expect("Error writing");
 
     let model_xml = extract_model_xml(buf.get_ref()).unwrap();

@@ -16,75 +16,6 @@
 //! - [`BuildBuilder`] - Configures the build section (what gets printed)
 //! - [`TriangleSetsBuilder`] - Organizes triangles into named groups
 //!
-//! # Basic Usage
-//!
-//! ```rust,ignore
-//! use threemf2::io::builder::{ModelBuilder, Unit};
-//!
-//! // Create a root model
-//! let mut builder = ModelBuilder::new(Unit::Millimeter, true);
-//! builder.add_metadata("Application", Some("MyApp"));
-//!
-//! // Add a build section
-//! builder.add_build(None)?;
-//!
-//! // Add a mesh object
-//! let cube_id = builder.add_mesh_object(|obj| {
-//!     obj.name("Cube");
-//!     obj.add_vertices(&[
-//!         [0.0, 0.0, 0.0],
-//!         [10.0, 0.0, 0.0],
-//!         [10.0, 10.0, 0.0],
-//!         [0.0, 10.0, 0.0],
-//!     ]);
-//!     obj.add_triangles(&[
-//!         [0, 1, 2],
-//!         [0, 2, 3],
-//!     ]);
-//!     Ok(())
-//! })?;
-//!
-//! // Add to build plate
-//! builder.add_build_item(cube_id)?;
-//!
-//! // Build the final model
-//! let model = builder.build()?;
-//! ```
-//!
-//! # Boolean Operations Example
-//!
-//! ```rust,ignore
-//! use threemf2::io::builder::{ModelBuilder, Unit, BooleanOperation};
-//!
-//! let mut builder = ModelBuilder::new(Unit::Millimeter, true);
-//! builder.add_build(None)?;
-//!
-//! // Create base mesh (cube)
-//! let cube_id = builder.add_mesh_object(|obj| {
-//!     obj.name("Cube");
-//!     // ... add cube geometry
-//!     Ok(())
-//! })?;
-//!
-//! // Create sphere mesh
-//! let sphere_id = builder.add_mesh_object(|obj| {
-//!     obj.name("Sphere");
-//!     // ... add sphere geometry
-//!     Ok(())
-//! })?;
-//!
-//! // Create a boolean shape (cube minus sphere)
-//! let result_id = builder.add_booleanshape_object(|obj| {
-//!     obj.name("CubeMinusSphere");
-//!     obj.base_object(cube_id, BooleanOperation::Difference);
-//!     obj.add_boolean(sphere_id);
-//!     Ok(())
-//! })?;
-//!
-//! builder.add_build_item(result_id)?;
-//! let model = builder.build()?;
-//! ```
-//!
 //! # Root vs Sub-Models
 //!
 //! 3MF models can be either root models or sub-models:
@@ -125,26 +56,32 @@ use crate::{
         boolean::{Boolean as BooleanOp, BooleanOperation, BooleanShape},
         build::{Build, Item},
         component::{Component, Components},
+        displacement::{
+            self, Disp2DGroup, Displacement2D, DisplacementMesh, NormVector, NormVectorGroup,
+        },
+        material::{
+            self, ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup,
+        },
         mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
         metadata::Metadata,
         model::{Model, ThreemfExtensions},
         object::{Object, ObjectKind},
-        resources::Resources,
+        resources::{Base, BaseMaterials, Resources},
         slice::{self, MeshResolution, Polygon, Segment, Slice, SliceRef, SliceStack},
         transform::Transform,
     },
     threemf_namespaces::ThreemfNamespace,
 };
 
-use std::ops::{Deref, DerefMut};
-
 pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
 pub use crate::core::model::Unit;
 pub use crate::core::object::ObjectType;
 use crate::core::types::{
-    OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIndex,
-    UuidResource,
+    OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIdCollection,
+    ResourceIndex, ResourceIndexCollection, StrResource, UuidResource,
 };
+
+use std::ops::{Deref, DerefMut};
 
 /// Errors that can occur when building a [`Model`].
 ///
@@ -233,90 +170,6 @@ pub enum ProductionExtensionError {
 ///   model file in a 3MF package (typically `/3D/3dmodel.model`).
 /// - **Sub-models** (`is_root = false`): Cannot have a Build section. These are auxiliary
 ///   models referenced by the root model or other sub-models.
-///
-/// # Examples
-///
-/// ## Creating a simple root model with a mesh object
-///
-/// ```rust,ignore
-/// use threemf2::io::builder::{ModelBuilder, Unit, ObjectType};
-///
-/// let mut builder = ModelBuilder::new(Unit::Millimeter, true);
-///
-/// // Add metadata
-/// builder.add_metadata("Application", Some("MyApp"));
-///
-/// // Create build section
-/// builder.add_build(None)?;
-///
-/// // Add a cube mesh object
-/// let cube_id = builder.add_mesh_object(|obj| {
-///     obj.name("Cube")
-///        .object_type(ObjectType::Model);
-///
-///     // Add vertices
-///     obj.add_vertices(&[
-///         [0.0, 0.0, 0.0],
-///         [10.0, 0.0, 0.0],
-///         [10.0, 10.0, 0.0],
-///         [0.0, 10.0, 0.0],
-///     ]);
-///
-///     // Add triangles
-///     obj.add_triangles(&[[0, 1, 2], [0, 2, 3]]);
-///
-///     Ok(())
-/// })?;
-///
-/// // Add object to build plate
-/// builder.add_build_item(cube_id)?;
-///
-/// // Build the final model
-/// let model = builder.build()?;
-/// ```
-///
-/// ## Creating a sub-model
-///
-/// ```rust,ignore
-/// // Sub-models cannot have a build section
-/// let mut builder = ModelBuilder::new(Unit::Millimeter, false);
-///
-/// let obj_id = builder.add_mesh_object(|obj| {
-///     obj.name("SubModelPart");
-///     obj.add_vertex(&[0.0, 0.0, 0.0]);
-///     obj.add_vertex(&[1.0, 0.0, 0.0]);
-///     obj.add_vertex(&[0.0, 1.0, 0.0]);
-///     obj.add_triangle(&[0, 1, 2]);
-///     Ok(())
-/// })?;
-///
-/// let model = builder.build()?;
-/// ```
-///
-/// ## Using the Production extension
-///
-/// ```rust,ignore
-/// let mut builder = ModelBuilder::new(Unit::Millimeter, true);
-///
-/// // Enable Production extension - requires UUIDs on all objects and items
-/// builder.make_production_extension_required()?;
-///
-/// builder.add_build(Some(UuidResource::from("build-uuid-12345")))?;
-///
-/// let obj_id = builder.add_mesh_object(|obj| {
-///     obj.name("TrackedPart")
-///        .uuid("object-uuid-67890");  // UUID required!
-///     obj.add_vertex(&[0.0, 0.0, 0.0]);
-///     obj.add_triangle(&[0, 1, 2]);
-///     Ok(())
-/// })?;
-///
-/// builder.add_build_item_advanced(obj_id, |item| {
-///     item.uuid("item-uuid-abcdef");  // UUID required!
-/// })?;
-///
-/// let model = builder.build()?;
-/// ```
 pub struct ModelBuilder {
     unit: Option<Unit>,
     requiredextensions: Vec<ThreemfNamespace>,
@@ -336,6 +189,19 @@ pub struct ModelBuilder {
     // tracks next slicestack id
     next_slicestack_id: SliceStackId,
 
+    // tracks next material resource ids
+    next_colorgroup_id: ResourceId,
+    next_texture2dgroup_id: ResourceId,
+    next_texture2d_id: ResourceId,
+    next_composite_materials_id: ResourceId,
+    next_multi_properties_id: ResourceId,
+    next_basematerials_id: ResourceId,
+
+    // tracks next displacement resource ids
+    next_displacement2d_id: ResourceId,
+    next_normvectorgroup_id: ResourceId,
+    next_disp2dgroup_id: ResourceId,
+
     // tracks if the model requires production ext
     // ensures UUID is set at the minimum
     is_production_ext_required: bool,
@@ -350,16 +216,6 @@ impl ModelBuilder {
     /// - `is_root`: Whether this is a root model (`true`) or sub-model (`false`)
     ///
     /// Root models must have a Build section, while sub-models cannot have one.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// // Create a root model in millimeters
-    /// let builder = ModelBuilder::new(Unit::Millimeter, true);
-    ///
-    /// // Create a sub-model in inches
-    /// let sub_builder = ModelBuilder::new(Unit::Inch, false);
-    /// ```
     pub fn new(unit: Unit, is_root: bool) -> Self {
         Self {
             unit: Some(unit),
@@ -371,6 +227,15 @@ impl ModelBuilder {
             is_root,
             next_object_id: 1.into(),
             next_slicestack_id: 1.into(),
+            next_colorgroup_id: 1,
+            next_texture2dgroup_id: 1,
+            next_texture2d_id: 1,
+            next_composite_materials_id: 1,
+            next_multi_properties_id: 1,
+            next_basematerials_id: 1,
+            next_displacement2d_id: 1,
+            next_normvectorgroup_id: 1,
+            next_disp2dgroup_id: 1,
             is_production_ext_required: false,
         }
     }
@@ -410,22 +275,6 @@ impl ModelBuilder {
     ///
     /// Returns [`ProductionExtensionError`] if any existing objects, components, builds,
     /// or build items are missing required UUIDs.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// let mut builder = ModelBuilder::new(Unit::Millimeter, true);
-    ///
-    /// // Enable production extension first
-    /// builder.make_production_extension_required()?;
-    ///
-    /// // Now all objects and items require UUIDs
-    /// let obj_id = builder.add_mesh_object(|obj| {
-    ///     obj.uuid("unique-object-id");  // Required!
-    ///     obj.name("Part");
-    ///     Ok(())
-    /// })?;
-    /// ```
     pub fn make_production_extension_required(
         &mut self,
     ) -> Result<&mut Self, ProductionExtensionError> {
@@ -514,25 +363,6 @@ impl ModelBuilder {
     /// # Returns
     ///
     /// The auto-assigned [`ObjectId`] for the created object.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// let cube_id = builder.add_mesh_object(|obj| {
-    ///     obj.name("Cube")
-    ///        .object_type(ObjectType::Model);
-    ///
-    ///     // Add geometry
-    ///     obj.add_vertices(&[
-    ///         [0.0, 0.0, 0.0],
-    ///         [10.0, 0.0, 0.0],
-    ///         [0.0, 10.0, 0.0],
-    ///     ]);
-    ///     obj.add_triangles(&[[0, 1, 2]]);
-    ///
-    ///     Ok(())
-    /// })?;
-    /// ```
     pub fn add_mesh_object<F>(&mut self, f: F) -> Result<ObjectId, MeshObjectError>
     where
         F: FnOnce(&mut MeshObjectBuilder) -> Result<(), MeshObjectError>,
@@ -566,6 +396,41 @@ impl ModelBuilder {
         Ok(id)
     }
 
+    /// Add a displacement mesh object to the model using a builder closure.
+    pub fn add_displacement_mesh_object<F>(
+        &mut self,
+        f: F,
+    ) -> Result<ObjectId, DisplacementMeshObjectError>
+    where
+        F: FnOnce(&mut DisplacementMeshObjectBuilder) -> Result<(), DisplacementMeshObjectError>,
+    {
+        let id = self.next_object_id;
+
+        let mut obj_builder =
+            DisplacementMeshObjectBuilder::new(id, self.is_production_ext_required);
+        f(&mut obj_builder)?;
+
+        self.add_displacement_mesh_object_from_builder(obj_builder)
+    }
+
+    /// Add a displacement mesh object from a pre-configured [`DisplacementMeshObjectBuilder`].
+    pub fn add_displacement_mesh_object_from_builder(
+        &mut self,
+        builder: DisplacementMeshObjectBuilder,
+    ) -> Result<ObjectId, DisplacementMeshObjectError> {
+        let id = builder.object_id;
+        let object = builder.build()?;
+
+        if let Some(mesh) = object.get_displacement_mesh() {
+            self.set_recommended_namespaces_for_triangle_sets(mesh.trianglesets.is_some());
+        }
+
+        self.resources.objects.push(object);
+        self.next_object_id = ObjectId(id.0 + 1);
+
+        Ok(id)
+    }
+
     /// Add a components (assembly) object to the model using a builder closure.
     ///
     /// Components objects reference other objects to create assemblies or composed parts.
@@ -580,33 +445,6 @@ impl ModelBuilder {
     /// # Returns
     ///
     /// The auto-assigned [`ObjectId`] for the created object.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// // First create a mesh object
-    /// let part_id = builder.add_mesh_object(|obj| {
-    ///     obj.name("Part");
-    ///     obj.add_vertex(&[0.0, 0.0, 0.0]);
-    ///     obj.add_triangle(&[0, 1, 2]);
-    ///     Ok(())
-    /// })?;
-    ///
-    /// // Create an assembly that references the part multiple times
-    /// let assembly_id = builder.add_components_object(|obj| {
-    ///     obj.name("Assembly");
-    ///
-    ///     // Add first instance
-    ///     obj.add_component(part_id);
-    ///
-    ///     // Add second instance with transform
-    ///     obj.add_component_advanced(part_id, |comp| {
-    ///         comp.transform(Transform([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 10.0, 0.0, 0.0]));
-    ///     });
-    ///
-    ///     Ok(())
-    /// })?;
-    /// ```
     pub fn add_components_object<F>(&mut self, f: F) -> Result<ObjectId, ComponentsObjectError>
     where
         F: FnOnce(&mut ComponentsObjectBuilder) -> Result<(), ComponentsObjectError>,
@@ -667,31 +505,6 @@ impl ModelBuilder {
     ///
     /// Returns [`BooleanShapeError`] if validation fails (e.g., missing base object,
     /// no operands, or missing UUID when Production extension is enabled).
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// // First create base and operand mesh objects
-    /// let cube_id = builder.add_mesh_object(|obj| {
-    ///     obj.name("Cube");
-    ///     // ... add cube geometry
-    ///     Ok(())
-    /// })?;
-    ///
-    /// let sphere_id = builder.add_mesh_object(|obj| {
-    ///     obj.name("Sphere");
-    ///     // ... add sphere geometry  
-    ///     Ok(())
-    /// })?;
-    ///
-    /// // Create boolean shape: cube minus sphere
-    /// let result_id = builder.add_booleanshape_object(|obj| {
-    ///     obj.name("CubeMinusSphere");
-    ///     obj.base_object(cube_id, BooleanOperation::Difference);
-    ///     obj.add_boolean(sphere_id);
-    ///     Ok(())
-    /// })?;
-    /// ```
     pub fn add_booleanshape_object<F>(&mut self, f: F) -> Result<ObjectId, BooleanShapeError>
     where
         F: FnOnce(&mut BooleanObjectBuilder) -> Result<(), BooleanShapeError>,
@@ -738,17 +551,6 @@ impl ModelBuilder {
     ///
     /// Returns [`ModelError::BuildOnlyAllowedInRootModel`] if called on a sub-model.
     /// Returns [`BuildError::BuildUuidNotSet`] if Production extension is enabled but no UUID is provided.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// // Simple build without UUID
-    /// builder.add_build(None)?;
-    ///
-    /// // With Production extension
-    /// builder.make_production_extension_required()?;
-    /// builder.add_build(Some(UuidResource::from("build-12345")))?;
-    /// ```
     pub fn add_build(&mut self, uuid: Option<UuidResource>) -> Result<&mut Self, ModelError> {
         if !self.is_root {
             return Err(ModelError::BuildOnlyAllowedInRootModel);
@@ -777,14 +579,6 @@ impl ModelBuilder {
     /// # Errors
     ///
     /// Returns [`ModelError::BuildItemNotSet`] if [`add_build()`](ModelBuilder::add_build) hasn't been called yet.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// builder.add_build(None)?;
-    /// let obj_id = builder.add_mesh_object(|obj| { /* ... */ Ok(()) })?;
-    /// builder.add_build_item(obj_id)?;
-    /// ```
     pub fn add_build_item(&mut self, object_id: ObjectId) -> Result<&mut Self, ModelError> {
         self.add_build_item_advanced(object_id, |_f| {})
     }
@@ -802,16 +596,6 @@ impl ModelBuilder {
     /// # Errors
     ///
     /// Returns [`ModelError::BuildItemNotSet`] if [`add_build()`](ModelBuilder::add_build) hasn't been called yet.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// builder.add_build_item_advanced(obj_id, |item| {
-    ///     item.transform(Transform([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 10.0, 0.0, 0.0]));
-    ///     item.partnumber("PART-001");
-    ///     item.uuid("item-uuid");  // Required if Production extension enabled
-    /// })?;
-    /// ```
     pub fn add_build_item_advanced<F>(
         &mut self,
         object_id: ObjectId,
@@ -843,24 +627,6 @@ impl ModelBuilder {
     ///
     /// The assigned slice stack ID as [`ResourceId`]
     ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// let stack_id = builder.add_slice_stack(|stack| {
-    ///     stack.zbottom(0.0);
-    ///     
-    ///     // Add a slice layer
-    ///     stack.add_slice(|slice| {
-    ///         slice.ztop(0.1);
-    ///         slice.add_vertices(&[(0.0, 0.0), (10.0, 0.0), (10.0, 10.0)]);
-    ///         slice.add_polygon(|poly| {
-    ///             poly.start_vertex(0);
-    ///             poly.add_segment(1);
-    ///             poly.add_segment(2);
-    ///         });
-    ///     });
-    /// });
-    /// ```
     pub fn add_slice_stack<F>(&mut self, f: F) -> Result<SliceStackId, SliceStackBuilderError>
     where
         F: FnOnce(&mut SliceStackBuilder),
@@ -894,6 +660,132 @@ impl ModelBuilder {
         Ok(SliceStackId(id.0))
     }
 
+    /// Add a color group resource.
+    pub fn add_color_group<F>(&mut self, f: F) -> ResourceId
+    where
+        F: FnOnce(&mut ColorGroupBuilder),
+    {
+        let id = self.next_colorgroup_id;
+        let mut builder = ColorGroupBuilder::new(id);
+        f(&mut builder);
+        self.resources.colorgroup.push(builder.build());
+        self.next_colorgroup_id += 1;
+        id
+    }
+
+    /// Add a texture2d resource.
+    pub fn add_texture2d<F>(&mut self, f: F) -> Result<ResourceId, Texture2DError>
+    where
+        F: FnOnce(&mut Texture2DBuilder),
+    {
+        let id = self.next_texture2d_id;
+        let mut builder = Texture2DBuilder::new(id);
+        f(&mut builder);
+        let texture = builder.build()?;
+        self.resources.texture2d.push(texture);
+        self.next_texture2d_id += 1;
+        Ok(id)
+    }
+
+    /// Add a texture2d group resource.
+    pub fn add_texture2d_group<F>(&mut self, f: F) -> Result<ResourceId, Texture2DGroupError>
+    where
+        F: FnOnce(&mut Texture2DGroupBuilder),
+    {
+        let id = self.next_texture2dgroup_id;
+        let mut builder = Texture2DGroupBuilder::new(id);
+        f(&mut builder);
+        let group = builder.build()?;
+        self.resources.texture2dgroup.push(group);
+        self.next_texture2dgroup_id += 1;
+        Ok(id)
+    }
+
+    /// Add a composite materials resource.
+    pub fn add_composite_materials<F>(
+        &mut self,
+        f: F,
+    ) -> Result<ResourceId, CompositeMaterialsError>
+    where
+        F: FnOnce(&mut CompositeMaterialsBuilder),
+    {
+        let id = self.next_composite_materials_id;
+        let mut builder = CompositeMaterialsBuilder::new(id);
+        f(&mut builder);
+        let materials = builder.build()?;
+        self.resources.compositematerials.push(materials);
+        self.next_composite_materials_id += 1;
+        Ok(id)
+    }
+
+    /// Add a multi-properties resource.
+    pub fn add_multi_properties<F>(&mut self, f: F) -> Result<ResourceId, MultiPropertiesError>
+    where
+        F: FnOnce(&mut MultiPropertiesBuilder),
+    {
+        let id = self.next_multi_properties_id;
+        let mut builder = MultiPropertiesBuilder::new(id);
+        f(&mut builder);
+        let props = builder.build()?;
+        self.resources.multiproperties.push(props);
+        self.next_multi_properties_id += 1;
+        Ok(id)
+    }
+
+    /// Add a base materials resource.
+    pub fn add_base_materials<F>(&mut self, f: F) -> ResourceId
+    where
+        F: FnOnce(&mut BaseMaterialsBuilder),
+    {
+        let id = self.next_basematerials_id;
+        let mut builder = BaseMaterialsBuilder::new(id);
+        f(&mut builder);
+        self.resources.basematerials.push(builder.build());
+        self.next_basematerials_id += 1;
+        id
+    }
+
+    /// Add a displacement2d resource.
+    pub fn add_displacement2d<F>(&mut self, f: F) -> Result<ResourceId, Displacement2DError>
+    where
+        F: FnOnce(&mut Displacement2DBuilder),
+    {
+        let id = self.next_displacement2d_id;
+        let mut builder = Displacement2DBuilder::new(id);
+        f(&mut builder);
+        let displacement = builder.build()?;
+        self.resources.displacement2d.push(displacement);
+        self.next_displacement2d_id += 1;
+        Ok(id)
+    }
+
+    /// Add a norm vector group resource.
+    pub fn add_norm_vector_group<F>(&mut self, f: F) -> ResourceId
+    where
+        F: FnOnce(&mut NormVectorGroupBuilder),
+    {
+        let id = self.next_normvectorgroup_id;
+        let mut builder = NormVectorGroupBuilder::new(id);
+        f(&mut builder);
+        self.resources.normvectorgroup.push(builder.build());
+        self.next_normvectorgroup_id += 1;
+        id
+    }
+
+    /// Add a displacement 2d group resource.
+    pub fn add_disp2d_group<F>(&mut self, f: F) -> Result<ResourceId, Disp2DGroupError>
+    where
+        F: FnOnce(&mut Disp2DGroupBuilder),
+    {
+        let id = self.next_disp2dgroup_id;
+        let mut builder = Disp2DGroupBuilder::new(id);
+        f(&mut builder);
+        let group = builder.build()?;
+        self.resources.disp2dgroup.push(group);
+        self.next_disp2dgroup_id += 1;
+        Ok(id)
+    }
+
     /// Build the final [`Model`].
     ///
     /// This consumes the builder and performs final validation:
@@ -904,12 +796,6 @@ impl ModelBuilder {
     /// # Errors
     ///
     /// Returns [`ModelError`] if validation fails.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// let model = builder.build()?;
-    /// ```
     pub fn build(self) -> Result<Model, ModelError> {
         let required_extensions = self.process_required_extensions();
 
@@ -944,11 +830,14 @@ impl ModelBuilder {
     }
 
     fn set_recommended_namespaces_for_mesh(&mut self, mesh: &Mesh) {
-        if mesh.trianglesets.is_some()
-            && self
+        self.set_recommended_namespaces_for_triangle_sets(mesh.trianglesets.is_some());
+    }
+
+    fn set_recommended_namespaces_for_triangle_sets(&mut self, has_triangle_sets: bool) {
+        if has_triangle_sets
+            && !self
                 .recommendedextensions
-                .iter()
-                .all(|ns| *ns == ThreemfNamespace::CoreTriangleSet)
+                .contains(&ThreemfNamespace::CoreTriangleSet)
         {
             self.recommendedextensions
                 .push(ThreemfNamespace::CoreTriangleSet);
@@ -971,6 +860,12 @@ impl ModelBuilder {
 
         for object in &self.resources.objects {
             if let Some(mesh) = object.get_mesh()
+                && let Some(beam_lattice) = &mesh.beamlattice
+            {
+                is_beam_lattice_required = true;
+                is_beam_lattice_balls_required = beam_lattice.balls.is_some();
+            }
+            if let Some(mesh) = object.get_displacement_mesh()
                 && let Some(beam_lattice) = &mesh.beamlattice
             {
                 is_beam_lattice_required = true;
@@ -1016,6 +911,7 @@ impl ModelBuilder {
         let is_slice_required = !self.resources.slicestack.is_empty()
             || self.resources.objects.iter().any(|obj| {
                 obj.slicestackid.is_some()
+                    || obj.slicepath.is_some()
                     || matches!(obj.meshresolution, Some(MeshResolution::LowRes))
             });
 
@@ -1025,6 +921,117 @@ impl ModelBuilder {
                 .find(|ns| **ns == ThreemfNamespace::Slice);
             if is_slice_ext_set.is_none() {
                 required_extensions.push(ThreemfNamespace::Slice);
+            }
+        }
+
+        let has_material_resources = !self.resources.basematerials.is_empty()
+            || !self.resources.colorgroup.is_empty()
+            || !self.resources.texture2dgroup.is_empty()
+            || !self.resources.texture2d.is_empty()
+            || !self.resources.compositematerials.is_empty()
+            || !self.resources.multiproperties.is_empty();
+
+        let has_material_references =
+            self.resources.objects.iter().any(|obj| {
+                if obj.pid.is_some() || obj.pindex.is_some() {
+                    return true;
+                }
+
+                if let Some(mesh) = obj.get_mesh() {
+                    if mesh.triangles.triangle.iter().any(|t| {
+                        t.pid.is_some() || t.p1.is_some() || t.p2.is_some() || t.p3.is_some()
+                    }) {
+                        return true;
+                    }
+
+                    if let Some(lattice) = &mesh.beamlattice {
+                        if lattice.pid.is_some() || lattice.pindex.is_some() {
+                            return true;
+                        }
+
+                        if lattice.beams.beam.iter().any(|beam| {
+                            beam.pid.is_some() || beam.p1.is_some() || beam.p2.is_some()
+                        }) {
+                            return true;
+                        }
+
+                        if let Some(balls) = &lattice.balls
+                            && balls
+                                .ball
+                                .iter()
+                                .any(|ball| ball.pid.is_some() || ball.p.is_some())
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                if let Some(mesh) = obj.get_displacement_mesh() {
+                    if mesh.triangles.triangle.iter().any(|t| {
+                        t.pid.is_some() || t.p1.is_some() || t.p2.is_some() || t.p3.is_some()
+                    }) {
+                        return true;
+                    }
+
+                    if let Some(lattice) = &mesh.beamlattice {
+                        if lattice.pid.is_some() || lattice.pindex.is_some() {
+                            return true;
+                        }
+
+                        if lattice.beams.beam.iter().any(|beam| {
+                            beam.pid.is_some() || beam.p1.is_some() || beam.p2.is_some()
+                        }) {
+                            return true;
+                        }
+
+                        if let Some(balls) = &lattice.balls
+                            && balls
+                                .ball
+                                .iter()
+                                .any(|ball| ball.pid.is_some() || ball.p.is_some())
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                false
+            }) || self.resources.slicestack.iter().any(|stack| {
+                stack.slice.iter().any(|slice| {
+                    slice.polygon.iter().any(|polygon| {
+                        polygon
+                            .segment
+                            .iter()
+                            .any(|seg| seg.pid.is_some() || seg.p1.is_some() || seg.p2.is_some())
+                    })
+                })
+            });
+
+        if has_material_resources || has_material_references {
+            let is_material_ext_set = required_extensions
+                .iter()
+                .find(|ns| **ns == ThreemfNamespace::Material);
+            if is_material_ext_set.is_none() {
+                required_extensions.push(ThreemfNamespace::Material);
+            }
+        }
+
+        let has_displacement_resources = !self.resources.displacement2d.is_empty()
+            || !self.resources.normvectorgroup.is_empty()
+            || !self.resources.disp2dgroup.is_empty();
+
+        let has_displacement_mesh = self
+            .resources
+            .objects
+            .iter()
+            .any(|obj| obj.get_displacement_mesh().is_some());
+
+        if has_displacement_resources || has_displacement_mesh {
+            let is_displacement_ext_set = required_extensions
+                .iter()
+                .find(|ns| **ns == ThreemfNamespace::Displacement);
+            if is_displacement_ext_set.is_none() {
+                required_extensions.push(ThreemfNamespace::Displacement);
             }
         }
 
@@ -1042,6 +1049,15 @@ impl Default for ModelBuilder {
 pub struct ResourcesBuilder {
     objects: Vec<Object>,
     slicestack: Vec<SliceStack>,
+    colorgroup: Vec<ColorGroup>,
+    texture2dgroup: Vec<Texture2DGroup>,
+    texture2d: Vec<Texture2D>,
+    compositematerials: Vec<CompositeMaterials>,
+    multiproperties: Vec<MultiProperties>,
+    basematerials: Vec<BaseMaterials>,
+    displacement2d: Vec<Displacement2D>,
+    normvectorgroup: Vec<NormVectorGroup>,
+    disp2dgroup: Vec<Disp2DGroup>,
 }
 
 impl ResourcesBuilder {
@@ -1049,22 +1065,31 @@ impl ResourcesBuilder {
         Self {
             objects: Vec::new(),
             slicestack: Vec::new(),
+            colorgroup: Vec::new(),
+            texture2dgroup: Vec::new(),
+            texture2d: Vec::new(),
+            compositematerials: Vec::new(),
+            multiproperties: Vec::new(),
+            basematerials: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         }
     }
 
     fn build(self) -> Resources {
         Resources {
             object: self.objects,
-            basematerials: Vec::new(),
+            basematerials: self.basematerials,
             slicestack: self.slicestack,
-            colorgroup: Vec::new(),
-            texture2dgroup: Vec::new(),
-            compositematerials: Vec::new(),
-            multiproperties: Vec::new(),
-            texture2d: Vec::new(),
-            displacement2d: Vec::new(),
-            normvectorgroup: Vec::new(),
-            disp2dgroup: Vec::new(),
+            colorgroup: self.colorgroup,
+            texture2dgroup: self.texture2dgroup,
+            compositematerials: self.compositematerials,
+            multiproperties: self.multiproperties,
+            texture2d: self.texture2d,
+            displacement2d: self.displacement2d,
+            normvectorgroup: self.normvectorgroup,
+            disp2dgroup: self.disp2dgroup,
         }
     }
 }
@@ -1154,6 +1179,56 @@ pub enum ItemError {
     ItemUuidNotSet,
 }
 
+/// Errors that can occur when building a Texture2D resource.
+#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+pub enum Texture2DError {
+    #[error("Texture2D path is not set")]
+    PathNotSet,
+    #[error("Texture2D content type is not set")]
+    ContentTypeNotSet,
+}
+
+/// Errors that can occur when building a Texture2DGroup resource.
+#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+pub enum Texture2DGroupError {
+    #[error("Texture2DGroup texid is not set")]
+    TexIdNotSet,
+}
+
+/// Errors that can occur when building CompositeMaterials.
+#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+pub enum CompositeMaterialsError {
+    #[error("CompositeMaterials matid is not set")]
+    MatIdNotSet,
+    #[error("CompositeMaterials matindices are empty")]
+    MatIndicesEmpty,
+}
+
+/// Errors that can occur when building MultiProperties.
+#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+pub enum MultiPropertiesError {
+    #[error("MultiProperties pids are empty")]
+    PidsEmpty,
+}
+
+/// Errors that can occur when building Displacement2D.
+#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+pub enum Displacement2DError {
+    #[error("Displacement2D path is not set")]
+    PathNotSet,
+}
+
+/// Errors that can occur when building Disp2DGroup.
+#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+pub enum Disp2DGroupError {
+    #[error("Disp2DGroup displacement id is not set")]
+    DispIdNotSet,
+    #[error("Disp2DGroup norm vector group id is not set")]
+    NormVectorGroupIdNotSet,
+    #[error("Disp2DGroup height is not set")]
+    HeightNotSet,
+}
+
 /// Builder for configuring a build item.
 ///
 /// Build items specify which objects should be manufactured and how they should
@@ -1184,26 +1259,6 @@ impl ItemBuilder {
     ///
     /// The transform is a 4x3 affine transformation matrix stored as a 12-element array
     /// in row-major order.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// // Identity transform (no transformation)
-    /// comp.transform(Transform([
-    ///     1.0, 0.0, 0.0,
-    ///     0.0, 1.0, 0.0,
-    ///     0.0, 0.0, 1.0,
-    ///     0.0, 0.0, 0.0
-    /// ]));
-    ///
-    /// // Translate 10mm in X direction
-    /// comp.transform(Transform([
-    ///     1.0, 0.0, 0.0,
-    ///     0.0, 1.0, 0.0,
-    ///     0.0, 0.0, 1.0,
-    ///     10.0, 0.0, 0.0
-    /// ]));
-    /// ```
     pub fn transform(&mut self, transform: Transform) -> &mut Self {
         self.transform = Some(transform);
         self
@@ -1298,6 +1353,9 @@ pub struct ObjectBuilder<T> {
     pid: OptionalResourceId,
     pindex: OptionalResourceIndex,
     uuid: Option<UuidResource>,
+    slicestackid: OptionalResourceId,
+    slicepath: Option<PathResource>,
+    meshresolution: Option<MeshResolution>,
 
     // sets if the production ext is required.
     // if yes will ensure UUID is set before building the object
@@ -1309,6 +1367,17 @@ impl<T> ObjectBuilder<T> {
     pub fn object_type(&mut self, object_type: ObjectType) -> &mut Self {
         self.objecttype = Some(object_type);
         self
+    }
+
+    /// Set a thumbnail path for this object.
+    pub fn thumbnail(&mut self, path: &str) -> &mut Self {
+        match PathResource::try_from(path) {
+            Ok(path) => {
+                self.thumbnail = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
     }
 
     /// Set the object name
@@ -1325,6 +1394,58 @@ impl<T> ObjectBuilder<T> {
 
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
         self.uuid = Some(UuidResource::from(uuid));
+        self
+    }
+
+    /// Set the property resource ID for this object.
+    pub fn pid(&mut self, pid: ResourceId) -> &mut Self {
+        self.pid = OptionalResourceId::new(pid);
+        self
+    }
+
+    /// Set the property index for this object.
+    pub fn pindex(&mut self, pindex: ResourceIndex) -> &mut Self {
+        self.pindex = OptionalResourceIndex::new(pindex);
+        self
+    }
+
+    /// Set the slice stack reference for this object.
+    pub fn slice_stack_id(&mut self, slicestack_id: SliceStackId) -> &mut Self {
+        self.slicestackid = OptionalResourceId::new(slicestack_id.0);
+        self
+    }
+
+    /// Set the slice path for this object.
+    pub fn slicepath(&mut self, slicepath: &str) -> &mut Self {
+        match PathResource::try_from(slicepath) {
+            Ok(path) => {
+                self.slicepath = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
+    }
+
+    /// Set the mesh resolution for this object when slice data is present.
+    pub fn meshresolution(&mut self, resolution: MeshResolution) -> &mut Self {
+        self.meshresolution = Some(resolution);
+        self
+    }
+
+    /// Configure slice stack attributes together.
+    pub fn slice_stack(
+        &mut self,
+        slicestack_id: SliceStackId,
+        slicepath: Option<&str>,
+        meshresolution: Option<MeshResolution>,
+    ) -> &mut Self {
+        self.slice_stack_id(slicestack_id);
+        if let Some(path) = slicepath {
+            self.slicepath(path);
+        }
+        if let Some(resolution) = meshresolution {
+            self.meshresolution(resolution);
+        }
         self
     }
 }
@@ -1353,36 +1474,20 @@ pub enum MeshObjectError {
     ObjectUuidNotSet,
 }
 
+/// Errors that can occur when building a displacement mesh object.
+#[derive(Debug, Error, Clone, PartialEq)]
+pub enum DisplacementMeshObjectError {
+    /// Object is missing a UUID when Production extension is required.
+    ///
+    /// Call [`DisplacementMeshObjectBuilder::uuid()`] to set the UUID.
+    #[error("Production extension is enabled but Uuid is not set!")]
+    ObjectUuidNotSet,
+}
+
 /// Builder for creating mesh objects with triangle geometry.
 ///
 /// `MeshObjectBuilder` combines object metadata (name, type, UUID, etc.) with
 /// mesh geometry. Access mesh-building methods directly via [`Deref`] to [`MeshBuilder`].
-///
-/// # Examples
-///
-/// ```rust,ignore
-/// let cube_id = builder.add_mesh_object(|obj| {
-///     // Object properties
-///     obj.name("Cube")
-///        .object_type(ObjectType::Model)
-///        .part_number("CUBE-001");
-///
-///     // Mesh geometry (via Deref to MeshBuilder)
-///     obj.add_vertices(&[
-///         [0.0, 0.0, 0.0],
-///         [10.0, 0.0, 0.0],
-///         [10.0, 10.0, 0.0],
-///         [0.0, 10.0, 0.0],
-///     ]);
-///
-///     obj.add_triangles(&[
-///         [0, 1, 2],
-///         [0, 2, 3],
-///     ]);
-///
-///     Ok(())
-/// })?;
-/// ```
 pub type MeshObjectBuilder = ObjectBuilder<MeshBuilder>;
 
 impl MeshObjectBuilder {
@@ -1397,6 +1502,9 @@ impl MeshObjectBuilder {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             is_production_ext_required,
         }
     }
@@ -1417,11 +1525,57 @@ impl MeshObjectBuilder {
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
-            slicestackid: crate::core::OptionalResourceId::none(),
-            slicepath: None,
-            meshresolution: None,
+            slicestackid: self.slicestackid,
+            slicepath: self.slicepath,
+            meshresolution: self.meshresolution,
             kind: Some(ObjectKind::Mesh(mesh)),
             // mesh: Some(mesh),
+        })
+    }
+}
+
+/// Builder for creating displacement mesh objects.
+pub type DisplacementMeshObjectBuilder = ObjectBuilder<DisplacementMeshBuilder>;
+
+impl DisplacementMeshObjectBuilder {
+    fn new(object_id: ObjectId, is_production_ext_required: bool) -> Self {
+        Self {
+            entity: DisplacementMeshBuilder::new(),
+            object_id,
+            objecttype: Some(ObjectType::Model),
+            thumbnail: None,
+            partnumber: None,
+            name: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
+            uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
+            is_production_ext_required,
+        }
+    }
+
+    fn build(self) -> Result<Object, DisplacementMeshObjectError> {
+        let mesh = self.entity.build_mesh();
+
+        if self.is_production_ext_required && self.uuid.is_none() {
+            return Err(DisplacementMeshObjectError::ObjectUuidNotSet);
+        }
+
+        Ok(Object {
+            id: self.object_id.0,
+            objecttype: self.objecttype,
+            thumbnail: self.thumbnail,
+            partnumber: self.partnumber.map(Into::into),
+            name: self.name.map(Into::into),
+            pid: self.pid,
+            pindex: self.pindex,
+            uuid: self.uuid,
+            slicestackid: self.slicestackid,
+            slicepath: self.slicepath,
+            meshresolution: self.meshresolution,
+            kind: Some(ObjectKind::DisplacementMesh(mesh)),
         })
     }
 }
@@ -1433,20 +1587,6 @@ impl MeshObjectBuilder {
 ///
 /// Vertices are referenced by their 0-based index in the order they were added.
 /// Triangles reference vertices by index.
-///
-/// # Examples
-///
-/// ```rust,ignore
-/// obj.add_vertices(&[
-///     [0.0, 0.0, 0.0],   // vertex 0
-///     [10.0, 0.0, 0.0],  // vertex 1
-///     [10.0, 10.0, 0.0], // vertex 2
-/// ]);
-///
-/// obj.add_triangles(&[
-///     [0, 1, 2],  // Triangle using vertices 0, 1, 2
-/// ]);
-/// ```
 pub struct MeshBuilder {
     vertices: Vec<Vertex>,
     triangles: Vec<Triangle>,
@@ -1471,14 +1611,6 @@ impl MeshBuilder {
     /// # Parameters
     ///
     /// - `coords`: 3D coordinates as `[x, y, z]`
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_vertex(&[0.0, 0.0, 0.0])
-    ///    .add_vertex(&[10.0, 0.0, 0.0])
-    ///    .add_vertex(&[0.0, 10.0, 0.0]);
-    /// ```
     pub fn add_vertex(&mut self, coords: &[f64; 3]) -> &mut Self {
         self.vertices
             .push(Vertex::new(coords[0], coords[1], coords[2]));
@@ -1488,16 +1620,6 @@ impl MeshBuilder {
     /// Add multiple vertices from a slice of coordinate arrays.
     ///
     /// Each element should be a 3D coordinate `[x, y, z]`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_vertices(&[
-    ///     [0.0, 0.0, 0.0],
-    ///     [10.0, 0.0, 0.0],
-    ///     [10.0, 10.0, 0.0],
-    /// ]);
-    /// ```
     pub fn add_vertices(&mut self, vertices: &[[f64; 3]]) -> &mut Self {
         for vertex in vertices {
             self.add_vertex(vertex);
@@ -1510,16 +1632,6 @@ impl MeshBuilder {
     ///
     /// The slice should contain coordinate values in sequence: `[x0, y0, z0, x1, y1, z1, ...]`.
     /// The length must be a multiple of 3.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_vertices_flat(&[
-    ///     0.0, 0.0, 0.0,     // vertex 0
-    ///     10.0, 0.0, 0.0,    // vertex 1
-    ///     10.0, 10.0, 0.0,   // vertex 2
-    /// ]);
-    /// ```
     pub fn add_vertices_flat(&mut self, vertices: &[f64]) -> &mut Self {
         for vertex in vertices.chunks_exact(3) {
             self.vertices
@@ -1537,15 +1649,6 @@ impl MeshBuilder {
     /// # Parameters
     ///
     /// - `indices`: Triangle vertex indices as `[v1, v2, v3]`
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_vertex(&[0.0, 0.0, 0.0]);    // index 0
-    /// obj.add_vertex(&[10.0, 0.0, 0.0]);   // index 1
-    /// obj.add_vertex(&[0.0, 10.0, 0.0]);   // index 2
-    /// obj.add_triangle(&[0, 1, 2]);
-    /// ```
     pub fn add_triangle(&mut self, indices: &[usize; 3]) -> &mut Self {
         self.triangles.push(Triangle {
             v1: indices[0] as ResourceIndex,
@@ -1559,19 +1662,44 @@ impl MeshBuilder {
         self
     }
 
+    /// Add a triangle with explicit property references.
+    pub fn add_triangle_with_properties(
+        &mut self,
+        indices: &[usize; 3],
+        p1: OptionalResourceIndex,
+        p2: OptionalResourceIndex,
+        p3: OptionalResourceIndex,
+        pid: OptionalResourceId,
+    ) -> &mut Self {
+        self.triangles.push(Triangle {
+            v1: indices[0] as ResourceIndex,
+            v2: indices[1] as ResourceIndex,
+            v3: indices[2] as ResourceIndex,
+            p1,
+            p2,
+            p3,
+            pid,
+        });
+        self
+    }
+
+    /// Add a triangle with advanced configuration.
+    pub fn add_triangle_advanced<F>(&mut self, indices: &[usize; 3], f: F) -> &mut Self
+    where
+        F: FnOnce(TriangleBuilder) -> TriangleBuilder,
+    {
+        let builder = TriangleBuilder::new(
+            indices[0] as ResourceIndex,
+            indices[1] as ResourceIndex,
+            indices[2] as ResourceIndex,
+        );
+        self.triangles.push(f(builder).build());
+        self
+    }
+
     /// Add multiple triangles from a slice of index arrays.
     ///
     /// Each element should be a triangle with three vertex indices.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_triangles(&[
-    ///     [0, 1, 2],
-    ///     [0, 2, 3],
-    ///     [0, 3, 4],
-    /// ]);
-    /// ```
     pub fn add_triangles(&mut self, triangles: &[[usize; 3]]) -> &mut Self {
         for triangle in triangles {
             self.add_triangle(triangle);
@@ -1584,15 +1712,6 @@ impl MeshBuilder {
     ///
     /// The slice should contain vertex indices in sequence: `[v1, v2, v3, v1, v2, v3, ...]`.
     /// The length must be a multiple of 3.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_triangles_flat(&[
-    ///     0, 1, 2,  // triangle 0
-    ///     0, 2, 3,  // triangle 1
-    /// ]);
-    /// ```
     pub fn add_triangles_flat(&mut self, triangles: &[usize]) -> &mut Self {
         for triangle in triangles.chunks_exact(3) {
             self.triangles.push(Triangle {
@@ -1617,15 +1736,6 @@ impl MeshBuilder {
     /// # Parameters
     ///
     /// - `f`: A closure that configures the [`TriangleSetsBuilder`]
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_triangle_sets(|sets| {
-    ///     sets.add_set("TopFace", "top-id", &[0, 1], &[]);
-    ///     sets.add_set("BottomFace", "bottom-id", &[2, 3], &[]);
-    /// });
-    /// ```
     pub fn add_triangle_sets<F>(&mut self, f: F) -> &mut Self
     where
         F: FnOnce(&mut TriangleSetsBuilder),
@@ -1649,16 +1759,6 @@ impl MeshBuilder {
     /// # Parameters
     ///
     /// - `f`: A closure that configures the [`BeamLatticeBuilder`]
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// obj.add_beam_lattice(|lattice| {
-    ///     lattice.radius(0.5)
-    ///            .add_beam(0, 1)
-    ///            .add_beam(1, 2);
-    /// });
-    /// ```
     pub fn add_beam_lattice<F>(&mut self, f: F) -> &mut Self
     where
         F: FnOnce(&mut BeamLatticeBuilder),
@@ -1686,6 +1786,330 @@ impl MeshBuilder {
             trianglesets,
             beamlattice,
         })
+    }
+}
+
+/// Builder for triangle properties in a mesh.
+pub struct TriangleBuilder {
+    v1: ResourceIndex,
+    v2: ResourceIndex,
+    v3: ResourceIndex,
+    p1: OptionalResourceIndex,
+    p2: OptionalResourceIndex,
+    p3: OptionalResourceIndex,
+    pid: OptionalResourceId,
+}
+
+impl TriangleBuilder {
+    fn new(v1: ResourceIndex, v2: ResourceIndex, v3: ResourceIndex) -> Self {
+        Self {
+            v1,
+            v2,
+            v3,
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            p3: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
+        }
+    }
+
+    pub fn pindex_1(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p1 = pindex;
+        self
+    }
+
+    pub fn pindex_2(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p2 = pindex;
+        self
+    }
+
+    pub fn pindex_3(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p3 = pindex;
+        self
+    }
+
+    pub fn pid(mut self, pid: ResourceId) -> Self {
+        self.pid = OptionalResourceId::new(pid);
+        self
+    }
+
+    fn build(self) -> Triangle {
+        Triangle {
+            v1: self.v1,
+            v2: self.v2,
+            v3: self.v3,
+            p1: self.p1,
+            p2: self.p2,
+            p3: self.p3,
+            pid: self.pid,
+        }
+    }
+}
+
+/// Builder for constructing displacement mesh geometry.
+pub struct DisplacementMeshBuilder {
+    vertices: Vec<crate::core::displacement::Vertex>,
+    triangles: Vec<crate::core::displacement::Triangle>,
+    triangle_sets: Option<TriangleSetsBuilder>,
+    beam_lattice: Option<BeamLatticeBuilder>,
+    triangles_did: OptionalResourceId,
+}
+
+impl DisplacementMeshBuilder {
+    fn new() -> Self {
+        Self {
+            vertices: Vec::new(),
+            triangles: Vec::new(),
+            triangle_sets: None,
+            beam_lattice: None,
+            triangles_did: OptionalResourceId::none(),
+        }
+    }
+
+    /// Set the default displacement group ID for triangles.
+    pub fn displacement_id(&mut self, disp2dgroup_id: ResourceId) -> &mut Self {
+        self.triangles_did = OptionalResourceId::new(disp2dgroup_id);
+        self
+    }
+
+    pub fn add_vertex(&mut self, coords: &[f64; 3]) -> &mut Self {
+        self.vertices.push(crate::core::displacement::Vertex {
+            x: coords[0].into(),
+            y: coords[1].into(),
+            z: coords[2].into(),
+        });
+        self
+    }
+
+    pub fn add_vertices(&mut self, vertices: &[[f64; 3]]) -> &mut Self {
+        for vertex in vertices {
+            self.add_vertex(vertex);
+        }
+        self
+    }
+
+    pub fn add_vertices_flat(&mut self, vertices: &[f64]) -> &mut Self {
+        for vertex in vertices.chunks_exact(3) {
+            self.vertices.push(crate::core::displacement::Vertex {
+                x: vertex[0].into(),
+                y: vertex[1].into(),
+                z: vertex[2].into(),
+            });
+        }
+        self
+    }
+
+    pub fn add_triangle(&mut self, indices: &[usize; 3]) -> &mut Self {
+        self.triangles.push(crate::core::displacement::Triangle {
+            v1: indices[0] as ResourceIndex,
+            v2: indices[1] as ResourceIndex,
+            v3: indices[2] as ResourceIndex,
+            d1: OptionalResourceIndex::none(),
+            d2: OptionalResourceIndex::none(),
+            d3: OptionalResourceIndex::none(),
+            did: OptionalResourceId::none(),
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            p3: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
+        });
+        self
+    }
+
+    pub fn add_triangle_with_properties(
+        &mut self,
+        indices: &[usize; 3],
+        p1: OptionalResourceIndex,
+        p2: OptionalResourceIndex,
+        p3: OptionalResourceIndex,
+        pid: OptionalResourceId,
+    ) -> &mut Self {
+        self.triangles.push(crate::core::displacement::Triangle {
+            v1: indices[0] as ResourceIndex,
+            v2: indices[1] as ResourceIndex,
+            v3: indices[2] as ResourceIndex,
+            d1: OptionalResourceIndex::none(),
+            d2: OptionalResourceIndex::none(),
+            d3: OptionalResourceIndex::none(),
+            did: OptionalResourceId::none(),
+            p1,
+            p2,
+            p3,
+            pid,
+        });
+        self
+    }
+
+    pub fn add_triangle_advanced<F>(&mut self, indices: &[usize; 3], f: F) -> &mut Self
+    where
+        F: FnOnce(DisplacementTriangleBuilder) -> DisplacementTriangleBuilder,
+    {
+        let builder = DisplacementTriangleBuilder::new(
+            indices[0] as ResourceIndex,
+            indices[1] as ResourceIndex,
+            indices[2] as ResourceIndex,
+        );
+        self.triangles.push(f(builder).build());
+        self
+    }
+
+    pub fn add_triangles(&mut self, triangles: &[[usize; 3]]) -> &mut Self {
+        for triangle in triangles {
+            self.add_triangle(triangle);
+        }
+        self
+    }
+
+    pub fn add_triangles_flat(&mut self, triangles: &[usize]) -> &mut Self {
+        for triangle in triangles.chunks_exact(3) {
+            self.triangles.push(crate::core::displacement::Triangle {
+                v1: triangle[0] as ResourceIndex,
+                v2: triangle[1] as ResourceIndex,
+                v3: triangle[2] as ResourceIndex,
+                d1: OptionalResourceIndex::none(),
+                d2: OptionalResourceIndex::none(),
+                d3: OptionalResourceIndex::none(),
+                did: OptionalResourceId::none(),
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
+            });
+        }
+        self
+    }
+
+    pub fn add_triangle_sets<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut TriangleSetsBuilder),
+    {
+        if let Some(ref mut builder) = self.triangle_sets {
+            f(builder);
+        } else {
+            let mut builder = TriangleSetsBuilder::new();
+            f(&mut builder);
+            self.triangle_sets = Some(builder);
+        }
+        self
+    }
+
+    pub fn add_beam_lattice<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut BeamLatticeBuilder),
+    {
+        if let Some(builder) = &mut self.beam_lattice {
+            f(builder);
+        } else {
+            let mut builder = BeamLatticeBuilder::new();
+            f(&mut builder);
+            self.beam_lattice = Some(builder);
+        }
+        self
+    }
+
+    fn build_mesh(self) -> DisplacementMesh {
+        let trianglesets = self.triangle_sets.map(|b| b.build());
+        let beamlattice = self.beam_lattice.map(|b| b.build());
+        DisplacementMesh {
+            vertices: crate::core::displacement::Vertices {
+                vertex: self.vertices,
+            },
+            triangles: crate::core::displacement::Triangles {
+                did: self.triangles_did,
+                triangle: self.triangles,
+            },
+            trianglesets,
+            beamlattice,
+        }
+    }
+}
+
+/// Builder for displacement mesh triangles.
+pub struct DisplacementTriangleBuilder {
+    v1: ResourceIndex,
+    v2: ResourceIndex,
+    v3: ResourceIndex,
+    d1: OptionalResourceIndex,
+    d2: OptionalResourceIndex,
+    d3: OptionalResourceIndex,
+    did: OptionalResourceId,
+    p1: OptionalResourceIndex,
+    p2: OptionalResourceIndex,
+    p3: OptionalResourceIndex,
+    pid: OptionalResourceId,
+}
+
+impl DisplacementTriangleBuilder {
+    fn new(v1: ResourceIndex, v2: ResourceIndex, v3: ResourceIndex) -> Self {
+        Self {
+            v1,
+            v2,
+            v3,
+            d1: OptionalResourceIndex::none(),
+            d2: OptionalResourceIndex::none(),
+            d3: OptionalResourceIndex::none(),
+            did: OptionalResourceId::none(),
+            p1: OptionalResourceIndex::none(),
+            p2: OptionalResourceIndex::none(),
+            p3: OptionalResourceIndex::none(),
+            pid: OptionalResourceId::none(),
+        }
+    }
+
+    pub fn displacement_index_1(mut self, index: OptionalResourceIndex) -> Self {
+        self.d1 = index;
+        self
+    }
+
+    pub fn displacement_index_2(mut self, index: OptionalResourceIndex) -> Self {
+        self.d2 = index;
+        self
+    }
+
+    pub fn displacement_index_3(mut self, index: OptionalResourceIndex) -> Self {
+        self.d3 = index;
+        self
+    }
+
+    pub fn displacement_id(mut self, disp2dgroup_id: ResourceId) -> Self {
+        self.did = OptionalResourceId::new(disp2dgroup_id);
+        self
+    }
+
+    pub fn pindex_1(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p1 = pindex;
+        self
+    }
+
+    pub fn pindex_2(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p2 = pindex;
+        self
+    }
+
+    pub fn pindex_3(mut self, pindex: OptionalResourceIndex) -> Self {
+        self.p3 = pindex;
+        self
+    }
+
+    pub fn pid(mut self, pid: ResourceId) -> Self {
+        self.pid = OptionalResourceId::new(pid);
+        self
+    }
+
+    fn build(self) -> crate::core::displacement::Triangle {
+        crate::core::displacement::Triangle {
+            v1: self.v1,
+            v2: self.v2,
+            v3: self.v3,
+            d1: self.d1,
+            d2: self.d2,
+            d3: self.d3,
+            did: self.did,
+            p1: self.p1,
+            p2: self.p2,
+            p3: self.p3,
+            pid: self.pid,
+        }
     }
 }
 
@@ -1778,6 +2202,9 @@ impl ComponentsObjectBuilder {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             is_production_ext_required,
         }
     }
@@ -1800,9 +2227,9 @@ impl ComponentsObjectBuilder {
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
-            slicestackid: crate::core::OptionalResourceId::none(),
-            slicepath: None,
-            meshresolution: None,
+            slicestackid: self.slicestackid,
+            slicepath: self.slicepath,
+            meshresolution: self.meshresolution,
             kind: Some(ObjectKind::Components(components)),
             // components: Some(components),
         })
@@ -2035,6 +2462,9 @@ impl BooleanObjectBuilder {
             pid: OptionalResourceId::none(),
             pindex: OptionalResourceIndex::none(),
             uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
             is_production_ext_required,
         }
     }
@@ -2055,9 +2485,9 @@ impl BooleanObjectBuilder {
             pid: self.pid,
             pindex: self.pindex,
             uuid: self.uuid,
-            slicestackid: crate::core::OptionalResourceId::none(),
-            slicepath: None,
-            meshresolution: None,
+            slicestackid: self.slicestackid,
+            slicepath: self.slicepath,
+            meshresolution: self.meshresolution,
             kind: Some(ObjectKind::BooleanShape(boolean_shape)),
         })
     }
@@ -2245,21 +2675,6 @@ impl BooleanBuilder {
 /// and references triangles either individually or as ranges.
 ///
 /// Triangle sets are added as a recommended extension (not required).
-///
-/// # Examples
-///
-/// ```rust,ignore
-/// obj.add_triangle_sets(|sets| {
-///     // Add a set referencing specific triangle indices
-///     sets.add_set("TopFace", "top-id", &[0, 1, 2], &[]);
-///
-///     // Add a set using a range of triangles
-///     sets.add_set("SideFaces", "side-id", &[], &[(3, 10)]);
-///
-///     // Mix individual refs and ranges
-///     sets.add_set("Mixed", "mixed-id", &[11, 12], &[(20, 30), (40, 50)]);
-/// });
-/// ```
 pub struct TriangleSetsBuilder {
     sets: Vec<crate::core::triangle_set::TriangleSet>,
 }
@@ -2280,19 +2695,6 @@ impl TriangleSetsBuilder {
     /// - `identifier`: Unique identifier for the set
     /// - `refs`: Slice of individual triangle indices to include
     /// - `ranges`: Slice of triangle index ranges (inclusive start, inclusive end)
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// // Reference triangles 0, 1, and 2 individually
-    /// sets.add_set("Group1", "g1", &[0, 1, 2], &[]);
-    ///
-    /// // Reference triangles 10-20 (inclusive)
-    /// sets.add_set("Group2", "g2", &[], &[(10, 20)]);
-    ///
-    /// // Mix both approaches
-    /// sets.add_set("Group3", "g3", &[5, 6], &[(10, 15), (20, 25)]);
-    /// ```
     pub fn add_set(
         &mut self,
         name: &str,
@@ -2794,6 +3196,486 @@ impl BeamSetBuilder {
     }
 }
 
+/// Builder for a color group resource.
+pub struct ColorGroupBuilder {
+    id: ResourceId,
+    colors: Vec<material::ColorElement>,
+}
+
+impl ColorGroupBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            colors: Vec::new(),
+        }
+    }
+
+    pub fn add_color(&mut self, color: crate::core::Color) -> &mut Self {
+        self.colors.push(material::ColorElement { color });
+        self
+    }
+
+    pub fn add_colors(&mut self, colors: &[crate::core::Color]) -> &mut Self {
+        for color in colors {
+            self.add_color(*color);
+        }
+        self
+    }
+
+    fn build(self) -> ColorGroup {
+        ColorGroup {
+            id: self.id,
+            color: self.colors,
+        }
+    }
+}
+
+/// Builder for a texture2d resource.
+pub struct Texture2DBuilder {
+    id: ResourceId,
+    path: Option<PathResource>,
+    contenttype: Option<material::TextureContentType>,
+    tilestyleu: Option<material::TileStyle>,
+    tilestylev: Option<material::TileStyle>,
+    filter: Option<material::Filter>,
+}
+
+impl Texture2DBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            path: None,
+            contenttype: None,
+            tilestyleu: None,
+            tilestylev: None,
+            filter: None,
+        }
+    }
+
+    pub fn path(&mut self, path: &str) -> &mut Self {
+        match PathResource::try_from(path) {
+            Ok(path) => {
+                self.path = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
+    }
+
+    pub fn content_type(&mut self, content_type: material::TextureContentType) -> &mut Self {
+        self.contenttype = Some(content_type);
+        self
+    }
+
+    pub fn tilestyle_u(&mut self, tilestyle: material::TileStyle) -> &mut Self {
+        self.tilestyleu = Some(tilestyle);
+        self
+    }
+
+    pub fn tilestyle_v(&mut self, tilestyle: material::TileStyle) -> &mut Self {
+        self.tilestylev = Some(tilestyle);
+        self
+    }
+
+    pub fn filter(&mut self, filter: material::Filter) -> &mut Self {
+        self.filter = Some(filter);
+        self
+    }
+
+    fn build(self) -> Result<Texture2D, Texture2DError> {
+        Ok(Texture2D {
+            id: self.id,
+            path: self.path.ok_or(Texture2DError::PathNotSet)?,
+            contenttype: self.contenttype.ok_or(Texture2DError::ContentTypeNotSet)?,
+            tilestyleu: self.tilestyleu,
+            tilestylev: self.tilestylev,
+            filter: self.filter,
+        })
+    }
+}
+
+/// Builder for a texture2d group resource.
+pub struct Texture2DGroupBuilder {
+    id: ResourceId,
+    texid: Option<ResourceId>,
+    tex2coord: Vec<material::Tex2Coord>,
+}
+
+impl Texture2DGroupBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            texid: None,
+            tex2coord: Vec::new(),
+        }
+    }
+
+    pub fn texid(&mut self, texid: ResourceId) -> &mut Self {
+        self.texid = Some(texid);
+        self
+    }
+
+    pub fn add_tex_coord(&mut self, u: f64, v: f64) -> &mut Self {
+        self.tex2coord.push(material::Tex2Coord {
+            u: u.into(),
+            v: v.into(),
+        });
+        self
+    }
+
+    pub fn add_tex_coords(&mut self, coords: &[(f64, f64)]) -> &mut Self {
+        for &(u, v) in coords {
+            self.add_tex_coord(u, v);
+        }
+        self
+    }
+
+    fn build(self) -> Result<Texture2DGroup, Texture2DGroupError> {
+        Ok(Texture2DGroup {
+            id: self.id,
+            texid: self.texid.ok_or(Texture2DGroupError::TexIdNotSet)?,
+            tex2coord: self.tex2coord,
+        })
+    }
+}
+
+/// Builder for composite materials.
+pub struct CompositeMaterialsBuilder {
+    id: ResourceId,
+    matid: Option<ResourceId>,
+    matindices: Vec<ResourceIndex>,
+    composite: Vec<material::Composite>,
+}
+
+impl CompositeMaterialsBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            matid: None,
+            matindices: Vec::new(),
+            composite: Vec::new(),
+        }
+    }
+
+    pub fn matid(&mut self, matid: ResourceId) -> &mut Self {
+        self.matid = Some(matid);
+        self
+    }
+
+    pub fn matindices(&mut self, matindices: &[ResourceIndex]) -> &mut Self {
+        self.matindices = matindices.to_vec();
+        self
+    }
+
+    pub fn add_matindex(&mut self, matindex: ResourceIndex) -> &mut Self {
+        self.matindices.push(matindex);
+        self
+    }
+
+    pub fn add_composite(&mut self, values: &[f64]) -> &mut Self {
+        self.composite.push(material::Composite {
+            values: values.iter().copied().map(Into::into).collect(),
+        });
+        self
+    }
+
+    pub fn add_composites(&mut self, values: &[Vec<f64>]) -> &mut Self {
+        for composite in values {
+            self.add_composite(composite);
+        }
+        self
+    }
+
+    fn build(self) -> Result<CompositeMaterials, CompositeMaterialsError> {
+        if self.matindices.is_empty() {
+            return Err(CompositeMaterialsError::MatIndicesEmpty);
+        }
+        Ok(CompositeMaterials {
+            id: self.id,
+            matid: self.matid.ok_or(CompositeMaterialsError::MatIdNotSet)?,
+            matindices: ResourceIndexCollection::from(self.matindices),
+            composite: self.composite,
+        })
+    }
+}
+
+/// Builder for multi-properties.
+pub struct MultiPropertiesBuilder {
+    id: ResourceId,
+    pids: Vec<ResourceId>,
+    blendmethods: Option<StrResource>,
+    multi: Vec<material::Multi>,
+}
+
+impl MultiPropertiesBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            pids: Vec::new(),
+            blendmethods: None,
+            multi: Vec::new(),
+        }
+    }
+
+    pub fn pids(&mut self, pids: &[ResourceId]) -> &mut Self {
+        self.pids = pids.to_vec();
+        self
+    }
+
+    pub fn add_pid(&mut self, pid: ResourceId) -> &mut Self {
+        self.pids.push(pid);
+        self
+    }
+
+    pub fn blendmethods(&mut self, methods: &[material::BlendMethod]) -> &mut Self {
+        let value = methods
+            .iter()
+            .map(|method| match method {
+                material::BlendMethod::Mix => "mix",
+                material::BlendMethod::Multiply => "multiply",
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.blendmethods = Some(StrResource::new(&value));
+        self
+    }
+
+    pub fn blendmethods_raw(&mut self, methods: &str) -> &mut Self {
+        self.blendmethods = Some(StrResource::new(methods));
+        self
+    }
+
+    pub fn add_multi(&mut self, pindices: &[ResourceIndex]) -> &mut Self {
+        self.multi.push(material::Multi {
+            pindices: ResourceIndexCollection::from(pindices.to_vec()),
+        });
+        self
+    }
+
+    fn build(self) -> Result<MultiProperties, MultiPropertiesError> {
+        if self.pids.is_empty() {
+            return Err(MultiPropertiesError::PidsEmpty);
+        }
+        Ok(MultiProperties {
+            id: self.id,
+            pids: ResourceIdCollection::from(self.pids),
+            blendmethods: self.blendmethods,
+            multi: self.multi,
+        })
+    }
+}
+
+/// Builder for base materials.
+pub struct BaseMaterialsBuilder {
+    id: ResourceId,
+    bases: Vec<Base>,
+}
+
+impl BaseMaterialsBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            bases: Vec::new(),
+        }
+    }
+
+    pub fn add_base(&mut self, name: &str, displaycolor: &str) -> &mut Self {
+        self.bases.push(Base {
+            name: StrResource::new(name),
+            displaycolor: StrResource::new(displaycolor),
+        });
+        self
+    }
+
+    pub fn add_base_color(&mut self, name: &str, displaycolor: crate::core::Color) -> &mut Self {
+        self.bases.push(Base {
+            name: StrResource::new(name),
+            displaycolor: StrResource::new(displaycolor.to_hex_compact()),
+        });
+        self
+    }
+
+    fn build(self) -> BaseMaterials {
+        BaseMaterials {
+            id: self.id,
+            base: self.bases,
+        }
+    }
+}
+
+/// Builder for displacement2d resources.
+pub struct Displacement2DBuilder {
+    id: ResourceId,
+    path: Option<PathResource>,
+    channel: Option<displacement::ChannelName>,
+    tilestyleu: Option<displacement::TileStyle>,
+    tilestylev: Option<displacement::TileStyle>,
+    filter: Option<displacement::Filter>,
+}
+
+impl Displacement2DBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            path: None,
+            channel: None,
+            tilestyleu: None,
+            tilestylev: None,
+            filter: None,
+        }
+    }
+
+    pub fn path(&mut self, path: &str) -> &mut Self {
+        match PathResource::try_from(path) {
+            Ok(path) => {
+                self.path = Some(path);
+                self
+            }
+            Err(err) => panic!("{err:?}"),
+        }
+    }
+
+    pub fn channel(&mut self, channel: displacement::ChannelName) -> &mut Self {
+        self.channel = Some(channel);
+        self
+    }
+
+    pub fn tilestyle_u(&mut self, tilestyle: displacement::TileStyle) -> &mut Self {
+        self.tilestyleu = Some(tilestyle);
+        self
+    }
+
+    pub fn tilestyle_v(&mut self, tilestyle: displacement::TileStyle) -> &mut Self {
+        self.tilestylev = Some(tilestyle);
+        self
+    }
+
+    pub fn filter(&mut self, filter: displacement::Filter) -> &mut Self {
+        self.filter = Some(filter);
+        self
+    }
+
+    fn build(self) -> Result<Displacement2D, Displacement2DError> {
+        Ok(Displacement2D {
+            id: self.id,
+            path: self.path.ok_or(Displacement2DError::PathNotSet)?,
+            channel: self.channel,
+            tilestyleu: self.tilestyleu,
+            tilestylev: self.tilestylev,
+            filter: self.filter,
+        })
+    }
+}
+
+/// Builder for norm vector groups.
+pub struct NormVectorGroupBuilder {
+    id: ResourceId,
+    vectors: Vec<NormVector>,
+}
+
+impl NormVectorGroupBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            vectors: Vec::new(),
+        }
+    }
+
+    pub fn add_norm_vector(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
+        self.vectors.push(NormVector {
+            x: x.into(),
+            y: y.into(),
+            z: z.into(),
+        });
+        self
+    }
+
+    pub fn add_norm_vectors(&mut self, vectors: &[[f64; 3]]) -> &mut Self {
+        for vector in vectors {
+            self.add_norm_vector(vector[0], vector[1], vector[2]);
+        }
+        self
+    }
+
+    fn build(self) -> NormVectorGroup {
+        NormVectorGroup {
+            id: self.id,
+            normvector: self.vectors,
+        }
+    }
+}
+
+/// Builder for displacement 2d groups.
+pub struct Disp2DGroupBuilder {
+    id: ResourceId,
+    dispid: Option<ResourceId>,
+    nid: Option<ResourceId>,
+    height: Option<f64>,
+    offset: Option<f64>,
+    coords: Vec<displacement::Disp2DCoord>,
+}
+
+impl Disp2DGroupBuilder {
+    fn new(id: ResourceId) -> Self {
+        Self {
+            id,
+            dispid: None,
+            nid: None,
+            height: None,
+            offset: None,
+            coords: Vec::new(),
+        }
+    }
+
+    pub fn displacement_map_id(&mut self, dispid: ResourceId) -> &mut Self {
+        self.dispid = Some(dispid);
+        self
+    }
+
+    pub fn norm_vector_group_id(&mut self, nid: ResourceId) -> &mut Self {
+        self.nid = Some(nid);
+        self
+    }
+
+    pub fn height(&mut self, height: f64) -> &mut Self {
+        self.height = Some(height);
+        self
+    }
+
+    pub fn offset(&mut self, offset: f64) -> &mut Self {
+        self.offset = Some(offset);
+        self
+    }
+
+    pub fn add_coord(&mut self, u: f64, v: f64, n: ResourceIndex, f: Option<f64>) -> &mut Self {
+        self.coords.push(displacement::Disp2DCoord {
+            u: u.into(),
+            v: v.into(),
+            n,
+            f: f.map(Into::into),
+        });
+        self
+    }
+
+    pub fn add_coords(&mut self, coords: &[(f64, f64, ResourceIndex, Option<f64>)]) -> &mut Self {
+        for &(u, v, n, f) in coords {
+            self.add_coord(u, v, n, f);
+        }
+        self
+    }
+
+    fn build(self) -> Result<Disp2DGroup, Disp2DGroupError> {
+        Ok(Disp2DGroup {
+            id: self.id,
+            dispid: self.dispid.ok_or(Disp2DGroupError::DispIdNotSet)?,
+            nid: self.nid.ok_or(Disp2DGroupError::NormVectorGroupIdNotSet)?,
+            height: self.height.ok_or(Disp2DGroupError::HeightNotSet)?.into(),
+            offset: self.offset.map(Into::into),
+            disp2dcoord: self.coords,
+        })
+    }
+}
+
 /// Errors that can occur when SliceStack is built.
 #[derive(Debug, Error, Clone, Copy, PartialEq)]
 pub enum SliceStackBuilderError {
@@ -3081,6 +3963,18 @@ impl PolygonBuilder {
         self
     }
 
+    /// Add a segment with property indices and property id.
+    pub fn add_segment_with_properties_and_pid(
+        &mut self,
+        v2: ResourceIndex,
+        p1: OptionalResourceIndex,
+        p2: OptionalResourceIndex,
+        pid: OptionalResourceId,
+    ) -> &mut Self {
+        self.segments.push(Segment { v2, p1, p2, pid });
+        self
+    }
+
     fn build(self) -> Polygon {
         Polygon {
             startv: self.startv.unwrap_or(0),
@@ -3336,13 +4230,13 @@ mod tests {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
 
         builder.add_required_extension(ThreemfNamespace::Unknown {
-            prefix: "test".to_owned(),
-            uri: "http://example.com/test".to_owned(),
+            prefix: "test".into(),
+            uri: "http://example.com/test".into(),
         });
 
         builder.add_recommended_extension(ThreemfNamespace::Unknown {
-            prefix: "rec".to_owned(),
-            uri: "http://example.com/rec".to_owned(),
+            prefix: "rec".into(),
+            uri: "http://example.com/rec".into(),
         });
         builder.add_build(None).unwrap();
         let model = builder.build().unwrap();
@@ -3350,17 +4244,65 @@ mod tests {
         assert_eq!(
             model.requiredextensions,
             ThreemfExtensions::new(&[ThreemfNamespace::Unknown {
-                prefix: "test".to_owned(),
-                uri: "http://example.com/test".to_owned()
+                prefix: "test".into(),
+                uri: "http://example.com/test".into()
             }])
         );
         assert_eq!(
             model.recommendedextensions,
             ThreemfExtensions::new(&[ThreemfNamespace::Unknown {
-                prefix: "rec".to_owned(),
-                uri: "http://example.com/rec".to_owned()
+                prefix: "rec".into(),
+                uri: "http://example.com/rec".into()
             }])
         );
+    }
+
+    #[test]
+    fn test_material_and_displacement_extensions_from_resources() {
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        builder.add_build(None).unwrap();
+
+        builder.add_color_group(|group| {
+            group.add_color(crate::core::Color {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 255,
+            });
+        });
+
+        builder
+            .add_displacement2d(|disp| {
+                disp.path("/3D/Textures/disp.png");
+            })
+            .unwrap();
+
+        let model = builder.build().unwrap();
+
+        assert_eq!(
+            model.requiredextensions,
+            ThreemfExtensions::new(&[ThreemfNamespace::Displacement, ThreemfNamespace::Material,])
+        );
+    }
+
+    #[test]
+    fn test_add_displacement_mesh_object() {
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        builder.add_build(None).unwrap();
+
+        let obj_id = builder
+            .add_displacement_mesh_object(|obj| {
+                obj.add_vertices(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]);
+                obj.add_triangle(&[0, 1, 2]);
+                Ok(())
+            })
+            .unwrap();
+
+        builder.add_build_item(obj_id).unwrap();
+
+        let model = builder.build().unwrap();
+        let obj = &model.resources.object[0];
+        assert!(obj.get_displacement_mesh().is_some());
     }
 
     #[cfg(not(feature = "uuid"))]

@@ -1,23 +1,12 @@
 use threemf2::{
     core::{
-        OptionalResourceId, OptionalResourceIndex,
-        build::{Build, Item},
-        mesh::{self, Mesh, Triangle, Triangles, Vertices},
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-        slice::{self, MeshResolution, Polygon, Segment, Slice, SliceStack},
+        builder::{ModelBuilder, ObjectType, Unit},
+        slice::MeshResolution,
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
-    threemf_namespaces::ThreemfNamespace,
+    io::ThreemfPackageBuilder,
 };
 
-use std::collections::HashMap;
-use std::{io::Cursor, vec};
+use std::io::Cursor;
 
 /// This example shows how to create and write a 3MF file with slice extension data.
 /// This demonstrates the Slice Extension support in threemf2.
@@ -26,269 +15,68 @@ use std::{io::Cursor, vec};
 /// `cargo run --example slice_write --no-default-features --features io-write`
 ///
 fn main() {
-    // Create vertices for a simple cube mesh
-    let vertices = Vertices {
-        vertex: vec![
-            mesh::Vertex::new(0.0, 0.0, 0.0),
-            mesh::Vertex::new(10.0, 0.0, 0.0),
-            mesh::Vertex::new(10.0, 10.0, 0.0),
-            mesh::Vertex::new(0.0, 10.0, 0.0),
-            mesh::Vertex::new(0.0, 0.0, 10.0),
-            mesh::Vertex::new(10.0, 0.0, 10.0),
-            mesh::Vertex::new(10.0, 10.0, 10.0),
-            mesh::Vertex::new(0.0, 10.0, 10.0),
-        ],
-    };
+    let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+    builder.add_build(None).unwrap();
 
-    // Create triangles for the mesh
-    let triangles = Triangles {
-        triangle: vec![
-            // Bottom face
-            Triangle {
-                v1: 0,
-                v2: 2,
-                v3: 1,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                p3: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            },
-            Triangle {
-                v1: 0,
-                v2: 3,
-                v3: 2,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                p3: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            },
-            // Top face
-            Triangle {
-                v1: 4,
-                v2: 5,
-                v3: 6,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                p3: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            },
-            Triangle {
-                v1: 4,
-                v2: 6,
-                v3: 7,
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                p3: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            },
-        ],
-    };
+    let slicestack_id = builder
+        .add_slice_stack(|stack| {
+            stack.zbottom(0.0);
 
-    // Create slice vertices for the first layer
-    let slice_vertices_1 = slice::Vertices {
-        vertex: vec![
-            slice::Vertex {
-                x: 0.0.into(),
-                y: 0.0.into(),
-            },
-            slice::Vertex {
-                x: 10.0.into(),
-                y: 0.0.into(),
-            },
-            slice::Vertex {
-                x: 10.0.into(),
-                y: 10.0.into(),
-            },
-            slice::Vertex {
-                x: 0.0.into(),
-                y: 10.0.into(),
-            },
-        ],
-    };
+            stack.add_slice(|slice| {
+                slice.ztop(0.1);
+                slice.add_vertices(&[(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)]);
+                slice.add_polygon(|poly| {
+                    poly.start_vertex(0);
+                    poly.add_segment(1);
+                    poly.add_segment(2);
+                    poly.add_segment(3);
+                });
+            });
 
-    // Create first slice at z=0.1
-    let slice_1 = Slice {
-        ztop: 0.1.into(),
-        vertices: Some(slice_vertices_1),
-        polygon: vec![Polygon {
-            startv: 0,
-            segment: vec![
-                Segment {
-                    v2: 1,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Segment {
-                    v2: 2,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Segment {
-                    v2: 3,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-            ],
-        }],
-    };
+            stack.add_slice(|slice| {
+                slice.ztop(0.2);
+                slice.add_vertices(&[(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)]);
+                slice.add_polygon(|poly| {
+                    poly.start_vertex(0);
+                    poly.add_segment(1);
+                    poly.add_segment(2);
+                    poly.add_segment(3);
+                });
+            });
+        })
+        .unwrap();
 
-    // Create slice vertices for the second layer
-    let slice_vertices_2 = slice::Vertices {
-        vertex: vec![
-            slice::Vertex {
-                x: 0.0.into(),
-                y: 0.0.into(),
-            },
-            slice::Vertex {
-                x: 10.0.into(),
-                y: 0.0.into(),
-            },
-            slice::Vertex {
-                x: 10.0.into(),
-                y: 10.0.into(),
-            },
-            slice::Vertex {
-                x: 0.0.into(),
-                y: 10.0.into(),
-            },
-        ],
-    };
+    let object_id = builder
+        .add_mesh_object(|obj| {
+            obj.object_type(ObjectType::Model)
+                .part_number("SLICE_EXAMPLE_001")
+                .name("SlicedCube")
+                .slice_stack(slicestack_id, None, Some(MeshResolution::LowRes));
 
-    // Create second slice at z=0.2
-    let slice_2 = Slice {
-        ztop: 0.2.into(),
-        vertices: Some(slice_vertices_2),
-        polygon: vec![Polygon {
-            startv: 0,
-            segment: vec![
-                Segment {
-                    v2: 1,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Segment {
-                    v2: 2,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-                Segment {
-                    v2: 3,
-                    p1: OptionalResourceIndex::none(),
-                    p2: OptionalResourceIndex::none(),
-                    pid: OptionalResourceId::none(),
-                },
-            ],
-        }],
-    };
+            obj.add_vertices(&[
+                [0.0, 0.0, 0.0],
+                [10.0, 0.0, 0.0],
+                [10.0, 10.0, 0.0],
+                [0.0, 10.0, 0.0],
+                [0.0, 0.0, 10.0],
+                [10.0, 0.0, 10.0],
+                [10.0, 10.0, 10.0],
+                [0.0, 10.0, 10.0],
+            ]);
 
-    // Create the slice stack
-    let slicestack = SliceStack {
-        id: 1,
-        zbottom: Some(0.0.into()),
-        slice: vec![slice_1, slice_2],
-        sliceref: vec![],
-    };
+            obj.add_triangles(&[[0, 2, 1], [0, 3, 2], [4, 5, 6], [4, 6, 7]]);
 
-    // Create the object with mesh and slice reference
-    let object = Object {
-        id: 1,
-        objecttype: Some(ObjectType::Model),
-        thumbnail: None,
-        partnumber: Some("SLICE_EXAMPLE_001".into()),
-        name: Some("SlicedCube".into()),
-        pid: OptionalResourceId::none(),
-        pindex: OptionalResourceIndex::none(),
-        uuid: None,
-        slicestackid: OptionalResourceId::new(1), // References slice stack with id=1
-        slicepath: None,                          // Slice stack is in the same file
-        meshresolution: Some(MeshResolution::LowRes), // Mesh is low resolution
-        kind: Some(ObjectKind::Mesh(Mesh {
-            vertices,
-            triangles,
-            trianglesets: None,
-            beamlattice: None,
-        })),
-    };
+            Ok(())
+        })
+        .unwrap();
 
-    // Create resources
-    let resources = Resources {
-        object: vec![object],
-        basematerials: vec![],
-        slicestack: vec![slicestack],
-        colorgroup: Vec::new(),
-        texture2dgroup: Vec::new(),
-        compositematerials: Vec::new(),
-        multiproperties: Vec::new(),
-        texture2d: Vec::new(),
-        displacement2d: Vec::new(),
-        normvectorgroup: Vec::new(),
-        disp2dgroup: Vec::new(),
-    };
+    builder.add_build_item(object_id).unwrap();
+    let model = builder.build().unwrap();
 
-    // Create build section
-    let build = Build {
-        uuid: None,
-        item: vec![Item {
-            objectid: 1,
-            transform: None,
-            partnumber: None,
-            path: None,
-            uuid: None,
-        }],
-    };
+    let mut package_builder = ThreemfPackageBuilder::new();
+    package_builder.set_root_model(model);
+    let package = package_builder.build().expect("Error building package");
 
-    // Create the model
-    let model = Model {
-        unit: Some(Unit::Millimeter),
-        requiredextensions: ThreemfExtensions::new(&[ThreemfNamespace::Slice]), // Slice extension is required
-        recommendedextensions: ThreemfExtensions::default(),
-        metadata: vec![],
-        resources,
-        build,
-    };
-
-    // Create content types
-    let content_types = ContentTypes {
-        defaults: vec![
-            DefaultContentTypes {
-                extension: "rels".to_owned(),
-                content_type: DefaultContentTypeEnum::Relationship,
-            },
-            DefaultContentTypes {
-                extension: "model".to_owned(),
-                content_type: DefaultContentTypeEnum::Model,
-            },
-        ],
-    };
-
-    // Create relationships
-    let relationships = HashMap::from([(
-        "_rels/.rels".to_owned(),
-        Relationships {
-            relationships: vec![Relationship {
-                id: "rel0".to_owned(),
-                target: "3D/3Dmodel.model".to_owned(),
-                relationship_type: RelationshipType::Model,
-            }],
-        },
-    )]);
-
-    // Create the package
-    let package = ThreemfPackage::new(
-        model,
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        relationships,
-        content_types,
-    );
-
-    // Write to buffer (in real usage, this would be a file)
     let mut buf = Cursor::new(Vec::new());
     package.write(&mut buf).expect("Error writing 3MF package");
 

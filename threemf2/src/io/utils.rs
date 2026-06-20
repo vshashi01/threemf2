@@ -1,12 +1,5 @@
 use crate::io::XmlNamespace;
 
-pub(crate) fn try_strip_leading_slash(target: &str) -> &str {
-    match target.strip_prefix('/') {
-        Some(stripped) => stripped,
-        None => target,
-    }
-}
-
 /// Extracts xmlns attribute declarations from an XML element attribute definitions
 pub fn parse_xmlns_attributes(tag_content: &str) -> Vec<XmlNamespace> {
     let mut attributes = Vec::new();

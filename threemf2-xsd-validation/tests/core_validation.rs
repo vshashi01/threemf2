@@ -2,7 +2,6 @@
 //!
 //! Tests validation of basic 3MF models against the core specification XSD.
 
-use std::collections::HashMap;
 use std::io::Cursor;
 use threemf2::{
     core::{
@@ -15,11 +14,7 @@ use threemf2::{
         resources::Resources,
         types::OptionalResourceIndex,
     },
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-    },
+    io::ThreemfPackageBuilder,
 };
 
 mod validation_utils;
@@ -87,75 +82,52 @@ fn validate_simple_mesh_against_core_xsd() {
         beamlattice: None,
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::default(),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![],
-            resources: Resources {
-                object: vec![Object {
-                    id: 1,
-                    objecttype: Some(ObjectType::Model),
-                    thumbnail: None,
-                    partnumber: None,
-                    name: Some("Simple Mesh".into()),
-                    pid: OptionalResourceId::none(),
-                    pindex: OptionalResourceIndex::none(),
-                    uuid: None,
-                    kind: Some(ObjectKind::Mesh(mesh)),
-                    meshresolution: None,
-                    slicestackid: OptionalResourceId::none(),
-                    slicepath: None,
-                }],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
-            },
-            build: Build {
+    let model = Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::default(),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![],
+        resources: Resources {
+            object: vec![Object {
+                id: 1,
+                objecttype: Some(ObjectType::Model),
+                thumbnail: None,
+                partnumber: None,
+                name: Some("Simple Mesh".into()),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                item: vec![Item {
-                    objectid: 1,
-                    transform: None,
-                    partnumber: None,
-                    path: None,
-                    uuid: None,
-                }],
-            },
+                kind: Some(ObjectKind::Mesh(mesh)),
+                meshresolution: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+            }],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 1,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
         },
-    );
+    };
+
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let write_package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -233,86 +205,63 @@ fn validate_model_with_metadata_against_core_xsd() {
         beamlattice: None,
     };
 
-    let write_package = ThreemfPackage::new(
-        Model {
-            unit: Some(Unit::Millimeter),
-            requiredextensions: ThreemfExtensions::default(),
-            recommendedextensions: ThreemfExtensions::default(),
-            metadata: vec![
-                Metadata {
-                    name: "Title".into(),
-                    value: Some("Test Model".into()),
-                    preserve: Some(Preserve(false)),
-                },
-                Metadata {
-                    name: "Description".into(),
-                    value: Some("A test model for XSD validation".into()),
-                    preserve: Some(Preserve(false)),
-                },
-            ],
-            resources: Resources {
-                object: vec![Object {
-                    id: 1,
-                    objecttype: Some(ObjectType::Model),
-                    thumbnail: None,
-                    partnumber: None,
-                    name: Some("Mesh with Metadata".into()),
-                    pid: OptionalResourceId::none(),
-                    pindex: OptionalResourceIndex::none(),
-                    uuid: None,
-                    kind: Some(ObjectKind::Mesh(mesh)),
-                    meshresolution: None,
-                    slicestackid: OptionalResourceId::none(),
-                    slicepath: None,
-                }],
-                basematerials: vec![],
-                slicestack: vec![],
-                colorgroup: vec![],
-                compositematerials: vec![],
-                texture2dgroup: vec![],
-                multiproperties: vec![],
-                texture2d: Vec::new(),
-                displacement2d: Vec::new(),
-                normvectorgroup: Vec::new(),
-                disp2dgroup: Vec::new(),
+    let model = Model {
+        unit: Some(Unit::Millimeter),
+        requiredextensions: ThreemfExtensions::default(),
+        recommendedextensions: ThreemfExtensions::default(),
+        metadata: vec![
+            Metadata {
+                name: "Title".into(),
+                value: Some("Test Model".into()),
+                preserve: Some(Preserve(false)),
             },
-            build: Build {
+            Metadata {
+                name: "Description".into(),
+                value: Some("A test model for XSD validation".into()),
+                preserve: Some(Preserve(false)),
+            },
+        ],
+        resources: Resources {
+            object: vec![Object {
+                id: 1,
+                objecttype: Some(ObjectType::Model),
+                thumbnail: None,
+                partnumber: None,
+                name: Some("Mesh with Metadata".into()),
+                pid: OptionalResourceId::none(),
+                pindex: OptionalResourceIndex::none(),
                 uuid: None,
-                item: vec![Item {
-                    objectid: 1,
-                    transform: None,
-                    partnumber: None,
-                    path: None,
-                    uuid: None,
-                }],
-            },
+                kind: Some(ObjectKind::Mesh(mesh)),
+                meshresolution: None,
+                slicestackid: OptionalResourceId::none(),
+                slicepath: None,
+            }],
+            basematerials: vec![],
+            slicestack: vec![],
+            colorgroup: vec![],
+            compositematerials: vec![],
+            texture2dgroup: vec![],
+            multiproperties: vec![],
+            texture2d: Vec::new(),
+            displacement2d: Vec::new(),
+            normvectorgroup: Vec::new(),
+            disp2dgroup: Vec::new(),
         },
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::new(),
-        HashMap::from([(
-            "_rels/.rels".to_owned(),
-            Relationships {
-                relationships: vec![Relationship {
-                    id: "rel0".to_owned(),
-                    target: "3D/3Dmodel.model".to_owned(),
-                    relationship_type: RelationshipType::Model,
-                }],
-            },
-        )]),
-        ContentTypes {
-            defaults: vec![
-                DefaultContentTypes {
-                    extension: "rels".to_owned(),
-                    content_type: DefaultContentTypeEnum::Relationship,
-                },
-                DefaultContentTypes {
-                    extension: "model".to_owned(),
-                    content_type: DefaultContentTypeEnum::Model,
-                },
-            ],
+        build: Build {
+            uuid: None,
+            item: vec![Item {
+                objectid: 1,
+                transform: None,
+                partnumber: None,
+                path: None,
+                uuid: None,
+            }],
         },
-    );
+    };
+
+    let mut builder = ThreemfPackageBuilder::new();
+    builder.set_root_model(model);
+    let write_package = builder.build().expect("Error building package");
 
     let mut buf = Cursor::new(Vec::new());
     write_package
@@ -396,75 +345,52 @@ fn validate_model_with_different_units() {
             beamlattice: None,
         };
 
-        let write_package = ThreemfPackage::new(
-            Model {
-                unit: Some(unit.clone()),
-                requiredextensions: ThreemfExtensions::default(),
-                recommendedextensions: ThreemfExtensions::default(),
-                metadata: vec![],
-                resources: Resources {
-                    object: vec![Object {
-                        id: 1,
-                        objecttype: Some(ObjectType::Model),
-                        thumbnail: None,
-                        partnumber: None,
-                        name: Some(format!("Mesh in {:?}", unit).into()),
-                        pid: OptionalResourceId::none(),
-                        pindex: OptionalResourceIndex::none(),
-                        uuid: None,
-                        kind: Some(ObjectKind::Mesh(mesh)),
-                        meshresolution: None,
-                        slicestackid: OptionalResourceId::none(),
-                        slicepath: None,
-                    }],
-                    basematerials: vec![],
-                    slicestack: vec![],
-                    colorgroup: vec![],
-                    compositematerials: vec![],
-                    texture2dgroup: vec![],
-                    multiproperties: vec![],
-                    texture2d: Vec::new(),
-                    displacement2d: Vec::new(),
-                    normvectorgroup: Vec::new(),
-                    disp2dgroup: Vec::new(),
-                },
-                build: Build {
+        let model = Model {
+            unit: Some(unit.clone()),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some(format!("Mesh in {:?}", unit).into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
                     uuid: None,
-                    item: vec![Item {
-                        objectid: 1,
-                        transform: None,
-                        partnumber: None,
-                        path: None,
-                        uuid: None,
-                    }],
-                },
+                    kind: Some(ObjectKind::Mesh(mesh)),
+                    meshresolution: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                }],
+                basematerials: vec![],
+                slicestack: vec![],
+                colorgroup: vec![],
+                compositematerials: vec![],
+                texture2dgroup: vec![],
+                multiproperties: vec![],
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
             },
-            HashMap::new(),
-            HashMap::new(),
-            HashMap::new(),
-            HashMap::from([(
-                "_rels/.rels".to_owned(),
-                Relationships {
-                    relationships: vec![Relationship {
-                        id: "rel0".to_owned(),
-                        target: "3D/3Dmodel.model".to_owned(),
-                        relationship_type: RelationshipType::Model,
-                    }],
-                },
-            )]),
-            ContentTypes {
-                defaults: vec![
-                    DefaultContentTypes {
-                        extension: "rels".to_owned(),
-                        content_type: DefaultContentTypeEnum::Relationship,
-                    },
-                    DefaultContentTypes {
-                        extension: "model".to_owned(),
-                        content_type: DefaultContentTypeEnum::Model,
-                    },
-                ],
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
             },
-        );
+        };
+
+        let mut builder = ThreemfPackageBuilder::new();
+        builder.set_root_model(model);
+        let write_package = builder.build().expect("Error building package");
 
         let mut buf = Cursor::new(Vec::new());
         write_package
