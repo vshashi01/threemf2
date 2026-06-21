@@ -10,16 +10,18 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use threemf2::{
-        core::{
-            OptionalResourceId,
-            build::{Build, Item},
-            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-            model::{Model, ThreemfExtensions, Unit},
-            object::{Object, ObjectKind, ObjectType},
-            resources::Resources,
-            types::OptionalResourceIndex,
-        },
         io::{ThreemfPackage, ThreemfPackageBuilder},
+        model::{
+            OptionalResourceId,
+            domain::{
+                build::{Build, Item},
+                mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+                model::{Model, ThreemfExtensions, Unit},
+                object::{Object, ObjectKind, ObjectType},
+                resources::Resources,
+                types::OptionalResourceIndex,
+            },
+        },
     };
 
     use std::io::Cursor;

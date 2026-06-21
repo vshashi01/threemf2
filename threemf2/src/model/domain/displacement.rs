@@ -8,16 +8,12 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 #[cfg(feature = "memory-optimized-read")]
-use crate::core::constants;
+use crate::model::domain::constants;
 
 use crate::{
-    core::{
-        beamlattice::BeamLattice,
-        triangle_set::TriangleSets,
-        types::{
-            Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId,
-            ResourceIndex,
-        },
+    model::domain::{beamlattice::BeamLattice, triangle_set::TriangleSets},
+    model::{
+        Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIndex,
     },
     threemf_namespaces::{BEAM_LATTICE_NS, CORE_TRIANGLESET_NS, DISPLACEMENT_NS},
 };
@@ -704,8 +700,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p1: OptionalResourceIndex,
@@ -714,8 +710,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p2: OptionalResourceIndex,
@@ -724,8 +720,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p3: OptionalResourceIndex,
@@ -734,8 +730,8 @@ pub struct Triangle {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,

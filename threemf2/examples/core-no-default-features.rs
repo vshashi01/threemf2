@@ -1,4 +1,4 @@
-use threemf2::core::{
+use threemf2::model::{
     builder::{ModelBuilder, ObjectType, Unit},
     query::get_model_view,
 };

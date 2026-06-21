@@ -10,7 +10,7 @@ use instant_xml::{FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::core::StrResource;
+use crate::model::StrResource;
 
 /// Content types for the Open Packaging Conventions (OPC).
 /// Contains a collection of [DefaultContentTypes].
@@ -283,7 +283,7 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::core::StrResource;
+    use crate::model::StrResource;
 
     use super::{
         CONTENT_TYPES_NS, ContentTypes, DefaultContentTypeEnum, DefaultContentTypes, JPEG_NS,

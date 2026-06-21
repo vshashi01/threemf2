@@ -2,25 +2,23 @@
 
 #![allow(clippy::needless_lifetimes)]
 
-use crate::core::{
-    OptionalResourceId, OptionalResourceIndex,
-    beamlattice::{BeamLattice, BeamSet, CapMode},
-    boolean::{BooleanOperation, BooleanShape},
+use crate::model::domain::{
+    beamlattice::{self},
+    boolean::{self},
     build::Item,
-    builder::{BallMode, ClippingMode},
     component::Components,
-    displacement::{Disp2DGroup, Displacement2D, DisplacementMesh, NormVectorGroup},
-    material::{self, ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup},
+    displacement::{self},
+    material::{self},
     mesh::Mesh,
     metadata::Metadata,
     model::{Model, Unit},
-    object::{Object, ObjectKind},
+    object::{self, Object},
     resources::BaseMaterials,
-    slice::{Polygon, Slice, SliceStack},
+    slice::{self},
     transform::Transform,
     triangle_set::TriangleSet,
-    types::{Color, UuidResource},
 };
+use crate::model::{Color, OptionalResourceId, OptionalResourceIndex, UuidResource};
 use crate::threemf_namespaces::ThreemfNamespace;
 
 use std::{borrow::Cow, num::NonZeroU32};
@@ -192,30 +190,37 @@ impl<'a> ObjectView<'a> {
         })
     }
 
+    pub fn object_type(&self) -> object::ObjectType {
+        self.object.objecttype.unwrap_or(object::ObjectType::Model)
+    }
+
     pub fn kind(&self) -> ObjectKindView {
         match &self.object.kind {
-            Some(ObjectKind::Mesh(_)) => ObjectKindView::Mesh,
-            Some(ObjectKind::Components(_)) => ObjectKindView::Components,
-            Some(ObjectKind::BooleanShape(_)) => ObjectKindView::BooleanShape,
-            Some(ObjectKind::DisplacementMesh(_)) => ObjectKindView::DisplacementMesh,
+            Some(object::ObjectKind::Mesh(_)) => ObjectKindView::Mesh,
+            Some(object::ObjectKind::Components(_)) => ObjectKindView::Components,
+            Some(object::ObjectKind::BooleanShape(_)) => ObjectKindView::BooleanShape,
+            Some(object::ObjectKind::DisplacementMesh(_)) => ObjectKindView::DisplacementMesh,
             None => panic!("Invalid object found"),
         }
     }
 
     pub fn is_mesh(&self) -> bool {
-        matches!(self.object.kind, Some(ObjectKind::Mesh(_)))
+        matches!(self.object.kind, Some(object::ObjectKind::Mesh(_)))
     }
 
     pub fn is_components(&self) -> bool {
-        matches!(self.object.kind, Some(ObjectKind::Components(_)))
+        matches!(self.object.kind, Some(object::ObjectKind::Components(_)))
     }
 
     pub fn is_boolean_shape(&self) -> bool {
-        matches!(self.object.kind, Some(ObjectKind::BooleanShape(_)))
+        matches!(self.object.kind, Some(object::ObjectKind::BooleanShape(_)))
     }
 
     pub fn is_displacement_mesh(&self) -> bool {
-        matches!(self.object.kind, Some(ObjectKind::DisplacementMesh(_)))
+        matches!(
+            self.object.kind,
+            Some(object::ObjectKind::DisplacementMesh(_))
+        )
     }
 
     pub fn pid(&self) -> OptionalResourceId {
@@ -243,7 +248,7 @@ pub struct MeshObjectView<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LatticeView<'a> {
-    lattice: &'a BeamLattice,
+    lattice: &'a beamlattice::BeamLattice,
 }
 
 pub struct LatticeData {
@@ -252,12 +257,12 @@ pub struct LatticeData {
     pub minlength: f64,
     pub radius: f64,
     pub clipping_mesh_id: Option<NonZeroU32>,
-    pub clippingmode: ClippingMode,
+    pub clippingmode: beamlattice::ClippingMode,
     pub representation_mesh_id: Option<NonZeroU32>,
     pub pid: Option<NonZeroU32>,
     pub pindex: Option<u32>,
     pub ball_radius: Option<f64>,
-    pub ball_mode: BallMode,
+    pub ball_mode: beamlattice::BallMode,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -266,8 +271,8 @@ pub struct BeamView {
     pub v2: u32,
     pub r1: f64,
     pub r2: f64,
-    pub cap1: CapMode,
-    pub cap2: CapMode,
+    pub cap1: beamlattice::CapMode,
+    pub cap2: beamlattice::CapMode,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -279,7 +284,7 @@ pub struct BallView {
 }
 
 pub struct BeamSetView<'a> {
-    set: &'a BeamSet,
+    set: &'a beamlattice::BeamSet,
 }
 
 impl<'a> BeamSetView<'a> {
@@ -324,12 +329,16 @@ impl<'a> LatticeView<'a> {
                 .lattice
                 .clippingmode
                 .clone()
-                .unwrap_or(ClippingMode::None),
+                .unwrap_or(beamlattice::ClippingMode::None),
             representation_mesh_id: self.lattice.representationmesh.into(),
             pid: self.lattice.pid.into(),
             pindex: self.lattice.pindex.into(),
             ball_radius: self.lattice.ballradius,
-            ball_mode: self.lattice.ballmode.clone().unwrap_or(BallMode::None),
+            ball_mode: self
+                .lattice
+                .ballmode
+                .clone()
+                .unwrap_or(beamlattice::BallMode::None),
         }
     }
 
@@ -339,7 +348,11 @@ impl<'a> LatticeView<'a> {
 
     pub fn beams(&self) -> impl Iterator<Item = BeamView> {
         let default_radius = self.lattice.radius;
-        let default_cap_mode = self.lattice.cap.clone().unwrap_or(CapMode::Sphere);
+        let default_cap_mode = self
+            .lattice
+            .cap
+            .clone()
+            .unwrap_or(beamlattice::CapMode::Sphere);
         self.lattice.beams.beam.iter().map(move |beam| BeamView {
             v1: beam.v1,
             v2: beam.v2,
@@ -501,7 +514,7 @@ impl<'a> MeshObjectView<'a> {
 /// Stable view over a displacement mesh object.
 pub struct DisplacementMeshObjectView<'a> {
     object: &'a Object,
-    mesh: &'a DisplacementMesh,
+    mesh: &'a displacement::DisplacementMesh,
 }
 
 impl<'a> DisplacementMeshObjectView<'a> {
@@ -670,7 +683,7 @@ impl<'a> BooleanOperandView<'a> {
 /// Stable view over a boolean shape object.
 pub struct BooleanShapeView<'a> {
     object: &'a Object,
-    shape: &'a BooleanShape,
+    shape: &'a boolean::BooleanShape,
 }
 
 impl<'a> BooleanShapeView<'a> {
@@ -692,20 +705,23 @@ impl<'a> BooleanShapeView<'a> {
         self.shape.objectid
     }
 
-    pub fn operation(&self) -> BooleanOperation {
+    pub fn operation(&self) -> boolean::BooleanOperation {
         self.shape.operation
     }
 
     pub fn is_union(&self) -> bool {
-        matches!(self.shape.operation, BooleanOperation::Union)
+        matches!(self.shape.operation, boolean::BooleanOperation::Union)
     }
 
     pub fn is_difference(&self) -> bool {
-        matches!(self.shape.operation, BooleanOperation::Difference)
+        matches!(self.shape.operation, boolean::BooleanOperation::Difference)
     }
 
     pub fn is_intersection(&self) -> bool {
-        matches!(self.shape.operation, BooleanOperation::Intersection)
+        matches!(
+            self.shape.operation,
+            boolean::BooleanOperation::Intersection
+        )
     }
 
     pub fn booleans(&self) -> impl Iterator<Item = BooleanOperandView<'a>> + '_ {
@@ -773,7 +789,7 @@ impl<'a> SliceRefView<'a> {
 
 /// Stable view over a polygon.
 pub struct PolygonView<'a> {
-    polygon: &'a Polygon,
+    polygon: &'a slice::Polygon,
     segment_count: usize,
 }
 
@@ -803,11 +819,11 @@ impl<'a> PolygonView<'a> {
 
 /// Stable view over a slice.
 pub struct SliceView<'a> {
-    slice: &'a Slice,
+    slice: &'a slice::Slice,
 }
 
 impl<'a> SliceView<'a> {
-    fn new(slice: &'a Slice) -> Self {
+    fn new(slice: &'a slice::Slice) -> Self {
         Self { slice }
     }
 
@@ -840,11 +856,11 @@ impl<'a> SliceView<'a> {
 
 /// Stable view over a slice stack.
 pub struct SliceStackView<'a> {
-    stack: &'a SliceStack,
+    stack: &'a slice::SliceStack,
 }
 
 impl<'a> SliceStackView<'a> {
-    pub(crate) fn new(stack: &'a SliceStack) -> Self {
+    pub(crate) fn new(stack: &'a slice::SliceStack) -> Self {
         Self { stack }
     }
 
@@ -882,11 +898,11 @@ impl<'a> SliceStackView<'a> {
 
 /// Stable view over a color group.
 pub struct ColorGroupView<'a> {
-    group: &'a ColorGroup,
+    group: &'a material::ColorGroup,
 }
 
 impl<'a> ColorGroupView<'a> {
-    pub(crate) fn new(group: &'a ColorGroup) -> Self {
+    pub(crate) fn new(group: &'a material::ColorGroup) -> Self {
         Self { group }
     }
 
@@ -905,11 +921,11 @@ impl<'a> ColorGroupView<'a> {
 
 /// Stable view over a texture 2d group.
 pub struct Texture2DGroupView<'a> {
-    group: &'a Texture2DGroup,
+    group: &'a material::Texture2DGroup,
 }
 
 impl<'a> Texture2DGroupView<'a> {
-    pub(crate) fn new(group: &'a Texture2DGroup) -> Self {
+    pub(crate) fn new(group: &'a material::Texture2DGroup) -> Self {
         Self { group }
     }
 
@@ -935,11 +951,11 @@ impl<'a> Texture2DGroupView<'a> {
 
 /// Stable view over composite materials.
 pub struct CompositeMaterialsView<'a> {
-    materials: &'a CompositeMaterials,
+    materials: &'a material::CompositeMaterials,
 }
 
 impl<'a> CompositeMaterialsView<'a> {
-    pub(crate) fn new(materials: &'a CompositeMaterials) -> Self {
+    pub(crate) fn new(materials: &'a material::CompositeMaterials) -> Self {
         Self { materials }
     }
 
@@ -954,11 +970,11 @@ impl<'a> CompositeMaterialsView<'a> {
 
 /// Stable view over multi-properties.
 pub struct MultiPropertiesView<'a> {
-    props: &'a MultiProperties,
+    props: &'a material::MultiProperties,
 }
 
 impl<'a> MultiPropertiesView<'a> {
-    pub(crate) fn new(props: &'a MultiProperties) -> Self {
+    pub(crate) fn new(props: &'a material::MultiProperties) -> Self {
         Self { props }
     }
 
@@ -973,11 +989,11 @@ impl<'a> MultiPropertiesView<'a> {
 
 /// Stable view over a texture2d resource.
 pub struct Texture2DView<'a> {
-    texture: &'a Texture2D,
+    texture: &'a material::Texture2D,
 }
 
 impl<'a> Texture2DView<'a> {
-    pub(crate) fn new(texture: &'a Texture2D) -> Self {
+    pub(crate) fn new(texture: &'a material::Texture2D) -> Self {
         Self { texture }
     }
 
@@ -1008,11 +1024,11 @@ impl<'a> Texture2DView<'a> {
 
 /// Stable view over a displacement2d resource.
 pub struct Displacement2DView<'a> {
-    displacement: &'a Displacement2D,
+    displacement: &'a displacement::Displacement2D,
 }
 
 impl<'a> Displacement2DView<'a> {
-    pub(crate) fn new(displacement: &'a Displacement2D) -> Self {
+    pub(crate) fn new(displacement: &'a displacement::Displacement2D) -> Self {
         Self { displacement }
     }
 
@@ -1023,11 +1039,11 @@ impl<'a> Displacement2DView<'a> {
 
 /// Stable view over a norm vector group.
 pub struct NormVectorGroupView<'a> {
-    group: &'a NormVectorGroup,
+    group: &'a displacement::NormVectorGroup,
 }
 
 impl<'a> NormVectorGroupView<'a> {
-    pub(crate) fn new(group: &'a NormVectorGroup) -> Self {
+    pub(crate) fn new(group: &'a displacement::NormVectorGroup) -> Self {
         Self { group }
     }
 
@@ -1045,7 +1061,7 @@ impl<'a> NormVectorGroupView<'a> {
 
 /// Stable view over a displacement 2d group.
 pub struct Disp2DGroupView<'a> {
-    group: &'a Disp2DGroup,
+    group: &'a displacement::Disp2DGroup,
 }
 
 pub struct Disp2DCoordView {
@@ -1056,7 +1072,7 @@ pub struct Disp2DCoordView {
 }
 
 impl<'a> Disp2DGroupView<'a> {
-    pub(crate) fn new(group: &'a Disp2DGroup) -> Self {
+    pub(crate) fn new(group: &'a displacement::Disp2DGroup) -> Self {
         Self { group }
     }
 
@@ -1441,7 +1457,7 @@ pub fn resolve_material_property<'a>(
 }
 
 pub fn get_texture_for_group<'a>(
-    texture2dgroup: &Texture2DGroup,
+    texture2dgroup: &material::Texture2DGroup,
     model: &'a Model,
 ) -> Option<Texture2DView<'a>> {
     get_texture2d_by_id(texture2dgroup.texid, model)

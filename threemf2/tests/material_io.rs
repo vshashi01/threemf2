@@ -8,9 +8,9 @@ mod tests {
 
     use std::{fs::File, path::PathBuf};
 
-    use threemf2::core::Color;
-    use threemf2::core::query::get_color_groups_from_model;
     use threemf2::io::query::get_mesh_objects;
+    use threemf2::model::Color;
+    use threemf2::model::query::get_color_groups_from_model;
 
     #[cfg(feature = "io-memory-optimized-read")]
     #[test]

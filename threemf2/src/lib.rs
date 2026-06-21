@@ -24,7 +24,7 @@
 /// [`core`] module maps and defines the elements in the 3MF Specifications to Rust Types.
 /// The Serialization and Deserialization implementations are also provided in this module.
 /// As a crate user you can use these types directly to serialize and deserialize 3MF Model element.
-pub mod core;
+pub mod model;
 
 /// This module defines all the namespaces used by the supported 3MF Extensions by this library.
 /// The default prefixes used when writing a 3MF Model is also defined here.

@@ -1,7 +1,7 @@
 use thiserror::Error;
 use zip::result::ZipError;
 
-use crate::core::types::PathResourceError;
+use crate::model::PathResourceError;
 
 /// An error that can occur while writing a 3MF file
 #[derive(Debug, Error)]

@@ -1,4 +1,4 @@
-use crate::core::StrResource;
+use crate::model::StrResource;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImageFormat {

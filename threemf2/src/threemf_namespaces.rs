@@ -1,4 +1,4 @@
-use crate::core::StrResource;
+use crate::model::StrResource;
 
 ////////////////////////////////////////////////////////////////////////////////////
 ///  Namespaces & Prefixes related to the Core specification and its extensions

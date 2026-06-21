@@ -8,7 +8,7 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{
+    model::domain::{
         displacement::{Disp2DGroup, Displacement2D, NormVectorGroup},
         material::{ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup},
         object::Object,
@@ -156,8 +156,7 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            Color, OptionalResourceId, OptionalResourceIndex, PathResource,
+        model::domain::{
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
                 MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -167,6 +166,7 @@ mod write_tests {
             slice,
             types::{Double, ResourceIdCollection, ResourceIndexCollection},
         },
+        model::{Color, OptionalResourceId, OptionalResourceIndex, PathResource},
         threemf_namespaces::{
             BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS,
             PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
@@ -586,8 +586,7 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            Color, OptionalResourceId, OptionalResourceIndex, PathResource,
+        model::domain::{
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Multi, MultiProperties,
                 Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -596,6 +595,7 @@ mod memory_optimized_read_tests {
             slice,
             types::{Double, ResourceIdCollection, ResourceIndexCollection},
         },
+        model::{Color, OptionalResourceId, OptionalResourceIndex, PathResource},
         threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, SLICE_NS, SLICE_PREFIX},
     };
 
@@ -1009,8 +1009,7 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{
-            Color, OptionalResourceId, OptionalResourceIndex, PathResource,
+        model::domain::{
             material::{
                 ColorElement, ColorGroup, Composite, CompositeMaterials, Multi, MultiProperties,
                 Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
@@ -1019,6 +1018,7 @@ mod speed_optimized_read_tests {
             slice,
             types::{Double, ResourceIdCollection, ResourceIndexCollection},
         },
+        model::{Color, OptionalResourceId, OptionalResourceIndex, PathResource},
         threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, SLICE_NS, SLICE_PREFIX},
     };
 

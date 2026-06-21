@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use threemf2::core::model::Model;
+use threemf2::model::domain::model::Model;
 
 use std::path::PathBuf;
 

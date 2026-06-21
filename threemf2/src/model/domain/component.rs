@@ -8,11 +8,9 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{
-        transform::Transform,
-        types::{
-            PathResource, {ResourceId, UuidResource},
-        },
+    model::domain::transform::Transform,
+    model::{
+        PathResource, {ResourceId, UuidResource},
     },
     threemf_namespaces::{CORE_NS, PROD_NS},
 };
@@ -76,7 +74,8 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{PathResource, transform::Transform, types::UuidResource},
+        model::domain::transform::Transform,
+        model::{PathResource, UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS, PROD_PREFIX},
     };
 
@@ -157,7 +156,8 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{PathResource, transform::Transform, types::UuidResource},
+        model::domain::transform::Transform,
+        model::{PathResource, UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 
@@ -245,7 +245,8 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{PathResource, transform::Transform, types::UuidResource},
+        model::domain::transform::Transform,
+        model::{PathResource, UuidResource},
         threemf_namespaces::{CORE_NS, PROD_NS},
     };
 

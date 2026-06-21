@@ -2,8 +2,8 @@
 //!
 //! Provides a framework for validating 3MF packages against configurable rules.
 
-use crate::core::model::Model;
 use crate::io::threemf_package::ThreemfPackage;
+use crate::model::domain::model::Model;
 
 /// Severity level of a validation issue.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

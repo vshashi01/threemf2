@@ -8,16 +8,13 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{
-        boolean::BooleanShape,
-        component::Components,
-        displacement::DisplacementMesh,
-        mesh::Mesh,
+    model::domain::{
+        boolean::BooleanShape, component::Components, displacement::DisplacementMesh, mesh::Mesh,
         slice::MeshResolution,
-        types::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, StrResource,
-            UuidResource,
-        },
+    },
+    model::{
+        OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, StrResource,
+        UuidResource,
     },
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS, SLICE_NS},
 };
@@ -86,8 +83,8 @@ pub struct Object {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,
@@ -101,8 +98,8 @@ pub struct Object {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub pindex: OptionalResourceIndex,
@@ -127,8 +124,8 @@ pub struct Object {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub slicestackid: OptionalResourceId,
@@ -160,8 +157,8 @@ pub struct Object {
         feature = "speed-optimized-read",
         serde(
             rename = "#content",
-            default = "crate::core::object::serde_object_kind::default_none",
-            deserialize_with = "crate::core::object::serde_object_kind::deserialize"
+            default = "crate::model::domain::object::serde_object_kind::default_none",
+            deserialize_with = "crate::model::domain::object::serde_object_kind::deserialize"
         )
     )]
     pub kind: Option<ObjectKind>,
@@ -314,11 +311,13 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
+        model::domain::{
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
+        },
+        model::{
+            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
@@ -522,11 +521,13 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
+        model::domain::{
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
+        },
+        model::{
+            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,
@@ -759,11 +760,13 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
+        model::domain::{
             component::{Component, Components},
             mesh::{Mesh, Triangles, Vertices},
             slice,
+        },
+        model::{
+            OptionalResourceId, OptionalResourceIndex, PathResource, StrResource, UuidResource,
         },
         threemf_namespaces::{
             CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS,

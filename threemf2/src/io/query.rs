@@ -2,14 +2,14 @@
 
 #![allow(clippy::needless_lifetimes)]
 
-use crate::core::{
-    model::Model,
+use crate::io::ThreemfPackage;
+use crate::model::{
+    domain::model::Model,
     query::{
         BooleanShapeView, ComponentsObjectView, DisplacementMeshObjectView, ItemView,
         MeshObjectView, ModelView, ObjectView, SliceStackView,
     },
 };
-use crate::io::ThreemfPackage;
 
 /// Package view for an object with origin model path.
 pub struct ObjectPackageView<'a> {

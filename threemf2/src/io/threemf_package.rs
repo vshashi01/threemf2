@@ -7,7 +7,6 @@ use zip::write::SimpleFileOptions;
 use instant_xml::ToXml;
 
 use crate::{
-    core::{PathResource, model::Model},
     io::{
         content_types::{ContentTypes, DefaultContentTypeEnum},
         error::Error,
@@ -15,6 +14,7 @@ use crate::{
         thumbnail_handle::ThumbnailHandle,
         utils,
     },
+    model::{PathResource, domain::model::Model},
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -388,7 +388,6 @@ mod processor {
     use zip::ZipArchive;
 
     use crate::{
-        core::{PathResource, model::Model},
         io::{
             Error::ThumbnailError,
             ThreemfPackage,
@@ -398,6 +397,7 @@ mod processor {
             thumbnail_handle::{ImageFormat, ThumbnailHandle},
             zip_utils::{self, XmlDeserializer},
         },
+        model::{PathResource, domain::model::Model},
     };
 
     use std::{
@@ -521,14 +521,14 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
+        io::{content_types::*, relationship::*},
+        model::PathResource,
+        model::domain::{
             build::Build,
             model::{self, Model},
             object::{Object, ObjectType},
             resources::Resources,
-            types::PathResource,
         },
-        io::{content_types::*, relationship::*},
     };
 
     use super::ThreemfPackage;
@@ -617,9 +617,9 @@ mod tests {
     #[test]
     pub fn write_root_model_test() {
         let bytes = {
-            use crate::core::{
+            use crate::model::{
                 OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
-                model::ThreemfExtensions,
+                domain::model::ThreemfExtensions,
             };
 
             let bytes = Vec::<u8>::new();
@@ -699,7 +699,7 @@ mod tests {
     #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
     #[test]
     pub fn io_unknown_content_test() {
-        use crate::core::{StrResource, model::ThreemfExtensions};
+        use crate::model::{StrResource, domain::model::ThreemfExtensions};
 
         let test_file_bytes = include_bytes!("../../tests/data/test.txt");
         let mut writer = Cursor::new(Vec::<u8>::new());
@@ -789,8 +789,8 @@ mod tests {
     #[test]
     pub fn io_thumbnail_content_test() {
         use crate::{
-            core::model::ThreemfExtensions,
             io::thumbnail_handle::{ImageFormat, ThumbnailHandle},
+            model::domain::model::ThreemfExtensions,
         };
 
         let test_file_bytes = include_bytes!("../../tests/data/test_thumbnail.png");

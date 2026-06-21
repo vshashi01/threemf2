@@ -8,10 +8,8 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{
-        transform::Transform,
-        types::{PathResource, ResourceId},
-    },
+    model::domain::transform::Transform,
+    model::{PathResource, ResourceId},
     threemf_namespaces::BOOLEAN_NS,
 };
 
@@ -155,12 +153,12 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex,
+        model::domain::{
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
         },
+        model::{OptionalResourceId, OptionalResourceIndex},
         threemf_namespaces::{
             BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS, PROD_NS, PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
         },
@@ -372,12 +370,12 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex,
+        model::domain::{
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
         },
+        model::{OptionalResourceId, OptionalResourceIndex},
         threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
     };
 
@@ -571,12 +569,12 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex,
+        model::domain::{
             boolean::{Boolean, BooleanOperation, BooleanShape},
             object::{Object, ObjectKind},
             transform::Transform,
         },
+        model::{OptionalResourceId, OptionalResourceIndex},
         threemf_namespaces::{BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS},
     };
 

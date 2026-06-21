@@ -10,7 +10,7 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
+    model::domain::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
     threemf_namespaces::{
         BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, DISPLACEMENT_NS, MATERIAL_NS,
         PROD_NS, SLICE_NS, ThreemfNamespace,
@@ -438,22 +438,27 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
+        model::{
             Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource,
-            ResourceIdCollection, ResourceIndexCollection, UuidResource, beamlattice, boolean,
-            build::{Build, Item},
-            displacement::Displacement2D,
-            material::{
-                ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
-                MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
-                TileStyle,
+            ResourceIdCollection, ResourceIndexCollection, UuidResource,
+            domain::{
+                beamlattice::{self},
+                boolean,
+                build::{Build, Item},
+                displacement::Displacement2D,
+                material::{
+                    ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
+                    MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
+                    TileStyle,
+                },
+                mesh::{Mesh, Triangles, Vertices},
+                metadata::Metadata,
+                model::ThreemfExtensions,
+                object::{Object, ObjectKind, ObjectType},
+                resources::Resources,
+                slice::{self},
+                triangle_set,
             },
-            mesh::{Mesh, Triangles, Vertices},
-            metadata::Metadata,
-            model::ThreemfExtensions,
-            object::{Object, ObjectKind, ObjectType},
-            resources::Resources,
-            slice::{self},
         },
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
@@ -672,8 +677,6 @@ mod write_tests {
 
     #[test]
     fn test_used_namespaces_with_beamlattice() {
-        use crate::core::beamlattice::BeamLattice;
-
         let model = Model {
             unit: Some(Unit::Millimeter),
             requiredextensions: ThreemfExtensions::default(),
@@ -695,7 +698,7 @@ mod write_tests {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
                         trianglesets: None,
-                        beamlattice: Some(BeamLattice {
+                        beamlattice: Some(beamlattice::BeamLattice {
                             minlength: 0.1,
                             radius: 0.05,
                             ballmode: None,
@@ -706,7 +709,7 @@ mod write_tests {
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
                             cap: None,
-                            beams: crate::core::beamlattice::Beams { beam: vec![] },
+                            beams: beamlattice::Beams { beam: vec![] },
                             balls: None,
                             beamsets: None,
                         }),
@@ -745,8 +748,6 @@ mod write_tests {
 
     #[test]
     fn test_used_namespaces_with_beamlattice_balls() {
-        use crate::core::beamlattice::BeamLattice;
-
         let model = Model {
             unit: Some(Unit::Millimeter),
             requiredextensions: ThreemfExtensions::default(),
@@ -768,7 +769,7 @@ mod write_tests {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
                         trianglesets: None,
-                        beamlattice: Some(BeamLattice {
+                        beamlattice: Some(beamlattice::BeamLattice {
                             minlength: 0.1,
                             radius: 0.05,
                             ballmode: Some(beamlattice::BallMode::Mixed),
@@ -779,7 +780,7 @@ mod write_tests {
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
                             cap: None,
-                            beams: crate::core::beamlattice::Beams { beam: vec![] },
+                            beams: beamlattice::Beams { beam: vec![] },
                             balls: Some(beamlattice::Balls { ball: vec![] }),
                             beamsets: None,
                         }),
@@ -822,8 +823,6 @@ mod write_tests {
 
     #[test]
     fn test_used_namespaces_with_trianglesets() {
-        use crate::core::triangle_set::TriangleSets;
-
         let model = Model {
             unit: Some(Unit::Millimeter),
             requiredextensions: ThreemfExtensions::default(),
@@ -844,7 +843,7 @@ mod write_tests {
                     kind: Some(ObjectKind::Mesh(Mesh {
                         vertices: Vertices { vertex: vec![] },
                         triangles: Triangles { triangle: vec![] },
-                        trianglesets: Some(TriangleSets {
+                        trianglesets: Some(triangle_set::TriangleSets {
                             trianglesets: vec![],
                         }),
                         beamlattice: None,
@@ -991,8 +990,6 @@ mod write_tests {
 
     #[test]
     fn test_used_namespaces_multiple_extensions() {
-        use crate::core::{beamlattice::BeamLattice, triangle_set::TriangleSets};
-
         let model = Model {
             unit: Some(Unit::Millimeter),
             requiredextensions: ThreemfExtensions::default(),
@@ -1014,10 +1011,10 @@ mod write_tests {
                         kind: Some(ObjectKind::Mesh(Mesh {
                             vertices: Vertices { vertex: vec![] },
                             triangles: Triangles { triangle: vec![] },
-                            trianglesets: Some(TriangleSets {
+                            trianglesets: Some(triangle_set::TriangleSets {
                                 trianglesets: vec![],
                             }),
-                            beamlattice: Some(BeamLattice {
+                            beamlattice: Some(beamlattice::BeamLattice {
                                 minlength: 0.1,
                                 radius: 0.05,
                                 ballmode: Some(beamlattice::BallMode::None),
@@ -1028,7 +1025,7 @@ mod write_tests {
                                 pid: OptionalResourceId::none(),
                                 pindex: OptionalResourceIndex::none(),
                                 cap: None,
-                                beams: crate::core::beamlattice::Beams { beam: vec![] },
+                                beams: beamlattice::Beams { beam: vec![] },
                                 balls: None,
                                 beamsets: None,
                             }),
@@ -1274,21 +1271,17 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::core::OptionalResourceId;
-    use crate::core::OptionalResourceIndex;
-    use crate::core::PathResource;
-    use crate::core::material::TextureContentType;
-    use crate::core::model::ThreemfExtensions;
     use crate::{
-        core::{
-            Color, UuidResource,
+        model::domain::{
             build::{Build, Item},
             component::{Component, Components},
-            material::{ColorElement, ColorGroup, Texture2D},
+            material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
             metadata::Metadata,
+            model::ThreemfExtensions,
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
         },
+        model::{Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource},
         threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS},
     };
 
@@ -1522,8 +1515,7 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{
-            Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource,
+        model::domain::{
             build::{Build, Item},
             component::{Component, Components},
             material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
@@ -1532,6 +1524,7 @@ mod speed_optimized_read_tests {
             object::{Object, ObjectKind, ObjectType},
             resources::Resources,
         },
+        model::{Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource},
         threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS},
     };
 

@@ -2,11 +2,12 @@
 //!
 //! This module contains the concrete implementations for each validation rule.
 
-use crate::core::model::Model;
-use crate::core::query as core_query;
 use crate::io::ThreemfPackage;
 use crate::io::query as io_query;
 use crate::io::validator::{Severity, ValidationIssue, ValidationRule};
+use crate::model::domain::model::Model;
+use crate::model::query as core_query;
+use crate::model::{OptionalResourceId, OptionalResourceIndex};
 use std::collections::HashSet;
 
 /// Runs a single validation rule against a model.
@@ -206,8 +207,8 @@ struct ObjectInfo<'a> {
     origin_model_path: Option<&'a str>,
     slicepath: Option<String>,
     slicestack_id: Option<u32>,
-    pid: crate::core::OptionalResourceId,
-    pindex: crate::core::OptionalResourceIndex,
+    pid: OptionalResourceId,
+    pindex: OptionalResourceIndex,
 }
 
 struct BuildItemInfo {
@@ -388,13 +389,14 @@ fn validate_resource_id_reference(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{
-        build::Build,
+    use crate::model::domain::{
+        build::{self, Build},
+        component, mesh,
         model::ThreemfExtensions,
         object::{Object, ObjectKind},
         resources::{BaseMaterials, Resources},
-        types::OptionalResourceId,
     };
+    use crate::model::{OptionalResourceId, OptionalResourceIndex};
 
     fn create_test_model(resources: Resources, build: Build) -> Model {
         Model {
@@ -415,7 +417,7 @@ mod tests {
             partnumber: None,
             name: None,
             pid: OptionalResourceId::none(),
-            pindex: crate::core::types::OptionalResourceIndex::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
@@ -432,7 +434,7 @@ mod tests {
             partnumber: None,
             name: None,
             pid: OptionalResourceId::new(pid),
-            pindex: crate::core::types::OptionalResourceIndex::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
@@ -652,7 +654,7 @@ mod tests {
             partnumber: None,
             name: None,
             pid: OptionalResourceId::none(),
-            pindex: crate::core::types::OptionalResourceIndex::new(0),
+            pindex: OptionalResourceIndex::new(0),
             uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
@@ -740,15 +742,15 @@ mod tests {
     }
 
     // Helper functions for Build and Component tests
-    fn create_test_build_with_items(items: Vec<crate::core::build::Item>) -> Build {
+    fn create_test_build_with_items(items: Vec<build::Item>) -> Build {
         Build {
             uuid: None,
             item: items,
         }
     }
 
-    fn create_test_build_item(objectid: u32) -> crate::core::build::Item {
-        crate::core::build::Item {
+    fn create_test_build_item(objectid: u32) -> build::Item {
+        build::Item {
             objectid,
             transform: None,
             partnumber: None,
@@ -757,8 +759,8 @@ mod tests {
         }
     }
 
-    fn create_test_component(objectid: u32) -> crate::core::component::Component {
-        crate::core::component::Component {
+    fn create_test_component(objectid: u32) -> component::Component {
+        component::Component {
             objectid,
             transform: None,
             path: None,
@@ -768,7 +770,7 @@ mod tests {
 
     fn create_test_object_with_components(
         id: u32,
-        components: Vec<crate::core::component::Component>,
+        components: Vec<component::Component>,
     ) -> Object {
         Object {
             id,
@@ -777,12 +779,12 @@ mod tests {
             partnumber: None,
             name: None,
             pid: OptionalResourceId::none(),
-            pindex: crate::core::types::OptionalResourceIndex::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
-            kind: Some(ObjectKind::Components(crate::core::component::Components {
+            kind: Some(ObjectKind::Components(component::Components {
                 component: components,
             })),
         }
@@ -796,14 +798,14 @@ mod tests {
             partnumber: None,
             name: None,
             pid: OptionalResourceId::none(),
-            pindex: crate::core::types::OptionalResourceIndex::none(),
+            pindex: OptionalResourceIndex::none(),
             uuid: None,
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
-            kind: Some(ObjectKind::Mesh(crate::core::mesh::Mesh {
-                vertices: crate::core::mesh::Vertices { vertex: vec![] },
-                triangles: crate::core::mesh::Triangles { triangle: vec![] },
+            kind: Some(ObjectKind::Mesh(mesh::Mesh {
+                vertices: mesh::Vertices { vertex: vec![] },
+                triangles: mesh::Triangles { triangle: vec![] },
                 trianglesets: None,
                 beamlattice: None,
             })),

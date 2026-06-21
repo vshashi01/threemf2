@@ -40,17 +40,6 @@ pub mod material;
 /// Defines the type representing the Displacement extension elements and related elements.
 pub mod displacement;
 
-/// Query helpers for model-level data.
-pub mod query;
-
-/// Defines 3MF specification-compliant type aliases for IDs and indices.
 pub mod types;
-
-pub use types::{
-    Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId,
-    ResourceIdCollection, ResourceIndex, ResourceIndexCollection, StrResource, UuidResource,
-};
-
-pub mod builder;
 
 mod constants;

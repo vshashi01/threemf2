@@ -10,7 +10,7 @@ use instant_xml::{FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::{core::types::StrResource, threemf_namespaces::CORE_NS};
+use crate::{model::StrResource, threemf_namespaces::CORE_NS};
 
 /// Key-value metadata associated with a 3MF model or object.
 ///
@@ -132,7 +132,7 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
-    use crate::{core::metadata::Preserve, threemf_namespaces::CORE_NS};
+    use crate::{model::domain::metadata::Preserve, threemf_namespaces::CORE_NS};
 
     use super::{Metadata, MetadataGroup};
 

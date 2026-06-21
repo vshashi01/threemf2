@@ -2,16 +2,16 @@ use compact_str::format_compact;
 use zip::ZipArchive;
 
 use crate::{
-    core::{PathResource, StrResource, model::ThreemfExtensions},
     io::{
         content_types::{ContentTypes, DefaultContentTypeEnum},
         error::Error,
         relationship::Relationships,
     },
+    model::{PathResource, StrResource, domain::model::ThreemfExtensions},
     threemf_namespaces::ThreemfNamespace,
 };
 
-use crate::core::model::Model;
+use crate::model::domain::model::Model;
 
 use std::io::{Read, Seek};
 use std::path::Path;

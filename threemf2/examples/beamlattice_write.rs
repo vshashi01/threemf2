@@ -1,5 +1,5 @@
-use threemf2::core::builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit};
 use threemf2::io::ThreemfPackageBuilder;
+use threemf2::model::builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit};
 
 use std::{io::Cursor, vec};
 

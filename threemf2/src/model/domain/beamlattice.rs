@@ -1,5 +1,5 @@
 use crate::{
-    core::{OptionalResourceId, OptionalResourceIndex, ResourceIndex, StrResource},
+    model::{OptionalResourceId, OptionalResourceIndex, ResourceIndex, StrResource},
     threemf_namespaces::{BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_NS},
 };
 
@@ -70,8 +70,8 @@ pub struct BeamLattice {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub clippingmesh: OptionalResourceId,
@@ -84,8 +84,8 @@ pub struct BeamLattice {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub representationmesh: OptionalResourceId,
@@ -98,8 +98,8 @@ pub struct BeamLattice {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,
@@ -112,8 +112,8 @@ pub struct BeamLattice {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub pindex: OptionalResourceIndex,
@@ -308,8 +308,8 @@ pub struct Beam {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p1: OptionalResourceIndex,
@@ -322,8 +322,8 @@ pub struct Beam {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p2: OptionalResourceIndex,
@@ -336,8 +336,8 @@ pub struct Beam {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,
@@ -404,8 +404,8 @@ pub struct Ball {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p: OptionalResourceIndex,
@@ -418,8 +418,8 @@ pub struct Ball {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,
@@ -695,8 +695,8 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceIndex,
+        model::OptionalResourceIndex,
+        model::domain::{
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::{Model, ThreemfExtensions},
@@ -1083,8 +1083,8 @@ mod speed_optimized_read_tests {
     use serde_roxmltree::from_str;
 
     use crate::{
-        core::{
-            OptionalResourceIndex,
+        model::OptionalResourceIndex,
+        model::domain::{
             build::Build,
             mesh::{Mesh, Triangles, Vertex, Vertices},
             model::{Model, ThreemfExtensions},

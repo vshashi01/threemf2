@@ -5,18 +5,19 @@
 
 use std::io::Cursor;
 use threemf2::{
-    core::{
-        OptionalResourceId,
-        boolean::{Boolean, BooleanOperation, BooleanShape},
-        build::{Build, Item},
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-        transform::Transform,
-        types::{OptionalResourceIndex, UuidResource},
-    },
     io::ThreemfPackageBuilder,
+    model::{
+        OptionalResourceId, OptionalResourceIndex, UuidResource,
+        domain::{
+            boolean::{Boolean, BooleanOperation, BooleanShape},
+            build::{Build, Item},
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+            model::{Model, ThreemfExtensions, Unit},
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+            transform::Transform,
+        },
+    },
     threemf_namespaces::ThreemfNamespace,
 };
 

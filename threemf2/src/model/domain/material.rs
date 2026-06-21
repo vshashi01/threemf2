@@ -36,12 +36,9 @@
 //! ```
 
 use crate::{
-    core::{
-        Color,
-        types::{
-            Double, PathResource, ResourceId, ResourceIdCollection, ResourceIndexCollection,
-            StrResource,
-        },
+    model::{
+        Color, Double, PathResource, ResourceId, ResourceIdCollection, ResourceIndexCollection,
+        StrResource,
     },
     threemf_namespaces::MATERIAL_NS,
 };
@@ -691,7 +688,7 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
-    use crate::core::types::{Double, ResourceIdCollection, ResourceIndexCollection};
+    use crate::model::{Double, ResourceIdCollection, ResourceIndexCollection};
     use crate::threemf_namespaces::MATERIAL_NS;
 
     use super::*;
@@ -925,7 +922,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::core::types::{Double, ResourceIdCollection, ResourceIndexCollection};
+    use crate::model::{Double, ResourceIdCollection, ResourceIndexCollection};
     use crate::threemf_namespaces::MATERIAL_NS;
 
     use super::*;

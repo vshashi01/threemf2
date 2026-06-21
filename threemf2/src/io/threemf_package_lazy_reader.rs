@@ -5,17 +5,16 @@ use std::io::{Read, Seek};
 use once_cell::unsync::OnceCell;
 use zip::ZipArchive;
 
-use crate::core::PathResource;
-use crate::core::model::Model;
 use crate::io::Error::ThumbnailError;
 use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
-use crate::io::utils;
 use crate::io::{
     content_types::{ContentTypes, DefaultContentTypeEnum},
     error::Error,
     relationship::{RelationshipType, Relationships},
     zip_utils::{self, XmlDeserializer},
 };
+use crate::model::PathResource;
+use crate::model::domain::model::Model;
 
 /// Cache policy for lazy-loaded data
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

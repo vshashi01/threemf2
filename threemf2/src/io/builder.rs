@@ -4,16 +4,15 @@ use compact_str::format_compact;
 use thiserror::Error;
 
 use crate::{
-    core::{
-        StrResource,
-        model::Model,
-        types::{PathResource, PathResourceError},
-    },
     io::{
         ThreemfPackage,
         content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
         relationship::{Relationship, RelationshipType, Relationships},
         thumbnail_handle::{ImageFormat, ThumbnailHandle},
+    },
+    model::{
+        PathResource, PathResourceError, StrResource,
+        domain::{component, model::Model},
     },
 };
 
@@ -311,7 +310,7 @@ fn collect_model_references(model: &Model) -> HashSet<&PathResource> {
 }
 
 fn collect_component_paths<'a>(
-    components: &'a [crate::core::component::Component],
+    components: &'a [component::Component],
     referenced: &mut HashSet<&'a PathResource>,
 ) {
     for component in components {
@@ -425,14 +424,15 @@ fn rels_path_for_model(model_path: &PathResource) -> Result<PathResource, PathRe
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::builder::{ModelBuilder, ObjectType, Unit};
+    use crate::model::builder::ModelBuilder;
+    use crate::model::domain::{model::Unit, object::ObjectType};
 
     #[test]
     fn build_multimodel_package() {
         let mut root_builder = ModelBuilder::new(Unit::Millimeter, true);
         root_builder.make_production_extension_required().unwrap();
         root_builder
-            .add_build(Some(crate::core::UuidResource::from("build-uuid")))
+            .add_build(Some(crate::model::UuidResource::from("build-uuid")))
             .unwrap();
 
         let obj_id = root_builder
@@ -516,7 +516,7 @@ mod tests {
         let mut root_builder = ModelBuilder::new(Unit::Millimeter, true);
         root_builder.make_production_extension_required().unwrap();
         root_builder
-            .add_build(Some(crate::core::UuidResource::from("build-uuid")))
+            .add_build(Some(crate::model::UuidResource::from("build-uuid")))
             .unwrap();
 
         let obj_id = root_builder

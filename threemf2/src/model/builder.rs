@@ -51,32 +51,32 @@
 use thiserror::Error;
 
 use crate::{
-    core::{
-        beamlattice::{Ball, BallRef, Balls, Beam, BeamLattice, BeamRef, BeamSet, BeamSets, Beams},
-        boolean::{Boolean as BooleanOp, BooleanOperation, BooleanShape},
+    model::domain::{
+        beamlattice::{self},
+        boolean::{self},
         build::{Build, Item},
         component::{Component, Components},
-        displacement::{
-            self, Disp2DGroup, Displacement2D, DisplacementMesh, NormVector, NormVectorGroup,
-        },
-        material::{
-            self, ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup,
-        },
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+        displacement::{self},
+        material::{self},
+        mesh::{self},
         metadata::Metadata,
-        model::{Model, ThreemfExtensions},
-        object::{Object, ObjectKind},
+        model::{self, Model, ThreemfExtensions},
+        object::{self},
         resources::{Base, BaseMaterials, Resources},
-        slice::{self, MeshResolution, Polygon, Segment, Slice, SliceRef, SliceStack},
+        slice::{self},
         transform::Transform,
+        triangle_set,
     },
     threemf_namespaces::ThreemfNamespace,
 };
 
-pub use crate::core::beamlattice::{BallMode, CapMode, ClippingMode};
-pub use crate::core::model::Unit;
-pub use crate::core::object::ObjectType;
-use crate::core::types::{
+pub use beamlattice::{BallMode, CapMode};
+pub use boolean::BooleanOperation;
+pub use model::Unit;
+pub use object::ObjectType;
+pub use slice::MeshResolution;
+
+use crate::model::{
     OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIdCollection,
     ResourceIndex, ResourceIndexCollection, StrResource, UuidResource,
 };
@@ -285,7 +285,7 @@ impl ModelBuilder {
             if o.uuid.is_none() {
                 return Err(ProductionExtensionError::ObjectUuidNotSet);
             } else if let Some(kind) = &o.kind
-                && let ObjectKind::Components(components) = kind
+                && let object::ObjectKind::Components(components) = kind
                 && components.component.iter().any(|c| c.uuid.is_none())
             {
                 return Err(ProductionExtensionError::ComponentUuidNotSet);
@@ -829,7 +829,7 @@ impl ModelBuilder {
         })
     }
 
-    fn set_recommended_namespaces_for_mesh(&mut self, mesh: &Mesh) {
+    fn set_recommended_namespaces_for_mesh(&mut self, mesh: &mesh::Mesh) {
         self.set_recommended_namespaces_for_triangle_sets(mesh.trianglesets.is_some());
     }
 
@@ -912,7 +912,7 @@ impl ModelBuilder {
             || self.resources.objects.iter().any(|obj| {
                 obj.slicestackid.is_some()
                     || obj.slicepath.is_some()
-                    || matches!(obj.meshresolution, Some(MeshResolution::LowRes))
+                    || matches!(obj.meshresolution, Some(slice::MeshResolution::LowRes))
             });
 
         if is_slice_required {
@@ -1047,17 +1047,17 @@ impl Default for ModelBuilder {
 
 /// Builder for Resources
 pub struct ResourcesBuilder {
-    objects: Vec<Object>,
-    slicestack: Vec<SliceStack>,
-    colorgroup: Vec<ColorGroup>,
-    texture2dgroup: Vec<Texture2DGroup>,
-    texture2d: Vec<Texture2D>,
-    compositematerials: Vec<CompositeMaterials>,
-    multiproperties: Vec<MultiProperties>,
+    objects: Vec<object::Object>,
+    slicestack: Vec<slice::SliceStack>,
+    colorgroup: Vec<material::ColorGroup>,
+    texture2dgroup: Vec<material::Texture2DGroup>,
+    texture2d: Vec<material::Texture2D>,
+    compositematerials: Vec<material::CompositeMaterials>,
+    multiproperties: Vec<material::MultiProperties>,
     basematerials: Vec<BaseMaterials>,
-    displacement2d: Vec<Displacement2D>,
-    normvectorgroup: Vec<NormVectorGroup>,
-    disp2dgroup: Vec<Disp2DGroup>,
+    displacement2d: Vec<displacement::Displacement2D>,
+    normvectorgroup: Vec<displacement::NormVectorGroup>,
+    disp2dgroup: Vec<displacement::Disp2DGroup>,
 }
 
 impl ResourcesBuilder {
@@ -1346,7 +1346,7 @@ impl From<SliceStackId> for ResourceId {
 pub struct ObjectBuilder<T> {
     entity: T,
     object_id: ObjectId,
-    objecttype: Option<ObjectType>,
+    objecttype: Option<object::ObjectType>,
     thumbnail: Option<PathResource>,
     partnumber: Option<String>,
     name: Option<String>,
@@ -1355,7 +1355,7 @@ pub struct ObjectBuilder<T> {
     uuid: Option<UuidResource>,
     slicestackid: OptionalResourceId,
     slicepath: Option<PathResource>,
-    meshresolution: Option<MeshResolution>,
+    meshresolution: Option<slice::MeshResolution>,
 
     // sets if the production ext is required.
     // if yes will ensure UUID is set before building the object
@@ -1364,7 +1364,7 @@ pub struct ObjectBuilder<T> {
 
 impl<T> ObjectBuilder<T> {
     /// Set the object type
-    pub fn object_type(&mut self, object_type: ObjectType) -> &mut Self {
+    pub fn object_type(&mut self, object_type: object::ObjectType) -> &mut Self {
         self.objecttype = Some(object_type);
         self
     }
@@ -1427,7 +1427,7 @@ impl<T> ObjectBuilder<T> {
     }
 
     /// Set the mesh resolution for this object when slice data is present.
-    pub fn meshresolution(&mut self, resolution: MeshResolution) -> &mut Self {
+    pub fn meshresolution(&mut self, resolution: slice::MeshResolution) -> &mut Self {
         self.meshresolution = Some(resolution);
         self
     }
@@ -1437,7 +1437,7 @@ impl<T> ObjectBuilder<T> {
         &mut self,
         slicestack_id: SliceStackId,
         slicepath: Option<&str>,
-        meshresolution: Option<MeshResolution>,
+        meshresolution: Option<slice::MeshResolution>,
     ) -> &mut Self {
         self.slice_stack_id(slicestack_id);
         if let Some(path) = slicepath {
@@ -1495,7 +1495,7 @@ impl MeshObjectBuilder {
         Self {
             entity: MeshBuilder::new(),
             object_id,
-            objecttype: Some(ObjectType::Model),
+            objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
             partnumber: None,
             name: None,
@@ -1509,14 +1509,14 @@ impl MeshObjectBuilder {
         }
     }
 
-    fn build(self) -> Result<Object, MeshObjectError> {
+    fn build(self) -> Result<object::Object, MeshObjectError> {
         let mesh = self.entity.build_mesh().unwrap();
 
         if self.is_production_ext_required && self.uuid.is_none() {
             return Err(MeshObjectError::ObjectUuidNotSet);
         }
 
-        Ok(Object {
+        Ok(object::Object {
             id: self.object_id.0,
             objecttype: self.objecttype,
             thumbnail: self.thumbnail,
@@ -1528,7 +1528,7 @@ impl MeshObjectBuilder {
             slicestackid: self.slicestackid,
             slicepath: self.slicepath,
             meshresolution: self.meshresolution,
-            kind: Some(ObjectKind::Mesh(mesh)),
+            kind: Some(object::ObjectKind::Mesh(mesh)),
             // mesh: Some(mesh),
         })
     }
@@ -1542,7 +1542,7 @@ impl DisplacementMeshObjectBuilder {
         Self {
             entity: DisplacementMeshBuilder::new(),
             object_id,
-            objecttype: Some(ObjectType::Model),
+            objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
             partnumber: None,
             name: None,
@@ -1556,14 +1556,14 @@ impl DisplacementMeshObjectBuilder {
         }
     }
 
-    fn build(self) -> Result<Object, DisplacementMeshObjectError> {
+    fn build(self) -> Result<object::Object, DisplacementMeshObjectError> {
         let mesh = self.entity.build_mesh();
 
         if self.is_production_ext_required && self.uuid.is_none() {
             return Err(DisplacementMeshObjectError::ObjectUuidNotSet);
         }
 
-        Ok(Object {
+        Ok(object::Object {
             id: self.object_id.0,
             objecttype: self.objecttype,
             thumbnail: self.thumbnail,
@@ -1575,7 +1575,7 @@ impl DisplacementMeshObjectBuilder {
             slicestackid: self.slicestackid,
             slicepath: self.slicepath,
             meshresolution: self.meshresolution,
-            kind: Some(ObjectKind::DisplacementMesh(mesh)),
+            kind: Some(object::ObjectKind::DisplacementMesh(mesh)),
         })
     }
 }
@@ -1588,8 +1588,8 @@ impl DisplacementMeshObjectBuilder {
 /// Vertices are referenced by their 0-based index in the order they were added.
 /// Triangles reference vertices by index.
 pub struct MeshBuilder {
-    vertices: Vec<Vertex>,
-    triangles: Vec<Triangle>,
+    vertices: Vec<mesh::Vertex>,
+    triangles: Vec<mesh::Triangle>,
     triangle_sets: Option<TriangleSetsBuilder>,
     beam_lattice: Option<BeamLatticeBuilder>,
 }
@@ -1613,7 +1613,7 @@ impl MeshBuilder {
     /// - `coords`: 3D coordinates as `[x, y, z]`
     pub fn add_vertex(&mut self, coords: &[f64; 3]) -> &mut Self {
         self.vertices
-            .push(Vertex::new(coords[0], coords[1], coords[2]));
+            .push(mesh::Vertex::new(coords[0], coords[1], coords[2]));
         self
     }
 
@@ -1635,7 +1635,7 @@ impl MeshBuilder {
     pub fn add_vertices_flat(&mut self, vertices: &[f64]) -> &mut Self {
         for vertex in vertices.chunks_exact(3) {
             self.vertices
-                .push(Vertex::new(vertex[0], vertex[1], vertex[2]));
+                .push(mesh::Vertex::new(vertex[0], vertex[1], vertex[2]));
         }
 
         self
@@ -1650,7 +1650,7 @@ impl MeshBuilder {
     ///
     /// - `indices`: Triangle vertex indices as `[v1, v2, v3]`
     pub fn add_triangle(&mut self, indices: &[usize; 3]) -> &mut Self {
-        self.triangles.push(Triangle {
+        self.triangles.push(mesh::Triangle {
             v1: indices[0] as ResourceIndex,
             v2: indices[1] as ResourceIndex,
             v3: indices[2] as ResourceIndex,
@@ -1671,7 +1671,7 @@ impl MeshBuilder {
         p3: OptionalResourceIndex,
         pid: OptionalResourceId,
     ) -> &mut Self {
-        self.triangles.push(Triangle {
+        self.triangles.push(mesh::Triangle {
             v1: indices[0] as ResourceIndex,
             v2: indices[1] as ResourceIndex,
             v3: indices[2] as ResourceIndex,
@@ -1714,7 +1714,7 @@ impl MeshBuilder {
     /// The length must be a multiple of 3.
     pub fn add_triangles_flat(&mut self, triangles: &[usize]) -> &mut Self {
         for triangle in triangles.chunks_exact(3) {
-            self.triangles.push(Triangle {
+            self.triangles.push(mesh::Triangle {
                 v1: triangle[0] as ResourceIndex,
                 v2: triangle[1] as ResourceIndex,
                 v3: triangle[2] as ResourceIndex,
@@ -1773,14 +1773,14 @@ impl MeshBuilder {
         self
     }
 
-    fn build_mesh(self) -> Result<Mesh, MeshObjectError> {
+    fn build_mesh(self) -> Result<mesh::Mesh, MeshObjectError> {
         let trianglesets = self.triangle_sets.map(|b| b.build());
         let beamlattice = self.beam_lattice.map(|b| b.build());
-        Ok(Mesh {
-            vertices: Vertices {
+        Ok(mesh::Mesh {
+            vertices: mesh::Vertices {
                 vertex: self.vertices,
             },
-            triangles: Triangles {
+            triangles: mesh::Triangles {
                 triangle: self.triangles,
             },
             trianglesets,
@@ -1833,8 +1833,8 @@ impl TriangleBuilder {
         self
     }
 
-    fn build(self) -> Triangle {
-        Triangle {
+    fn build(self) -> mesh::Triangle {
+        mesh::Triangle {
             v1: self.v1,
             v2: self.v2,
             v3: self.v3,
@@ -1848,8 +1848,8 @@ impl TriangleBuilder {
 
 /// Builder for constructing displacement mesh geometry.
 pub struct DisplacementMeshBuilder {
-    vertices: Vec<crate::core::displacement::Vertex>,
-    triangles: Vec<crate::core::displacement::Triangle>,
+    vertices: Vec<displacement::Vertex>,
+    triangles: Vec<displacement::Triangle>,
     triangle_sets: Option<TriangleSetsBuilder>,
     beam_lattice: Option<BeamLatticeBuilder>,
     triangles_did: OptionalResourceId,
@@ -1873,11 +1873,12 @@ impl DisplacementMeshBuilder {
     }
 
     pub fn add_vertex(&mut self, coords: &[f64; 3]) -> &mut Self {
-        self.vertices.push(crate::core::displacement::Vertex {
-            x: coords[0].into(),
-            y: coords[1].into(),
-            z: coords[2].into(),
-        });
+        self.vertices
+            .push(crate::model::domain::displacement::Vertex {
+                x: coords[0].into(),
+                y: coords[1].into(),
+                z: coords[2].into(),
+            });
         self
     }
 
@@ -1890,29 +1891,31 @@ impl DisplacementMeshBuilder {
 
     pub fn add_vertices_flat(&mut self, vertices: &[f64]) -> &mut Self {
         for vertex in vertices.chunks_exact(3) {
-            self.vertices.push(crate::core::displacement::Vertex {
-                x: vertex[0].into(),
-                y: vertex[1].into(),
-                z: vertex[2].into(),
-            });
+            self.vertices
+                .push(crate::model::domain::displacement::Vertex {
+                    x: vertex[0].into(),
+                    y: vertex[1].into(),
+                    z: vertex[2].into(),
+                });
         }
         self
     }
 
     pub fn add_triangle(&mut self, indices: &[usize; 3]) -> &mut Self {
-        self.triangles.push(crate::core::displacement::Triangle {
-            v1: indices[0] as ResourceIndex,
-            v2: indices[1] as ResourceIndex,
-            v3: indices[2] as ResourceIndex,
-            d1: OptionalResourceIndex::none(),
-            d2: OptionalResourceIndex::none(),
-            d3: OptionalResourceIndex::none(),
-            did: OptionalResourceId::none(),
-            p1: OptionalResourceIndex::none(),
-            p2: OptionalResourceIndex::none(),
-            p3: OptionalResourceIndex::none(),
-            pid: OptionalResourceId::none(),
-        });
+        self.triangles
+            .push(crate::model::domain::displacement::Triangle {
+                v1: indices[0] as ResourceIndex,
+                v2: indices[1] as ResourceIndex,
+                v3: indices[2] as ResourceIndex,
+                d1: OptionalResourceIndex::none(),
+                d2: OptionalResourceIndex::none(),
+                d3: OptionalResourceIndex::none(),
+                did: OptionalResourceId::none(),
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
+            });
         self
     }
 
@@ -1924,19 +1927,20 @@ impl DisplacementMeshBuilder {
         p3: OptionalResourceIndex,
         pid: OptionalResourceId,
     ) -> &mut Self {
-        self.triangles.push(crate::core::displacement::Triangle {
-            v1: indices[0] as ResourceIndex,
-            v2: indices[1] as ResourceIndex,
-            v3: indices[2] as ResourceIndex,
-            d1: OptionalResourceIndex::none(),
-            d2: OptionalResourceIndex::none(),
-            d3: OptionalResourceIndex::none(),
-            did: OptionalResourceId::none(),
-            p1,
-            p2,
-            p3,
-            pid,
-        });
+        self.triangles
+            .push(crate::model::domain::displacement::Triangle {
+                v1: indices[0] as ResourceIndex,
+                v2: indices[1] as ResourceIndex,
+                v3: indices[2] as ResourceIndex,
+                d1: OptionalResourceIndex::none(),
+                d2: OptionalResourceIndex::none(),
+                d3: OptionalResourceIndex::none(),
+                did: OptionalResourceId::none(),
+                p1,
+                p2,
+                p3,
+                pid,
+            });
         self
     }
 
@@ -1962,19 +1966,20 @@ impl DisplacementMeshBuilder {
 
     pub fn add_triangles_flat(&mut self, triangles: &[usize]) -> &mut Self {
         for triangle in triangles.chunks_exact(3) {
-            self.triangles.push(crate::core::displacement::Triangle {
-                v1: triangle[0] as ResourceIndex,
-                v2: triangle[1] as ResourceIndex,
-                v3: triangle[2] as ResourceIndex,
-                d1: OptionalResourceIndex::none(),
-                d2: OptionalResourceIndex::none(),
-                d3: OptionalResourceIndex::none(),
-                did: OptionalResourceId::none(),
-                p1: OptionalResourceIndex::none(),
-                p2: OptionalResourceIndex::none(),
-                p3: OptionalResourceIndex::none(),
-                pid: OptionalResourceId::none(),
-            });
+            self.triangles
+                .push(crate::model::domain::displacement::Triangle {
+                    v1: triangle[0] as ResourceIndex,
+                    v2: triangle[1] as ResourceIndex,
+                    v3: triangle[2] as ResourceIndex,
+                    d1: OptionalResourceIndex::none(),
+                    d2: OptionalResourceIndex::none(),
+                    d3: OptionalResourceIndex::none(),
+                    did: OptionalResourceId::none(),
+                    p1: OptionalResourceIndex::none(),
+                    p2: OptionalResourceIndex::none(),
+                    p3: OptionalResourceIndex::none(),
+                    pid: OptionalResourceId::none(),
+                });
         }
         self
     }
@@ -2007,14 +2012,14 @@ impl DisplacementMeshBuilder {
         self
     }
 
-    fn build_mesh(self) -> DisplacementMesh {
+    fn build_mesh(self) -> displacement::DisplacementMesh {
         let trianglesets = self.triangle_sets.map(|b| b.build());
         let beamlattice = self.beam_lattice.map(|b| b.build());
-        DisplacementMesh {
-            vertices: crate::core::displacement::Vertices {
+        displacement::DisplacementMesh {
+            vertices: crate::model::domain::displacement::Vertices {
                 vertex: self.vertices,
             },
-            triangles: crate::core::displacement::Triangles {
+            triangles: crate::model::domain::displacement::Triangles {
                 did: self.triangles_did,
                 triangle: self.triangles,
             },
@@ -2096,8 +2101,8 @@ impl DisplacementTriangleBuilder {
         self
     }
 
-    fn build(self) -> crate::core::displacement::Triangle {
-        crate::core::displacement::Triangle {
+    fn build(self) -> crate::model::domain::displacement::Triangle {
+        crate::model::domain::displacement::Triangle {
             v1: self.v1,
             v2: self.v2,
             v3: self.v3,
@@ -2195,7 +2200,7 @@ impl ComponentsObjectBuilder {
         Self {
             entity: ComponentsBuilder::new(all_existing_object_ids),
             object_id,
-            objecttype: Some(ObjectType::Model),
+            objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
             partnumber: None,
             name: None,
@@ -2209,7 +2214,7 @@ impl ComponentsObjectBuilder {
         }
     }
 
-    fn build(self) -> Result<Object, ComponentsObjectError> {
+    fn build(self) -> Result<object::Object, ComponentsObjectError> {
         let components = self
             .entity
             .build_components(self.is_production_ext_required)?;
@@ -2218,7 +2223,7 @@ impl ComponentsObjectBuilder {
             return Err(ComponentsObjectError::ObjectUuidNotSet);
         }
 
-        Ok(Object {
+        Ok(object::Object {
             id: self.object_id.0,
             objecttype: self.objecttype,
             thumbnail: self.thumbnail,
@@ -2230,7 +2235,7 @@ impl ComponentsObjectBuilder {
             slicestackid: self.slicestackid,
             slicepath: self.slicepath,
             meshresolution: self.meshresolution,
-            kind: Some(ObjectKind::Components(components)),
+            kind: Some(object::ObjectKind::Components(components)),
             // components: Some(components),
         })
     }
@@ -2455,7 +2460,7 @@ impl BooleanObjectBuilder {
         Self {
             entity: BooleanShapeBuilder::new(),
             object_id,
-            objecttype: Some(ObjectType::Model),
+            objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
             partnumber: None,
             name: None,
@@ -2469,14 +2474,14 @@ impl BooleanObjectBuilder {
         }
     }
 
-    fn build(self) -> Result<Object, BooleanShapeError> {
+    fn build(self) -> Result<object::Object, BooleanShapeError> {
         let boolean_shape = self.entity.build_boolean_shape()?;
 
         if self.is_production_ext_required && self.uuid.is_none() {
             return Err(BooleanShapeError::ObjectUuidNotSet);
         }
 
-        Ok(Object {
+        Ok(object::Object {
             id: self.object_id.0,
             objecttype: self.objecttype,
             thumbnail: self.thumbnail,
@@ -2488,7 +2493,7 @@ impl BooleanObjectBuilder {
             slicestackid: self.slicestackid,
             slicepath: self.slicepath,
             meshresolution: self.meshresolution,
-            kind: Some(ObjectKind::BooleanShape(boolean_shape)),
+            kind: Some(object::ObjectKind::BooleanShape(boolean_shape)),
         })
     }
 }
@@ -2499,17 +2504,17 @@ impl BooleanObjectBuilder {
 /// and the list of operand objects for CSG operations.
 pub struct BooleanShapeBuilder {
     base_object_id: Option<ObjectId>,
-    operation: BooleanOperation,
+    operation: boolean::BooleanOperation,
     base_transform: Option<Transform>,
     base_path: Option<PathResource>,
-    booleans: Vec<BooleanOp>,
+    booleans: Vec<boolean::Boolean>,
 }
 
 impl BooleanShapeBuilder {
     fn new() -> Self {
         Self {
             base_object_id: None,
-            operation: BooleanOperation::Union,
+            operation: boolean::BooleanOperation::Union,
             base_transform: None,
             base_path: None,
             booleans: Vec::new(),
@@ -2531,7 +2536,11 @@ impl BooleanShapeBuilder {
     /// ```rust,ignore
     /// obj.base_object(cube_id, BooleanOperation::Difference);
     /// ```
-    pub fn base_object(&mut self, object_id: ObjectId, operation: BooleanOperation) -> &mut Self {
+    pub fn base_object(
+        &mut self,
+        object_id: ObjectId,
+        operation: boolean::BooleanOperation,
+    ) -> &mut Self {
         self.base_object_id = Some(object_id);
         self.operation = operation;
         self
@@ -2595,7 +2604,7 @@ impl BooleanShapeBuilder {
         self
     }
 
-    fn build_boolean_shape(self) -> Result<BooleanShape, BooleanShapeError> {
+    fn build_boolean_shape(self) -> Result<boolean::BooleanShape, BooleanShapeError> {
         let base_object_id = self
             .base_object_id
             .ok_or(BooleanShapeError::BaseObjectNotSet)?;
@@ -2604,7 +2613,7 @@ impl BooleanShapeBuilder {
             return Err(BooleanShapeError::NoBooleanOperands);
         }
 
-        Ok(BooleanShape {
+        Ok(boolean::BooleanShape {
             objectid: base_object_id.0,
             operation: self.operation,
             transform: self.base_transform,
@@ -2659,8 +2668,8 @@ impl BooleanBuilder {
         }
     }
 
-    fn build(self) -> BooleanOp {
-        BooleanOp {
+    fn build(self) -> boolean::Boolean {
+        boolean::Boolean {
             objectid: self.objectid.0,
             transform: self.transform,
             path: self.path,
@@ -2676,7 +2685,7 @@ impl BooleanBuilder {
 ///
 /// Triangle sets are added as a recommended extension (not required).
 pub struct TriangleSetsBuilder {
-    sets: Vec<crate::core::triangle_set::TriangleSet>,
+    sets: Vec<triangle_set::TriangleSet>,
 }
 
 impl TriangleSetsBuilder {
@@ -2702,7 +2711,7 @@ impl TriangleSetsBuilder {
         refs: &[u32],
         ranges: &[(u32, u32)],
     ) -> &mut Self {
-        use crate::core::triangle_set::{TriangleRef, TriangleRefRange, TriangleSet};
+        use crate::model::domain::triangle_set::{TriangleRef, TriangleRefRange, TriangleSet};
 
         let triangle_ref = refs.iter().map(|&index| TriangleRef { index }).collect();
         let triangle_refrange = ranges
@@ -2722,8 +2731,8 @@ impl TriangleSetsBuilder {
         self
     }
 
-    fn build(self) -> crate::core::triangle_set::TriangleSets {
-        crate::core::triangle_set::TriangleSets {
+    fn build(self) -> crate::model::domain::triangle_set::TriangleSets {
+        crate::model::domain::triangle_set::TriangleSets {
             trianglesets: self.sets,
         }
     }
@@ -2745,17 +2754,17 @@ impl TriangleSetsBuilder {
 pub struct BeamLatticeBuilder {
     minlength: Option<f64>,
     radius: Option<f64>,
-    ballmode: Option<BallMode>,
+    ballmode: Option<beamlattice::BallMode>,
     ballradius: Option<f64>,
-    clippingmode: Option<ClippingMode>,
+    clippingmode: Option<beamlattice::ClippingMode>,
     clippingmesh: OptionalResourceId,
     representationmesh: OptionalResourceId,
     pid: OptionalResourceId,
     pindex: OptionalResourceIndex,
-    cap: Option<CapMode>,
-    beams: Vec<Beam>,
-    balls: Vec<Ball>,
-    beamsets: Vec<BeamSet>,
+    cap: Option<beamlattice::CapMode>,
+    beams: Vec<beamlattice::Beam>,
+    balls: Vec<beamlattice::Ball>,
+    beamsets: Vec<beamlattice::BeamSet>,
 }
 
 impl BeamLatticeBuilder {
@@ -2796,7 +2805,7 @@ impl BeamLatticeBuilder {
     /// Set how balls (nodes) are rendered at beam connections.
     ///
     /// See [`BallMode`] for available options.
-    pub fn ballmode(&mut self, mode: BallMode) -> &mut Self {
+    pub fn ballmode(&mut self, mode: beamlattice::BallMode) -> &mut Self {
         self.ballmode = Some(mode);
         self
     }
@@ -2812,7 +2821,7 @@ impl BeamLatticeBuilder {
     /// Set how the lattice is clipped by the clipping mesh.
     ///
     /// See [`ClippingMode`] for available options.
-    pub fn clippingmode(&mut self, mode: ClippingMode) -> &mut Self {
+    pub fn clippingmode(&mut self, mode: beamlattice::ClippingMode) -> &mut Self {
         self.clippingmode = Some(mode);
         self
     }
@@ -2848,7 +2857,7 @@ impl BeamLatticeBuilder {
     /// Set the default cap mode for beam ends.
     ///
     /// Individual beams can override this. See [`CapMode`] for available options.
-    pub fn cap(&mut self, cap: CapMode) -> &mut Self {
+    pub fn cap(&mut self, cap: beamlattice::CapMode) -> &mut Self {
         self.cap = Some(cap);
         self
     }
@@ -2956,24 +2965,24 @@ impl BeamLatticeBuilder {
         self
     }
 
-    fn build(self) -> BeamLattice {
-        let beams = Beams { beam: self.beams };
+    fn build(self) -> beamlattice::BeamLattice {
+        let beams = beamlattice::Beams { beam: self.beams };
 
         let balls = if self.balls.is_empty() {
             None
         } else {
-            Some(Balls { ball: self.balls })
+            Some(beamlattice::Balls { ball: self.balls })
         };
 
         let beamsets = if self.beamsets.is_empty() {
             None
         } else {
-            Some(BeamSets {
+            Some(beamlattice::BeamSets {
                 beamset: self.beamsets,
             })
         };
 
-        BeamLattice {
+        beamlattice::BeamLattice {
             minlength: self.minlength.unwrap_or(0.0001),
             radius: self.radius.unwrap_or(0.0001),
             ballmode: self.ballmode,
@@ -3000,8 +3009,8 @@ pub struct BeamBuilder {
     p1: OptionalResourceIndex,
     p2: OptionalResourceIndex,
     pid: OptionalResourceId,
-    cap1: Option<CapMode>,
-    cap2: Option<CapMode>,
+    cap1: Option<beamlattice::CapMode>,
+    cap2: Option<beamlattice::CapMode>,
 }
 
 impl BeamBuilder {
@@ -3051,19 +3060,19 @@ impl BeamBuilder {
     }
 
     /// Set the cap mode for the first end of the beam
-    pub fn cap_1(mut self, cap: CapMode) -> Self {
+    pub fn cap_1(mut self, cap: beamlattice::CapMode) -> Self {
         self.cap1 = Some(cap);
         self
     }
 
     /// Set the cap mode for the second end of the beam
-    pub fn cap_2(mut self, cap: CapMode) -> Self {
+    pub fn cap_2(mut self, cap: beamlattice::CapMode) -> Self {
         self.cap2 = Some(cap);
         self
     }
 
-    fn build(self) -> Beam {
-        Beam {
+    fn build(self) -> beamlattice::Beam {
+        beamlattice::Beam {
             v1: self.v1,
             v2: self.v2,
             r1: self.r1,
@@ -3114,8 +3123,8 @@ impl BallBuilder {
         self
     }
 
-    fn build(self) -> Ball {
-        Ball {
+    fn build(self) -> beamlattice::Ball {
+        beamlattice::Ball {
             vindex: self.vindex,
             r: self.r,
             p: self.p,
@@ -3178,19 +3187,19 @@ impl BeamSetBuilder {
         self
     }
 
-    fn build(self) -> BeamSet {
-        BeamSet {
+    fn build(self) -> beamlattice::BeamSet {
+        beamlattice::BeamSet {
             name: self.name.map(Into::into),
             identifier: self.identifier.map(Into::into),
             refs: self
                 .beam_refs
                 .into_iter()
-                .map(|index| BeamRef { index })
+                .map(|index| beamlattice::BeamRef { index })
                 .collect(),
             ballref: self
                 .ball_refs
                 .into_iter()
-                .map(|index| BallRef { index })
+                .map(|index| beamlattice::BallRef { index })
                 .collect(),
         }
     }
@@ -3210,20 +3219,20 @@ impl ColorGroupBuilder {
         }
     }
 
-    pub fn add_color(&mut self, color: crate::core::Color) -> &mut Self {
+    pub fn add_color(&mut self, color: crate::model::Color) -> &mut Self {
         self.colors.push(material::ColorElement { color });
         self
     }
 
-    pub fn add_colors(&mut self, colors: &[crate::core::Color]) -> &mut Self {
+    pub fn add_colors(&mut self, colors: &[crate::model::Color]) -> &mut Self {
         for color in colors {
             self.add_color(*color);
         }
         self
     }
 
-    fn build(self) -> ColorGroup {
-        ColorGroup {
+    fn build(self) -> material::ColorGroup {
+        material::ColorGroup {
             id: self.id,
             color: self.colors,
         }
@@ -3282,8 +3291,8 @@ impl Texture2DBuilder {
         self
     }
 
-    fn build(self) -> Result<Texture2D, Texture2DError> {
-        Ok(Texture2D {
+    fn build(self) -> Result<material::Texture2D, Texture2DError> {
+        Ok(material::Texture2D {
             id: self.id,
             path: self.path.ok_or(Texture2DError::PathNotSet)?,
             contenttype: self.contenttype.ok_or(Texture2DError::ContentTypeNotSet)?,
@@ -3330,8 +3339,8 @@ impl Texture2DGroupBuilder {
         self
     }
 
-    fn build(self) -> Result<Texture2DGroup, Texture2DGroupError> {
-        Ok(Texture2DGroup {
+    fn build(self) -> Result<material::Texture2DGroup, Texture2DGroupError> {
+        Ok(material::Texture2DGroup {
             id: self.id,
             texid: self.texid.ok_or(Texture2DGroupError::TexIdNotSet)?,
             tex2coord: self.tex2coord,
@@ -3386,11 +3395,11 @@ impl CompositeMaterialsBuilder {
         self
     }
 
-    fn build(self) -> Result<CompositeMaterials, CompositeMaterialsError> {
+    fn build(self) -> Result<material::CompositeMaterials, CompositeMaterialsError> {
         if self.matindices.is_empty() {
             return Err(CompositeMaterialsError::MatIndicesEmpty);
         }
-        Ok(CompositeMaterials {
+        Ok(material::CompositeMaterials {
             id: self.id,
             matid: self.matid.ok_or(CompositeMaterialsError::MatIdNotSet)?,
             matindices: ResourceIndexCollection::from(self.matindices),
@@ -3452,11 +3461,11 @@ impl MultiPropertiesBuilder {
         self
     }
 
-    fn build(self) -> Result<MultiProperties, MultiPropertiesError> {
+    fn build(self) -> Result<material::MultiProperties, MultiPropertiesError> {
         if self.pids.is_empty() {
             return Err(MultiPropertiesError::PidsEmpty);
         }
-        Ok(MultiProperties {
+        Ok(material::MultiProperties {
             id: self.id,
             pids: ResourceIdCollection::from(self.pids),
             blendmethods: self.blendmethods,
@@ -3487,7 +3496,7 @@ impl BaseMaterialsBuilder {
         self
     }
 
-    pub fn add_base_color(&mut self, name: &str, displaycolor: crate::core::Color) -> &mut Self {
+    pub fn add_base_color(&mut self, name: &str, displaycolor: crate::model::Color) -> &mut Self {
         self.bases.push(Base {
             name: StrResource::new(name),
             displaycolor: StrResource::new(displaycolor.to_hex_compact()),
@@ -3555,8 +3564,8 @@ impl Displacement2DBuilder {
         self
     }
 
-    fn build(self) -> Result<Displacement2D, Displacement2DError> {
-        Ok(Displacement2D {
+    fn build(self) -> Result<displacement::Displacement2D, Displacement2DError> {
+        Ok(displacement::Displacement2D {
             id: self.id,
             path: self.path.ok_or(Displacement2DError::PathNotSet)?,
             channel: self.channel,
@@ -3570,7 +3579,7 @@ impl Displacement2DBuilder {
 /// Builder for norm vector groups.
 pub struct NormVectorGroupBuilder {
     id: ResourceId,
-    vectors: Vec<NormVector>,
+    vectors: Vec<displacement::NormVector>,
 }
 
 impl NormVectorGroupBuilder {
@@ -3582,7 +3591,7 @@ impl NormVectorGroupBuilder {
     }
 
     pub fn add_norm_vector(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
-        self.vectors.push(NormVector {
+        self.vectors.push(displacement::NormVector {
             x: x.into(),
             y: y.into(),
             z: z.into(),
@@ -3597,8 +3606,8 @@ impl NormVectorGroupBuilder {
         self
     }
 
-    fn build(self) -> NormVectorGroup {
-        NormVectorGroup {
+    fn build(self) -> displacement::NormVectorGroup {
+        displacement::NormVectorGroup {
             id: self.id,
             normvector: self.vectors,
         }
@@ -3664,8 +3673,8 @@ impl Disp2DGroupBuilder {
         self
     }
 
-    fn build(self) -> Result<Disp2DGroup, Disp2DGroupError> {
-        Ok(Disp2DGroup {
+    fn build(self) -> Result<displacement::Disp2DGroup, Disp2DGroupError> {
+        Ok(displacement::Disp2DGroup {
             id: self.id,
             dispid: self.dispid.ok_or(Disp2DGroupError::DispIdNotSet)?,
             nid: self.nid.ok_or(Disp2DGroupError::NormVectorGroupIdNotSet)?,
@@ -3733,8 +3742,8 @@ pub enum SliceStackBuilderError {
 pub struct SliceStackBuilder {
     id: SliceStackId,
     zbottom: Option<f64>,
-    slices: Vec<Slice>,
-    slicerefs: Vec<SliceRef>,
+    slices: Vec<slice::Slice>,
+    slicerefs: Vec<slice::SliceRef>,
 }
 
 impl SliceStackBuilder {
@@ -3783,18 +3792,18 @@ impl SliceStackBuilder {
     /// - `slicestackid`: The ID of the slice stack in the external file
     /// - `slicepath`: Path to the model file containing the slice stack
     pub fn add_sliceref(&mut self, slicestackid: ResourceId, slicepath: &str) -> &mut Self {
-        self.slicerefs.push(SliceRef {
+        self.slicerefs.push(slice::SliceRef {
             slicestackid,
             slicepath: PathResource::try_from(slicepath).expect("Invalid PathResource"),
         });
         self
     }
 
-    fn build(self) -> Result<SliceStack, SliceStackBuilderError> {
+    fn build(self) -> Result<slice::SliceStack, SliceStackBuilderError> {
         if !self.slicerefs.is_empty() && !self.slices.is_empty() {
             Err(SliceStackBuilderError::BothSliceAndSliceRefCannotBeSet)
         } else {
-            Ok(SliceStack {
+            Ok(slice::SliceStack {
                 id: self.id.0,
                 zbottom: self.zbottom.map(|zbot| zbot.into()),
                 slice: self.slices,
@@ -3810,7 +3819,7 @@ impl SliceStackBuilder {
 pub struct SliceBuilder {
     ztop: Option<f64>,
     vertices: Vec<slice::Vertex>,
-    polygons: Vec<Polygon>,
+    polygons: Vec<slice::Polygon>,
 }
 
 impl SliceBuilder {
@@ -3878,7 +3887,7 @@ impl SliceBuilder {
         self
     }
 
-    fn build(self) -> Slice {
+    fn build(self) -> slice::Slice {
         let vertices = if self.vertices.is_empty() {
             None
         } else {
@@ -3887,7 +3896,7 @@ impl SliceBuilder {
             })
         };
 
-        Slice {
+        slice::Slice {
             ztop: self.ztop.unwrap_or(0.0).into(),
             vertices,
             polygon: self.polygons,
@@ -3900,7 +3909,7 @@ impl SliceBuilder {
 /// Polygons define closed or open contours made of line segments.
 pub struct PolygonBuilder {
     startv: Option<ResourceIndex>,
-    segments: Vec<Segment>,
+    segments: Vec<slice::Segment>,
 }
 
 impl PolygonBuilder {
@@ -3932,7 +3941,7 @@ impl PolygonBuilder {
     ///
     /// - `v2`: The index of the second vertex of this segment
     pub fn add_segment(&mut self, v2: ResourceIndex) -> &mut Self {
-        self.segments.push(Segment {
+        self.segments.push(slice::Segment {
             v2,
             p1: OptionalResourceIndex::none(),
             p2: OptionalResourceIndex::none(),
@@ -3954,7 +3963,7 @@ impl PolygonBuilder {
         p1: OptionalResourceIndex,
         p2: OptionalResourceIndex,
     ) -> &mut Self {
-        self.segments.push(Segment {
+        self.segments.push(slice::Segment {
             v2,
             p1,
             p2,
@@ -3971,12 +3980,12 @@ impl PolygonBuilder {
         p2: OptionalResourceIndex,
         pid: OptionalResourceId,
     ) -> &mut Self {
-        self.segments.push(Segment { v2, p1, p2, pid });
+        self.segments.push(slice::Segment { v2, p1, p2, pid });
         self
     }
 
-    fn build(self) -> Polygon {
-        Polygon {
+    fn build(self) -> slice::Polygon {
+        slice::Polygon {
             startv: self.startv.unwrap_or(0),
             segment: self.segments,
         }
@@ -3999,7 +4008,7 @@ mod tests {
         let cube_id = builder
             .add_mesh_object(|obj| {
                 obj.name("Cube");
-                obj.object_type(ObjectType::Model);
+                obj.object_type(object::ObjectType::Model);
                 obj.add_vertex(&[0.0, 0.0, 0.0])
                     .add_vertex(&[10.0, 0.0, 0.0])
                     .add_vertex(&[10.0, 10.0, 0.0])
@@ -4263,7 +4272,7 @@ mod tests {
         builder.add_build(None).unwrap();
 
         builder.add_color_group(|group| {
-            group.add_color(crate::core::Color {
+            group.add_color(crate::model::Color {
                 r: 255,
                 g: 0,
                 b: 0,
@@ -4308,7 +4317,7 @@ mod tests {
     #[cfg(not(feature = "uuid"))]
     #[test]
     fn test_build_item_advanced_tests() {
-        use crate::core::StrResource;
+        use crate::model::StrResource;
 
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         let _ = builder.make_production_extension_required();
@@ -4322,7 +4331,7 @@ mod tests {
             .add_build(Some(UuidResource::from("build-uuid")))
             .unwrap();
 
-        let transform = crate::core::transform::Transform([
+        let transform = crate::model::transform::Transform([
             1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
         ]);
         builder
@@ -4349,12 +4358,12 @@ mod tests {
     #[cfg(not(feature = "uuid"))]
     #[test]
     fn test_object_builder_tests() {
-        use crate::core::StrResource;
+        use crate::model::StrResource;
 
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         let obj_id = builder
             .add_mesh_object(|obj| {
-                obj.object_type(crate::core::object::ObjectType::Support);
+                obj.object_type(crate::model::object::ObjectType::Support);
                 obj.name("support obj");
                 obj.part_number("part123");
                 obj.uuid("obj-uuid");
@@ -4613,8 +4622,8 @@ mod tests {
             .pindex_1(OptionalResourceIndex::new(10))
             .pindex_2(OptionalResourceIndex::new(20))
             .pid(5)
-            .cap_1(CapMode::Hemisphere)
-            .cap_2(CapMode::Butt)
+            .cap_1(beamlattice::CapMode::Hemisphere)
+            .cap_2(beamlattice::CapMode::Butt)
             .build();
 
         assert_eq!(beam.v1, 0);
@@ -4624,8 +4633,8 @@ mod tests {
         assert_eq!(beam.p1, OptionalResourceIndex::new(10));
         assert_eq!(beam.p2, OptionalResourceIndex::new(20));
         assert_eq!(beam.pid, OptionalResourceId::new(5));
-        assert_eq!(beam.cap1, Some(CapMode::Hemisphere));
-        assert_eq!(beam.cap2, Some(CapMode::Butt));
+        assert_eq!(beam.cap1, Some(beamlattice::CapMode::Hemisphere));
+        assert_eq!(beam.cap2, Some(beamlattice::CapMode::Butt));
     }
 
     // ========== BallBuilder Tests ==========
@@ -4731,7 +4740,7 @@ mod tests {
         builder
             .minlength(0.001)
             .radius(1.0)
-            .ballmode(BallMode::Mixed)
+            .ballmode(beamlattice::BallMode::Mixed)
             .ballradius(0.5)
             .add_beam(0, 1)
             .add_ball(0)
@@ -4739,7 +4748,7 @@ mod tests {
 
         let beamlattice = builder.build();
 
-        assert_eq!(beamlattice.ballmode, Some(BallMode::Mixed));
+        assert_eq!(beamlattice.ballmode, Some(beamlattice::BallMode::Mixed));
         assert_eq!(beamlattice.ballradius, Some(0.5));
         assert!(beamlattice.balls.is_some());
 
@@ -4760,28 +4769,31 @@ mod tests {
         builder
             .minlength(0.002)
             .radius(2.0)
-            .ballmode(BallMode::All)
+            .ballmode(beamlattice::BallMode::All)
             .ballradius(1.0)
-            .clippingmode(ClippingMode::Inside)
+            .clippingmode(beamlattice::ClippingMode::Inside)
             .clippingmesh(clip_mesh_id)
             .representationmesh(repr_mesh_id)
             .pid(5)
             .pindex(10)
-            .cap(CapMode::Sphere)
+            .cap(beamlattice::CapMode::Sphere)
             .add_beam(0, 1);
 
         let beamlattice = builder.build();
 
         assert_eq!(beamlattice.minlength, 0.002);
         assert_eq!(beamlattice.radius, 2.0);
-        assert_eq!(beamlattice.ballmode, Some(BallMode::All));
+        assert_eq!(beamlattice.ballmode, Some(beamlattice::BallMode::All));
         assert_eq!(beamlattice.ballradius, Some(1.0));
-        assert_eq!(beamlattice.clippingmode, Some(ClippingMode::Inside));
+        assert_eq!(
+            beamlattice.clippingmode,
+            Some(beamlattice::ClippingMode::Inside)
+        );
         assert_eq!(beamlattice.clippingmesh, OptionalResourceId::new(10));
         assert_eq!(beamlattice.representationmesh, OptionalResourceId::new(20));
         assert_eq!(beamlattice.pid, OptionalResourceId::new(5));
         assert_eq!(beamlattice.pindex, OptionalResourceIndex::new(10));
-        assert_eq!(beamlattice.cap, Some(CapMode::Sphere));
+        assert_eq!(beamlattice.cap, Some(beamlattice::CapMode::Sphere));
     }
 
     #[test]
@@ -4805,7 +4817,7 @@ mod tests {
         let mut builder = BeamLatticeBuilder::new();
         builder
             .radius(1.0)
-            .ballmode(BallMode::Mixed)
+            .ballmode(beamlattice::BallMode::Mixed)
             .ballradius(0.5)
             .add_beam(0, 1)
             .add_balls(&[0, 1, 2, 3]);
@@ -4884,7 +4896,7 @@ mod tests {
                 .add_beam_lattice(|bl| {
                     bl.minlength(0.001)
                         .radius(1.0)
-                        .cap(CapMode::Sphere)
+                        .cap(beamlattice::CapMode::Sphere)
                         .add_beams(&[(0, 1), (1, 2), (2, 3), (3, 0)]);
                 });
                 Ok(())
@@ -4920,7 +4932,7 @@ mod tests {
                     .add_beam_lattice(|bl| {
                         bl.minlength(0.001)
                             .radius(1.0)
-                            .ballmode(BallMode::Mixed)
+                            .ballmode(beamlattice::BallMode::Mixed)
                             .ballradius(0.5)
                             .add_beams(&[(0, 1), (1, 2)])
                             .add_balls(&[0, 2]);

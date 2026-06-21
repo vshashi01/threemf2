@@ -1,10 +1,10 @@
-use threemf2::core::mesh::Mesh;
-use threemf2::core::model::Model;
-use threemf2::core::resources::Resources;
-use threemf2::core::transform::Transform;
-use threemf2::core::types::ResourceId;
 use threemf2::io::Error;
 use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
+use threemf2::model::domain::mesh::Mesh;
+use threemf2::model::domain::model::Model;
+use threemf2::model::domain::resources::Resources;
+use threemf2::model::domain::transform::Transform;
+use threemf2::model::domain::types::ResourceId;
 
 use crate::bbox::BoundingBox;
 use crate::beam_lattice_pipeline::{BeamVertexIn, ColoredBeamLattice};
@@ -429,13 +429,13 @@ impl Default for ThumbnailGenerator {
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
-    use threemf2::core::model::ThreemfExtensions;
+    use threemf2::model::domain::model::ThreemfExtensions;
 
     use super::*;
-    use threemf2::core::build::Build;
-    use threemf2::core::resources::Resources;
-    use threemf2::core::types::UuidResource;
     use threemf2::io::ThreemfPackage;
+    use threemf2::model::domain::build::Build;
+    use threemf2::model::domain::resources::Resources;
+    use threemf2::model::domain::types::UuidResource;
 
     use std::cmp::Ordering;
     use std::fs::File;

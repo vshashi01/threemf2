@@ -8,7 +8,7 @@ use instant_xml::FromXml;
 use serde::Deserialize;
 
 use crate::{
-    core::types::{ResourceIndex, StrResource},
+    model::{ResourceIndex, StrResource},
     threemf_namespaces::CORE_TRIANGLESET_NS,
 };
 
@@ -190,11 +190,11 @@ mod write_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex,
+        model::domain::{
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
+        model::{OptionalResourceId, OptionalResourceIndex},
         threemf_namespaces::{
             BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, CORE_NS, CORE_TRIANGLESET_NS,
             CORE_TRIANGLESET_PREFIX,
@@ -321,11 +321,11 @@ mod memory_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex,
+        model::domain::{
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
+        model::{OptionalResourceId, OptionalResourceIndex},
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
     };
 
@@ -454,11 +454,11 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        core::{
-            OptionalResourceId, OptionalResourceIndex,
+        model::domain::{
             mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
             triangle_set::{TriangleRef, TriangleRefRange, TriangleSet, TriangleSets},
         },
+        model::{OptionalResourceId, OptionalResourceIndex},
         threemf_namespaces::{CORE_NS, CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX},
     };
 

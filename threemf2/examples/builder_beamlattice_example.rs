@@ -1,4 +1,4 @@
-use threemf2::core::{
+use threemf2::model::{
     builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit},
     query::{get_mesh_objects_from_model, get_model_view},
 };

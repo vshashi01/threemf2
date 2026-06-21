@@ -10,7 +10,7 @@ use instant_xml::{FromXml, Kind};
 #[cfg(feature = "speed-optimized-read")]
 use serde::Deserialize;
 
-use crate::core::{PathResource, StrResource};
+use crate::model::{PathResource, StrResource};
 
 const RELATIONSHIP_NS: &str = "http://schemas.openxmlformats.org/package/2006/relationships";
 
@@ -156,7 +156,7 @@ mod write_tests {
     use instant_xml::to_string;
     use pretty_assertions::assert_eq;
 
-    use crate::core::PathResource;
+    use crate::model::PathResource;
 
     use super::{
         MODEL_TYPE_NS, RELATIONSHIP_NS, Relationship, RelationshipType, Relationships,
@@ -200,7 +200,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::core::PathResource;
+    use crate::model::PathResource;
 
     use super::{
         MODEL_TYPE_NS, RELATIONSHIP_NS, Relationship, RelationshipType, Relationships,
@@ -246,7 +246,7 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::core::PathResource;
+    use crate::model::PathResource;
 
     use super::{
         MODEL_TYPE_NS, RELATIONSHIP_NS, Relationship, RelationshipType, Relationships,

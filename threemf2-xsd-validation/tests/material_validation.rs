@@ -5,20 +5,22 @@
 
 use std::io::Cursor;
 use threemf2::{
-    core::{
-        Color, OptionalResourceId, OptionalResourceIndex, PathResource,
-        build::{Build, Item},
-        material::{
-            ColorElement, ColorGroup, Filter, Multi, MultiProperties, Tex2Coord, Texture2D,
-            Texture2DGroup, TextureContentType, TileStyle,
-        },
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-        types::{Double, ResourceIdCollection, ResourceIndexCollection},
-    },
     io::ThreemfPackageBuilder,
+    model::{
+        Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource,
+        ResourceIdCollection, ResourceIndexCollection,
+        domain::{
+            build::{Build, Item},
+            material::{
+                ColorElement, ColorGroup, Filter, Multi, MultiProperties, Tex2Coord, Texture2D,
+                Texture2DGroup, TextureContentType, TileStyle,
+            },
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+            model::{Model, ThreemfExtensions, Unit},
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+        },
+    },
     threemf_namespaces::ThreemfNamespace,
 };
 

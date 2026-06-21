@@ -1,7 +1,7 @@
 use threemf2::{
-    core::{model::Model, query::get_model_view},
     io::CachePolicy,
     io::ThreemfPackageLazyReader,
+    model::{domain::model::Model, query::get_model_view},
 };
 
 use std::{fs::File, path::PathBuf};

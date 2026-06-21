@@ -5,17 +5,18 @@
 
 use std::io::Cursor;
 use threemf2::{
-    core::{
-        OptionalResourceId, UuidResource,
-        build::{Build, Item},
-        component::Component,
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-        types::OptionalResourceIndex,
-    },
     io::ThreemfPackageBuilder,
+    model::{
+        OptionalResourceId, OptionalResourceIndex, UuidResource,
+        domain::{
+            build::{Build, Item},
+            component::{self, Component},
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+            model::{Model, ThreemfExtensions, Unit},
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+        },
+    },
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -276,11 +277,9 @@ fn validate_production_model_with_components() {
                     uuid: Some(UuidResource::from(
                         "uuid-assembly-1234-5678-90ab-cdef12345678",
                     )),
-                    kind: Some(ObjectKind::Components(
-                        threemf2::core::component::Components {
-                            component: vec![component],
-                        },
-                    )),
+                    kind: Some(ObjectKind::Components(component::Components {
+                        component: vec![component],
+                    })),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,

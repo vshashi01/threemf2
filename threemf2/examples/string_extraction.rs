@@ -1,7 +1,7 @@
 use std::{fs::File, path::PathBuf};
 use threemf2::{
-    core::PathResource,
     io::{CachePolicy, Error, ThreemfPackageLazyReader},
+    model::PathResource,
 };
 
 /// This example demonstrates extracting raw XML strings from a 3MF package

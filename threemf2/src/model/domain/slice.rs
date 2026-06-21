@@ -42,9 +42,8 @@
 //! ```
 
 use crate::{
-    core::{
-        OptionalResourceId, OptionalResourceIndex, ResourceIndex,
-        types::{Double, PathResource, ResourceId},
+    model::{
+        Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIndex,
     },
     threemf_namespaces::SLICE_NS,
 };
@@ -384,8 +383,8 @@ pub struct Segment {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p1: OptionalResourceIndex,
@@ -395,8 +394,8 @@ pub struct Segment {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_index_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_index_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_index_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_index_impl::deserialize"
         )
     )]
     pub p2: OptionalResourceIndex,
@@ -406,8 +405,8 @@ pub struct Segment {
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(
-            default = "crate::core::types::opt_res_id_impl::default_none",
-            deserialize_with = "crate::core::types::opt_res_id_impl::deserialize"
+            default = "crate::model::domain::types::opt_res_id_impl::default_none",
+            deserialize_with = "crate::model::domain::types::opt_res_id_impl::deserialize"
         )
     )]
     pub pid: OptionalResourceId,
@@ -485,7 +484,10 @@ mod write_tests {
     use instant_xml::{ToXml, to_string};
     use pretty_assertions::assert_eq;
 
-    use crate::{core::PathResource, threemf_namespaces::SLICE_NS};
+    use crate::{
+        model::{OptionalResourceId, OptionalResourceIndex, PathResource},
+        threemf_namespaces::SLICE_NS,
+    };
 
     use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
 
@@ -567,21 +569,21 @@ mod write_tests {
                 segment: vec![
                     super::Segment {
                         v2: 1,
-                        p1: crate::core::OptionalResourceIndex::none(),
-                        p2: crate::core::OptionalResourceIndex::none(),
-                        pid: crate::core::OptionalResourceId::none(),
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                     super::Segment {
                         v2: 2,
-                        p1: crate::core::OptionalResourceIndex::none(),
-                        p2: crate::core::OptionalResourceIndex::none(),
-                        pid: crate::core::OptionalResourceId::none(),
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                     super::Segment {
                         v2: 3,
-                        p1: crate::core::OptionalResourceIndex::none(),
-                        p2: crate::core::OptionalResourceIndex::none(),
-                        pid: crate::core::OptionalResourceId::none(),
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     },
                 ],
             }],
@@ -634,9 +636,9 @@ mod write_tests {
                     startv: 0,
                     segment: vec![super::Segment {
                         v2: 1,
-                        p1: crate::core::OptionalResourceIndex::none(),
-                        p2: crate::core::OptionalResourceIndex::none(),
-                        pid: crate::core::OptionalResourceId::none(),
+                        p1: OptionalResourceIndex::none(),
+                        p2: OptionalResourceIndex::none(),
+                        pid: OptionalResourceId::none(),
                     }],
                 }],
             }],
@@ -679,7 +681,7 @@ mod memory_optimized_read_tests {
     use instant_xml::from_str;
     use pretty_assertions::assert_eq;
 
-    use crate::core::{OptionalResourceId, OptionalResourceIndex, PathResource};
+    use crate::model::{OptionalResourceId, OptionalResourceIndex, PathResource};
     use crate::threemf_namespaces::SLICE_NS;
 
     use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
@@ -806,7 +808,7 @@ mod speed_optimized_read_tests {
     use pretty_assertions::assert_eq;
     use serde_roxmltree::from_str;
 
-    use crate::core::{OptionalResourceId, OptionalResourceIndex, PathResource};
+    use crate::model::{OptionalResourceId, OptionalResourceIndex, PathResource};
     use crate::threemf_namespaces::SLICE_NS;
 
     use super::{MeshResolution, Slice, SliceRef, SliceStack, Vertex, Vertices};
