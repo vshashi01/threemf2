@@ -3705,7 +3705,7 @@ pub enum SliceStackBuilderError {
 /// # Examples
 ///
 /// ```rust,ignore
-/// use threemf2::io::builder::{ModelBuilder, Unit};
+/// use package::builder::{ModelBuilder, Unit};
 ///
 /// let mut builder = ModelBuilder::new(Unit::Millimeter, true);
 ///

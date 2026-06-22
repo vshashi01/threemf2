@@ -17,11 +17,11 @@
 use std::io::Cursor;
 
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::{
         builder::{BooleanOperation, ModelBuilder, ObjectType, Unit},
         query::get_model_view,
     },
+    package::ThreemfPackageBuilder,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

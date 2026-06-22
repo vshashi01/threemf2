@@ -2,12 +2,12 @@
 //!
 //! This module contains the concrete implementations for each validation rule.
 
-use crate::io::ThreemfPackage;
-use crate::io::query as io_query;
-use crate::io::validator::{Severity, ValidationIssue, ValidationRule};
 use crate::model::domain::model::Model;
 use crate::model::query as core_query;
 use crate::model::{OptionalResourceId, OptionalResourceIndex};
+use crate::package::ThreemfPackage;
+use crate::package::domain::validator::{Severity, ValidationIssue, ValidationRule};
+use crate::package::query as io_query;
 use std::collections::HashSet;
 
 /// Runs a single validation rule against a model.

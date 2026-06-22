@@ -6,9 +6,9 @@
 #[cfg(test)]
 mod tests {
 
-    use threemf2::io::ThreemfPackage;
-    use threemf2::io::query as io_query;
     use threemf2::model::query as core_query;
+    use threemf2::package::ThreemfPackage;
+    use threemf2::package::query as io_query;
 
     use std::{fs::File, path::PathBuf};
 
@@ -72,8 +72,8 @@ mod tests {
     #[test]
     fn read_displacement_package_lazy_memory_optimized() {
         use threemf2::{
-            io::{CachePolicy, ThreemfPackageLazyReader},
             model::PathResource,
+            package::{CachePolicy, ThreemfPackageLazyReader},
         };
 
         let path =

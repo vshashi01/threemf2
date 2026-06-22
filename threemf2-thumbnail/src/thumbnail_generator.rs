@@ -1,10 +1,10 @@
-use threemf2::io::Error;
-use threemf2::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 use threemf2::model::domain::mesh::Mesh;
 use threemf2::model::domain::model::Model;
 use threemf2::model::domain::resources::Resources;
 use threemf2::model::domain::transform::Transform;
 use threemf2::model::domain::types::ResourceId;
+use threemf2::package::Error;
+use threemf2::package::domain::thumbnail_handle::{ImageFormat, ThumbnailHandle};
 
 use crate::bbox::BoundingBox;
 use crate::beam_lattice_pipeline::{BeamVertexIn, ColoredBeamLattice};
@@ -432,10 +432,10 @@ mod tests {
     use threemf2::model::domain::model::ThreemfExtensions;
 
     use super::*;
-    use threemf2::io::ThreemfPackage;
     use threemf2::model::domain::build::Build;
     use threemf2::model::domain::resources::Resources;
     use threemf2::model::domain::types::UuidResource;
+    use threemf2::package::ThreemfPackage;
 
     use std::cmp::Ordering;
     use std::fs::File;

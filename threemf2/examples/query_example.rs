@@ -9,8 +9,8 @@
 //! ```
 
 use threemf2::{
-    io::{ThreemfPackage, query as io_query},
     model::query as core_query,
+    package::{ThreemfPackage, query as io_query},
 };
 
 use std::{fs::File, path::PathBuf};

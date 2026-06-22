@@ -1,4 +1,4 @@
-use crate::io::XmlNamespace;
+use crate::package::domain::XmlNamespace;
 
 /// Extracts xmlns attribute declarations from an XML element attribute definitions
 pub fn parse_xmlns_attributes(tag_content: &str) -> Vec<XmlNamespace> {

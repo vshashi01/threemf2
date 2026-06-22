@@ -7,14 +7,14 @@ use zip::write::SimpleFileOptions;
 use instant_xml::ToXml;
 
 use crate::{
-    io::{
+    model::{PathResource, domain::model::Model},
+    package::Error,
+    package::domain::{
         content_types::{ContentTypes, DefaultContentTypeEnum},
-        error::Error,
         relationship::{RelationshipType, Relationships},
         thumbnail_handle::ThumbnailHandle,
         utils,
     },
-    model::{PathResource, domain::model::Model},
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -22,7 +22,7 @@ use crate::{
     feature = "io-memory-optimized-read",
     feature = "io-speed-optimized-read"
 ))]
-use crate::io::zip_utils::XmlDeserializer;
+use crate::package::domain::zip_utils::XmlDeserializer;
 
 use std::collections::HashMap;
 use std::io::{self, Read, Seek, Write};
@@ -286,7 +286,7 @@ impl ThreemfPackage {
         process_sub_models: bool,
         deserializer: XmlDeserializer,
     ) -> Result<Self, Error> {
-        use crate::io::zip_utils;
+        use crate::package::domain::zip_utils;
 
         let (mut zip, content_types, _, root_rels_filename) =
             zip_utils::setup_archive_and_content_types(reader, deserializer)?;
@@ -388,16 +388,16 @@ mod processor {
     use zip::ZipArchive;
 
     use crate::{
-        io::{
-            Error::ThumbnailError,
-            ThreemfPackage,
-            content_types::ContentTypes,
-            error::Error,
-            relationship::{RelationshipType, Relationships},
-            thumbnail_handle::{ImageFormat, ThumbnailHandle},
-            zip_utils::{self, XmlDeserializer},
-        },
         model::{PathResource, domain::model::Model},
+        package::{
+            Error, ThreemfPackage,
+            domain::{
+                content_types::ContentTypes,
+                relationship::{RelationshipType, Relationships},
+                thumbnail_handle::{ImageFormat, ThumbnailHandle},
+                zip_utils::{self, XmlDeserializer},
+            },
+        },
     };
 
     use std::{
@@ -475,7 +475,7 @@ mod processor {
                                         {
                                             ImageFormat::from_ext(ext)
                                         } else {
-                                            return Err(ThumbnailError(format!(
+                                            return Err(Error::ThumbnailError(format!(
                                                 "Referenced thumbnail path: {path:?} is not a valid archive path to thumbnail data"
                                             )));
                                         }
@@ -521,7 +521,6 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        io::{content_types::*, relationship::*},
         model::PathResource,
         model::domain::{
             build::Build,
@@ -529,6 +528,7 @@ mod tests {
             object::{Object, ObjectType},
             resources::Resources,
         },
+        package::domain::{content_types::*, relationship::*},
     };
 
     use super::ThreemfPackage;
@@ -789,8 +789,8 @@ mod tests {
     #[test]
     pub fn io_thumbnail_content_test() {
         use crate::{
-            io::thumbnail_handle::{ImageFormat, ThumbnailHandle},
             model::domain::model::ThreemfExtensions,
+            package::domain::thumbnail_handle::{ImageFormat, ThumbnailHandle},
         };
 
         let test_file_bytes = include_bytes!("../../tests/data/test_thumbnail.png");
@@ -872,7 +872,7 @@ mod tests {
 
         match read_result {
             Ok(package) => {
-                use crate::io::thumbnail_handle::ImageFormat;
+                use crate::package::domain::thumbnail_handle::ImageFormat;
 
                 assert!(package.thumbnails.contains_key(&thumbnail_target));
                 let thumbnail_rep = package.thumbnails.get(&thumbnail_target).unwrap();

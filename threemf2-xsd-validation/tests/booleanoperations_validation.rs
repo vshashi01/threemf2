@@ -5,7 +5,6 @@
 
 use std::io::Cursor;
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::{
         OptionalResourceId, OptionalResourceIndex, UuidResource,
         domain::{
@@ -18,6 +17,7 @@ use threemf2::{
             transform::Transform,
         },
     },
+    package::{ThreemfPackage, ThreemfPackageBuilder},
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -42,7 +42,7 @@ fn validate_boolean_model(model_xml: &str) {
     );
 }
 
-fn build_package(model: Model) -> threemf2::io::ThreemfPackage {
+fn build_package(model: Model) -> ThreemfPackage {
     let mut builder = ThreemfPackageBuilder::new();
     builder.set_root_model(model);
     builder.build().expect("Error building package")

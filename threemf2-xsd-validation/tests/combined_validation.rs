@@ -4,7 +4,6 @@
 
 use std::io::Cursor;
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::{
         OptionalResourceId, OptionalResourceIndex,
         domain::{
@@ -17,6 +16,7 @@ use threemf2::{
             triangle_set::{TriangleRef, TriangleSet, TriangleSets},
         },
     },
+    package::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 

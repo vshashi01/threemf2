@@ -4,15 +4,17 @@ use compact_str::format_compact;
 use thiserror::Error;
 
 use crate::{
-    io::{
-        ThreemfPackage,
-        content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
-        relationship::{Relationship, RelationshipType, Relationships},
-        thumbnail_handle::{ImageFormat, ThumbnailHandle},
-    },
     model::{
         PathResource, PathResourceError, StrResource,
         domain::{component, model::Model},
+    },
+    package::{
+        ThreemfPackage,
+        domain::{
+            content_types::{ContentTypes, DefaultContentTypeEnum, DefaultContentTypes},
+            relationship::{Relationship, RelationshipType, Relationships},
+            thumbnail_handle::{ImageFormat, ThumbnailHandle},
+        },
     },
 };
 

@@ -2,7 +2,6 @@
 
 #![allow(clippy::needless_lifetimes)]
 
-use crate::io::ThreemfPackage;
 use crate::model::{
     domain::model::Model,
     query::{
@@ -10,6 +9,7 @@ use crate::model::{
         MeshObjectView, ModelView, ObjectView, SliceStackView,
     },
 };
+use crate::package::ThreemfPackage;
 
 /// Package view for an object with origin model path.
 pub struct ObjectPackageView<'a> {

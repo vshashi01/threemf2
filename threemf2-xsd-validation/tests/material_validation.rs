@@ -5,7 +5,6 @@
 
 use std::io::Cursor;
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::{
         Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource,
         ResourceIdCollection, ResourceIndexCollection,
@@ -21,6 +20,7 @@ use threemf2::{
             resources::Resources,
         },
     },
+    package::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 

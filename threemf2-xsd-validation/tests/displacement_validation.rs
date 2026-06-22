@@ -3,7 +3,6 @@
 use std::io::Cursor;
 
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::{
         OptionalResourceId, OptionalResourceIndex, PathResource,
         domain::{
@@ -17,6 +16,7 @@ use threemf2::{
             resources::Resources,
         },
     },
+    package::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 

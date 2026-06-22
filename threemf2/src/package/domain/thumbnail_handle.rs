@@ -33,7 +33,7 @@ pub struct ThumbnailHandle {
 
 #[cfg(test)]
 mod tests {
-    use crate::io::thumbnail_handle::ImageFormat;
+    use crate::package::domain::thumbnail_handle::ImageFormat;
 
     #[test]
     fn from_ext_test() {

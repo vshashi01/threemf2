@@ -1,6 +1,6 @@
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::builder::{MeshResolution, ModelBuilder, ObjectType, Unit},
+    package::ThreemfPackageBuilder,
 };
 
 use std::io::Cursor;

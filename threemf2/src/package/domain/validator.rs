@@ -2,8 +2,8 @@
 //!
 //! Provides a framework for validating 3MF packages against configurable rules.
 
-use crate::io::threemf_package::ThreemfPackage;
 use crate::model::domain::model::Model;
+use crate::package::threemf_package::ThreemfPackage;
 
 /// Severity level of a validation issue.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -162,7 +162,8 @@ impl Validator {
 
         for rule in &self.rules {
             if rule.scope() == ValidationScope::ModelOrPackage {
-                let rule_issues = crate::io::validator_rules::run_rule_for_model(rule, model);
+                let rule_issues =
+                    crate::package::domain::validator_rules::run_rule_for_model(rule, model);
                 issues.extend(rule_issues);
             }
         }
@@ -183,7 +184,8 @@ impl Validator {
         let mut issues = Vec::new();
 
         for rule in &self.rules {
-            let rule_issues = crate::io::validator_rules::run_rule_for_package(rule, package);
+            let rule_issues =
+                crate::package::domain::validator_rules::run_rule_for_package(rule, package);
             issues.extend(rule_issues);
         }
 

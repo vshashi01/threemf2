@@ -1,5 +1,5 @@
-use threemf2::io::ThreemfPackageBuilder;
 use threemf2::model::builder::{ModelBuilder, ObjectType, Unit};
+use threemf2::package::ThreemfPackageBuilder;
 
 use std::{io::Cursor, vec};
 

@@ -5,16 +5,17 @@ use std::io::{Read, Seek};
 use once_cell::unsync::OnceCell;
 use zip::ZipArchive;
 
-use crate::io::Error::ThumbnailError;
-use crate::io::thumbnail_handle::{ImageFormat, ThumbnailHandle};
-use crate::io::{
-    content_types::{ContentTypes, DefaultContentTypeEnum},
-    error::Error,
-    relationship::{RelationshipType, Relationships},
-    zip_utils::{self, XmlDeserializer},
-};
 use crate::model::PathResource;
 use crate::model::domain::model::Model;
+use crate::package::{
+    domain::{
+        content_types::{ContentTypes, DefaultContentTypeEnum},
+        relationship::{RelationshipType, Relationships},
+        thumbnail_handle::{ImageFormat, ThumbnailHandle},
+        zip_utils::{self, XmlDeserializer},
+    },
+    error::Error,
+};
 
 /// Cache policy for lazy-loaded data
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -378,7 +379,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             {
                 ImageFormat::from_ext(ext)
             } else {
-                return Err(ThumbnailError(format!(
+                return Err(Error::ThumbnailError(format!(
                     "Referenced thumbnail path: {path} is not a valid archive path to thumbnail data"
                 )));
             }

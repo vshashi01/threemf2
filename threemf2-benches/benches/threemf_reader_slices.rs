@@ -1,7 +1,7 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use serde::Deserialize;
 use std::path::PathBuf;
-use threemf2::io::ThreemfPackage;
+use threemf2::package::ThreemfPackage;
 
 #[cfg(feature = "enable-alloc-check")]
 #[global_allocator]

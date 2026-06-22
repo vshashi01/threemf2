@@ -10,7 +10,6 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use threemf2::{
-        io::{ThreemfPackage, ThreemfPackageBuilder},
         model::{
             OptionalResourceId,
             domain::{
@@ -22,6 +21,7 @@ mod tests {
                 types::OptionalResourceIndex,
             },
         },
+        package::{ThreemfPackage, ThreemfPackageBuilder},
     };
 
     use std::io::Cursor;
@@ -129,7 +129,7 @@ mod tests {
 
         #[cfg(feature = "io-lazy-read")]
         {
-            use threemf2::io::{CachePolicy, ThreemfPackageLazyReader};
+            use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};
 
             buf.set_position(0); // Reset cursor position
             let lazy_package =

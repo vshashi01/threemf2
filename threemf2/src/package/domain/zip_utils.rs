@@ -2,12 +2,14 @@ use compact_str::format_compact;
 use zip::ZipArchive;
 
 use crate::{
-    io::{
-        content_types::{ContentTypes, DefaultContentTypeEnum},
-        error::Error,
-        relationship::Relationships,
-    },
     model::{PathResource, StrResource, domain::model::ThreemfExtensions},
+    package::{
+        Error,
+        domain::{
+            content_types::{ContentTypes, DefaultContentTypeEnum},
+            relationship::Relationships,
+        },
+    },
     threemf_namespaces::ThreemfNamespace,
 };
 

@@ -12,8 +12,8 @@ mod tests {
     #[cfg(feature = "io-memory-optimized-read")]
     #[test]
     fn read_threemf_package_memory_optimized() {
-        use threemf2::io::ThreemfPackage;
-        use threemf2::io::query::get_mesh_objects;
+        use threemf2::package::ThreemfPackage;
+        use threemf2::package::query::get_mesh_objects;
 
         let path = PathBuf::from("./tests/data/mesh-composedpart-beamlattice.3mf");
         let reader = File::open(path).unwrap();
@@ -44,8 +44,8 @@ mod tests {
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
     fn read_threemf_package_speed_optimized() {
-        use threemf2::io::ThreemfPackage;
-        use threemf2::io::query::get_mesh_objects;
+        use threemf2::package::ThreemfPackage;
+        use threemf2::package::query::get_mesh_objects;
 
         let path = PathBuf::from("./tests/data/mesh-composedpart-beamlattice.3mf");
         let reader = File::open(path).unwrap();
@@ -87,7 +87,7 @@ mod tests {
     #[cfg(all(feature = "io-lazy-read", feature = "io-memory-optimized-read"))]
     #[test]
     fn read_threemf_package_lazy_memory_optimized() {
-        use threemf2::io::{CachePolicy, ThreemfPackageLazyReader};
+        use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};
 
         let path = PathBuf::from("./tests/data/mesh-composedpart-beamlattice.3mf");
         let reader = File::open(path).unwrap();
@@ -145,7 +145,7 @@ mod tests {
     #[cfg(all(feature = "io-lazy-read", feature = "io-speed-optimized-read"))]
     #[test]
     fn read_threemf_package_lazy_speed_optimized() {
-        use threemf2::io::{CachePolicy, ThreemfPackageLazyReader};
+        use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};
 
         let path = PathBuf::from("./tests/data/mesh-composedpart-beamlattice.3mf");
         let reader = File::open(path).unwrap();

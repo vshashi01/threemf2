@@ -7,8 +7,8 @@ mod tests {
         get_object_from_model, get_objects_from_model,
     };
 
-    use threemf2::io::query::*;
     use threemf2::model::domain::model::Model;
+    use threemf2::package::query::*;
 
     #[test]
     fn test_get_object_ref_from_model() {

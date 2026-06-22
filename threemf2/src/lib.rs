@@ -39,4 +39,4 @@ pub mod threemf_namespaces;
     feature = "io-speed-optimized-read",
     feature = "io-lazy-read"
 ))]
-pub mod io;
+pub mod package;

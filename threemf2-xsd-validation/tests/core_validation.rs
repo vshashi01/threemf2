@@ -4,7 +4,6 @@
 
 use std::io::Cursor;
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::{
         OptionalResourceId, OptionalResourceIndex,
         domain::{
@@ -16,6 +15,7 @@ use threemf2::{
             resources::Resources,
         },
     },
+    package::ThreemfPackageBuilder,
 };
 
 mod validation_utils;

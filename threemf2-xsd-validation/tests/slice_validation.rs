@@ -5,7 +5,6 @@
 
 use std::io::Cursor;
 use threemf2::{
-    io::ThreemfPackageBuilder,
     model::{
         OptionalResourceId, OptionalResourceIndex,
         domain::{
@@ -17,6 +16,7 @@ use threemf2::{
             slice::{self, MeshResolution, Polygon, Segment, Slice, SliceStack},
         },
     },
+    package::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 

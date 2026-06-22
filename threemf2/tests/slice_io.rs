@@ -7,10 +7,10 @@
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use threemf2::io::{
+    use threemf2::package::{
         ThreemfPackage,
+        domain::validator::{ValidationRule, Validator},
         query::{get_mesh_objects, get_objects, get_slice_stacks},
-        validator::{ValidationRule, Validator},
     };
 
     use std::fs::File;
