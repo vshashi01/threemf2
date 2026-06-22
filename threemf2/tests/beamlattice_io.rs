@@ -1,7 +1,7 @@
 #[cfg(any(
     feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
-    feature = "io-lazy-read"
+    feature = "package-lazy-read"
 ))]
 #[cfg(test)]
 mod tests {
@@ -84,7 +84,10 @@ mod tests {
         }
     }
 
-    #[cfg(all(feature = "io-lazy-read", feature = "package-memory-optimized-read"))]
+    #[cfg(all(
+        feature = "package-lazy-read",
+        feature = "package-memory-optimized-read"
+    ))]
     #[test]
     fn read_threemf_package_lazy_memory_optimized() {
         use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};
@@ -142,7 +145,7 @@ mod tests {
         }
     }
 
-    #[cfg(all(feature = "io-lazy-read", feature = "io-speed-optimized-read"))]
+    #[cfg(all(feature = "package-lazy-read", feature = "io-speed-optimized-read"))]
     #[test]
     fn read_threemf_package_lazy_speed_optimized() {
         use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};

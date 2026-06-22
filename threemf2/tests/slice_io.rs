@@ -1,7 +1,7 @@
 #[cfg(any(
     feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
-    feature = "io-lazy-read"
+    feature = "package-lazy-read"
 ))]
 #[cfg(test)]
 mod tests {

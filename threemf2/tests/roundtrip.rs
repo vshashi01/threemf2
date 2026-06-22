@@ -127,7 +127,7 @@ mod tests {
             assert_eq!(ns.len(), 1);
         }
 
-        #[cfg(feature = "io-lazy-read")]
+        #[cfg(feature = "package-lazy-read")]
         {
             use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};
 

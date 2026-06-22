@@ -1,7 +1,7 @@
 #[cfg(any(
     feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
-    feature = "io-lazy-read"
+    feature = "package-lazy-read"
 ))]
 #[cfg(test)]
 mod tests {
@@ -68,7 +68,7 @@ mod tests {
         );
     }
 
-    #[cfg(all(feature = "io-lazy-read", feature = "package-memory-optimized-read"))]
+    #[cfg(all(feature = "package-lazy-read", feature = "package-memory-optimized-read"))]
     #[test]
     fn read_displacement_package_lazy_memory_optimized() {
         use threemf2::{

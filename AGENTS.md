@@ -4,7 +4,7 @@
 
 - **Build**: `cargo build --all-features`
 - **Test all**: `cargo test --all-features`
-- **Test lazy reader**: `cargo test --features io-lazy-read`
+- **Test lazy reader**: `cargo test --features package-lazy-read`
 - **Run benchmarks**: `cargo bench --features "package-memory-optimized-read,io-speed-optimized-read"` (speed-optimized-read is deprecated)
 - **Run examples**: `cargo run --example write --features package-write`
 - **Lint/Format check**: `cargo fmt --all -- --check && cargo clippy --all-targets --all-features -- -D warnings`
@@ -37,8 +37,8 @@
 
 - `io-*`: Package I/O operations (write, memory-optimized-read, speed-optimized-read [deprecated], lazy-read)
 - `*-optimized-read`: XML deserialization strategies (memory vs speed trade-offs)
-- `io-lazy-read`: Lazy loading functionality (defers loading until accessed)
-- Default: `package-write`, `package-memory-optimized-read`, `io-lazy-read`, `write`, `memory-optimized-read`
+- `package-lazy-read`: Lazy loading functionality (defers loading until accessed)
+- Default: `package-write`, `package-memory-optimized-read`, `package-lazy-read`, `write`, `memory-optimized-read`
 - **Note**: 3MF extensions (beam lattice, production, etc.) are always available regardless of feature flags
 
 ## API Overview

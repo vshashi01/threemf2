@@ -10,7 +10,7 @@ threemf2 = { path = "../threemf2", features = [
     "package-write",
     "package-memory-optimized-read",
     "io-speed-optimized-read",       # deprecated
-    "io-lazy-read",
+    "package-lazy-read",
 ] }
 
 [dev-dependencies]

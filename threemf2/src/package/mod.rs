@@ -29,7 +29,7 @@ pub use threemf_package::ThreemfPackage;
 pub mod query;
 
 #[cfg(all(
-    feature = "io-lazy-read",
+    feature = "package-lazy-read",
     any(
         feature = "package-memory-optimized-read",
         feature = "io-speed-optimized-read"
@@ -37,7 +37,7 @@ pub mod query;
 ))]
 mod threemf_package_lazy_reader;
 #[cfg(all(
-    feature = "io-lazy-read",
+    feature = "package-lazy-read",
     any(
         feature = "package-memory-optimized-read",
         feature = "io-speed-optimized-read"

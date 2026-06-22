@@ -8,7 +8,7 @@ use threemf2::{
 /// using the pull-based reader with string extraction methods.
 ///
 /// Run with:
-/// `cargo run --example string_extraction --features io-lazy-read`
+/// `cargo run --example string_extraction --features package-lazy-read`
 fn main() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/P_XPX_0702_02.3mf");
     let reader = File::open(path).unwrap();

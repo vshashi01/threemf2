@@ -17,7 +17,7 @@ readme.workspace = true
 default = [
     "package-write",
     "package-memory-optimized-read",
-    "io-lazy-read",
+    "package-lazy-read",
     "write",
     "memory-optimized-read",
 ]
@@ -27,7 +27,7 @@ speed-optimized-read = ["dep:serde-roxmltree", "dep:serde"]
 package-write = ["dep:zip", "write"]
 package-memory-optimized-read = ["dep:zip", "memory-optimized-read"]
 io-speed-optimized-read = ["dep:zip", "speed-optimized-read"]
-io-lazy-read = ["dep:once_cell", "package-memory-optimized-read"]
+package-lazy-read = ["dep:once_cell", "package-memory-optimized-read"]
 uuid = ["dep:uuid"]
 # memory-optimized-read-experimental = [
 #     "memory-optimized-read",
@@ -63,7 +63,7 @@ required-features = ["package-write"]
 [[example]]
 name = "unpack"
 path = "examples/unpack.rs"
-required-features = ["io-lazy-read"]
+required-features = ["package-lazy-read"]
 
 [[example]]
 name = "io_memory_optimized_read"
@@ -84,7 +84,7 @@ required-features = ["package-write"]
 [[example]]
 name = "string_extraction"
 path = "examples/string_extraction.rs"
-required-features = ["io-lazy-read"]
+required-features = ["package-lazy-read"]
 
 [[example]]
 name = "builder_example"
