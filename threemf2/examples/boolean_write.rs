@@ -14,8 +14,6 @@
 //! cargo run --example boolean_write --features "package-write"
 //! ```
 
-use std::io::Cursor;
-
 use threemf2::{
     model::{
         builder::{BooleanOperation, ModelBuilder, ObjectType, Unit},
@@ -23,6 +21,8 @@ use threemf2::{
     },
     package::ThreemfPackageBuilder,
 };
+
+use std::io::Cursor;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Creating 3MF file with boolean operations...");

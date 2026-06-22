@@ -396,7 +396,7 @@ mod write_tests {
         let object = Object {
             id: 4,
             objecttype: Some(ObjectType::Model),
-            thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+            thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
             partnumber: Some(StrResource::new("part_1")),
             name: Some(StrResource::new("Object Part")),
             pid: OptionalResourceId::none(),
@@ -421,7 +421,7 @@ mod write_tests {
         let object = Object {
             id: 4,
             objecttype: Some(ObjectType::Model),
-            thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+            thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
             partnumber: Some(StrResource::new("part_1")),
             name: Some(StrResource::new("Object Part")),
             pid: OptionalResourceId::none(),
@@ -460,7 +460,7 @@ mod write_tests {
         let object = Object {
             id: 4,
             objecttype: Some(ObjectType::Model),
-            thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+            thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
             partnumber: Some(StrResource::new("part_1")),
             name: Some(StrResource::new("Object Part")),
             pid: OptionalResourceId::none(),
@@ -594,7 +594,7 @@ mod memory_optimized_read_tests {
     #[test]
     pub fn fromxml_intermediate_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
+            r#"<object xmlns="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
             CORE_NS
         );
         let object = from_str::<Object>(&xml_string).unwrap();
@@ -604,7 +604,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
@@ -621,7 +621,7 @@ mod memory_optimized_read_tests {
     #[test]
     pub fn fromxml_intermediate_object_test_x() {
         let xml_string = format!(
-            r#"<object xmlns="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
+            r#"<object xmlns="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
             CORE_NS
         );
         let object = from_str::<Object>(&xml_string).unwrap();
@@ -631,7 +631,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
@@ -648,7 +648,7 @@ mod memory_optimized_read_tests {
     #[test]
     pub fn fromxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:meshresolution="lowres"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:meshresolution="lowres"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
             CORE_NS,
             PROD_PREFIX,
             PROD_NS,
@@ -666,7 +666,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),
@@ -688,7 +688,7 @@ mod memory_optimized_read_tests {
     #[test]
     pub fn fromxml_advanced_component_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
+            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
             CORE_NS, PROD_PREFIX, PROD_NS
         );
         let object = from_str::<Object>(&xml_string).unwrap();
@@ -698,7 +698,7 @@ mod memory_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),
@@ -833,7 +833,7 @@ mod speed_optimized_read_tests {
     #[test]
     pub fn fromxml_intermediate_object_test() {
         let xml_string = format!(
-            r#"<object xmlns="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
+            r#"<object xmlns="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
             CORE_NS
         );
         let object = from_str::<Object>(&xml_string).unwrap();
@@ -843,7 +843,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
@@ -860,7 +860,7 @@ mod speed_optimized_read_tests {
     #[test]
     pub fn fromxml_intermediate_object_test_x() {
         let xml_string = format!(
-            r#"<object xmlns="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
+            r#"<object xmlns="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part" pid="123" pindex="123"></object>"#,
             CORE_NS
         );
         let object = from_str::<Object>(&xml_string).unwrap();
@@ -870,7 +870,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::new(123),
@@ -887,7 +887,7 @@ mod speed_optimized_read_tests {
     #[test]
     pub fn fromxml_advanced_mesh_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:meshresolution="lowres"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
+            r##"<object xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part" {}:slicestackid="236" {}:meshresolution="lowres"><mesh xmlns:{}="{}"><vertices></vertices><triangles></triangles></mesh></object>"##,
             CORE_NS,
             PROD_PREFIX,
             PROD_NS,
@@ -905,7 +905,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),
@@ -927,7 +927,7 @@ mod speed_optimized_read_tests {
     #[test]
     pub fn fromxml_advanced_component_object_test() {
         let xml_string = format!(
-            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="\thumbnail\part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
+            r##"<object xmlns="{}" xmlns:{}="{}" id="4" type="model" thumbnail="/thumbnail/part_thumbnail.png" partnumber="part_1" name="Object Part"><components><component objectid="23" /></components></object>"##,
             CORE_NS, PROD_PREFIX, PROD_NS
         );
         let object = from_str::<Object>(&xml_string);
@@ -937,7 +937,7 @@ mod speed_optimized_read_tests {
             Object {
                 id: 4,
                 objecttype: Some(ObjectType::Model),
-                thumbnail: Some(PathResource::try_from("\\thumbnail\\part_thumbnail.png").unwrap()),
+                thumbnail: Some(PathResource::try_from("/thumbnail/part_thumbnail.png").unwrap()),
                 partnumber: Some(StrResource::new("part_1")),
                 name: Some(StrResource::new("Object Part")),
                 pid: OptionalResourceId::none(),

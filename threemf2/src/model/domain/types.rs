@@ -5,9 +5,9 @@
 //! - ResourceIndex = ST_ResourceIndex: Vertex indices, property indices (0 to 2^31-1)
 //! - Double = ST_Number: All number inputs in the form of 64-byte float number
 
-use std::{borrow::Borrow, fmt, num::NonZeroU32, ops::Deref, str::FromStr};
-
 use compact_str::CompactString;
+
+use std::{borrow::Borrow, fmt, num::NonZeroU32, ops::Deref, str::FromStr};
 
 #[cfg(feature = "write")]
 use instant_xml::{Id, Serializer, ToXml};
@@ -150,7 +150,6 @@ impl<'xml> FromXml<'xml> for StrResource {
 
 /// Path to a resource inside the 3MF package.
 ///
-/// - Backslashes are converted to forward slashes.
 /// - Multiple slashes collapse into a single slash.
 /// - A leading slash is enforced.
 /// - All path should be a path to a file and not a folder
@@ -168,13 +167,13 @@ pub enum PathResourceError {
 
     #[error("Path Resource is required to be a file extension")]
     PathMustBeAFileWithExtension,
+
+    #[error("Path Resource cannot contain backslashes")]
+    BackslashesNotAllowed,
 }
 
 impl PathResource {
-    pub fn new(
-        value: impl Into<CompactString>,
-        path_must_have_extension: bool,
-    ) -> Result<Self, PathResourceError> {
+    pub fn new(value: &str, path_must_have_extension: bool) -> Result<Self, PathResourceError> {
         match normalize_path_resource(value, path_must_have_extension) {
             Ok(normalized) => Ok(Self(StrResource::new(normalized))),
             Err(err) => Err(err),
@@ -280,7 +279,7 @@ impl<'xml> FromXml<'xml> for PathResource {
         }
 
         let value = PathResource::try_from(value.as_ref())
-            .map_err(|_| Error::MissingValue("Invalid PathResource value"))?;
+            .map_err(|_| Error::UnexpectedValue("Invalid PathResource value".to_owned()))?;
 
         *into = Some(value);
         Ok(())
@@ -291,23 +290,26 @@ impl<'xml> FromXml<'xml> for PathResource {
 }
 
 fn normalize_path_resource(
-    input: impl Into<CompactString>,
+    input: &str,
     path_must_have_extension: bool,
 ) -> Result<CompactString, PathResourceError> {
     //ToDo: Remove the allocation here
-    let original = input.into();
-    let replaced = original.replace('\\', "/");
+    if input.contains('\\') {
+        return Err(PathResourceError::BackslashesNotAllowed);
+    }
+    // let original = input.into();
+    // let replaced = original.replace('\\', "/");
     let mut final_path = CompactString::new("");
 
-    if replaced.split('/').count() == 1 {
+    if input.split('/').count() == 1 {
         //this is a file in the current working directory
-        if path_must_have_extension && replaced.rsplit('.').next().is_none() {
+        if path_must_have_extension && input.rsplit('.').next().is_none() {
             return Err(PathResourceError::PathMustBeAFileWithExtension);
         } else {
-            final_path.push_str(&replaced);
+            final_path.push_str(input);
         }
     } else {
-        let mut peekable = replaced.split('/').peekable();
+        let mut peekable = input.split('/').peekable();
         let mut visited_first_item = false;
         while let Some(part) = peekable.next() {
             let next_available = peekable.peek().is_some();

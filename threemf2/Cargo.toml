@@ -66,8 +66,8 @@ path = "examples/unpack.rs"
 required-features = ["package-lazy-read"]
 
 [[example]]
-name = "io_memory_optimized_read"
-path = "examples/io_memory_optimized_read.rs"
+name = "package_memory_optimized_read"
+path = "examples/package_memory_optimized_read.rs"
 required-features = ["package-memory-optimized-read"]
 
 

@@ -161,7 +161,7 @@ pub(crate) fn setup_archive_and_content_types<R: Read + Seek>(
     //let root_rels_filename = "_rels/.{extension}".replace("{extension}", &rels_ext);
     let root_rels_filename = format_compact!("_rels/.{}", rels_ext);
 
-    match PathResource::new(root_rels_filename, true) {
+    match PathResource::new(&root_rels_filename, true) {
         Ok(path) => Ok((zip, content_types, content_types_string, path)),
         Err(err) => Err(Error::PathResourceError(err)),
     }
@@ -216,7 +216,7 @@ pub(crate) fn discover_relationship_files<R: Read + Seek>(
                 .join("/");
             let final_path = format_compact!("/{zip_name}");
 
-            match PathResource::new(final_path, true) {
+            match PathResource::new(&final_path, true) {
                 Ok(path) => rel_files.push(path),
                 Err(err) => return Err(Error::PathResourceError(err)),
             }
