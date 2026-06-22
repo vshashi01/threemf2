@@ -8,8 +8,8 @@ license = "MIT or Apache-2.0"
 [dependencies]
 threemf2 = { path = "../threemf2", features = [
     "package-write",
-    "io-memory-optimized-read",
-    "io-speed-optimized-read",  # deprecated
+    "package-memory-optimized-read",
+    "io-speed-optimized-read",       # deprecated
     "io-lazy-read",
 ] }
 

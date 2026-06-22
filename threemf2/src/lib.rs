@@ -35,7 +35,7 @@ pub mod threemf_namespaces;
 /// This module can be disabled if you only want the [`core`] module.
 #[cfg(any(
     feature = "package-write",
-    feature = "io-memory-optimized-read",
+    feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
     feature = "io-lazy-read"
 ))]

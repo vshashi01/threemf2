@@ -10,8 +10,8 @@ instant-xml = { version = "0.7.5" }
 # instant-xml = { version = "0.7.4", path = "../../../../instant-xml/instant-xml/instant-xml", optional = true }
 serde-roxmltree = { version = "0.11.1" }
 threemf2 = { path = "../threemf2", features = [
-    "io-memory-optimized-read",
-    "io-speed-optimized-read",  # deprecated
+    "package-memory-optimized-read",
+    "io-speed-optimized-read",       # deprecated
     "package-write",
 ] }
 lib3mf-core = { version = "0.4.0", features = ["parallel"] }

@@ -72,13 +72,13 @@ This crate uses optional Cargo features to control functionality. Enable only wh
 ### Package I/O Features
 
 - `package-write` — Package writing with ZIP creation (requires `write`)
-- `io-memory-optimized-read` — Package reading with memory optimization (requires `memory-optimized-read`)
+- `package-memory-optimized-read` — Package reading with memory optimization (requires `memory-optimized-read`)
 - `io-speed-optimized-read` (deprecated) — Package reading with speed optimization (requires `speed-optimized-read`)
-- `io-lazy-read` — Lazy loading functionality (requires `io-memory-optimized-read`)
+- `io-lazy-read` — Lazy loading functionality (requires `package-memory-optimized-read`)
 
 ### Default Features
 
-`package-write`, `io-memory-optimized-read`, `io-lazy-read`, `write`, `memory-optimized-read`
+`package-write`, `package-memory-optimized-read`, `io-lazy-read`, `write`, `memory-optimized-read`
 
 ### Feature Combinations
 

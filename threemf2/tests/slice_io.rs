@@ -1,5 +1,5 @@
 #[cfg(any(
-    feature = "io-memory-optimized-read",
+    feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
     feature = "io-lazy-read"
 ))]
@@ -16,7 +16,7 @@ mod tests {
     use std::fs::File;
     use std::path::PathBuf;
 
-    #[cfg(feature = "io-memory-optimized-read")]
+    #[cfg(feature = "package-memory-optimized-read")]
     #[test]
     fn read_threemf_package_memory_optimized_single_slice_ref_with_multiple_slices() {
         let path = PathBuf::from("./tests/data/mesh-slice.3mf");

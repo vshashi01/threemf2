@@ -16,7 +16,7 @@ readme.workspace = true
 [features]
 default = [
     "package-write",
-    "io-memory-optimized-read",
+    "package-memory-optimized-read",
     "io-lazy-read",
     "write",
     "memory-optimized-read",
@@ -25,9 +25,9 @@ write = ["dep:instant-xml"]
 memory-optimized-read = ["dep:instant-xml"]
 speed-optimized-read = ["dep:serde-roxmltree", "dep:serde"]
 package-write = ["dep:zip", "write"]
-io-memory-optimized-read = ["dep:zip", "memory-optimized-read"]
+package-memory-optimized-read = ["dep:zip", "memory-optimized-read"]
 io-speed-optimized-read = ["dep:zip", "speed-optimized-read"]
-io-lazy-read = ["dep:once_cell", "io-memory-optimized-read"]
+io-lazy-read = ["dep:once_cell", "package-memory-optimized-read"]
 uuid = ["dep:uuid"]
 # memory-optimized-read-experimental = [
 #     "memory-optimized-read",
@@ -68,7 +68,7 @@ required-features = ["io-lazy-read"]
 [[example]]
 name = "io_memory_optimized_read"
 path = "examples/io_memory_optimized_read.rs"
-required-features = ["io-memory-optimized-read"]
+required-features = ["package-memory-optimized-read"]
 
 
 [[example]]
@@ -99,7 +99,7 @@ required-features = ["package-write"]
 [[example]]
 name = "query_example"
 path = "examples/query_example.rs"
-required-features = ["io-memory-optimized-read", "uuid"]
+required-features = ["package-memory-optimized-read", "uuid"]
 
 [[example]]
 name = "boolean_write"

@@ -21,12 +21,12 @@ use std::{collections::HashSet, ffi::OsStr};
 
 /// Enum for different XML deserialization strategies
 #[cfg(any(
-    feature = "io-memory-optimized-read",
+    feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read"
 ))]
 #[derive(Clone, Copy)]
 pub(crate) enum XmlDeserializer {
-    #[cfg(feature = "io-memory-optimized-read")]
+    #[cfg(feature = "package-memory-optimized-read")]
     MemoryOptimized,
     #[cfg(feature = "io-speed-optimized-read")]
     SpeedOptimized,
@@ -38,7 +38,7 @@ impl XmlDeserializer {
         xml_string: &str,
     ) -> Result<ContentTypes, Error> {
         match self {
-            #[cfg(feature = "io-memory-optimized-read")]
+            #[cfg(feature = "package-memory-optimized-read")]
             XmlDeserializer::MemoryOptimized => {
                 instant_xml::from_str::<ContentTypes>(xml_string).map_err(Error::from)
             }
@@ -54,7 +54,7 @@ impl XmlDeserializer {
         xml_string: &str,
     ) -> Result<Relationships, Error> {
         match self {
-            #[cfg(feature = "io-memory-optimized-read")]
+            #[cfg(feature = "package-memory-optimized-read")]
             XmlDeserializer::MemoryOptimized => {
                 instant_xml::from_str::<Relationships>(xml_string).map_err(Error::from)
             }
@@ -67,7 +67,7 @@ impl XmlDeserializer {
 
     pub(crate) fn deserialize_model(&self, xml_string: &str) -> Result<Model, Error> {
         let model = match self {
-            #[cfg(feature = "io-memory-optimized-read")]
+            #[cfg(feature = "package-memory-optimized-read")]
             XmlDeserializer::MemoryOptimized => instant_xml::from_str::<Model>(xml_string)?,
             #[cfg(feature = "io-speed-optimized-read")]
             XmlDeserializer::SpeedOptimized => speed_optimized_read(xml_string),

@@ -1,5 +1,5 @@
 #[cfg(any(
-    feature = "io-memory-optimized-read",
+    feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
 ))]
 #[cfg(test)]
@@ -12,7 +12,7 @@ mod tests {
     use threemf2::model::query::get_color_groups_from_model;
     use threemf2::package::query::get_mesh_objects;
 
-    #[cfg(feature = "io-memory-optimized-read")]
+    #[cfg(feature = "package-memory-optimized-read")]
     #[test]
     fn read_threemf_package_memory_optimized() {
         use threemf2::package::ThreemfPackage;

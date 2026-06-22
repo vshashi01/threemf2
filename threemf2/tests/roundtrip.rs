@@ -1,6 +1,6 @@
 #[cfg(all(
     any(
-        feature = "io-memory-optimized-read",
+        feature = "package-memory-optimized-read",
         feature = "io-speed-optimized-read"
     ),
     feature = "package-write"
@@ -106,7 +106,7 @@ mod tests {
         write_package
             .write(&mut buf)
             .expect("Error writing package");
-        #[cfg(feature = "io-memory-optimized-read")]
+        #[cfg(feature = "package-memory-optimized-read")]
         {
             let package =
                 ThreemfPackage::from_reader_with_memory_optimized_deserializer(&mut buf, false)
