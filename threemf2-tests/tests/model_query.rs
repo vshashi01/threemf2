@@ -2,13 +2,13 @@
 mod tests {
     use instant_xml::from_str;
     use std::path::PathBuf;
-    use threemf2::core::query::{
+    use threemf2::model::query::{
         get_components_objects_from_model, get_items_from_model, get_mesh_objects_from_model,
         get_object_from_model, get_objects_from_model,
     };
 
-    use threemf2::core::model::Model;
-    use threemf2::io::query::*;
+    use threemf2::model::domain::model::Model;
+    use threemf2::package::query::*;
 
     #[test]
     fn test_get_object_ref_from_model() {

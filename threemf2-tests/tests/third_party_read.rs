@@ -10,7 +10,7 @@ mod tests {
         let fixtures = test_utilities::get_test_fixtures();
 
         for fixture in fixtures {
-            use threemf2::io::ThreemfPackage;
+            use threemf2::package::ThreemfPackage;
 
             if fixture.skip_test || fixture.large_test {
                 continue;
@@ -45,8 +45,8 @@ mod tests {
 
     #[test]
     pub fn unpack_thirdparty_3mf_package() {
-        use threemf2::io::CachePolicy;
-        use threemf2::io::ThreemfPackageLazyReader;
+        use threemf2::package::CachePolicy;
+        use threemf2::package::ThreemfPackageLazyReader;
 
         let fixtures = test_utilities::get_test_fixtures();
 

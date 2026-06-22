@@ -4,17 +4,18 @@
 
 use std::io::Cursor;
 use threemf2::{
-    core::{
-        OptionalResourceId,
-        build::{Build, Item},
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        metadata::Preserve,
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-        types::OptionalResourceIndex,
+    model::{
+        OptionalResourceId, OptionalResourceIndex,
+        domain::{
+            build::{Build, Item},
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+            metadata::{Metadata, Preserve},
+            model::{Model, ThreemfExtensions, Unit},
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+        },
     },
-    io::ThreemfPackageBuilder,
+    package::ThreemfPackageBuilder,
 };
 
 mod validation_utils;
@@ -146,8 +147,6 @@ fn validate_simple_mesh_against_core_xsd() {
 
 #[test]
 fn validate_model_with_metadata_against_core_xsd() {
-    use threemf2::core::metadata::Metadata;
-
     let vertices = Vertices {
         vertex: vec![
             Vertex::new(0.0, 0.0, 0.0),

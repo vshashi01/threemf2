@@ -15,19 +15,19 @@ readme.workspace = true
 
 [features]
 default = [
-    "io-write",
-    "io-memory-optimized-read",
-    "io-lazy-read",
+    "package-write",
+    "package-memory-optimized-read",
+    "package-lazy-read",
     "write",
     "memory-optimized-read",
 ]
 write = ["dep:instant-xml"]
 memory-optimized-read = ["dep:instant-xml"]
 speed-optimized-read = ["dep:serde-roxmltree", "dep:serde"]
-io-write = ["dep:zip", "write"]
-io-memory-optimized-read = ["dep:zip", "memory-optimized-read"]
+package-write = ["dep:zip", "write"]
+package-memory-optimized-read = ["dep:zip", "memory-optimized-read"]
 io-speed-optimized-read = ["dep:zip", "speed-optimized-read"]
-io-lazy-read = ["dep:once_cell", "io-memory-optimized-read"]
+package-lazy-read = ["dep:once_cell", "package-memory-optimized-read"]
 uuid = ["dep:uuid"]
 # memory-optimized-read-experimental = [
 #     "memory-optimized-read",
@@ -58,17 +58,17 @@ serde-roxmltree = { version = "0.11.1" }
 [[example]]
 name = "write"
 path = "examples/write.rs"
-required-features = ["io-write"]
+required-features = ["package-write"]
 
 [[example]]
 name = "unpack"
 path = "examples/unpack.rs"
-required-features = ["io-lazy-read"]
+required-features = ["package-lazy-read"]
 
 [[example]]
 name = "io_memory_optimized_read"
 path = "examples/io_memory_optimized_read.rs"
-required-features = ["io-memory-optimized-read"]
+required-features = ["package-memory-optimized-read"]
 
 
 [[example]]
@@ -79,37 +79,37 @@ required-features = ["io-speed-optimized-read"]
 [[example]]
 name = "beamlattice_write"
 path = "examples/beamlattice_write.rs"
-required-features = ["io-write"]
+required-features = ["package-write"]
 
 [[example]]
 name = "string_extraction"
 path = "examples/string_extraction.rs"
-required-features = ["io-lazy-read"]
+required-features = ["package-lazy-read"]
 
 [[example]]
 name = "builder_example"
 path = "examples/builder_example.rs"
-required-features = ["io-write"]
+required-features = ["package-write"]
 
 [[example]]
 name = "builder_beamlattice_example"
 path = "examples/builder_beamlattice_example.rs"
-required-features = ["io-write"]
+required-features = ["package-write"]
 
 [[example]]
 name = "query_example"
 path = "examples/query_example.rs"
-required-features = ["io-memory-optimized-read", "uuid"]
+required-features = ["package-memory-optimized-read", "uuid"]
 
 [[example]]
 name = "boolean_write"
 path = "examples/boolean_write.rs"
-required-features = ["io-write"]
+required-features = ["package-write"]
 
 [[example]]
 name = "slice_write"
 path = "examples/slice_write.rs"
-required-features = ["io-write"]
+required-features = ["package-write"]
 
 
 [package.metadata.cargo-all-features]

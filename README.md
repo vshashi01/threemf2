@@ -71,14 +71,14 @@ This crate uses optional Cargo features to control functionality. Enable only wh
 
 ### Package I/O Features
 
-- `io-write` — Package writing with ZIP creation (requires `write`)
-- `io-memory-optimized-read` — Package reading with memory optimization (requires `memory-optimized-read`)
+- `package-write` — Package writing with ZIP creation (requires `write`)
+- `package-memory-optimized-read` — Package reading with memory optimization (requires `memory-optimized-read`)
 - `io-speed-optimized-read` (deprecated) — Package reading with speed optimization (requires `speed-optimized-read`)
-- `io-lazy-read` — Lazy loading functionality (requires `io-memory-optimized-read`)
+- `package-lazy-read` — Lazy loading functionality (requires `package-memory-optimized-read`)
 
 ### Default Features
 
-`io-write`, `io-memory-optimized-read`, `io-lazy-read`, `write`, `memory-optimized-read`
+`package-write`, `package-memory-optimized-read`, `package-lazy-read`, `write`, `memory-optimized-read`
 
 ### Feature Combinations
 
@@ -87,10 +87,10 @@ This crate uses optional Cargo features to control functionality. Enable only wh
 threemf2 = "0.1"
 
 # Full I/O with lazy loading (default)
-threemf2 = { version = "0.1", features = ["io-lazy-read"] }
+threemf2 = { version = "0.1", features = ["package-lazy-read"] }
 
 # Memory-constrained environments
-threemf2 = { version = "0.1", features = ["io-lazy-read"], default-features = false }
+threemf2 = { version = "0.1", features = ["package-lazy-read"], default-features = false }
 
 # High-performance reading (deprecated)
 threemf2 = { version = "0.1", features = ["io-speed-optimized-read"] }
@@ -111,8 +111,8 @@ The [threemf2/examples/](threemf2/examples/) directory contains runnable example
 Run examples with:
 
 ```bash
-cargo run --example write --features io-write
-cargo run --example unpack --features io-lazy-read
+cargo run --example write --features package-write
+cargo run --example unpack --features package-lazy-read
 ```
 
 ## Benchmarks

@@ -5,18 +5,19 @@
 
 use std::io::Cursor;
 use threemf2::{
-    core::{
-        OptionalResourceId,
-        boolean::{Boolean, BooleanOperation, BooleanShape},
-        build::{Build, Item},
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-        transform::Transform,
-        types::{OptionalResourceIndex, UuidResource},
+    model::{
+        OptionalResourceId, OptionalResourceIndex, UuidResource,
+        domain::{
+            boolean::{Boolean, BooleanOperation, BooleanShape},
+            build::{Build, Item},
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+            model::{Model, ThreemfExtensions, Unit},
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+            transform::Transform,
+        },
     },
-    io::ThreemfPackageBuilder,
+    package::{ThreemfPackage, ThreemfPackageBuilder},
     threemf_namespaces::ThreemfNamespace,
 };
 
@@ -41,7 +42,7 @@ fn validate_boolean_model(model_xml: &str) {
     );
 }
 
-fn build_package(model: Model) -> threemf2::io::ThreemfPackage {
+fn build_package(model: Model) -> ThreemfPackage {
     let mut builder = ThreemfPackageBuilder::new();
     builder.set_root_model(model);
     builder.build().expect("Error building package")

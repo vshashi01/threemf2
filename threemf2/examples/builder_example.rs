@@ -1,14 +1,14 @@
-use threemf2::core::{
+use threemf2::model::{
     builder::{ModelBuilder, ObjectType, Unit},
     query::{get_mesh_objects_from_model, get_model_view, get_objects_from_model},
 };
-use threemf2::io::ThreemfPackageBuilder;
+use threemf2::package::ThreemfPackageBuilder;
 
 /// This example shows how to build 3MF Model using ModelBuilder.
 /// Use this to reduce the boilerplate needed to setup 3MF Models.
 ///
 /// Run with:
-/// `cargo run --example builder_example --no-default-features --features io-write`
+/// `cargo run --example builder_example --no-default-features --features package-write`
 ///
 fn main() {
     // Create a simple cube model using the builder

@@ -1,22 +1,22 @@
 #[cfg(any(
-    feature = "io-memory-optimized-read",
+    feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
-    feature = "io-lazy-read"
+    feature = "package-lazy-read"
 ))]
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use threemf2::io::{
+    use threemf2::package::{
         ThreemfPackage,
+        domain::validator::{ValidationRule, Validator},
         query::{get_mesh_objects, get_objects, get_slice_stacks},
-        validator::{ValidationRule, Validator},
     };
 
     use std::fs::File;
     use std::path::PathBuf;
 
-    #[cfg(feature = "io-memory-optimized-read")]
+    #[cfg(feature = "package-memory-optimized-read")]
     #[test]
     fn read_threemf_package_memory_optimized_single_slice_ref_with_multiple_slices() {
         let path = PathBuf::from("./tests/data/mesh-slice.3mf");

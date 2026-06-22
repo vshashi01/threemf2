@@ -5,7 +5,7 @@
 //!
 //! Run with: cargo run --example thumbnail_generation --features thumbnail-generation
 
-use threemf2::core::{
+use threemf2::model::domain::{
     model::{Model, ThreemfExtensions},
     object::ObjectKind,
 };
@@ -40,11 +40,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Creates a simple cube model for demonstration
 fn create_cube_model() -> Model {
-    use threemf2::core::build::{Build, Item};
-    use threemf2::core::mesh::{Mesh, Triangle, Triangles, Vertex, Vertices};
-    use threemf2::core::object::Object;
-    use threemf2::core::resources::Resources;
-    use threemf2::core::types::{OptionalResourceId, OptionalResourceIndex};
+    use threemf2::model::domain::build::{Build, Item};
+    use threemf2::model::domain::mesh::{Mesh, Triangle, Triangles, Vertex, Vertices};
+    use threemf2::model::domain::object::Object;
+    use threemf2::model::domain::resources::Resources;
+    use threemf2::model::domain::types::{OptionalResourceId, OptionalResourceIndex};
 
     // Define vertices for a cube
     let vertices = Vertices {

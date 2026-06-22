@@ -3,18 +3,20 @@
 use std::io::Cursor;
 
 use threemf2::{
-    core::{
+    model::{
         OptionalResourceId, OptionalResourceIndex, PathResource,
-        build::{Build, Item},
-        displacement::{
-            Disp2DCoord, Disp2DGroup, Displacement2D, DisplacementMesh, NormVector,
-            NormVectorGroup, Triangle, Triangles, Vertex, Vertices,
+        domain::{
+            build::{Build, Item},
+            displacement::{
+                Disp2DCoord, Disp2DGroup, Displacement2D, DisplacementMesh, NormVector,
+                NormVectorGroup, Triangle, Triangles, Vertex, Vertices,
+            },
+            model::{Model, ThreemfExtensions, Unit},
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
         },
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
     },
-    io::ThreemfPackageBuilder,
+    package::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 

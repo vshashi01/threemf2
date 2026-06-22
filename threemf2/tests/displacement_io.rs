@@ -1,18 +1,18 @@
 #[cfg(any(
-    feature = "io-memory-optimized-read",
+    feature = "package-memory-optimized-read",
     feature = "io-speed-optimized-read",
-    feature = "io-lazy-read"
+    feature = "package-lazy-read"
 ))]
 #[cfg(test)]
 mod tests {
 
-    use threemf2::core::query as core_query;
-    use threemf2::io::ThreemfPackage;
-    use threemf2::io::query as io_query;
+    use threemf2::model::query as core_query;
+    use threemf2::package::ThreemfPackage;
+    use threemf2::package::query as io_query;
 
     use std::{fs::File, path::PathBuf};
 
-    #[cfg(feature = "io-memory-optimized-read")]
+    #[cfg(feature = "package-memory-optimized-read")]
     #[test]
     fn read_displacement_package_memory_optimized() {
         use threemf2::threemf_namespaces::ThreemfNamespace;
@@ -68,12 +68,15 @@ mod tests {
         );
     }
 
-    #[cfg(all(feature = "io-lazy-read", feature = "io-memory-optimized-read"))]
+    #[cfg(all(
+        feature = "package-lazy-read",
+        feature = "package-memory-optimized-read"
+    ))]
     #[test]
     fn read_displacement_package_lazy_memory_optimized() {
         use threemf2::{
-            core::PathResource,
-            io::{CachePolicy, ThreemfPackageLazyReader},
+            model::PathResource,
+            package::{CachePolicy, ThreemfPackageLazyReader},
         };
 
         let path =

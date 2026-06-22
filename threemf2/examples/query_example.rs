@@ -5,12 +5,12 @@
 //!
 //! Run with:
 //! ```bash
-//! cargo run --example query_example --no-default-features --features io-write
+//! cargo run --example query_example --no-default-features --features package-write
 //! ```
 
 use threemf2::{
-    core::query as core_query,
-    io::{ThreemfPackage, query as io_query},
+    model::query as core_query,
+    package::{ThreemfPackage, query as io_query},
 };
 
 use std::{fs::File, path::PathBuf};

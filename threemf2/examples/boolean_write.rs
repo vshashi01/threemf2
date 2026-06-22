@@ -11,18 +11,17 @@
 //! # Running the example
 //!
 //! ```bash
-//! cargo run --example boolean_write --features "io-write"
+//! cargo run --example boolean_write --features "package-write"
 //! ```
 
 use std::io::Cursor;
 
 use threemf2::{
-    core::{
-        boolean::BooleanOperation,
-        builder::{ModelBuilder, ObjectType, Unit},
+    model::{
+        builder::{BooleanOperation, ModelBuilder, ObjectType, Unit},
         query::get_model_view,
     },
-    io::ThreemfPackageBuilder,
+    package::ThreemfPackageBuilder,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

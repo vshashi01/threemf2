@@ -1,0 +1,1753 @@
+use std::collections::HashSet;
+
+#[cfg(feature = "write")]
+use instant_xml::ToXml;
+
+#[cfg(feature = "memory-optimized-read")]
+use instant_xml::FromXml;
+
+#[cfg(feature = "speed-optimized-read")]
+use serde::Deserialize;
+
+use crate::{
+    model::domain::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
+    threemf_namespaces::{
+        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, DISPLACEMENT_NS, MATERIAL_NS,
+        PROD_NS, SLICE_NS, ThreemfNamespace,
+    },
+};
+
+/// Represents a 3MF model, the root element containing resources and build configuration.
+///
+/// A model defines the 3D objects, materials, and build instructions for a 3MF package.
+/// It serves as the primary container for all 3MF data structures.
+#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
+#[cfg_attr(feature = "speed-optimized-read", serde(rename = "model"))]
+#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(feature = "write", derive(ToXml))]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(any(feature="write", feature="memory-optimized-read"), 
+xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS, m = MATERIAL_NS, d = DISPLACEMENT_NS), rename = "model"))]
+pub struct Model {
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(attribute)
+    )]
+    pub unit: Option<Unit>,
+
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(attribute)
+    )]
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub requiredextensions: ThreemfExtensions,
+
+    #[cfg_attr(
+        any(feature = "write", feature = "memory-optimized-read"),
+        xml(attribute)
+    )]
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub recommendedextensions: ThreemfExtensions,
+
+    #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    pub metadata: Vec<Metadata>,
+
+    pub resources: Resources,
+
+    pub build: Build,
+}
+
+/// Model measurement unit, default is millimeter
+#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
+#[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
+#[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
+#[cfg_attr(feature = "write", derive(ToXml))]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    any(feature = "write", feature = "memory-optimized-read"),
+    xml(scalar, rename_all = "lowercase")
+)]
+pub enum Unit {
+    Micron,
+    #[default]
+    Millimeter,
+    Centimeter,
+    Inch,
+    Foot,
+    Meter,
+}
+
+impl From<String> for Unit {
+    fn from(value: String) -> Self {
+        match value.to_ascii_lowercase().as_str() {
+            "micron" => Unit::Micron,
+            "millimeter" => Unit::Millimeter,
+            "centimeter" => Unit::Centimeter,
+            "inch" => Unit::Inch,
+            "foot" => Unit::Foot,
+            "meter" => Unit::Meter,
+            _ => Unit::Millimeter,
+        }
+    }
+}
+
+/// A collection of [`ThreemfNamespace`] specified in the 3mf model file
+/// Only Extension namespaces are allowed.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
+#[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
+pub struct ThreemfExtensions(Vec<ThreemfNamespace>);
+
+impl ThreemfExtensions {
+    /// Creates a new [ThreemfExtensions] collection without duplicate
+    /// extensions and without [`ThreemfNamespace::Core`] included
+    pub fn new(extensions: &[ThreemfNamespace]) -> Self {
+        let mut ordered = extensions
+            .iter()
+            .filter(|ext| **ext != ThreemfNamespace::Core)
+            .cloned()
+            .collect::<Vec<_>>();
+        ordered.sort();
+        ordered.dedup();
+        Self(ordered)
+    }
+
+    /// Creates a new [ThreemfExtensions] collection without duplicate
+    /// extensions and without [`ThreemfNamespace::Core`] included
+    pub fn new_from_iter<'a>(extensions: impl IntoIterator<Item = &'a ThreemfNamespace>) -> Self {
+        let mut ordered = extensions
+            .into_iter()
+            .filter(|ext| **ext != ThreemfNamespace::Core)
+            .cloned()
+            .collect::<Vec<_>>();
+        ordered.sort();
+        ordered.dedup();
+        Self(ordered)
+    }
+
+    /// Returns a slice of the collection
+    pub fn get(&self) -> &[ThreemfNamespace] {
+        &self.0
+    }
+}
+
+#[cfg(feature = "write")]
+impl ToXml for ThreemfExtensions {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let prefix = match field {
+            Some(id) => {
+                let prefix =
+                    serializer.write_start(id.name, id.ns, None::<instant_xml::ser::Context<0>>)?;
+                serializer.end_start()?;
+                Some((prefix, id.name))
+            }
+            None => None,
+        };
+
+        let mut iter = self
+            .0
+            .iter()
+            .map(|ns| {
+                ns.prefix()
+                    .expect("3mf Extensions collection should be specified with valid prefix")
+            })
+            .peekable();
+        while let Some(prefix) = iter.next() {
+            serializer.write_str(prefix)?;
+            if iter.peek().is_some() {
+                serializer.write_str(" ")?;
+            }
+        }
+
+        if let Some((prefix, _)) = prefix {
+            serializer.write_close(prefix)?;
+        }
+
+        Ok(())
+    }
+
+    fn present(&self) -> bool {
+        !self.0.is_empty()
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl<'xml> FromXml<'xml> for ThreemfExtensions {
+    fn matches(id: instant_xml::Id<'_>, field: Option<instant_xml::Id<'_>>) -> bool {
+        match field {
+            Some(field) => id == field,
+            None => false,
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        _field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if let Some(value) = deserializer.take_str()? {
+            let mut ns_collection = vec![];
+            for prefix in value.split_whitespace() {
+                if let Some(uri) = deserializer.namespace(prefix)
+                    && let Some(ns) = ThreemfNamespace::try_from_uri(uri, Some(prefix))
+                {
+                    ns_collection.push(ns);
+                }
+            }
+            *into = Self(ns_collection);
+        } else {
+            *into = Self(vec![]);
+        }
+
+        Ok(())
+    }
+
+    type Accumulator = Self;
+
+    const KIND: instant_xml::Kind = instant_xml::Kind::Scalar;
+}
+
+#[cfg(feature = "memory-optimized-read")]
+impl instant_xml::Accumulate<ThreemfExtensions> for ThreemfExtensions {
+    fn try_done(self, _: &'static str) -> Result<ThreemfExtensions, instant_xml::Error> {
+        Ok(self)
+    }
+}
+
+impl From<String> for ThreemfExtensions {
+    fn from(value: String) -> Self {
+        let mut ns_collection = vec![];
+        for prefix in value.split_whitespace() {
+            if let Some(ns) = ThreemfNamespace::try_from_prefix(prefix, None) {
+                ns_collection.push(ns);
+            }
+        }
+
+        Self(ns_collection)
+    }
+}
+
+impl Model {
+    pub fn used_namespaces(&self) -> Vec<ThreemfNamespace> {
+        let mut used = vec![ThreemfNamespace::Core];
+        used.reserve_exact(10);
+
+        if self.uses_prod_ns() {
+            used.push(ThreemfNamespace::Prod);
+        }
+
+        if self.uses_beamlattice_ns() {
+            used.push(ThreemfNamespace::BeamLattice);
+
+            if self.uses_beamlattice_balls_ns() {
+                used.push(ThreemfNamespace::BeamLatticeBalls);
+            }
+        }
+
+        if self.uses_triangleset_ns() {
+            used.push(ThreemfNamespace::CoreTriangleSet);
+        }
+
+        if self.uses_boolean_ns() {
+            used.push(ThreemfNamespace::Boolean);
+        }
+
+        if self.uses_slice_ns() {
+            used.push(ThreemfNamespace::Slice);
+        }
+
+        if self.uses_material_ns() {
+            used.push(ThreemfNamespace::Material);
+        }
+
+        if self.uses_displacement_ns() {
+            used.push(ThreemfNamespace::Displacement);
+        }
+
+        for ns in self.used_unknown_namespaces() {
+            used.push(ns);
+        }
+
+        used
+    }
+
+    fn uses_prod_ns(&self) -> bool {
+        if self.build.uuid.is_some() {
+            return true;
+        }
+
+        for item in &self.build.item {
+            if item.path.is_some() || item.uuid.is_some() {
+                return true;
+            }
+        }
+
+        for obj in &self.resources.object {
+            if obj.uuid.is_some() {
+                return true;
+            }
+
+            if let Some(kind) = &obj.kind
+                && let ObjectKind::Components(comps) = kind
+            {
+                for comp in &comps.component {
+                    if comp.path.is_some() || comp.uuid.is_some() {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    fn uses_beamlattice_ns(&self) -> bool {
+        for obj in &self.resources.object {
+            if let Some(kind) = &obj.kind {
+                if let ObjectKind::Mesh(mesh) = kind
+                    && mesh.beamlattice.is_some()
+                {
+                    return true;
+                } else if let ObjectKind::DisplacementMesh(mesh) = kind
+                    && mesh.beamlattice.is_some()
+                {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    fn uses_beamlattice_balls_ns(&self) -> bool {
+        for obj in &self.resources.object {
+            if let Some(kind) = &obj.kind {
+                if let ObjectKind::Mesh(mesh) = kind
+                    && let Some(beam_lattice) = &mesh.beamlattice
+                    && (beam_lattice.balls.is_some()
+                        || beam_lattice.ballmode.is_some()
+                        || beam_lattice.ballradius.is_some())
+                {
+                    return true;
+                } else if let ObjectKind::DisplacementMesh(mesh) = kind
+                    && let Some(beam_lattice) = &mesh.beamlattice
+                    && (beam_lattice.balls.is_some()
+                        || beam_lattice.ballmode.is_some()
+                        || beam_lattice.ballradius.is_some())
+                {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    fn uses_triangleset_ns(&self) -> bool {
+        for obj in &self.resources.object {
+            if let Some(kind) = &obj.kind {
+                if let ObjectKind::Mesh(mesh) = kind
+                    && mesh.trianglesets.is_some()
+                {
+                    return true;
+                } else if let ObjectKind::DisplacementMesh(mesh) = kind
+                    && mesh.trianglesets.is_some()
+                {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    fn uses_boolean_ns(&self) -> bool {
+        for obj in &self.resources.object {
+            if let Some(kind) = &obj.kind
+                && let ObjectKind::BooleanShape(_) = kind
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn uses_slice_ns(&self) -> bool {
+        !self.resources.slicestack.is_empty()
+            || self.resources.object.iter().any(|o| {
+                o.slicestackid.is_some() || o.slicepath.is_some() || o.meshresolution.is_some()
+            })
+    }
+
+    fn uses_material_ns(&self) -> bool {
+        !self.resources.colorgroup.is_empty()
+            || !self.resources.texture2dgroup.is_empty()
+            || !self.resources.compositematerials.is_empty()
+            || !self.resources.multiproperties.is_empty()
+            || !self.resources.texture2d.is_empty()
+    }
+
+    fn uses_displacement_ns(&self) -> bool {
+        !self.resources.displacement2d.is_empty()
+            || !self.resources.normvectorgroup.is_empty()
+            || !self.resources.disp2dgroup.is_empty()
+            || self.resources.object.iter().any(|o| {
+                if let Some(kind) = &o.kind
+                    && let ObjectKind::DisplacementMesh(_) = kind
+                {
+                    true
+                } else {
+                    false
+                }
+            })
+    }
+
+    fn used_unknown_namespaces(&self) -> HashSet<ThreemfNamespace> {
+        let mut unknown_set = HashSet::new();
+
+        self.requiredextensions
+            .0
+            .iter()
+            .filter(|ns| matches!(ns, ThreemfNamespace::Unknown { prefix: _, uri: _ }))
+            .for_each(|ns| {
+                unknown_set.insert(ns.clone());
+            });
+
+        self.recommendedextensions
+            .0
+            .iter()
+            .filter(|ns| matches!(ns, ThreemfNamespace::Unknown { prefix: _, uri: _ }))
+            .for_each(|ns| {
+                unknown_set.insert(ns.clone());
+            });
+
+        unknown_set
+    }
+}
+
+#[cfg(feature = "write")]
+#[cfg(test)]
+mod write_tests {
+    use instant_xml::{ToXml, to_string};
+    use pretty_assertions::assert_eq;
+
+    use crate::{
+        model::{
+            Color, Double, OptionalResourceId, OptionalResourceIndex, PathResource,
+            ResourceIdCollection, ResourceIndexCollection, UuidResource,
+            domain::{
+                beamlattice::{self},
+                boolean,
+                build::{Build, Item},
+                displacement::Displacement2D,
+                material::{
+                    ColorElement, ColorGroup, Composite, CompositeMaterials, Filter, Multi,
+                    MultiProperties, Tex2Coord, Texture2D, Texture2DGroup, TextureContentType,
+                    TileStyle,
+                },
+                mesh::{Mesh, Triangles, Vertices},
+                metadata::Metadata,
+                model::ThreemfExtensions,
+                object::{Object, ObjectKind, ObjectType},
+                resources::Resources,
+                slice::{self},
+                triangle_set,
+            },
+        },
+        threemf_namespaces::{
+            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
+            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, DISPLACEMENT_NS, DISPLACEMENT_PREFIX,
+            MATERIAL_NS, MATERIAL_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
+            ThreemfNamespace,
+        },
+    };
+
+    use super::{Model, Unit};
+
+    #[test]
+    pub fn toxml_simple_model_test() {
+        let xml_string = format!(
+            r#"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            CORE_NS,
+            BEAM_LATTICE_PREFIX,
+            BEAM_LATTICE_NS,
+            BOOLEAN_PREFIX,
+            BOOLEAN_NS,
+            DISPLACEMENT_PREFIX,
+            DISPLACEMENT_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            CORE_TRIANGLESET_PREFIX,
+            CORE_TRIANGLESET_NS
+        );
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![Metadata {
+                name: "Trial Metadata".into(),
+                preserve: None,
+                value: None,
+            }],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![Object {
+                    id: 346,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: Some("test part".into()),
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: None,
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 346,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+        let model_string = to_string(&model).unwrap();
+
+        assert_eq!(model_string, xml_string);
+    }
+
+    #[derive(Debug, ToXml, PartialEq, Eq)]
+    struct UnitsType {
+        unit: Vec<Unit>,
+    }
+
+    #[test]
+    pub fn toxml_units_test() {
+        let xml_string = "<UnitsType><unit>micron</unit><unit>millimeter</unit><unit>centimeter</unit><unit>inch</unit><unit>foot</unit><unit>meter</unit></UnitsType>";
+        let unitsvector = UnitsType {
+            unit: vec![
+                Unit::Micron,
+                Unit::Millimeter,
+                Unit::Centimeter,
+                Unit::Inch,
+                Unit::Foot,
+                Unit::Meter,
+            ],
+        };
+        let unitsvector_string = to_string(&unitsvector).unwrap();
+
+        assert_eq!(unitsvector_string, xml_string);
+    }
+
+    #[test]
+    fn test_used_namespaces_simple_model() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(Mesh {
+                        vertices: Vertices { vertex: vec![] },
+                        triangles: Triangles { triangle: vec![] },
+                        trianglesets: None,
+                        beamlattice: None,
+                    })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                basematerials: vec![],
+                slicestack: vec![],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(namespaces, vec![ThreemfNamespace::Core]);
+    }
+
+    #[test]
+    fn test_used_namespaces_with_prod() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: Some(UuidResource::from("test-uuid")),
+                    kind: Some(ObjectKind::Mesh(Mesh {
+                        vertices: Vertices { vertex: vec![] },
+                        triangles: Triangles { triangle: vec![] },
+                        trianglesets: None,
+                        beamlattice: None,
+                    })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Prod]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_beamlattice() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(Mesh {
+                        vertices: Vertices { vertex: vec![] },
+                        triangles: Triangles { triangle: vec![] },
+                        trianglesets: None,
+                        beamlattice: Some(beamlattice::BeamLattice {
+                            minlength: 0.1,
+                            radius: 0.05,
+                            ballmode: None,
+                            ballradius: None,
+                            clippingmode: None,
+                            clippingmesh: OptionalResourceId::none(),
+                            representationmesh: OptionalResourceId::none(),
+                            pid: OptionalResourceId::none(),
+                            pindex: OptionalResourceIndex::none(),
+                            cap: None,
+                            beams: beamlattice::Beams { beam: vec![] },
+                            balls: None,
+                            beamsets: None,
+                        }),
+                    })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::BeamLattice]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_beamlattice_balls() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(Mesh {
+                        vertices: Vertices { vertex: vec![] },
+                        triangles: Triangles { triangle: vec![] },
+                        trianglesets: None,
+                        beamlattice: Some(beamlattice::BeamLattice {
+                            minlength: 0.1,
+                            radius: 0.05,
+                            ballmode: Some(beamlattice::BallMode::Mixed),
+                            ballradius: Some(1.0),
+                            clippingmode: None,
+                            clippingmesh: OptionalResourceId::none(),
+                            representationmesh: OptionalResourceId::none(),
+                            pid: OptionalResourceId::none(),
+                            pindex: OptionalResourceIndex::none(),
+                            cap: None,
+                            beams: beamlattice::Beams { beam: vec![] },
+                            balls: Some(beamlattice::Balls { ball: vec![] }),
+                            beamsets: None,
+                        }),
+                    })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![
+                ThreemfNamespace::Core,
+                ThreemfNamespace::BeamLattice,
+                ThreemfNamespace::BeamLatticeBalls
+            ]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_trianglesets() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::Mesh(Mesh {
+                        vertices: Vertices { vertex: vec![] },
+                        triangles: Triangles { triangle: vec![] },
+                        trianglesets: Some(triangle_set::TriangleSets {
+                            trianglesets: vec![],
+                        }),
+                        beamlattice: None,
+                    })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::CoreTriangleSet]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_boolean_object() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                object: vec![Object {
+                    id: 1,
+                    objecttype: Some(ObjectType::Model),
+                    thumbnail: None,
+                    partnumber: None,
+                    name: None,
+                    pid: OptionalResourceId::none(),
+                    pindex: OptionalResourceIndex::none(),
+                    uuid: None,
+                    kind: Some(ObjectKind::BooleanShape(boolean::BooleanShape {
+                        objectid: 1,
+                        operation: boolean::BooleanOperation::Intersection,
+                        transform: None,
+                        path: None,
+                        booleans: vec![],
+                    })),
+                    slicestackid: OptionalResourceId::none(),
+                    slicepath: None,
+                    meshresolution: None,
+                }],
+                basematerials: vec![],
+                slicestack: vec![],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Boolean]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_slices() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                object: vec![],
+                basematerials: vec![],
+                slicestack: vec![slice::SliceStack {
+                    id: 1,
+                    zbottom: Some(0.0.into()),
+                    sliceref: vec![],
+                    slice: vec![slice::Slice {
+                        ztop: 1.0.into(),
+                        vertices: Some(slice::Vertices { vertex: vec![] }),
+                        polygon: vec![slice::Polygon {
+                            startv: 0,
+                            segment: vec![slice::Segment {
+                                v2: 1,
+                                p1: OptionalResourceIndex::none(),
+                                p2: OptionalResourceIndex::none(),
+                                pid: OptionalResourceId::none(),
+                            }],
+                        }],
+                    }],
+                }],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Slice]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_multiple_extensions() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![
+                    Object {
+                        id: 1,
+                        objecttype: Some(ObjectType::Model),
+                        thumbnail: None,
+                        partnumber: None,
+                        name: None,
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: Some(UuidResource::from("test-uuid")),
+                        kind: Some(ObjectKind::Mesh(Mesh {
+                            vertices: Vertices { vertex: vec![] },
+                            triangles: Triangles { triangle: vec![] },
+                            trianglesets: Some(triangle_set::TriangleSets {
+                                trianglesets: vec![],
+                            }),
+                            beamlattice: Some(beamlattice::BeamLattice {
+                                minlength: 0.1,
+                                radius: 0.05,
+                                ballmode: Some(beamlattice::BallMode::None),
+                                ballradius: None,
+                                clippingmode: None,
+                                clippingmesh: OptionalResourceId::none(),
+                                representationmesh: OptionalResourceId::none(),
+                                pid: OptionalResourceId::none(),
+                                pindex: OptionalResourceIndex::none(),
+                                cap: None,
+                                beams: beamlattice::Beams { beam: vec![] },
+                                balls: None,
+                                beamsets: None,
+                            }),
+                        })),
+                        slicestackid: OptionalResourceId::new(236),
+                        slicepath: Some(PathResource::try_from("/2D/stack_model.model").unwrap()),
+                        meshresolution: Some(slice::MeshResolution::LowRes),
+                    },
+                    Object {
+                        id: 2,
+                        objecttype: None,
+                        thumbnail: None,
+                        partnumber: None,
+                        name: None,
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: Some(UuidResource::from("test-uuid-boolean")),
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
+                        kind: Some(ObjectKind::BooleanShape(boolean::BooleanShape {
+                            objectid: 2,
+                            operation: boolean::BooleanOperation::Difference,
+                            transform: None,
+                            path: None,
+                            booleans: vec![],
+                        })),
+                    },
+                ],
+                colorgroup: Vec::new(),
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: Vec::new(),
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![Item {
+                    objectid: 1,
+                    transform: None,
+                    partnumber: None,
+                    path: None,
+                    uuid: None,
+                }],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            [
+                ThreemfNamespace::Core,
+                ThreemfNamespace::Prod,
+                ThreemfNamespace::BeamLattice,
+                ThreemfNamespace::BeamLatticeBalls,
+                ThreemfNamespace::CoreTriangleSet,
+                ThreemfNamespace::Boolean,
+                ThreemfNamespace::Slice,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_material() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![],
+                colorgroup: vec![ColorGroup {
+                    id: 1,
+                    color: vec![ColorElement {
+                        color: Color::from_hex("#FF0000").unwrap(),
+                    }],
+                }],
+                texture2dgroup: vec![Texture2DGroup {
+                    id: 2,
+                    texid: 1,
+                    tex2coord: vec![Tex2Coord {
+                        u: 0.0.into(),
+                        v: 0.0.into(),
+                    }],
+                }],
+                compositematerials: vec![CompositeMaterials {
+                    id: 3,
+                    matid: 10,
+                    matindices: ResourceIndexCollection::from(vec![0, 1]),
+                    composite: vec![Composite {
+                        values: vec![Double::new(1.0), Double::new(0.0)],
+                    }],
+                }],
+                multiproperties: vec![MultiProperties {
+                    id: 4,
+                    pids: ResourceIdCollection::from(vec![10, 20]),
+                    blendmethods: Some("mix".into()),
+                    multi: vec![Multi {
+                        pindices: ResourceIndexCollection::from(vec![0, 0]),
+                    }],
+                }],
+                texture2d: vec![Texture2D {
+                    id: 5,
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
+                    contenttype: TextureContentType::Png,
+                    tilestyleu: Some(TileStyle::Wrap),
+                    tilestylev: Some(TileStyle::Mirror),
+                    filter: Some(Filter::Linear),
+                }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Material]
+        );
+    }
+
+    #[test]
+    fn test_used_namespaces_with_displacement() {
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![],
+                colorgroup: vec![],
+                texture2dgroup: vec![],
+                compositematerials: vec![],
+                multiproperties: vec![],
+                texture2d: vec![],
+                displacement2d: vec![Displacement2D {
+                    id: 10,
+                    path: PathResource::try_from("/3D/Textures/disp.png").unwrap(),
+                    channel: None,
+                    tilestyleu: None,
+                    tilestylev: None,
+                    filter: None,
+                }],
+                normvectorgroup: vec![],
+                disp2dgroup: vec![],
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+
+        let namespaces = model.used_namespaces();
+        assert_eq!(
+            namespaces,
+            vec![ThreemfNamespace::Core, ThreemfNamespace::Displacement]
+        );
+    }
+
+    #[test]
+    pub fn toxml_model_with_material_resources_test() {
+        // Note: The serializer always includes all namespace declarations
+        // The actual order is: core, b, bo, d, m, p, s, t (alphabetical by prefix)
+        let xml_string = format!(
+            r##"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            CORE_NS,
+            BEAM_LATTICE_PREFIX,
+            BEAM_LATTICE_NS,
+            BOOLEAN_PREFIX,
+            BOOLEAN_NS,
+            DISPLACEMENT_PREFIX,
+            DISPLACEMENT_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            PROD_PREFIX,
+            PROD_NS,
+            SLICE_PREFIX,
+            SLICE_NS,
+            CORE_TRIANGLESET_PREFIX,
+            CORE_TRIANGLESET_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+        );
+        let model = Model {
+            unit: Some(Unit::Millimeter),
+            requiredextensions: ThreemfExtensions::default(),
+            recommendedextensions: ThreemfExtensions::default(),
+            metadata: vec![],
+            resources: Resources {
+                basematerials: vec![],
+                slicestack: vec![],
+                object: vec![],
+                colorgroup: vec![ColorGroup {
+                    id: 1,
+                    color: vec![ColorElement {
+                        color: Color::from_hex("#FF0000").unwrap(),
+                    }],
+                }],
+                texture2dgroup: Vec::new(),
+                compositematerials: Vec::new(),
+                multiproperties: Vec::new(),
+                texture2d: vec![Texture2D {
+                    id: 2,
+                    path: PathResource::try_from("/3D/texture.png").unwrap(),
+                    contenttype: TextureContentType::Png,
+                    tilestyleu: None,
+                    tilestylev: None,
+                    filter: None,
+                }],
+                displacement2d: Vec::new(),
+                normvectorgroup: Vec::new(),
+                disp2dgroup: Vec::new(),
+            },
+            build: Build {
+                uuid: None,
+                item: vec![],
+            },
+        };
+        let model_string = to_string(&model).unwrap();
+
+        assert_eq!(model_string, xml_string);
+    }
+}
+
+#[cfg(feature = "memory-optimized-read")]
+#[cfg(test)]
+mod memory_optimized_read_tests {
+    use instant_xml::FromXml;
+    use instant_xml::from_str;
+    use pretty_assertions::assert_eq;
+
+    use crate::{
+        model::domain::{
+            build::{Build, Item},
+            component::{Component, Components},
+            material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
+            metadata::Metadata,
+            model::ThreemfExtensions,
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+        },
+        model::{Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource},
+        threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS},
+    };
+
+    use super::{Model, Unit};
+
+    #[test]
+    pub fn fromxml_simple_model_test() {
+        let xml_string = format!(
+            r#"<model xmlns="{}"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            CORE_NS
+        );
+
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                unit: None, //ToDo: Set the default value when unit is not supplied.
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
+                metadata: vec![Metadata {
+                    name: "Trial Metadata".into(),
+                    preserve: None,
+                    value: None,
+                }],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![Object {
+                        id: 346,
+                        objecttype: Some(ObjectType::Model),
+                        thumbnail: None,
+                        partnumber: None,
+                        name: Some("test part".into()),
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: None,
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
+                        kind: None,
+                    }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
+                },
+                build: Build {
+                    uuid: None,
+                    item: vec![Item {
+                        objectid: 346,
+                        transform: None,
+                        partnumber: None,
+                        path: None,
+                        uuid: None,
+                    }],
+                },
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_production_model_test() {
+        const CUSTOM_PROD_PREFIX: &str = "custom";
+        let xml_string = format!(
+            r#"<model xmlns="{}" xmlns:{}="{}" xml:lang="en-us" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part" {}:UUID="someObjectUUID"><components><component objectid="1" {}:path="//somePath//Component" {}:UUID="someComponentUUID" /></components></object></resources><build {}:UUID="someBuildUUID"><item objectid="346" {}:UUID="someItemUUID"/></build></model>"#,
+            CORE_NS,
+            CUSTOM_PROD_PREFIX,
+            PROD_NS,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+        );
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                // xmlns: None,
+                unit: Some(Unit::Millimeter),
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
+                metadata: vec![Metadata {
+                    name: "Trial Metadata".into(),
+                    preserve: None,
+                    value: None,
+                }],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![Object {
+                        id: 346,
+                        objecttype: Some(ObjectType::Model),
+                        thumbnail: None,
+                        partnumber: None,
+                        name: Some("test part".into()),
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: Some(UuidResource::from("someObjectUUID")),
+                        kind: Some(ObjectKind::Components(Components {
+                            component: vec![Component {
+                                objectid: 1,
+                                transform: None,
+                                path: Some(
+                                    PathResource::try_from("//somePath//Component").unwrap()
+                                ),
+                                uuid: Some(UuidResource::from("someComponentUUID")),
+                            }]
+                        })),
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
+                    }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
+                },
+                build: Build {
+                    uuid: Some(UuidResource::from("someBuildUUID")),
+                    item: vec![Item {
+                        objectid: 346,
+                        transform: None,
+                        partnumber: None,
+                        path: None,
+                        uuid: Some(UuidResource::from("someItemUUID")),
+                    }],
+                },
+            }
+        );
+    }
+
+    #[derive(FromXml, Debug, PartialEq, Eq)]
+    struct UnitsType {
+        unit: Vec<Unit>,
+        #[xml(rename = "attr", attribute)]
+        attribute: Option<Unit>,
+    }
+
+    #[test]
+    pub fn fromxml_units_test() {
+        let xml_string = r#"<UnitsType attr="inch"><unit>micron</unit><unit>millimeter</unit><unit>centimeter</unit><unit>inch</unit><unit>foot</unit><unit>meter</unit></UnitsType>"#;
+        let unitsvector = from_str::<UnitsType>(xml_string).unwrap();
+
+        assert_eq!(
+            unitsvector,
+            UnitsType {
+                attribute: Some(Unit::Inch),
+                unit: vec![
+                    Unit::Micron,
+                    Unit::Millimeter,
+                    Unit::Centimeter,
+                    Unit::Inch,
+                    Unit::Foot,
+                    Unit::Meter,
+                ],
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_model_with_material_resources_test() {
+        let xml_string = format!(
+            r##"<model xmlns="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            CORE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX
+        );
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                unit: Some(Unit::Millimeter),
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
+                metadata: vec![],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![],
+                    colorgroup: vec![ColorGroup {
+                        id: 1,
+                        color: vec![ColorElement {
+                            color: Color::from_hex("#FF0000").unwrap()
+                        }],
+                    }],
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: vec![Texture2D {
+                        id: 2,
+                        path: PathResource::try_from("/3D/texture.png").unwrap(),
+                        contenttype: TextureContentType::Png,
+                        tilestyleu: None,
+                        tilestylev: None,
+                        filter: None,
+                    }],
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
+                },
+                build: Build {
+                    uuid: None,
+                    item: vec![],
+                },
+            }
+        );
+    }
+}
+
+#[cfg(feature = "speed-optimized-read")]
+#[cfg(test)]
+mod speed_optimized_read_tests {
+    use pretty_assertions::assert_eq;
+    use serde::Deserialize;
+    use serde_roxmltree::from_str;
+
+    use crate::{
+        model::domain::{
+            build::{Build, Item},
+            component::{Component, Components},
+            material::{ColorElement, ColorGroup, Texture2D, TextureContentType},
+            metadata::Metadata,
+            model::ThreemfExtensions,
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+        },
+        model::{Color, OptionalResourceId, OptionalResourceIndex, PathResource, UuidResource},
+        threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, PROD_NS},
+    };
+
+    use super::{Model, Unit};
+
+    #[test]
+    pub fn fromxml_simple_model_test() {
+        let xml_string = format!(
+            r#"<model xmlns="{}"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            CORE_NS
+        );
+
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                // xmlns: None,
+                unit: None, //ToDo: Set the default value when unit is not supplied.
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
+                metadata: vec![Metadata {
+                    name: "Trial Metadata".into(),
+                    preserve: None,
+                    value: Some("".into()), //ToDo: Import output for empty value
+                }],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![Object {
+                        id: 346,
+                        objecttype: Some(ObjectType::Model),
+                        thumbnail: None,
+                        partnumber: None,
+                        name: Some("test part".into()),
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: None,
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
+                        kind: None,
+                    }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
+                },
+                build: Build {
+                    uuid: None,
+                    item: vec![Item {
+                        objectid: 346,
+                        transform: None,
+                        partnumber: None,
+                        path: None,
+                        uuid: None,
+                    }],
+                },
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_production_model_test() {
+        const CUSTOM_PROD_PREFIX: &str = "custom";
+        let xml_string = format!(
+            r#"<model xmlns="{}" xmlns:{}="{}" xml:lang="en-us" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part" {}:UUID="someObjectUUID"><components><component objectid="1" {}:path="//somePath//Component" {}:UUID="someComponentUUID" /></components></object></resources><build {}:UUID="someBuildUUID"><item objectid="346" {}:UUID="someItemUUID"/></build></model>"#,
+            CORE_NS,
+            CUSTOM_PROD_PREFIX,
+            PROD_NS,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+            CUSTOM_PROD_PREFIX,
+        );
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                // xmlns: None,
+                unit: Some(Unit::Millimeter),
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
+                metadata: vec![Metadata {
+                    name: "Trial Metadata".into(),
+                    preserve: None,
+                    value: Some("".into()), //ToDo: Improve output for empty value
+                }],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![Object {
+                        id: 346,
+                        objecttype: Some(ObjectType::Model),
+                        thumbnail: None,
+                        partnumber: None,
+                        name: Some("test part".into()),
+                        pid: OptionalResourceId::none(),
+                        pindex: OptionalResourceIndex::none(),
+                        uuid: Some(UuidResource::from("someObjectUUID")),
+                        kind: Some(ObjectKind::Components(Components {
+                            component: vec![Component {
+                                objectid: 1,
+                                transform: None,
+                                path: Some(
+                                    PathResource::try_from("//somePath//Component").unwrap()
+                                ),
+                                uuid: Some(UuidResource::from("someComponentUUID")),
+                            }]
+                        })),
+                        slicestackid: OptionalResourceId::none(),
+                        slicepath: None,
+                        meshresolution: None,
+                    }],
+                    colorgroup: Vec::new(),
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: Vec::new(),
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
+                },
+                build: Build {
+                    uuid: Some(UuidResource::from("someBuildUUID")),
+                    item: vec![Item {
+                        objectid: 346,
+                        transform: None,
+                        partnumber: None,
+                        path: None,
+                        uuid: Some(UuidResource::from("someItemUUID")),
+                    }],
+                },
+            }
+        );
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    struct UnitsType {
+        // #[serde(rename = "unit")]
+        unit: Vec<Unit>,
+        #[serde(rename = "attr")]
+        attribute: Option<Unit>,
+    }
+
+    #[test]
+    pub fn fromxml_units_test() {
+        let xml_string = r#"<UnitsType attr="Inch"><unit>micron</unit><unit>millimeter</unit><unit>centimeter</unit><unit>inch</unit><unit>foot</unit><unit>meter</unit></UnitsType>"#;
+        let unitsvector = from_str::<UnitsType>(xml_string).unwrap();
+
+        assert_eq!(
+            unitsvector,
+            UnitsType {
+                attribute: Some(Unit::Inch),
+                unit: vec![
+                    Unit::Micron,
+                    Unit::Millimeter,
+                    Unit::Centimeter,
+                    Unit::Inch,
+                    Unit::Foot,
+                    Unit::Meter,
+                ],
+            }
+        );
+    }
+
+    #[test]
+    pub fn fromxml_model_with_material_resources_test() {
+        let xml_string = format!(
+            r##"<model xmlns="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            CORE_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_NS,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX,
+            MATERIAL_PREFIX
+        );
+        let model = from_str::<Model>(&xml_string).unwrap();
+
+        assert_eq!(
+            model,
+            Model {
+                unit: Some(Unit::Millimeter),
+                requiredextensions: ThreemfExtensions::default(),
+                recommendedextensions: ThreemfExtensions::default(),
+                metadata: vec![],
+                resources: Resources {
+                    basematerials: vec![],
+                    slicestack: vec![],
+                    object: vec![],
+                    colorgroup: vec![ColorGroup {
+                        id: 1,
+                        color: vec![ColorElement {
+                            color: Color::from_hex("#FF0000").unwrap()
+                        }],
+                    }],
+                    texture2dgroup: Vec::new(),
+                    compositematerials: Vec::new(),
+                    multiproperties: Vec::new(),
+                    texture2d: vec![Texture2D {
+                        id: 2,
+                        path: PathResource::try_from("/3D/texture.png").unwrap(),
+                        contenttype: TextureContentType::Png,
+                        tilestyleu: None,
+                        tilestylev: None,
+                        filter: None,
+                    }],
+                    displacement2d: Vec::new(),
+                    normvectorgroup: Vec::new(),
+                    disp2dgroup: Vec::new(),
+                },
+                build: Build {
+                    uuid: None,
+                    item: vec![],
+                },
+            }
+        );
+    }
+}

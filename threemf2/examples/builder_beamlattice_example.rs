@@ -1,4 +1,4 @@
-use threemf2::core::{
+use threemf2::model::{
     builder::{BallMode, CapMode, ModelBuilder, ObjectType, Unit},
     query::{get_mesh_objects_from_model, get_model_view},
 };
@@ -7,7 +7,7 @@ use threemf2::core::{
 /// to create 3MF models with beam lattice structures.
 ///
 /// Run with:
-/// `cargo run --example builder_beamlattice_example --no-default-features --features io-write`
+/// `cargo run --example builder_beamlattice_example --no-default-features --features package-write`
 ///
 fn main() {
     // Create a model with beam lattice extension enabled

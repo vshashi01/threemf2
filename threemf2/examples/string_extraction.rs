@@ -1,14 +1,14 @@
 use std::{fs::File, path::PathBuf};
 use threemf2::{
-    core::PathResource,
-    io::{CachePolicy, Error, ThreemfPackageLazyReader},
+    model::PathResource,
+    package::{CachePolicy, Error, ThreemfPackageLazyReader},
 };
 
 /// This example demonstrates extracting raw XML strings from a 3MF package
 /// using the pull-based reader with string extraction methods.
 ///
 /// Run with:
-/// `cargo run --example string_extraction --features io-lazy-read`
+/// `cargo run --example string_extraction --features package-lazy-read`
 fn main() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/P_XPX_0702_02.3mf");
     let reader = File::open(path).unwrap();

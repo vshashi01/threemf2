@@ -4,18 +4,19 @@
 
 use std::io::Cursor;
 use threemf2::{
-    core::{
-        OptionalResourceId,
-        beamlattice::{Ball, BallMode, Balls, Beam, BeamLattice, Beams, CapMode},
-        build::{Build, Item},
-        mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-        model::{Model, ThreemfExtensions, Unit},
-        object::{Object, ObjectKind, ObjectType},
-        resources::Resources,
-        triangle_set::{TriangleRef, TriangleSet, TriangleSets},
-        types::OptionalResourceIndex,
+    model::{
+        OptionalResourceId, OptionalResourceIndex,
+        domain::{
+            beamlattice::{Ball, BallMode, Balls, Beam, BeamLattice, Beams, CapMode},
+            build::{Build, Item},
+            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+            model::{Model, ThreemfExtensions, Unit},
+            object::{Object, ObjectKind, ObjectType},
+            resources::Resources,
+            triangle_set::{TriangleRef, TriangleSet, TriangleSets},
+        },
     },
-    io::ThreemfPackageBuilder,
+    package::ThreemfPackageBuilder,
     threemf_namespaces::ThreemfNamespace,
 };
 

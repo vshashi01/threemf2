@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use threemf2::io::ThreemfPackage;
+use threemf2::package::ThreemfPackage;
 
 use std::{io::Cursor, path::PathBuf};
 

@@ -1,4 +1,4 @@
-use threemf2::{core::query::get_model_view, io::ThreemfPackage};
+use threemf2::{model::query::get_model_view, package::ThreemfPackage};
 
 use std::{fs::File, path::PathBuf};
 

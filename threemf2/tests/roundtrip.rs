@@ -1,25 +1,27 @@
 #[cfg(all(
     any(
-        feature = "io-memory-optimized-read",
+        feature = "package-memory-optimized-read",
         feature = "io-speed-optimized-read"
     ),
-    feature = "io-write"
+    feature = "package-write"
 ))]
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
 
     use threemf2::{
-        core::{
+        model::{
             OptionalResourceId,
-            build::{Build, Item},
-            mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
-            model::{Model, ThreemfExtensions, Unit},
-            object::{Object, ObjectKind, ObjectType},
-            resources::Resources,
-            types::OptionalResourceIndex,
+            domain::{
+                build::{Build, Item},
+                mesh::{Mesh, Triangle, Triangles, Vertex, Vertices},
+                model::{Model, ThreemfExtensions, Unit},
+                object::{Object, ObjectKind, ObjectType},
+                resources::Resources,
+                types::OptionalResourceIndex,
+            },
         },
-        io::{ThreemfPackage, ThreemfPackageBuilder},
+        package::{ThreemfPackage, ThreemfPackageBuilder},
     };
 
     use std::io::Cursor;
@@ -104,7 +106,7 @@ mod tests {
         write_package
             .write(&mut buf)
             .expect("Error writing package");
-        #[cfg(feature = "io-memory-optimized-read")]
+        #[cfg(feature = "package-memory-optimized-read")]
         {
             let package =
                 ThreemfPackage::from_reader_with_memory_optimized_deserializer(&mut buf, false)
@@ -125,9 +127,9 @@ mod tests {
             assert_eq!(ns.len(), 1);
         }
 
-        #[cfg(feature = "io-lazy-read")]
+        #[cfg(feature = "package-lazy-read")]
         {
-            use threemf2::io::{CachePolicy, ThreemfPackageLazyReader};
+            use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};
 
             buf.set_position(0); // Reset cursor position
             let lazy_package =

@@ -1,14 +1,13 @@
 use threemf2::{
-    core::{model::Model, query::get_model_view},
-    io::CachePolicy,
-    io::ThreemfPackageLazyReader,
+    model::{domain::model::Model, query::get_model_view},
+    package::{CachePolicy, ThreemfPackageLazyReader},
 };
 
 use std::{fs::File, path::PathBuf};
 
 /// This is an example showing unpacking the package and manually deserializing the root model
 /// run with
-/// `cargo run --example unpack --no-default-features --features io-lazy-read`
+/// `cargo run --example unpack --no-default-features --features package-lazy-read`
 ///
 fn main() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
