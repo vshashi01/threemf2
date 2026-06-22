@@ -7,7 +7,7 @@ use threemf2::model::{
 /// to create 3MF models with beam lattice structures.
 ///
 /// Run with:
-/// `cargo run --example builder_beamlattice_example --no-default-features --features io-write`
+/// `cargo run --example builder_beamlattice_example --no-default-features --features package-write`
 ///
 fn main() {
     // Create a model with beam lattice extension enabled

@@ -3,7 +3,7 @@
         feature = "io-memory-optimized-read",
         feature = "io-speed-optimized-read"
     ),
-    feature = "io-write"
+    feature = "package-write"
 ))]
 #[cfg(test)]
 mod tests {

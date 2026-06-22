@@ -11,7 +11,7 @@ uuid = ["threemf2/uuid"]
 
 [dependencies]
 threemf2 = { path = "../threemf2", features = [
-    "io-write",
+    "package-write",
     "io-memory-optimized-read",
 ] }
 

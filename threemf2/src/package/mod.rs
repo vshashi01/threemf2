@@ -3,26 +3,26 @@ pub mod domain;
 mod error;
 pub use error::Error;
 
-#[cfg(feature = "io-write")]
+#[cfg(feature = "package-write")]
 pub mod builder;
-#[cfg(feature = "io-write")]
+#[cfg(feature = "package-write")]
 pub use builder::ThreemfPackageBuilder;
 
 #[cfg(any(
-    feature = "io-write",
+    feature = "package-write",
     feature = "io-memory-optimized-read",
     feature = "io-speed-optimized-read"
 ))]
 mod threemf_package;
 #[cfg(any(
-    feature = "io-write",
+    feature = "package-write",
     feature = "io-memory-optimized-read",
     feature = "io-speed-optimized-read"
 ))]
 pub use threemf_package::ThreemfPackage;
 
 #[cfg(any(
-    feature = "io-write",
+    feature = "package-write",
     feature = "io-memory-optimized-read",
     feature = "io-speed-optimized-read"
 ))]

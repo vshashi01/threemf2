@@ -8,7 +8,7 @@ use threemf2::package::ThreemfPackageBuilder;
 /// Use this to reduce the boilerplate needed to setup 3MF Models.
 ///
 /// Run with:
-/// `cargo run --example builder_example --no-default-features --features io-write`
+/// `cargo run --example builder_example --no-default-features --features package-write`
 ///
 fn main() {
     // Create a simple cube model using the builder

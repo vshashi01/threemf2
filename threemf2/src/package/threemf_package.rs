@@ -1,9 +1,9 @@
-#[cfg(feature = "io-write")]
+#[cfg(feature = "package-write")]
 use compact_str::CompactString;
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
 
-#[cfg(feature = "io-write")]
+#[cfg(feature = "package-write")]
 use instant_xml::ToXml;
 
 use crate::{
@@ -84,7 +84,7 @@ impl ThreemfPackage {
     }
 }
 
-#[cfg(feature = "io-write")]
+#[cfg(feature = "package-write")]
 impl ThreemfPackage {
     /// Writes the 3mf package to a [`io::Write`].
     /// Expects a well formed [ThreemfPackage] object to write the package.
@@ -613,7 +613,7 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "io-write")]
+    #[cfg(feature = "package-write")]
     #[test]
     pub fn write_root_model_test() {
         let bytes = {
@@ -696,7 +696,7 @@ mod tests {
         assert_eq!(bytes.into_inner().len(), 945);
     }
 
-    #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
+    #[cfg(all(feature = "io-memory-optimized-read", feature = "package-write"))]
     #[test]
     pub fn io_unknown_content_test() {
         use crate::model::{StrResource, domain::model::ThreemfExtensions};
@@ -785,7 +785,7 @@ mod tests {
         }
     }
 
-    #[cfg(all(feature = "io-memory-optimized-read", feature = "io-write"))]
+    #[cfg(all(feature = "io-memory-optimized-read", feature = "package-write"))]
     #[test]
     pub fn io_thumbnail_content_test() {
         use crate::{

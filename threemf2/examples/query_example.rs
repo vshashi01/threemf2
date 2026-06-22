@@ -5,7 +5,7 @@
 //!
 //! Run with:
 //! ```bash
-//! cargo run --example query_example --no-default-features --features io-write
+//! cargo run --example query_example --no-default-features --features package-write
 //! ```
 
 use threemf2::{

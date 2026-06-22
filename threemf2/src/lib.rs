@@ -34,7 +34,7 @@ pub mod threemf_namespaces;
 /// to read and write 3MF file, then this is the module you require to work with them.
 /// This module can be disabled if you only want the [`core`] module.
 #[cfg(any(
-    feature = "io-write",
+    feature = "package-write",
     feature = "io-memory-optimized-read",
     feature = "io-speed-optimized-read",
     feature = "io-lazy-read"

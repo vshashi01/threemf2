@@ -71,14 +71,14 @@ This crate uses optional Cargo features to control functionality. Enable only wh
 
 ### Package I/O Features
 
-- `io-write` — Package writing with ZIP creation (requires `write`)
+- `package-write` — Package writing with ZIP creation (requires `write`)
 - `io-memory-optimized-read` — Package reading with memory optimization (requires `memory-optimized-read`)
 - `io-speed-optimized-read` (deprecated) — Package reading with speed optimization (requires `speed-optimized-read`)
 - `io-lazy-read` — Lazy loading functionality (requires `io-memory-optimized-read`)
 
 ### Default Features
 
-`io-write`, `io-memory-optimized-read`, `io-lazy-read`, `write`, `memory-optimized-read`
+`package-write`, `io-memory-optimized-read`, `io-lazy-read`, `write`, `memory-optimized-read`
 
 ### Feature Combinations
 
@@ -111,7 +111,7 @@ The [threemf2/examples/](threemf2/examples/) directory contains runnable example
 Run examples with:
 
 ```bash
-cargo run --example write --features io-write
+cargo run --example write --features package-write
 cargo run --example unpack --features io-lazy-read
 ```
 

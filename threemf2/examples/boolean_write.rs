@@ -11,7 +11,7 @@
 //! # Running the example
 //!
 //! ```bash
-//! cargo run --example boolean_write --features "io-write"
+//! cargo run --example boolean_write --features "package-write"
 //! ```
 
 use std::io::Cursor;

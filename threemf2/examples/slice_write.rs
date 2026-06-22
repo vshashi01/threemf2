@@ -9,7 +9,7 @@ use std::io::Cursor;
 /// This demonstrates the Slice Extension support in threemf2.
 ///
 /// Run with:
-/// `cargo run --example slice_write --no-default-features --features io-write`
+/// `cargo run --example slice_write --no-default-features --features package-write`
 ///
 fn main() {
     let mut builder = ModelBuilder::new(Unit::Millimeter, true);
