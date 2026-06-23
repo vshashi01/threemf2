@@ -1,3 +1,5 @@
+//! Unified error type for 3MF package I/O operations.
+
 use thiserror::Error;
 use zip::result::ZipError;
 

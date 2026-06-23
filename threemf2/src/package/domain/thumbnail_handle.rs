@@ -1,3 +1,5 @@
+//! Thumbnail image handling for 3MF packages.
+
 use crate::model::StrResource;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

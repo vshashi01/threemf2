@@ -141,7 +141,7 @@ impl ToXml for TriangleSet {
     }
 }
 
-/// A reference to a Triangle in the Mesh as an index into [`crate::core::mesh::Triangles::triangle`].
+/// A reference to a Triangle in the Mesh as an index into [`Triangles`](crate::model::domain::mesh::Triangles).
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]

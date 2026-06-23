@@ -1,3 +1,5 @@
+//! XML utility functions for namespace parsing and manipulation.
+
 use crate::package::domain::XmlNamespace;
 
 /// Extracts xmlns attribute declarations from an XML element attribute definitions

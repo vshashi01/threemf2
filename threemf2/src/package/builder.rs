@@ -1,3 +1,8 @@
+//! Package builder for assembling 3MF files from multiple models.
+//!
+//! [`ThreemfPackageBuilder`] collects root models, sub-models, thumbnails, and unknown parts,
+//! then generates the correct ZIP structure with content types and relationship files.
+
 use std::collections::{HashMap, HashSet};
 
 use compact_str::format_compact;

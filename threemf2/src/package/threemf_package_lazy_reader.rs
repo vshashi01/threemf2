@@ -28,7 +28,7 @@ pub enum CachePolicy {
 }
 
 /// Represents a 3mf package with lazy loading.
-/// Unlike [`ThreemfPackage`](crate::io::ThreemfPackage), this struct only parses metadata upfront
+    /// Unlike [`ThreemfPackage`](crate::package::ThreemfPackage), this struct only parses metadata upfront
 /// (content types and relationships), and loads models, thumbnails, and other data on-demand.
 ///
 /// This is ideal for memory-constrained environments or when you need to inspect package contents

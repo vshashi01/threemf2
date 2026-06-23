@@ -39,7 +39,7 @@ pub struct Mesh {
 
     /// Optional TriangleSets that allows to create identifiable group of triangles
     ///
-    /// See [`crate::core::triangle_set::TriangleSet`] for more details
+    /// See [`TriangleSet`](crate::model::domain::triangle_set::TriangleSet) for more details
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(ns(CORE_TRIANGLESET_NS))
@@ -48,7 +48,7 @@ pub struct Mesh {
 
     /// Optional Beam Lattice geometry that is part of this mesh
     ///
-    /// See [`crate::core::beamlattice::BeamLattice`] for more details
+    /// See [`BeamLattice`](crate::model::domain::beamlattice::BeamLattice) for more details
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),

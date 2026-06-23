@@ -6,7 +6,7 @@ This repository uses a Cargo workspace with `threemf2` (main crate), `threemf2-b
 
 This crate is **100% safe Rust** — it explicitly forbids unsafe code (`#![forbid(unsafe_code)]`).
 
-[![CI](https://github.com/vshashi01/threemf2/actions/workflows/CI.yml/badge.svg)](https://github.com/vshashi01/threemf2/actions/workflows/CI.yml) [![codecov](https://codecov.io/gh/vshashi01/threemf2/graph/badge.svg?token=O1EHCUZLT4)](https://codecov.io/gh/vshashi01/threemf2)
+[![CI](https://github.com/vshashi01/threemf2/actions/workflows/CI.yml/badge.svg)](https://github.com/vshashi01/threemf2/actions/workflows/CI.yml) [![codecov](https://codecov.io/gh/vshashi01/threemf2/graph/badge.svg?token=O1EHCUZLT4)](https://codecov.io/gh/vshashi01/threemf2) [![docs.rs](https://docs.rs/threemf2/badge.svg)](https://docs.rs/threemf2)
 
 ## Supported 3MF Extensions and Maximum Supported Versions
 

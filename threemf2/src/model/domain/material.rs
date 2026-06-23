@@ -5,11 +5,11 @@
 //!
 //! # Key Types
 //!
-//! - [`ColorGroup`] - Container for color properties (vertex colors)
-//! - [`Texture2DGroup`] - Container for texture coordinate properties
-//! - [`CompositeMaterials`] - Mixing multiple base materials in defined ratios
-//! - [`MultiProperties`] - Layering multiple properties (color + texture + material)
-//! - [`Texture2D`] - Image references for texture mapping
+//! - `ColorGroup` - Container for color properties (vertex colors)
+//! - `Texture2DGroup` - Container for texture coordinate properties
+//! - `CompositeMaterials` - Mixing multiple base materials in defined ratios
+//! - `MultiProperties` - Layering multiple properties (color + texture + material)
+//! - `Texture2D` - Image references for texture mapping
 //!
 //! # Usage
 //!
@@ -52,7 +52,7 @@ use instant_xml::FromXml;
 #[cfg(feature = "speed-optimized-read")]
 use serde::{self, Deserialize};
 
-/// Tile style for texture coordinates outside the [0,1] range.
+/// Tile style for texture coordinates outside the `[0,1]` range.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
@@ -70,7 +70,7 @@ pub enum TileStyle {
     Mirror,
     /// Use the color of the nearest edge pixel
     Clamp,
-    /// Use edge color with transparent alpha outside [0,1]
+    /// Use edge color with transparent alpha outside `[0,1]`.
     None,
 }
 
@@ -229,7 +229,7 @@ pub struct Texture2DGroup {
 /// A single texture coordinate (UV) pair.
 ///
 /// The origin (0,0) is at the bottom-left of the texture image.
-/// Values outside [0,1] are handled according to the tile style settings.
+/// Values outside `[0,1]` are handled according to the tile style settings.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(rename = "tex2coord"))]
 #[cfg_attr(feature = "write", derive(ToXml))]
@@ -660,14 +660,14 @@ pub struct Texture2D {
     )]
     pub contenttype: TextureContentType,
 
-    /// Tile style for u-coordinates outside [0,1] range. Defaults to "wrap".
+    /// Tile style for u-coordinates outside `[0,1]` range. Defaults to "wrap".
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub tilestyleu: Option<TileStyle>,
 
-    /// Tile style for v-coordinates outside [0,1] range. Defaults to "wrap".
+    /// Tile style for v-coordinates outside `[0,1]` range. Defaults to "wrap".
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)

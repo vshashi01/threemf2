@@ -100,7 +100,7 @@ impl From<String> for ChannelName {
     }
 }
 
-/// Tile style for displacement coordinates outside [0,1].
+/// Tile style for displacement coordinates outside the `[0,1]` range.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
@@ -428,7 +428,7 @@ pub struct DisplacementMesh {
 
     /// Optional TriangleSets that allows to create identifiable group of triangles
     ///
-    /// See [`crate::core::triangle_set::TriangleSet`] for more details
+    /// See [`TriangleSet`](crate::model::domain::triangle_set::TriangleSet) for more details
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(ns(CORE_TRIANGLESET_NS))
@@ -437,7 +437,7 @@ pub struct DisplacementMesh {
 
     /// Optional Beam Lattice geometry that is part of this mesh
     ///
-    /// See [`crate::core::beamlattice::BeamLattice`] for more details
+    /// See [`BeamLattice`](crate::model::domain::beamlattice::BeamLattice) for more details
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),

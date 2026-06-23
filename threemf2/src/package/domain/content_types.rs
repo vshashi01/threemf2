@@ -13,9 +13,12 @@ use serde::Deserialize;
 use crate::model::StrResource;
 
 /// Content types for the Open Packaging Conventions (OPC).
-/// Contains a collection of [DefaultContentTypes].
-/// [DefaultContentTypes] contains the [DefaultContentTypeEnum] specifying the content type.
-/// [DefaultContentTypes] contains the file extension that is used for the specified content type.
+///
+/// 3MF files are ZIP archives that follow the OPC standard. The `[Content_Types].xml` file
+/// maps file extensions to MIME types so that consumers know how to handle each part.
+///
+/// This struct represents the content types container, which holds a collection of
+/// [`DefaultContentTypes`] mappings.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Types"))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]

@@ -45,7 +45,7 @@
 //!
 //! The builder uses [`ObjectId`] as a type-safe wrapper around object IDs to prevent
 //! accidental misuse of raw integer IDs. Object IDs are automatically assigned and managed
-//! by the [`ModelBuilder`]. If you prefer to opt out of them, you can use the [`from_builder`] methods
+//! by the [`ModelBuilder`]. If you prefer to opt out of them, you can use the `from_builder` methods
 //! to create and add custom objects based on specific object builders.
 
 use thiserror::Error;
@@ -2820,7 +2820,7 @@ impl BeamLatticeBuilder {
 
     /// Set how the lattice is clipped by the clipping mesh.
     ///
-    /// See [`ClippingMode`] for available options.
+    /// See `ClippingMode` for available options.
     pub fn clippingmode(&mut self, mode: beamlattice::ClippingMode) -> &mut Self {
         self.clippingmode = Some(mode);
         self
@@ -4376,7 +4376,7 @@ mod tests {
         let obj = &model.resources.object[0];
         assert_eq!(
             obj.objecttype,
-            Some(crate::core::object::ObjectType::Support)
+            Some(crate::model::domain::object::ObjectType::Support)
         );
         assert_eq!(obj.name, Some(StrResource::new("support obj")));
         assert_eq!(obj.partnumber, Some(StrResource::new("part123")));

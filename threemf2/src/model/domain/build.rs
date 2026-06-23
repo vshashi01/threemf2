@@ -19,6 +19,11 @@ use crate::{
 ///
 /// The build section specifies which objects from the resources should be included
 /// in the final 3D print, along with their transforms and metadata.
+///
+/// # Root vs Sub-Models
+///
+/// - **Root models** MUST have a `Build` section with at least one item.
+/// - **Sub-models** CANNOT have a `Build` section.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]

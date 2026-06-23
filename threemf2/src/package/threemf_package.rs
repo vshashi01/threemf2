@@ -33,17 +33,17 @@ use std::io::{self, Read, Seek, Write};
 #[derive(Debug, Clone)]
 pub struct ThreemfPackage {
     /// The root model of the 3mf package.
-    /// Expected to always exist and be a valid model with a [Build](crate::core::build::Build) object.
+    /// Expected to always exist and be a valid model with a [Build](crate::model::domain::build::Build) object.
     pub root: Model,
 
-    /// The sub models contained in the file. Usually this is to represent the [Object](crate::core::object::Object)
+    /// The sub models contained in the file. Usually this is to represent the [Object](crate::model::domain::object::Object)
     /// that are to be referenced in the [root](ThreemfPackage::root) model part.
     /// The key is the path of the model in the archive package.
     pub sub_models: HashMap<PathResource, Model>,
 
     /// The thumbnails contained in the file.
     /// The key is the path of the thumbnail in the archive package.
-    /// The thumbnail paths defined in the [Model](crate::core::model::Model) object should match the keys in this dictionary.
+    /// The thumbnail paths defined in the [Model](crate::model::domain::model::Model) object should match the keys in this dictionary.
     pub thumbnails: HashMap<PathResource, ThumbnailHandle>,
 
     /// Bytes of additional data found through Unknown relationship

@@ -9,13 +9,13 @@
 //!
 //! # Key Types
 //!
-//! - [`SliceStack`] - Container for slice data, referenced by objects
-//! - [`Slice`] - Individual 2D layer with vertices and polygons
-//! - [`SliceRef`] - Reference to external slice files in the 3MF package
-//! - [`SliceVertex`] - 2D vertex with x, y coordinates
-//! - [`Polygon`] - Closed or open contour defined by segments
-//! - [`Segment`] - Line segment connecting vertices
-//! - [`MeshResolution`] - Indicates mesh quality (fullres or lowres)
+//! - `SliceStack` - Container for slice data, referenced by objects
+//! - `Slice` - Individual 2D layer with vertices and polygons
+//! - `SliceRef` - Reference to external slice files in the 3MF package
+//! - `SliceVertex` - 2D vertex with x, y coordinates
+//! - `Polygon` - Closed or open contour defined by segments
+//! - `Segment` - Line segment connecting vertices
+//! - `MeshResolution` - Indicates mesh quality (fullres or lowres)
 //!
 //! # Usage
 //!

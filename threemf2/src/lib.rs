@@ -20,8 +20,9 @@
 //! [Open Packaging Conventions]: https://standards.iso.org/ittf/PubliclyAvailableStandards/c061796_ISO_IEC_29500-2_2012.zip
 
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
-/// [`core`] module maps and defines the elements in the 3MF Specifications to Rust Types.
+/// [`model`] module maps and defines the elements in the 3MF Specifications to Rust Types.
 /// The Serialization and Deserialization implementations are also provided in this module.
 /// As a crate user you can use these types directly to serialize and deserialize 3MF Model element.
 pub mod model;
@@ -30,9 +31,9 @@ pub mod model;
 /// The default prefixes used when writing a 3MF Model is also defined here.
 pub mod threemf_namespaces;
 
-/// [`io`] module implements the actual Reader and Writers for a 3MF Package. If you want one stop centre
+/// [`package`] module implements the actual Reader and Writers for a 3MF Package. If you want one stop centre
 /// to read and write 3MF file, then this is the module you require to work with them.
-/// This module can be disabled if you only want the [`core`] module.
+/// This module can be disabled if you only want the [`model`] module.
 #[cfg(any(
     feature = "package-write",
     feature = "package-memory-optimized-read",
