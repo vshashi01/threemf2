@@ -103,10 +103,8 @@ package.write(std::io::Cursor::new(&mut bytes)).unwrap();
 
 ## Performance Options
 
-Choose the right loading strategy for your use case:
-
-- **Memory-Optimized**: Lower memory usage, good for large files. This is the default.
-- **Speed-Optimized (deprecated)**: Faster parsing, higher memory usage
+- **Memory-Optimized**: Lower memory usage, good for large files. This is the default. Parsing speed in the slowest path is 10-20% slower than speed-optimized configuration
+- **Speed-Optimized (deprecated)**: Faster parsing however uses 1.5x to 3x more memory than memory-optimized
 - **Lazy Loading**: Defers loading until accessed, best for inspection-only use cases
 
 Key types and files:
