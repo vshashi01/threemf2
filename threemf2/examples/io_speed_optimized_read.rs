@@ -6,6 +6,7 @@ use std::{fs::File, path::PathBuf};
 /// Run with:
 /// `cargo run --example io_speed_optimized_read --features io-speed-optimized-read`
 ///
+#[allow(deprecated)]
 fn main() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/data/mgx-core-prod-beamlattice-material-displacement-mesh.3mf");

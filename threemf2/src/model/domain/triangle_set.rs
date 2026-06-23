@@ -22,6 +22,7 @@ use crate::{
 )]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriangleSets {
+    /// Field of triangle set
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "triangleset"))]
     pub trianglesets: Vec<TriangleSet>,
 }
@@ -141,7 +142,7 @@ impl ToXml for TriangleSet {
     }
 }
 
-/// A reference to a Triangle in the Mesh as an index into [`crate::core::mesh::Triangles::triangle`].
+/// A reference to a Triangle in the Mesh as an index into [`Triangles`](crate::model::domain::mesh::Triangles).
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
@@ -151,6 +152,7 @@ impl ToXml for TriangleSet {
     xml(ns(CORE_TRIANGLESET_NS), rename = "ref", force_prefix)
 )]
 pub struct TriangleRef {
+    /// Index of the Triangle
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)

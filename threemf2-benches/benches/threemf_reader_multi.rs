@@ -74,6 +74,7 @@ fn bench_speed_optimized(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("read", name), &path, |b, path| {
             b.iter(|| {
                 let file = std::fs::File::open(path).unwrap();
+                #[allow(deprecated)]
                 ThreemfPackage::from_reader_with_speed_optimized_deserializer(file, true).unwrap();
             });
         });

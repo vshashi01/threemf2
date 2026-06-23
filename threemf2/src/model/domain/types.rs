@@ -38,6 +38,7 @@ pub type ResourceIndex = u32;
 pub struct StrResource(CompactString);
 
 impl StrResource {
+    /// Creates a new StrResource from a string-like value.
     pub fn new(value: impl Into<CompactString>) -> Self {
         Self(value.into())
     }
@@ -157,22 +158,28 @@ impl<'xml> FromXml<'xml> for StrResource {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PathResource(StrResource);
 
+/// Errors that can occur when parsing or validating a package path.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum PathResourceError {
+    /// Empty path is not a valid path resource.
     #[error("Empty path is not a valid Path Resource")]
     EmptyPathNotAllowed,
 
+    /// Relative path segments (. or ..) are not allowed.
     #[error("Relative path is not a valid Path Resource")]
     DotSegmentNotAllowed,
 
+    /// Path resource must be a file with an extension.
     #[error("Path Resource is required to be a file extension")]
     PathMustBeAFileWithExtension,
 
+    /// Path resource cannot contain backslashes.
     #[error("Path Resource cannot contain backslashes")]
     BackslashesNotAllowed,
 }
 
 impl PathResource {
+    /// Creates a new PathResource after normalizing the input path.
     pub fn new(value: &str, path_must_have_extension: bool) -> Result<Self, PathResourceError> {
         match normalize_path_resource(value, path_must_have_extension) {
             Ok(normalized) => Ok(Self(StrResource::new(normalized))),
@@ -180,10 +187,12 @@ impl PathResource {
         }
     }
 
+    /// Returns the path as a string slice.
     pub fn as_str(&self) -> &str {
         &self.0.0
     }
 
+    /// Returns the path without the leading slash, if present.
     pub fn as_str_without_leading_slash(&self) -> &str {
         if self.as_str().starts_with('/') {
             &self.as_str()[1..]
@@ -361,6 +370,7 @@ pub enum UuidResource {
 }
 
 impl UuidResource {
+    /// Returns the UUID string if available.
     pub fn as_str(&self) -> Option<&str> {
         match self {
             #[cfg(not(feature = "uuid"))]
@@ -372,6 +382,7 @@ impl UuidResource {
         }
     }
 
+    /// Returns the UUID as a String if available.
     pub fn to_string(&self) -> Option<String> {
         match self {
             #[cfg(not(feature = "uuid"))]
@@ -496,18 +507,23 @@ impl OptionalResourceId {
         }
     }
 
+    /// Creates a None value.
     pub const fn none() -> Self {
         Self(None)
     }
+    /// Returns true if the value is None.
     pub fn is_none(&self) -> bool {
         self.0.is_none()
     }
+    /// Returns true if the value is Some.
     pub fn is_some(&self) -> bool {
         self.0.is_some()
     }
+    /// Returns the inner u32 value if Some.
     pub fn get(&self) -> Option<u32> {
         self.0.map(|nz| nz.get())
     }
+    /// Returns the inner u32 value or a default.
     pub fn unwrap_or(&self, default: u32) -> u32 {
         self.get().unwrap_or(default)
     }
@@ -748,15 +764,18 @@ impl instant_xml::Accumulate<OptionalResourceIndex> for OptionalResourceIndex {
     }
 }
 
+/// Serde deserialization helpers for OptionalResourceId.
 #[cfg(feature = "speed-optimized-read")]
 pub mod opt_res_id_impl {
     use super::OptionalResourceId;
     use serde::{Deserialize, Deserializer};
 
+    /// Returns default none() value for serde default attribute.
     pub fn default_none() -> OptionalResourceId {
         OptionalResourceId::none()
     }
 
+    /// Custom deserializer for OptionalResourceId.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<OptionalResourceId, D::Error>
     where
         D: Deserializer<'de>,
@@ -776,6 +795,7 @@ pub mod opt_res_id_impl {
     }
 }
 
+/// Serde deserialization helpers for OptionalResourceIndex.
 #[cfg(feature = "speed-optimized-read")]
 pub mod opt_res_index_impl {
     use super::OptionalResourceIndex;
@@ -1068,7 +1088,9 @@ impl From<String> for ResourceIndexCollection {
     }
 }
 
+/// Trait for converting a type into a usize index.
 pub trait IntoIndex {
+    /// Converts the value into a usize index.
     fn into(self) -> usize;
 }
 
@@ -1088,10 +1110,12 @@ impl IntoIndex for u32 {
 pub struct Double(f64);
 
 impl Double {
+    /// Creates a new Double from an f64 value.
     pub fn new(value: f64) -> Self {
         Self(value)
     }
 
+    /// Returns the inner f64 value.
     pub fn value(&self) -> f64 {
         self.0
     }

@@ -9,13 +9,13 @@
 //!
 //! # Key Types
 //!
-//! - [`SliceStack`] - Container for slice data, referenced by objects
-//! - [`Slice`] - Individual 2D layer with vertices and polygons
-//! - [`SliceRef`] - Reference to external slice files in the 3MF package
-//! - [`SliceVertex`] - 2D vertex with x, y coordinates
-//! - [`Polygon`] - Closed or open contour defined by segments
-//! - [`Segment`] - Line segment connecting vertices
-//! - [`MeshResolution`] - Indicates mesh quality (fullres or lowres)
+//! - `SliceStack` - Container for slice data, referenced by objects
+//! - `Slice` - Individual 2D layer with vertices and polygons
+//! - `SliceRef` - Reference to external slice files in the 3MF package
+//! - `SliceVertex` - 2D vertex with x, y coordinates
+//! - `Polygon` - Closed or open contour defined by segments
+//! - `Segment` - Line segment connecting vertices
+//! - `MeshResolution` - Indicates mesh quality (fullres or lowres)
 //!
 //! # Usage
 //!
@@ -133,14 +133,17 @@ pub struct SliceStack {
     )]
     pub zbottom: Option<Double>,
 
+    /// Owned slice data entries.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub slice: Vec<Slice>,
 
+    /// References to external slice data.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub sliceref: Vec<SliceRef>,
 }
 
 impl SliceStack {
+    /// Returns true if this slice stack contains owned slice data.
     pub fn has_owned_slices(&self) -> bool {
         // matches!(self.kind, SliceDataKind::Slice(_))
         !self.slice.is_empty()
@@ -215,6 +218,7 @@ pub struct Slice {
     xml(ns(SLICE_NS), rename = "vertices", force_prefix)
 )]
 pub struct Vertices {
+    /// 2D vertices within a slice.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub vertex: Vec<Vertex>,
 }
@@ -278,9 +282,11 @@ impl<'xml> FromXml<'xml> for Vertices {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "vertex", force_prefix))]
 pub struct Vertex {
+    /// X coordinate in slice space.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub x: Double,
 
+    /// Y coordinate in slice space.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub y: Double,
 }

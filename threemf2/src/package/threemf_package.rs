@@ -33,17 +33,17 @@ use std::io::{self, Read, Seek, Write};
 #[derive(Debug, Clone)]
 pub struct ThreemfPackage {
     /// The root model of the 3mf package.
-    /// Expected to always exist and be a valid model with a [Build](crate::core::build::Build) object.
+    /// Expected to always exist and be a valid model with a [Build](crate::model::domain::build::Build) object.
     pub root: Model,
 
-    /// The sub models contained in the file. Usually this is to represent the [Object](crate::core::object::Object)
+    /// The sub models contained in the file. Usually this is to represent the [Object](crate::model::domain::object::Object)
     /// that are to be referenced in the [root](ThreemfPackage::root) model part.
     /// The key is the path of the model in the archive package.
     pub sub_models: HashMap<PathResource, Model>,
 
     /// The thumbnails contained in the file.
     /// The key is the path of the thumbnail in the archive package.
-    /// The thumbnail paths defined in the [Model](crate::core::model::Model) object should match the keys in this dictionary.
+    /// The thumbnail paths defined in the [Model](crate::model::domain::model::Model) object should match the keys in this dictionary.
     pub thumbnails: HashMap<PathResource, ThumbnailHandle>,
 
     /// Bytes of additional data found through Unknown relationship
@@ -65,6 +65,7 @@ pub struct ThreemfPackage {
 }
 
 impl ThreemfPackage {
+    /// Creates a new 3MF package from its constituent parts.
     pub fn new(
         root: Model,
         sub_models: HashMap<PathResource, Model>,
@@ -258,6 +259,7 @@ impl ThreemfPackage {
     feature = "io-speed-optimized-read"
 ))]
 impl ThreemfPackage {
+    /// Reads a 3MF package using the memory-optimized XML deserializer.
     #[cfg(feature = "package-memory-optimized-read")]
     pub fn from_reader_with_memory_optimized_deserializer<R: Read + io::Seek>(
         reader: R,
@@ -266,6 +268,7 @@ impl ThreemfPackage {
         Self::from_reader(reader, process_sub_models, XmlDeserializer::MemoryOptimized)
     }
 
+    /// Reads a 3MF package using the speed-optimized XML deserializer (deprecated).
     #[cfg(feature = "io-speed-optimized-read")]
     #[deprecated(
         note = "speed-optimized-read is deprecated; use from_reader_with_memory_optimized_deserializer"
@@ -350,7 +353,8 @@ impl ThreemfPackage {
         Ok(processor.into_threemf_package())
     }
 
-    //if path is set or not found then its the root model
+    /// Returns the namespaces used by a specific model in the package.
+    /// If path is None or not found, returns the root model namespaces.
     pub fn get_namespaces_on_model(
         &self,
         model_path: Option<&str>,
@@ -577,6 +581,7 @@ mod tests {
 
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
+    #[allow(deprecated)]
     pub fn from_reader_root_model_with_speed_optimized_read_test() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/P_XPX_0702_02.3mf");
         let reader = File::open(path).unwrap();

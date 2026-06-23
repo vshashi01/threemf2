@@ -1,3 +1,4 @@
+/// Domain types mapping the 3MF specification to Rust structs and enums.
 pub mod domain;
 
 /// Query helpers for model-level data.

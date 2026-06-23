@@ -2,45 +2,62 @@ use crate::model::StrResource;
 
 ////////////////////////////////////////////////////////////////////////////////////
 ///  Namespaces & Prefixes related to the Core specification and its extensions
+/// Core 3MF namespace URI.
 pub const CORE_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
 
+/// Triangle Set extension namespace URI.
 pub const CORE_TRIANGLESET_NS: &str =
     "http://schemas.microsoft.com/3dmanufacturing/trianglesets/2021/07";
+/// Triangle Set extension XML prefix.
 pub const CORE_TRIANGLESET_PREFIX: &str = "t";
 
 ////////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Slice extension
+/// Slice extension namespace URI.
 pub const SLICE_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/slice/2015/07";
+/// Slice extension XML prefix.
 pub const SLICE_PREFIX: &str = "s";
 
 ////////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Boolean operations extension
+/// Boolean operations extension namespace URI.
 pub const BOOLEAN_NS: &str = "http://schemas.3mf.io/3dmanufacturing/booleanoperations/2023/07";
+/// Boolean operations extension XML prefix.
 pub const BOOLEAN_PREFIX: &str = "bo";
 
-//////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Production extension
+/// Production extension namespace URI.
 pub const PROD_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/production/2015/06";
+/// Production extension XML prefix.
 pub const PROD_PREFIX: &str = "p";
 
 ////////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Beam Lattice extension
+/// Beam Lattice extension namespace URI.
 pub const BEAM_LATTICE_NS: &str =
     "http://schemas.microsoft.com/3dmanufacturing/beamlattice/2017/02";
+/// Beam Lattice extension XML prefix.
 pub const BEAM_LATTICE_PREFIX: &str = "b";
 
+/// Beam Lattice balls extension namespace URI.
 pub const BEAM_LATTICE_BALLS_NS: &str =
     "http://schemas.microsoft.com/3dmanufacturing/beamlattice/balls/2020/07";
+/// Beam Lattice balls extension XML prefix.
 pub const BEAM_LATTICE_BALLS_PREFIX: &str = "b2";
 
 ////////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Material extension
+/// Material extension namespace URI.
 pub const MATERIAL_NS: &str = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02";
+/// Material extension XML prefix.
 pub const MATERIAL_PREFIX: &str = "m";
 
 ////////////////////////////////////////////////////////////////////////////////////
 /// Namespaces & Prefixes related to the Displacement extension
+/// Displacement extension namespace URI.
 pub const DISPLACEMENT_NS: &str = "http://schemas.3mf.io/3dmanufacturing/displacement/2023/10";
+/// Displacement extension XML prefix.
 pub const DISPLACEMENT_PREFIX: &str = "d";
 
 /// Enum representing the different 3MF specifications supported by this library
@@ -75,7 +92,9 @@ pub enum ThreemfNamespace {
 
     /// Unknown namespace
     Unknown {
+        /// XML prefix for the unknown namespace.
         prefix: StrResource,
+        /// Namespace URI.
         uri: StrResource,
     },
 }
@@ -115,6 +134,7 @@ impl ThreemfNamespace {
         }
     }
 
+    /// Attempts to create a ThreemfNamespace from a URI.
     pub fn try_from_uri(uri: &str, assigned_prefix: Option<&str>) -> Option<Self> {
         match uri {
             CORE_NS => Some(Self::Core),
@@ -133,6 +153,7 @@ impl ThreemfNamespace {
         }
     }
 
+    /// Attempts to create a ThreemfNamespace from a prefix.
     pub fn try_from_prefix(prefix: &str, specified_uri: Option<&str>) -> Option<Self> {
         match prefix {
             //CORE_NS => Some(Self::Core),

@@ -1,3 +1,5 @@
+//! ZIP archive utilities for reading 3MF package files.
+
 use compact_str::format_compact;
 use zip::ZipArchive;
 

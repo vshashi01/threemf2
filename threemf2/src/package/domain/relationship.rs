@@ -14,8 +14,13 @@ use crate::model::{PathResource, StrResource};
 
 const RELATIONSHIP_NS: &str = "http://schemas.openxmlformats.org/package/2006/relationships";
 
-/// Represents a relationship of a single part in the 3mf package along with its [RelationshipType]
-/// and target path of the part in the archive.
+/// Represents a relationship between parts in a 3MF package.
+///
+/// OPC relationship files (e.g., `_rels/.rels`) declare how parts relate to each other:
+/// which model is the root, which files are thumbnails, and which are sub-models.
+///
+/// Each relationship has an ID, a target path, and a [`RelationshipType`] that describes
+/// the nature of the relationship.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
@@ -61,6 +66,7 @@ pub struct Relationship {
     xml(ns(RELATIONSHIP_NS))
 )]
 pub struct Relationships {
+    /// Field of relationship
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Relationship"))]
     pub relationships: Vec<Relationship>,
 }

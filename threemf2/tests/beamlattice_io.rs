@@ -43,6 +43,7 @@ mod tests {
 
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
+    #[allow(deprecated)]
     fn read_threemf_package_speed_optimized() {
         use threemf2::package::ThreemfPackage;
         use threemf2::package::query::get_mesh_objects;
@@ -147,6 +148,7 @@ mod tests {
 
     #[cfg(all(feature = "package-lazy-read", feature = "io-speed-optimized-read"))]
     #[test]
+    #[allow(deprecated)]
     fn read_threemf_package_lazy_speed_optimized() {
         use threemf2::package::{CachePolicy, ThreemfPackageLazyReader};
 

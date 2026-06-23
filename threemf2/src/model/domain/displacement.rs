@@ -29,18 +29,21 @@ use crate::{
     xml(ns(DISPLACEMENT_NS), rename = "displacement2d")
 )]
 pub struct Displacement2D {
+    /// Unique identifier for this displacement texture.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub id: ResourceId,
 
+    /// Path to the displacement texture image inside the package.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub path: PathResource,
 
+    /// Color channel to use for displacement.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -48,6 +51,7 @@ pub struct Displacement2D {
     )]
     pub channel: Option<ChannelName>,
 
+    /// Horizontal tiling style.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -55,6 +59,7 @@ pub struct Displacement2D {
     )]
     pub tilestyleu: Option<TileStyle>,
 
+    /// Vertical tiling style.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -62,6 +67,7 @@ pub struct Displacement2D {
     )]
     pub tilestylev: Option<TileStyle>,
 
+    /// Sampling filter for displacement map.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -81,10 +87,14 @@ pub struct Displacement2D {
     xml(scalar, ns(DISPLACEMENT_NS))
 )]
 pub enum ChannelName {
+    /// Red channel.
     R,
+    /// Green channel (default).
     #[default]
     G,
+    /// Blue channel.
     B,
+    /// Alpha channel.
     A,
 }
 
@@ -100,7 +110,7 @@ impl From<String> for ChannelName {
     }
 }
 
-/// Tile style for displacement coordinates outside [0,1].
+/// Tile style for displacement coordinates outside the `[0,1]` range.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
@@ -111,10 +121,14 @@ impl From<String> for ChannelName {
     xml(scalar, ns(DISPLACEMENT_NS), rename_all = "lowercase")
 )]
 pub enum TileStyle {
+    /// Repeat texture (default).
     #[default]
     Wrap,
+    /// Mirror texture at boundaries.
     Mirror,
+    /// Clamp texture to edge.
     Clamp,
+    /// No tiling applied.
     None,
 }
 
@@ -141,9 +155,12 @@ impl From<String> for TileStyle {
     xml(scalar, ns(DISPLACEMENT_NS), rename_all = "lowercase")
 )]
 pub enum Filter {
+    /// Automatically choose filtering (default).
     #[default]
     Auto,
+    /// Linear interpolation filtering.
     Linear,
+    /// Nearest-neighbor filtering.
     Nearest,
 }
 
@@ -168,9 +185,11 @@ impl From<String> for Filter {
     xml(ns(DISPLACEMENT_NS), rename = "normvectorgroup")
 )]
 pub struct NormVectorGroup {
+    /// Unique identifier for this normal vector group.
     #[cfg_attr(any(feature = "write"), xml(attribute))]
     pub id: ResourceId,
 
+    /// Normalized vectors in this group.
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(default, rename = "normvector")
@@ -254,12 +273,15 @@ impl<'xml> FromXml<'xml> for NormVectorGroup {
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "write", xml(ns(DISPLACEMENT_NS), rename = "normvector"))]
 pub struct NormVector {
+    /// X component of the normal vector.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub x: Double,
 
+    /// Y component of the normal vector.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub y: Double,
 
+    /// Z component of the normal vector.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub z: Double,
 }
@@ -337,30 +359,35 @@ impl<'xml> FromXml<'xml> for NormVector {
     xml(ns(DISPLACEMENT_NS), rename = "disp2dgroup")
 )]
 pub struct Disp2DGroup {
+    /// Unique identifier for this displacement coordinate group.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub id: ResourceId,
 
+    /// Reference to the displacement texture resource.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub dispid: ResourceId,
 
+    /// Reference to the normal vector group.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub nid: ResourceId,
 
+    /// Maximum displacement height.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub height: Double,
 
+    /// Optional displacement offset.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -368,6 +395,7 @@ pub struct Disp2DGroup {
     )]
     pub offset: Option<Double>,
 
+    /// Displacement coordinates for this group.
     #[cfg_attr(
         feature = "speed-optimized-read",
         serde(default, rename = "disp2dcoord")
@@ -386,24 +414,28 @@ pub struct Disp2DGroup {
     xml(ns(DISPLACEMENT_NS), rename = "disp2dcoord")
 )]
 pub struct Disp2DCoord {
+    /// U texture coordinate.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub u: Double,
 
+    /// V texture coordinate.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub v: Double,
 
+    /// Index into the normal vector group.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub n: ResourceIndex,
 
+    /// Optional scaling factor for displacement.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -423,12 +455,14 @@ pub struct Disp2DCoord {
     xml(ns(DISPLACEMENT_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS), rename = "displacementmesh")
 )]
 pub struct DisplacementMesh {
+    /// Vertices of the displacement mesh.
     pub vertices: Vertices,
+    /// Triangles of the displacement mesh.
     pub triangles: Triangles,
 
     /// Optional TriangleSets that allows to create identifiable group of triangles
     ///
-    /// See [`crate::core::triangle_set::TriangleSet`] for more details
+    /// See [`TriangleSet`](crate::model::domain::triangle_set::TriangleSet) for more details
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(ns(CORE_TRIANGLESET_NS))
@@ -437,7 +471,7 @@ pub struct DisplacementMesh {
 
     /// Optional Beam Lattice geometry that is part of this mesh
     ///
-    /// See [`crate::core::beamlattice::BeamLattice`] for more details
+    /// See [`BeamLattice`] for more details
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -453,6 +487,7 @@ pub struct DisplacementMesh {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(feature = "write", xml(ns(DISPLACEMENT_NS), rename = "vertices"))]
 pub struct Vertices {
+    /// Vertex entries in this mesh.
     #[cfg_attr(feature = "speed-optimized-read", serde(default, rename = "vertex"))]
     pub vertex: Vec<Vertex>,
 }
@@ -515,12 +550,15 @@ impl<'xml> FromXml<'xml> for Vertices {
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "write", xml(ns(DISPLACEMENT_NS), rename = "vertex"))]
 pub struct Vertex {
+    /// X coordinate of the vertex.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub x: Double,
 
+    /// Y coordinate of the vertex.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub y: Double,
 
+    /// Z coordinate of the vertex.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub z: Double,
 }
@@ -594,10 +632,12 @@ impl<'xml> FromXml<'xml> for Vertex {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(feature = "write", xml(ns(DISPLACEMENT_NS), rename = "triangles"))]
 pub struct Triangles {
+    /// Optional default displacement group id.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(feature = "write", xml(attribute))]
     pub did: OptionalResourceId,
 
+    /// Triangle entries in this mesh.
     #[cfg_attr(feature = "speed-optimized-read", serde(default, rename = "triangle"))]
     pub triangle: Vec<Triangle>,
 }
@@ -671,31 +711,39 @@ impl<'xml> FromXml<'xml> for Triangles {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(feature = "write", xml(ns(DISPLACEMENT_NS), rename = "triangle"))]
 pub struct Triangle {
+    /// First vertex index.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub v1: ResourceIndex,
 
+    /// Second vertex index.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub v2: ResourceIndex,
 
+    /// Third vertex index.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub v3: ResourceIndex,
 
+    /// Optional displacement index for the first vertex.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(feature = "write", xml(attribute))]
     pub d1: OptionalResourceIndex,
 
+    /// Optional displacement index for the second vertex.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(feature = "write", xml(attribute))]
     pub d2: OptionalResourceIndex,
 
+    /// Optional displacement index for the third vertex.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(feature = "write", xml(attribute))]
     pub d3: OptionalResourceIndex,
 
+    /// Optional displacement group id.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(feature = "write", xml(attribute))]
     pub did: OptionalResourceId,
 
+    /// Optional property index for the first vertex.
     #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
@@ -706,6 +754,7 @@ pub struct Triangle {
     )]
     pub p1: OptionalResourceIndex,
 
+    /// Optional property index for the second vertex.
     #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
@@ -716,6 +765,7 @@ pub struct Triangle {
     )]
     pub p2: OptionalResourceIndex,
 
+    /// Optional property index for the third vertex.
     #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",
@@ -726,6 +776,7 @@ pub struct Triangle {
     )]
     pub p3: OptionalResourceIndex,
 
+    /// Optional property group id.
     #[cfg_attr(feature = "write", xml(attribute))]
     #[cfg_attr(
         feature = "speed-optimized-read",

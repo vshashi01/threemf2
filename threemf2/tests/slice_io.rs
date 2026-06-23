@@ -97,6 +97,7 @@ mod tests {
 
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
+    #[allow(deprecated)]
     fn read_threemf_package_speed_optimized_single_slice_ref_with_multiple_slices() {
         let path = PathBuf::from("./tests/data/mesh-slice.3mf");
         let reader = File::open(path).unwrap();

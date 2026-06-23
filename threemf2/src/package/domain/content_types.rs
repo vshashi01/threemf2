@@ -13,9 +13,12 @@ use serde::Deserialize;
 use crate::model::StrResource;
 
 /// Content types for the Open Packaging Conventions (OPC).
-/// Contains a collection of [DefaultContentTypes].
-/// [DefaultContentTypes] contains the [DefaultContentTypeEnum] specifying the content type.
-/// [DefaultContentTypes] contains the file extension that is used for the specified content type.
+///
+/// 3MF files are ZIP archives that follow the OPC standard. The `[Content_Types].xml` file
+/// maps file extensions to MIME types so that consumers know how to handle each part.
+///
+/// This struct represents the content types container, which holds a collection of
+/// [`DefaultContentTypes`] mappings.
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Types"))]
 #[cfg_attr(feature = "memory-optimized-read", derive(FromXml))]
@@ -26,6 +29,7 @@ use crate::model::StrResource;
     xml(ns(CONTENT_TYPES_NS), rename = "Types")
 )]
 pub struct ContentTypes {
+    /// Field containing Content Types
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Default"))]
     pub defaults: Vec<DefaultContentTypes>,
 }
@@ -48,8 +52,8 @@ pub enum DefaultContentTypeEnum {
     /// Represents a JPEG image content.
     ImageJPEG,
 
-    // Represents a Content Type that is not currently known to this library
-    // content namespace is stored in the tuple.
+    /// Represents a Content Type that is not currently known to this library
+    /// content namespace is stored in the tuple.
     Unknown(StrResource),
 }
 
@@ -134,6 +138,7 @@ impl From<String> for DefaultContentTypeEnum {
     xml(ns(CONTENT_TYPES_NS), rename = "Default")
 )]
 pub struct DefaultContentTypes {
+    /// Extension of the Content Type (useful in some ambiguous case like jpeg vs jpg)
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, rename = "Extension")
@@ -141,6 +146,7 @@ pub struct DefaultContentTypes {
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Extension"))]
     pub extension: StrResource,
 
+    /// Enum of the Content Type
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, rename = "ContentType")

@@ -34,6 +34,7 @@ pub struct Model {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
+    /// Measurement unit for the model.
     pub unit: Option<Unit>,
 
     #[cfg_attr(
@@ -41,6 +42,7 @@ pub struct Model {
         xml(attribute)
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    /// Required extension namespaces for this model.
     pub requiredextensions: ThreemfExtensions,
 
     #[cfg_attr(
@@ -48,13 +50,17 @@ pub struct Model {
         xml(attribute)
     )]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    /// Recommended extension namespaces for this model.
     pub recommendedextensions: ThreemfExtensions,
 
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
+    /// Metadata entries associated with the model.
     pub metadata: Vec<Metadata>,
 
+    /// Resources available in this model.
     pub resources: Resources,
 
+    /// Build configuration specifying which objects to print.
     pub build: Build,
 }
 
@@ -69,12 +75,18 @@ pub struct Model {
     xml(scalar, rename_all = "lowercase")
 )]
 pub enum Unit {
+    /// One millionth of a meter.
     Micron,
+    /// One thousandth of a meter.
     #[default]
     Millimeter,
+    /// One hundredth of a meter.
     Centimeter,
+    /// Imperial unit equal to 25.4 millimeters.
     Inch,
+    /// Imperial unit equal to 304.8 millimeters.
     Foot,
+    /// SI base unit of length.
     Meter,
 }
 
@@ -233,6 +245,7 @@ impl From<String> for ThreemfExtensions {
 }
 
 impl Model {
+    /// Returns the list of namespaces used by this model.
     pub fn used_namespaces(&self) -> Vec<ThreemfNamespace> {
         let mut used = vec![ThreemfNamespace::Core];
         used.reserve_exact(10);

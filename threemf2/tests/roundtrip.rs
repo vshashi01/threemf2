@@ -117,6 +117,7 @@ mod tests {
             assert_eq!(ns.len(), 1);
         }
         #[cfg(feature = "io-speed-optimized-read")]
+        #[allow(deprecated)]
         {
             let package =
                 ThreemfPackage::from_reader_with_speed_optimized_deserializer(&mut buf, false)

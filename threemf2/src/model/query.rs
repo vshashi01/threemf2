@@ -26,12 +26,17 @@ use std::{borrow::Cow, num::NonZeroU32};
 /// Stable classification for object kinds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObjectKindView {
+    /// Object contains a triangle mesh.
     Mesh,
+    /// Object is an assembly of components.
     Components,
+    /// Object defines a boolean shape.
     BooleanShape,
+    /// Object contains a displacement mesh.
     DisplacementMesh,
 }
 
+/// Stable view over a model.
 pub struct ModelView<'a> {
     model: &'a Model,
 }
@@ -41,18 +46,22 @@ impl<'a> ModelView<'a> {
         Self { model }
     }
 
+    /// Returns the unit of measurement for the model.
     pub fn unit(&self) -> Unit {
         self.model.unit.clone().unwrap_or(Unit::Millimeter)
     }
 
+    /// Returns the number of objects in the model.
     pub fn object_count(&self) -> usize {
         self.model.resources.object.len()
     }
 
+    /// Returns the number of items in the build.
     pub fn build_item_count(&self) -> usize {
         self.model.build.item.len()
     }
 
+    /// Returns the UUID of the build, if any.
     pub fn build_uuid(&self) -> Option<Cow<'a, str>> {
         self.model.build.uuid.as_ref().map(|uuid| match uuid {
             #[cfg(feature = "uuid")]
@@ -64,54 +73,67 @@ impl<'a> ModelView<'a> {
         })
     }
 
+    /// Returns the number of slice stacks in the model.
     pub fn slice_stack_count(&self) -> usize {
         self.model.resources.slicestack.len()
     }
 
+    /// Returns the number of color groups in the model.
     pub fn color_group_count(&self) -> usize {
         self.model.resources.colorgroup.len()
     }
 
+    /// Returns the number of texture 2D groups in the model.
     pub fn texture2d_group_count(&self) -> usize {
         self.model.resources.texture2dgroup.len()
     }
 
+    /// Returns the number of texture 2D resources in the model.
     pub fn texture2d_count(&self) -> usize {
         self.model.resources.texture2d.len()
     }
 
+    /// Returns the number of composite materials in the model.
     pub fn composite_materials_count(&self) -> usize {
         self.model.resources.compositematerials.len()
     }
 
+    /// Returns the number of multi-properties in the model.
     pub fn multi_properties_count(&self) -> usize {
         self.model.resources.multiproperties.len()
     }
 
+    /// Returns the number of base materials in the model.
     pub fn base_materials_count(&self) -> usize {
         self.model.resources.basematerials.len()
     }
 
+    /// Returns the number of displacement 2D resources in the model.
     pub fn displacement2d_count(&self) -> usize {
         self.model.resources.displacement2d.len()
     }
 
+    /// Returns the number of normal vector groups in the model.
     pub fn normvectorgroup_count(&self) -> usize {
         self.model.resources.normvectorgroup.len()
     }
 
+    /// Returns the number of displacement 2D groups in the model.
     pub fn disp2dgroup_count(&self) -> usize {
         self.model.resources.disp2dgroup.len()
     }
 
+    /// Returns the number of metadata entries in the model.
     pub fn metadata_count(&self) -> usize {
         self.model.metadata.len()
     }
 
+    /// Returns an iterator over the metadata entries in the model.
     pub fn metadata_iter(&self) -> impl Iterator<Item = MetadataView<'a>> + '_ {
         self.model.metadata.iter().map(MetadataView::new)
     }
 
+    /// Returns the required extensions for the model, if any.
     pub fn required_extensions(&self) -> Option<&[ThreemfNamespace]> {
         let extensions = self.model.requiredextensions.get();
         if extensions.is_empty() {
@@ -121,6 +143,7 @@ impl<'a> ModelView<'a> {
         }
     }
 
+    /// Returns the recommended extensions for the model, if any.
     pub fn recommended_extensions(&self) -> Option<&[ThreemfNamespace]> {
         let extensions = self.model.recommendedextensions.get();
         if extensions.is_empty() {
@@ -130,11 +153,13 @@ impl<'a> ModelView<'a> {
         }
     }
 
+    /// Returns an iterator over the namespaces used by the model.
     pub fn used_namespaces(&self) -> impl Iterator<Item = ThreemfNamespace> {
         self.model.used_namespaces().into_iter()
     }
 }
 
+/// Stable view over a metadata entry.
 pub struct MetadataView<'a> {
     metadata: &'a Metadata,
 }
@@ -144,20 +169,23 @@ impl<'a> MetadataView<'a> {
         Self { metadata }
     }
 
+    /// Returns the name of the metadata entry.
     pub fn name(&self) -> &str {
         self.metadata.name.as_ref()
     }
 
+    /// Returns the preserve flag of the metadata entry, if any.
     pub fn preserve(&self) -> Option<bool> {
         self.metadata.preserve.as_ref().map(|p| p.0)
     }
 
+    /// Returns the value of the metadata entry, if any.
     pub fn value(&self) -> Option<&str> {
         self.metadata.value.as_ref().map(|v| v.as_ref())
     }
 }
 
-/// A stable view over a model object.
+/// Stable view over a model object.
 pub struct ObjectView<'a> {
     object: &'a Object,
 }
@@ -167,18 +195,22 @@ impl<'a> ObjectView<'a> {
         Self { object }
     }
 
+    /// Returns the identifier of the object.
     pub fn id(&self) -> u32 {
         self.object.id
     }
 
+    /// Returns the name of the object, if any.
     pub fn name(&self) -> Option<&'a str> {
         self.object.name.as_deref()
     }
 
+    /// Returns the part number of the object, if any.
     pub fn part_number(&self) -> Option<&'a str> {
         self.object.partnumber.as_deref()
     }
 
+    /// Returns the UUID of the object, if any.
     pub fn uuid(&self) -> Option<Cow<'a, str>> {
         self.object.uuid.as_ref().map(|uuid| match uuid {
             #[cfg(feature = "uuid")]
@@ -190,10 +222,12 @@ impl<'a> ObjectView<'a> {
         })
     }
 
+    /// Returns the type of the object.
     pub fn object_type(&self) -> object::ObjectType {
         self.object.objecttype.unwrap_or(object::ObjectType::Model)
     }
 
+    /// Returns the kind of the object.
     pub fn kind(&self) -> ObjectKindView {
         match &self.object.kind {
             Some(object::ObjectKind::Mesh(_)) => ObjectKindView::Mesh,
@@ -204,18 +238,23 @@ impl<'a> ObjectView<'a> {
         }
     }
 
+    /// Returns true if the object is a mesh.
     pub fn is_mesh(&self) -> bool {
         matches!(self.object.kind, Some(object::ObjectKind::Mesh(_)))
     }
 
+    /// Returns true if the object is a components assembly.
     pub fn is_components(&self) -> bool {
         matches!(self.object.kind, Some(object::ObjectKind::Components(_)))
     }
 
+    /// Returns true if the object is a boolean shape.
     pub fn is_boolean_shape(&self) -> bool {
         matches!(self.object.kind, Some(object::ObjectKind::BooleanShape(_)))
     }
 
+    /// Returns true if the object is a displacement mesh.
+    /// Returns true if the object is a displacement mesh.
     pub fn is_displacement_mesh(&self) -> bool {
         matches!(
             self.object.kind,
@@ -223,18 +262,22 @@ impl<'a> ObjectView<'a> {
         )
     }
 
+    /// Returns the property group id of the object.
     pub fn pid(&self) -> OptionalResourceId {
         self.object.pid
     }
 
+    /// Returns the property index of the object.
     pub fn pindex(&self) -> OptionalResourceIndex {
         self.object.pindex
     }
 
+    /// Returns the slice path of the object, if any.
     pub fn slicepath(&self) -> Option<&str> {
         self.object.slicepath.as_ref().map(|p| p.as_str())
     }
 
+    /// Returns the slice stack id of the object, if any.
     pub fn slicestack_id(&self) -> Option<u32> {
         self.object.slicestackid.get()
     }
@@ -246,74 +289,107 @@ pub struct MeshObjectView<'a> {
     mesh: &'a Mesh,
 }
 
+/// Stable view over a beam lattice.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LatticeView<'a> {
     lattice: &'a beamlattice::BeamLattice,
 }
 
+/// Summary data for a beam lattice.
 pub struct LatticeData {
+    /// Number of beams in the lattice.
     pub beam_count: u32,
+    /// Number of balls in the lattice.
     pub ball_count: u32,
+    /// Minimum beam length.
     pub minlength: f64,
+    /// Default beam radius.
     pub radius: f64,
+    /// Optional clipping mesh object id.
     pub clipping_mesh_id: Option<NonZeroU32>,
+    /// Clipping mode for the lattice.
     pub clippingmode: beamlattice::ClippingMode,
+    /// Optional representation mesh object id.
     pub representation_mesh_id: Option<NonZeroU32>,
+    /// Optional property group id.
     pub pid: Option<NonZeroU32>,
+    /// Optional property index.
     pub pindex: Option<u32>,
+    /// Optional ball radius.
     pub ball_radius: Option<f64>,
+    /// Ball mode for the lattice.
     pub ball_mode: beamlattice::BallMode,
 }
 
+/// Stable view over a beam.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BeamView {
+    /// First vertex index.
     pub v1: u32,
+    /// Second vertex index.
     pub v2: u32,
+    /// Radius at the first vertex.
     pub r1: f64,
+    /// Radius at the second vertex.
     pub r2: f64,
+    /// Cap mode at the first vertex.
     pub cap1: beamlattice::CapMode,
+    /// Cap mode at the second vertex.
     pub cap2: beamlattice::CapMode,
 }
 
+/// Stable view over a ball in a beam lattice.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BallView {
+    /// Vertex index where the ball is centered.
     pub vindex: u32,
+    /// Radius of the ball.
     pub radius: f64,
+    /// Optional property index.
     pub pindex: Option<u32>,
+    /// Optional property group id.
     pub pid: Option<NonZeroU32>,
 }
 
+/// Stable view over a beam set.
 pub struct BeamSetView<'a> {
     set: &'a beamlattice::BeamSet,
 }
 
 impl<'a> BeamSetView<'a> {
+    /// Returns the name of the beam set, if any.
     pub fn name(&self) -> Option<&str> {
         self.set.name.as_ref().map(|n| n.as_ref())
     }
 
+    /// Returns the identifier of the beam set, if any.
     pub fn identifier(&self) -> Option<&str> {
         self.set.identifier.as_ref().map(|i| i.as_ref())
     }
 
+    /// Returns the number of beams in the set.
     pub fn beam_count(&self) -> u32 {
         self.set.refs.len() as u32
     }
 
+    /// Returns an iterator over the beam indices in the set.
     pub fn beam_refs(&self) -> impl Iterator<Item = u32> + '_ {
         self.set.refs.iter().map(|r| r.index)
     }
 
+    /// Returns the number of balls in the set.
     pub fn ball_count(&self) -> u32 {
         self.set.ballref.len() as u32
     }
 
+    /// Returns an iterator over the ball indices in the set.
     pub fn ball_refs(&self) -> impl Iterator<Item = u32> + '_ {
         self.set.ballref.iter().map(|r| r.index)
     }
 }
 
 impl<'a> LatticeView<'a> {
+    /// Returns summary data for the beam lattice.
     pub fn data(&self) -> LatticeData {
         LatticeData {
             beam_count: self.lattice.beams.beam.len() as u32,
@@ -342,10 +418,12 @@ impl<'a> LatticeView<'a> {
         }
     }
 
+    /// Returns the number of beams in the lattice.
     pub fn beam_count(&self) -> usize {
         self.lattice.beams.beam.len()
     }
 
+    /// Returns an iterator over the beams in the lattice.
     pub fn beams(&self) -> impl Iterator<Item = BeamView> {
         let default_radius = self.lattice.radius;
         let default_cap_mode = self
@@ -363,6 +441,7 @@ impl<'a> LatticeView<'a> {
         })
     }
 
+    /// Returns the number of balls in the lattice.
     pub fn ball_count(&self) -> usize {
         self.lattice
             .balls
@@ -370,6 +449,7 @@ impl<'a> LatticeView<'a> {
             .map_or_else(|| 0, |b| b.ball.len())
     }
 
+    /// Returns an iterator over the balls in the lattice, if any.
     pub fn balls(&self) -> Option<impl Iterator<Item = BallView>> {
         let default_ball_radius = self.lattice.ballradius.unwrap_or(0.0);
         self.lattice.balls.as_ref().map(|b| {
@@ -382,6 +462,7 @@ impl<'a> LatticeView<'a> {
         })
     }
 
+    /// Returns the number of beam sets in the lattice.
     pub fn beamset_count(&self) -> usize {
         self.lattice
             .beamsets
@@ -389,6 +470,7 @@ impl<'a> LatticeView<'a> {
             .map_or_else(|| 0, |sets| sets.beamset.len())
     }
 
+    /// Returns an iterator over the beam sets in the lattice, if any.
     pub fn beamsets(&self) -> Option<impl Iterator<Item = BeamSetView<'a>> + '_> {
         self.lattice
             .beamsets
@@ -397,19 +479,23 @@ impl<'a> LatticeView<'a> {
     }
 }
 
+/// Stable view over a triangle set.
 pub struct TriangleSetView<'a> {
     set: &'a TriangleSet,
 }
 
 impl<'a> TriangleSetView<'a> {
+    /// Returns the name of the triangle set.
     pub fn name(&self) -> &str {
         self.set.name.as_ref()
     }
 
+    /// Returns the identifier of the triangle set.
     pub fn identifier(&self) -> &str {
         self.set.identifier.as_ref()
     }
 
+    /// Returns an iterator over the triangle indices in the set.
     pub fn triangles_iter(&self) -> impl Iterator<Item = u32> + '_ {
         self.set.triangle_ref.iter().map(|r| r.index).chain(
             self.set
@@ -425,22 +511,27 @@ impl<'a> MeshObjectView<'a> {
         object.get_mesh().map(|mesh| Self { object, mesh })
     }
 
+    /// Returns the identifier of the mesh object.
     pub fn id(&self) -> u32 {
         self.object.id
     }
 
+    /// Returns the name of the mesh object, if any.
     pub fn name(&self) -> Option<&'a str> {
         self.object.name.as_deref()
     }
 
+    /// Returns the property group id of the mesh object.
     pub fn pid(&self) -> OptionalResourceId {
         self.object.pid
     }
 
+    /// Returns the property index of the mesh object.
     pub fn pindex(&self) -> OptionalResourceIndex {
         self.object.pindex
     }
 
+    /// Returns the UUID of the mesh object, if any.
     pub fn uuid(&self) -> Option<Cow<'a, str>> {
         self.object
             .uuid
@@ -449,22 +540,27 @@ impl<'a> MeshObjectView<'a> {
             .map(Cow::Owned)
     }
 
+    /// Returns the number of vertices in the mesh.
     pub fn vertex_count(&self) -> usize {
         self.mesh.vertices.vertex.len()
     }
 
+    /// Returns the number of triangles in the mesh.
     pub fn triangle_count(&self) -> usize {
         self.mesh.triangles.triangle.len()
     }
 
+    /// Returns true if the mesh has a beam lattice.
     pub fn has_beamlattice(&self) -> bool {
         self.mesh.beamlattice.is_some()
     }
 
+    /// Returns true if the mesh has triangle sets.
     pub fn has_triangle_sets(&self) -> bool {
         self.mesh.trianglesets.is_some()
     }
 
+    /// Returns an iterator over the vertex positions in the mesh.
     pub fn vertices(&self) -> impl Iterator<Item = [f64; 3]> {
         self.mesh
             .vertices
@@ -473,6 +569,7 @@ impl<'a> MeshObjectView<'a> {
             .map(|v| [v.x.value(), v.y.value(), v.z.value()])
     }
 
+    /// Returns an iterator over the triangle vertex indices in the mesh.
     pub fn triangles(&self) -> impl Iterator<Item = [u32; 3]> {
         self.mesh
             .triangles
@@ -481,6 +578,7 @@ impl<'a> MeshObjectView<'a> {
             .map(|t| [t.v1, t.v2, t.v3])
     }
 
+    /// Returns an iterator over the triangle property data in the mesh.
     pub fn triangles_data(&self) -> impl Iterator<Item = [Option<u32>; 4]> {
         self.mesh
             .triangles
@@ -489,6 +587,7 @@ impl<'a> MeshObjectView<'a> {
             .map(|t| [t.p1.into(), t.p2.into(), t.p3.into(), t.pid.into()])
     }
 
+    /// Returns the number of triangle sets in the mesh.
     pub fn triangle_set_count(&self) -> usize {
         self.mesh
             .trianglesets
@@ -496,6 +595,7 @@ impl<'a> MeshObjectView<'a> {
             .map_or_else(|| 0, |sets| sets.trianglesets.len())
     }
 
+    /// Returns an iterator over the triangle sets in the mesh, if any.
     pub fn triangle_sets(&self) -> Option<impl Iterator<Item = TriangleSetView<'a>> + '_> {
         self.mesh
             .trianglesets
@@ -503,6 +603,7 @@ impl<'a> MeshObjectView<'a> {
             .map(|sets| sets.trianglesets.iter().map(|set| TriangleSetView { set }))
     }
 
+    /// Returns the beam lattice of the mesh, if any.
     pub fn lattice(&self) -> Option<LatticeView<'a>> {
         self.mesh
             .beamlattice
@@ -524,22 +625,27 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map(|mesh| Self { object, mesh })
     }
 
+    /// Returns the identifier of the displacement mesh object.
     pub fn id(&self) -> u32 {
         self.object.id
     }
 
+    /// Returns the name of the displacement mesh object, if any.
     pub fn name(&self) -> Option<Cow<'a, str>> {
         self.object.name.as_deref().map(Cow::Borrowed)
     }
 
+    /// Returns true if the displacement mesh has a beam lattice.
     pub fn has_beamlattice(&self) -> bool {
         self.mesh.beamlattice.is_some()
     }
 
+    /// Returns true if the displacement mesh has triangle sets.
     pub fn has_triangle_sets(&self) -> bool {
         self.mesh.trianglesets.is_some()
     }
 
+    /// Returns an iterator over the vertex positions in the displacement mesh.
     pub fn vertices(&self) -> impl Iterator<Item = [f64; 3]> {
         self.mesh
             .vertices
@@ -548,6 +654,7 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map(|v| [v.x.value(), v.y.value(), v.z.value()])
     }
 
+    /// Returns an iterator over the triangle vertex indices in the displacement mesh.
     pub fn triangles(&self) -> impl Iterator<Item = [u32; 3]> {
         self.mesh
             .triangles
@@ -556,6 +663,7 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map(|t| [t.v1, t.v2, t.v3])
     }
 
+    /// Returns an iterator over the triangle property data in the displacement mesh.
     pub fn triangles_data(&self) -> impl Iterator<Item = [Option<u32>; 4]> {
         self.mesh
             .triangles
@@ -564,6 +672,7 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map(|t| [t.p1.into(), t.p2.into(), t.p3.into(), t.pid.into()])
     }
 
+    /// Returns an iterator over the triangle displacement data in the displacement mesh.
     pub fn triangles_displacement_data(&self) -> impl Iterator<Item = [Option<u32>; 4]> {
         self.mesh
             .triangles
@@ -572,6 +681,7 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map(|t| [t.d1.into(), t.d2.into(), t.d3.into(), t.did.into()])
     }
 
+    /// Returns the number of triangle sets in the displacement mesh.
     pub fn triangle_set_count(&self) -> usize {
         self.mesh
             .trianglesets
@@ -579,6 +689,7 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map_or_else(|| 0, |sets| sets.trianglesets.len())
     }
 
+    /// Returns an iterator over the triangle sets in the displacement mesh, if any.
     pub fn triangle_sets(&self) -> Option<impl Iterator<Item = TriangleSetView<'a>> + '_> {
         self.mesh
             .trianglesets
@@ -586,6 +697,7 @@ impl<'a> DisplacementMeshObjectView<'a> {
             .map(|sets| sets.trianglesets.iter().map(|set| TriangleSetView { set }))
     }
 
+    /// Returns the beam lattice of the displacement mesh, if any.
     pub fn lattice(&self) -> Option<LatticeView<'a>> {
         self.mesh
             .beamlattice
@@ -603,18 +715,22 @@ pub struct ComponentView<'a> {
 }
 
 impl<'a> ComponentView<'a> {
+    /// Returns the object id of the component.
     pub fn object_id(&self) -> u32 {
         self.objectid
     }
 
+    /// Returns the transform matrix of the component, if any.
     pub fn transform(&self) -> Option<[f64; 16]> {
         self.transform
     }
 
+    /// Returns the path of the component, if any.
     pub fn path(&self) -> Option<&str> {
         self.path
     }
 
+    /// Returns the UUID of the component, if any.
     pub fn uuid(&self) -> Option<&str> {
         self.uuid.as_deref()
     }
@@ -633,18 +749,22 @@ impl<'a> ComponentsObjectView<'a> {
             .map(|components| Self { object, components })
     }
 
+    /// Returns the identifier of the components object.
     pub fn id(&self) -> u32 {
         self.object.id
     }
 
+    /// Returns the name of the components object, if any.
     pub fn name(&self) -> Option<Cow<'a, str>> {
         self.object.name.as_deref().map(Cow::Borrowed)
     }
 
+    /// Returns the number of components in the object.
     pub fn component_count(&self) -> usize {
         self.components.component.len()
     }
 
+    /// Returns an iterator over the components in the object.
     pub fn components(&self) -> impl Iterator<Item = ComponentView<'a>> + '_ {
         self.components.component.iter().map(|c| ComponentView {
             objectid: c.objectid,
@@ -667,14 +787,17 @@ pub struct BooleanOperandView<'a> {
 }
 
 impl<'a> BooleanOperandView<'a> {
+    /// Returns the object id of the operand.
     pub fn object_id(&self) -> u32 {
         self.objectid
     }
 
+    /// Returns the transform matrix of the operand, if any.
     pub fn transform(&self) -> Option<[f64; 16]> {
         self.transform
     }
 
+    /// Returns the path of the operand, if any.
     pub fn path(&self) -> Option<&str> {
         self.path
     }
@@ -693,30 +816,37 @@ impl<'a> BooleanShapeView<'a> {
             .map(|shape| Self { object, shape })
     }
 
+    /// Returns the identifier of the boolean shape object.
     pub fn id(&self) -> u32 {
         self.object.id
     }
 
+    /// Returns the name of the boolean shape object, if any.
     pub fn name(&self) -> Option<&'a str> {
         self.object.name.as_deref()
     }
 
+    /// Returns the base object id of the boolean shape.
     pub fn base_objectid(&self) -> u32 {
         self.shape.objectid
     }
 
+    /// Returns the boolean operation of the shape.
     pub fn operation(&self) -> boolean::BooleanOperation {
         self.shape.operation
     }
 
+    /// Returns true if the operation is a union.
     pub fn is_union(&self) -> bool {
         matches!(self.shape.operation, boolean::BooleanOperation::Union)
     }
 
+    /// Returns true if the operation is a difference.
     pub fn is_difference(&self) -> bool {
         matches!(self.shape.operation, boolean::BooleanOperation::Difference)
     }
 
+    /// Returns true if the operation is an intersection.
     pub fn is_intersection(&self) -> bool {
         matches!(
             self.shape.operation,
@@ -724,6 +854,7 @@ impl<'a> BooleanShapeView<'a> {
         )
     }
 
+    /// Returns an iterator over the boolean operands in the shape.
     pub fn booleans(&self) -> impl Iterator<Item = BooleanOperandView<'a>> + '_ {
         self.shape.booleans.iter().map(|b| BooleanOperandView {
             objectid: b.objectid,
@@ -743,10 +874,12 @@ impl<'a> ItemView<'a> {
         Self { item }
     }
 
+    /// Returns the object id of the build item.
     pub fn object_id(&self) -> u32 {
         self.item.objectid
     }
 
+    /// Returns the transform matrix of the build item, if any.
     pub fn transform(&self) -> Option<[f64; 16]> {
         self.item
             .transform
@@ -754,14 +887,17 @@ impl<'a> ItemView<'a> {
             .map(Transform::to_column_major_matrix)
     }
 
+    /// Returns the part number of the build item, if any.
     pub fn part_number(&self) -> Option<&str> {
         self.item.partnumber.as_deref()
     }
 
+    /// Returns the path of the build item, if any.
     pub fn path(&self) -> Option<&str> {
         self.item.path.as_ref().map(|p| p.as_str())
     }
 
+    /// Returns the UUID of the build item, if any.
     pub fn uuid(&self) -> Option<Cow<'a, str>> {
         self.item
             .uuid
@@ -778,10 +914,12 @@ pub struct SliceRefView<'a> {
 }
 
 impl<'a> SliceRefView<'a> {
+    /// Returns the slice stack id of the reference.
     pub fn slicestack_id(&self) -> u32 {
         self.slicestack_id
     }
 
+    /// Returns the slice path of the reference.
     pub fn slicepath(&self) -> &str {
         self.slicepath
     }
@@ -794,10 +932,12 @@ pub struct PolygonView<'a> {
 }
 
 impl<'a> PolygonView<'a> {
+    /// Returns the number of segments in the polygon.
     pub fn segment_count(&self) -> usize {
         self.segment_count
     }
 
+    /// Returns an iterator over the segment vertex pairs in the polygon.
     pub fn segments(self) -> impl Iterator<Item = [u32; 2]> {
         self.polygon
             .segment
@@ -809,6 +949,7 @@ impl<'a> PolygonView<'a> {
             })
     }
 
+    /// Returns an iterator over the segment property data in the polygon.
     pub fn segments_data(self) -> impl Iterator<Item = [Option<u32>; 3]> {
         self.polygon
             .segment
@@ -827,14 +968,17 @@ impl<'a> SliceView<'a> {
         Self { slice }
     }
 
+    /// Returns the top Z position of the slice.
     pub fn ztop(&self) -> f64 {
         self.slice.ztop.value()
     }
 
+    /// Returns the number of vertices in the slice, if any.
     pub fn vertex_count(&self) -> Option<usize> {
         self.slice.vertices.as_ref().map(|v| v.vertex.len())
     }
 
+    /// Returns an iterator over the vertex positions in the slice, if any.
     pub fn vertices(&self) -> Option<impl Iterator<Item = [f64; 2]>> {
         self.slice
             .vertices
@@ -842,10 +986,12 @@ impl<'a> SliceView<'a> {
             .map(|v| v.vertex.iter().map(|v| [v.x.into(), v.y.into()]))
     }
 
+    /// Returns the number of polygons in the slice.
     pub fn polygon_count(&self) -> usize {
         self.slice.polygon.len()
     }
 
+    /// Returns an iterator over the polygons in the slice.
     pub fn polygons(&self) -> impl Iterator<Item = PolygonView<'a>> + '_ {
         self.slice.polygon.iter().map(|p| PolygonView {
             polygon: p,
@@ -864,26 +1010,32 @@ impl<'a> SliceStackView<'a> {
         Self { stack }
     }
 
+    /// Returns the identifier of the slice stack.
     pub fn id(&self) -> u32 {
         self.stack.id
     }
 
+    /// Returns the bottom Z position of the slice stack, if any.
     pub fn zbottom(&self) -> Option<f64> {
         self.stack.zbottom.map(|d| d.value())
     }
 
+    /// Returns true if the slice stack contains owned slices.
     pub fn has_owned_slices(&self) -> bool {
         self.stack.has_owned_slices()
     }
 
+    /// Returns the number of slices in the stack.
     pub fn slice_count(&self) -> usize {
         self.stack.slice.len()
     }
 
+    /// Returns the number of slice references in the stack.
     pub fn sliceref_count(&self) -> usize {
         self.stack.sliceref.len()
     }
 
+    /// Returns an iterator over the slice references in the stack.
     pub fn slicerefs(&self) -> impl Iterator<Item = SliceRefView<'a>> + '_ {
         self.stack.sliceref.iter().map(|r| SliceRefView {
             slicestack_id: r.slicestackid,
@@ -891,6 +1043,7 @@ impl<'a> SliceStackView<'a> {
         })
     }
 
+    /// Returns an iterator over the slices in the stack.
     pub fn slices(&self) -> impl Iterator<Item = SliceView<'a>> + '_ {
         self.stack.slice.iter().map(SliceView::new)
     }
@@ -906,14 +1059,17 @@ impl<'a> ColorGroupView<'a> {
         Self { group }
     }
 
+    /// Returns the identifier of the color group.
     pub fn id(&self) -> u32 {
         self.group.id
     }
 
+    /// Returns the number of colors in the group.
     pub fn color_count(&self) -> usize {
         self.group.color.len()
     }
 
+    /// Returns the color at the given index, if any.
     pub fn color_at(&self, index: usize) -> Option<Color> {
         self.group.color.get(index).map(|c| c.color)
     }
@@ -929,18 +1085,22 @@ impl<'a> Texture2DGroupView<'a> {
         Self { group }
     }
 
+    /// Returns the identifier of the texture 2D group.
     pub fn id(&self) -> u32 {
         self.group.id
     }
 
+    /// Returns the texture id of the group.
     pub fn texid(&self) -> u32 {
         self.group.texid
     }
 
+    /// Returns the number of texture coordinates in the group.
     pub fn texcoord_count(&self) -> usize {
         self.group.tex2coord.len()
     }
 
+    /// Returns an iterator over the texture coordinates in the group.
     pub fn tex_coords(&self) -> impl Iterator<Item = [f64; 2]> {
         self.group
             .tex2coord
@@ -959,10 +1119,12 @@ impl<'a> CompositeMaterialsView<'a> {
         Self { materials }
     }
 
+    /// Returns the identifier of the composite materials.
     pub fn id(&self) -> u32 {
         self.materials.id
     }
 
+    /// Returns the number of composite entries in the materials.
     pub fn composite_count(&self) -> usize {
         self.materials.composite.len()
     }
@@ -978,10 +1140,12 @@ impl<'a> MultiPropertiesView<'a> {
         Self { props }
     }
 
+    /// Returns the identifier of the multi-properties.
     pub fn id(&self) -> u32 {
         self.props.id
     }
 
+    /// Returns the number of multi-property entries.
     pub fn multi_count(&self) -> usize {
         self.props.multi.len()
     }
@@ -997,26 +1161,32 @@ impl<'a> Texture2DView<'a> {
         Self { texture }
     }
 
+    /// Returns the identifier of the texture 2D resource.
     pub fn id(&self) -> u32 {
         self.texture.id
     }
 
+    /// Returns the path of the texture 2D resource.
     pub fn path(&self) -> &str {
         self.texture.path.as_str()
     }
 
+    /// Returns the content type of the texture.
     pub fn content_type(&self) -> material::TextureContentType {
         self.texture.contenttype.clone()
     }
 
+    /// Returns the tile style in the U direction.
     pub fn tile_style_u(&self) -> material::TileStyle {
         self.texture.tilestyleu.unwrap_or(material::TileStyle::Wrap)
     }
 
+    /// Returns the tile style in the V direction.
     pub fn tile_style_v(&self) -> material::TileStyle {
         self.texture.tilestylev.unwrap_or(material::TileStyle::Wrap)
     }
 
+    /// Returns the filter mode of the texture.
     pub fn filter(&self) -> material::Filter {
         self.texture.filter.unwrap_or(material::Filter::Auto)
     }
@@ -1032,6 +1202,7 @@ impl<'a> Displacement2DView<'a> {
         Self { displacement }
     }
 
+    /// Returns the identifier of the displacement 2D resource.
     pub fn id(&self) -> u32 {
         self.displacement.id
     }
@@ -1047,10 +1218,12 @@ impl<'a> NormVectorGroupView<'a> {
         Self { group }
     }
 
+    /// Returns the identifier of the normal vector group.
     pub fn id(&self) -> u32 {
         self.group.id
     }
 
+    /// Returns an iterator over the normal vectors in the group.
     pub fn norm_vectors(&self) -> impl Iterator<Item = [f64; 3]> {
         self.group
             .normvector
@@ -1064,10 +1237,15 @@ pub struct Disp2DGroupView<'a> {
     group: &'a displacement::Disp2DGroup,
 }
 
+/// Stable view over a 2D displacement coordinate.
 pub struct Disp2DCoordView {
+    /// U texture coordinate.
     pub u: f64,
+    /// V texture coordinate.
     pub v: f64,
+    /// Index into the normal vector group.
     pub norm_index: u32,
+    /// Scaling factor for displacement.
     pub f: f64,
 }
 
@@ -1076,26 +1254,32 @@ impl<'a> Disp2DGroupView<'a> {
         Self { group }
     }
 
+    /// Returns the identifier of the displacement 2D group.
     pub fn id(&self) -> u32 {
         self.group.id
     }
 
+    /// Returns the displacement map id of the group.
     pub fn displacement_map_id(&self) -> u32 {
         self.group.dispid
     }
 
+    /// Returns the normal vector group id of the group.
     pub fn norm_vector_group_id(&self) -> u32 {
         self.group.nid
     }
 
+    /// Returns the height of the displacement.
     pub fn height(&self) -> f64 {
         self.group.height.into()
     }
 
+    /// Returns the offset of the displacement.
     pub fn offset(&self) -> f64 {
         self.group.offset.map_or(0.0, |o| o.into())
     }
 
+    /// Returns an iterator over the displacement 2D coordinates in the group.
     pub fn disp_2d_coords(&self) -> impl Iterator<Item = Disp2DCoordView> {
         self.group.disp2dcoord.iter().map(|d| Disp2DCoordView {
             u: d.u.into(),
@@ -1116,10 +1300,12 @@ impl<'a> BaseMaterialsView<'a> {
         Self { materials }
     }
 
+    /// Returns the identifier of the base materials.
     pub fn id(&self) -> u32 {
         self.materials.id
     }
 
+    /// Returns the number of base materials entries.
     pub fn base_count(&self) -> usize {
         self.materials.base.len()
     }
@@ -1128,17 +1314,40 @@ impl<'a> BaseMaterialsView<'a> {
 /// Stable material property value.
 #[derive(Debug, Clone, PartialEq)]
 pub enum MaterialPropertyValue {
+    /// Solid color property.
     Color(Color),
-    TextureCoord { u: f64, v: f64 },
-    Composite { values: Vec<f64> },
-    Multi { indices: Vec<u32> },
-    Base { name: String, displaycolor: String },
+    /// Texture coordinate property.
+    TextureCoord {
+        /// U texture coordinate.
+        u: f64,
+        /// V texture coordinate.
+        v: f64,
+    },
+    /// Composite material values.
+    Composite {
+        /// Composite material values.
+        values: Vec<f64>,
+    },
+    /// Multi-property indices.
+    Multi {
+        /// Multi-property indices.
+        indices: Vec<u32>,
+    },
+    /// Base material name and color.
+    Base {
+        /// Base material name.
+        name: String,
+        /// Base material display color.
+        displaycolor: String,
+    },
 }
 
+/// Returns a stable view over the given model.
 pub fn get_model_view<'a>(model: &'a Model) -> ModelView<'a> {
     ModelView::new(model)
 }
 
+/// Returns a view over the object with the given id from the model, if found.
 pub fn get_object_from_model<'a>(object_id: u32, model: &'a Model) -> Option<ObjectView<'a>> {
     model
         .resources
@@ -1148,10 +1357,12 @@ pub fn get_object_from_model<'a>(object_id: u32, model: &'a Model) -> Option<Obj
         .map(ObjectView::new)
 }
 
+/// Returns an iterator over all objects in the model.
 pub fn get_objects_from_model<'a>(model: &'a Model) -> impl Iterator<Item = ObjectView<'a>> {
     model.resources.object.iter().map(ObjectView::new)
 }
 
+/// Returns an iterator over all mesh objects in the model.
 pub fn get_mesh_objects_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = MeshObjectView<'a>> {
@@ -1162,6 +1373,7 @@ pub fn get_mesh_objects_from_model<'a>(
         .filter_map(MeshObjectView::from_object)
 }
 
+/// Returns an iterator over all displacement mesh objects in the model.
 pub fn get_displacement_mesh_objects_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = DisplacementMeshObjectView<'a>> {
@@ -1172,6 +1384,7 @@ pub fn get_displacement_mesh_objects_from_model<'a>(
         .filter_map(DisplacementMeshObjectView::from_object)
 }
 
+/// Returns an iterator over all components objects in the model.
 pub fn get_components_objects_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = ComponentsObjectView<'a>> {
@@ -1182,6 +1395,7 @@ pub fn get_components_objects_from_model<'a>(
         .filter_map(ComponentsObjectView::from_object)
 }
 
+/// Returns an iterator over all boolean shape objects in the model.
 pub fn get_boolean_shape_objects_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = BooleanShapeView<'a>> {
@@ -1192,16 +1406,19 @@ pub fn get_boolean_shape_objects_from_model<'a>(
         .filter_map(BooleanShapeView::from_object)
 }
 
+/// Returns an iterator over all build items in the model.
 pub fn get_items_from_model<'a>(model: &'a Model) -> impl Iterator<Item = ItemView<'a>> {
     model.build.item.iter().map(ItemView::new)
 }
 
+/// Returns an iterator over all slice stacks in the model.
 pub fn get_slice_stacks_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = SliceStackView<'a>> {
     model.resources.slicestack.iter().map(SliceStackView::new)
 }
 
+/// Returns a view over the slice stack with the given id from the model, if found.
 pub fn get_slice_stack_from_model<'a>(
     slicestack_id: u32,
     model: &'a Model,
@@ -1214,12 +1431,14 @@ pub fn get_slice_stack_from_model<'a>(
         .map(SliceStackView::new)
 }
 
+/// Returns an iterator over all color groups in the model.
 pub fn get_color_groups_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = ColorGroupView<'a>> {
     model.resources.colorgroup.iter().map(ColorGroupView::new)
 }
 
+/// Returns a view over the color group with the given id from the model, if found.
 pub fn get_color_group_by_id<'a>(
     colorgroup_id: u32,
     model: &'a Model,
@@ -1232,6 +1451,7 @@ pub fn get_color_group_by_id<'a>(
         .map(ColorGroupView::new)
 }
 
+/// Returns an iterator over all texture 2D groups in the model.
 pub fn get_texture2d_groups_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = Texture2DGroupView<'a>> {
@@ -1242,6 +1462,7 @@ pub fn get_texture2d_groups_from_model<'a>(
         .map(Texture2DGroupView::new)
 }
 
+/// Returns a view over the texture 2D group with the given id from the model, if found.
 pub fn get_texture2d_group_by_id<'a>(
     texture2dgroup_id: u32,
     model: &'a Model,
@@ -1254,6 +1475,7 @@ pub fn get_texture2d_group_by_id<'a>(
         .map(Texture2DGroupView::new)
 }
 
+/// Returns an iterator over all composite materials in the model.
 pub fn get_composite_materials_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = CompositeMaterialsView<'a>> {
@@ -1264,6 +1486,7 @@ pub fn get_composite_materials_from_model<'a>(
         .map(CompositeMaterialsView::new)
 }
 
+/// Returns a view over the composite materials with the given id from the model, if found.
 pub fn get_composite_materials_by_id<'a>(
     compositematerials_id: u32,
     model: &'a Model,
@@ -1276,6 +1499,7 @@ pub fn get_composite_materials_by_id<'a>(
         .map(CompositeMaterialsView::new)
 }
 
+/// Returns an iterator over all multi-properties in the model.
 pub fn get_multi_properties_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = MultiPropertiesView<'a>> {
@@ -1286,6 +1510,7 @@ pub fn get_multi_properties_from_model<'a>(
         .map(MultiPropertiesView::new)
 }
 
+/// Returns a view over the multi-properties with the given id from the model, if found.
 pub fn get_multi_properties_by_id<'a>(
     multiproperties_id: u32,
     model: &'a Model,
@@ -1298,10 +1523,12 @@ pub fn get_multi_properties_by_id<'a>(
         .map(MultiPropertiesView::new)
 }
 
+/// Returns an iterator over all texture 2D resources in the model.
 pub fn get_texture2ds_from_model<'a>(model: &'a Model) -> impl Iterator<Item = Texture2DView<'a>> {
     model.resources.texture2d.iter().map(Texture2DView::new)
 }
 
+/// Returns a view over the texture 2D resource with the given id from the model, if found.
 pub fn get_texture2d_by_id<'a>(texture2d_id: u32, model: &'a Model) -> Option<Texture2DView<'a>> {
     model
         .resources
@@ -1311,6 +1538,7 @@ pub fn get_texture2d_by_id<'a>(texture2d_id: u32, model: &'a Model) -> Option<Te
         .map(Texture2DView::new)
 }
 
+/// Returns an iterator over all displacement 2D resources in the model.
 pub fn get_displacement2ds_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = Displacement2DView<'a>> {
@@ -1321,6 +1549,7 @@ pub fn get_displacement2ds_from_model<'a>(
         .map(Displacement2DView::new)
 }
 
+/// Returns a view over the displacement 2D resource with the given id from the model, if found.
 pub fn get_displacement2d_by_id<'a>(
     displacement2d_id: u32,
     model: &'a Model,
@@ -1333,6 +1562,7 @@ pub fn get_displacement2d_by_id<'a>(
         .map(Displacement2DView::new)
 }
 
+/// Returns an iterator over all normal vector groups in the model.
 pub fn get_normvectorgroups_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = NormVectorGroupView<'a>> {
@@ -1343,6 +1573,7 @@ pub fn get_normvectorgroups_from_model<'a>(
         .map(NormVectorGroupView::new)
 }
 
+/// Returns a view over the normal vector group with the given id from the model, if found.
 pub fn get_normvectorgroup_by_id<'a>(
     normvectorgroup_id: u32,
     model: &'a Model,
@@ -1355,12 +1586,14 @@ pub fn get_normvectorgroup_by_id<'a>(
         .map(NormVectorGroupView::new)
 }
 
+/// Returns an iterator over all displacement 2D groups in the model.
 pub fn get_disp2dgroups_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = Disp2DGroupView<'a>> {
     model.resources.disp2dgroup.iter().map(Disp2DGroupView::new)
 }
 
+/// Returns a view over the displacement 2D group with the given id from the model, if found.
 pub fn get_disp2dgroup_by_id<'a>(
     disp2dgroup_id: u32,
     model: &'a Model,
@@ -1373,6 +1606,7 @@ pub fn get_disp2dgroup_by_id<'a>(
         .map(Disp2DGroupView::new)
 }
 
+/// Returns an iterator over all base materials in the model.
 pub fn get_base_materials_from_model<'a>(
     model: &'a Model,
 ) -> impl Iterator<Item = BaseMaterialsView<'a>> {
@@ -1383,6 +1617,7 @@ pub fn get_base_materials_from_model<'a>(
         .map(BaseMaterialsView::new)
 }
 
+/// Returns a view over the base materials with the given id from the model, if found.
 pub fn get_base_materials_by_id<'a>(
     basematerials_id: u32,
     model: &'a Model,
@@ -1395,6 +1630,7 @@ pub fn get_base_materials_by_id<'a>(
         .map(BaseMaterialsView::new)
 }
 
+/// Resolves a material property from the model using the given property group id and index.
 pub fn resolve_material_property<'a>(
     pid: OptionalResourceId,
     pindex: OptionalResourceIndex,
@@ -1456,6 +1692,7 @@ pub fn resolve_material_property<'a>(
     None
 }
 
+/// Returns the texture 2D resource associated with the given texture 2D group from the model, if found.
 pub fn get_texture_for_group<'a>(
     texture2dgroup: &material::Texture2DGroup,
     model: &'a Model,

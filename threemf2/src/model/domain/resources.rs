@@ -28,7 +28,7 @@ use crate::{
     xml(ns(CORE_NS, s = SLICE_NS, m = MATERIAL_NS), rename = "resources")
 )]
 pub struct Resources {
-    /// Collection of Object. See [`crate::core::object::Object`]
+    /// Collection of 3D objects. See [`Object`]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub object: Vec<Object>,
 
@@ -36,7 +36,7 @@ pub struct Resources {
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub basematerials: Vec<BaseMaterials>,
 
-    /// Collection of SliceStack. See [`crate::core::slice::SliceStack`]
+    /// Collection of slice stacks. See [`SliceStack`]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -44,7 +44,7 @@ pub struct Resources {
     )]
     pub slicestack: Vec<SliceStack>,
 
-    /// Collection of ColorGroup. See [`crate::core::material::ColorGroup`]
+    /// Collection of color groups. See [`ColorGroup`]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -52,7 +52,7 @@ pub struct Resources {
     )]
     pub colorgroup: Vec<ColorGroup>,
 
-    /// Collection of Texture2DGroup. See [`crate::core::material::Texture2DGroup`]
+    /// Collection of texture coordinate groups. See [`Texture2DGroup`]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -60,7 +60,7 @@ pub struct Resources {
     )]
     pub texture2dgroup: Vec<Texture2DGroup>,
 
-    /// Collection of CompositeMaterials. See [`crate::core::material::CompositeMaterials`]
+    /// Collection of composite materials. See [`CompositeMaterials`]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -68,7 +68,7 @@ pub struct Resources {
     )]
     pub compositematerials: Vec<CompositeMaterials>,
 
-    /// Collection of MultiProperties. See [`crate::core::material::MultiProperties`]
+    /// Collection of multi-property definitions. See [`MultiProperties`]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -76,7 +76,7 @@ pub struct Resources {
     )]
     pub multiproperties: Vec<MultiProperties>,
 
-    /// Collection of Texture2D. See [`crate::core::material::Texture2D`]
+    /// Collection of 2D texture references. See [`Texture2D`]
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -117,13 +117,16 @@ pub struct Resources {
     any(feature = "write", feature = "memory-optimized-read"),
     xml(ns(CORE_NS), rename = "base")
 )]
+/// A single base material entry with name and color.
 pub struct Base {
+    /// Name of the base material.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub name: StrResource,
 
+    /// Display color of the base material in hex format.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
@@ -139,13 +142,16 @@ pub struct Base {
     any(feature = "write", feature = "memory-optimized-read"),
     xml(ns(CORE_NS), rename = "basematerials")
 )]
+/// A group of base materials referenced by objects.
 pub struct BaseMaterials {
+    /// Unique identifier for this base materials group.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub id: ResourceId,
 
+    /// Base material entries in this group.
     pub base: Vec<Base>,
 }
 

@@ -1,3 +1,8 @@
+//! Package builder for assembling 3MF files from multiple models.
+//!
+//! [`ThreemfPackageBuilder`] collects root models, sub-models, thumbnails, and unknown parts,
+//! then generates the correct ZIP structure with content types and relationship files.
+
 use std::collections::{HashMap, HashSet};
 
 use compact_str::format_compact;
@@ -20,22 +25,26 @@ use crate::{
 
 const DEFAULT_ROOT_MODEL_PATH: &str = "/3D/3Dmodel.model";
 
+/// Errors that can occur when building a 3MF package.
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum PackageBuildError {
+    /// Root model is not set.
     #[error("Root model is not set")]
     RootModelNotSet,
 
+    /// Duplicate model path detected.
     #[error("Duplicate model path: {0}")]
     DuplicateModelPath(String),
 
+    /// Referenced model path not found in the package.
     #[error("Referenced model path not found: {0}")]
     MissingModel(String),
 
+    /// Invalid model path format.
     #[error("Invalid model path: {0}")]
     InvalidModelPath(String),
 
-    // #[error("ContentTypes missing required defaults: {0}")]
-    // ContentTypesMissingRequiredDefaults(String),
+    /// OPC Part Path is missing an extension.
     #[error("OPC Part Path is missing an extension: {0}")]
     MissingOPCPartExtension(String),
 }
@@ -66,10 +75,12 @@ impl Default for ThreemfPackageBuilder {
 }
 
 impl ThreemfPackageBuilder {
+    /// Creates a new package builder.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Sets the root model for the package.
     pub fn set_root_model(&mut self, model: Model) -> &mut Self {
         self.root_model = Some(model);
         self.add_model_content_type();
@@ -82,6 +93,7 @@ impl ThreemfPackageBuilder {
     //     Ok(self)
     // }
 
+    /// Adds a sub-model to the package.
     pub fn add_model(&mut self, path: &str, model: Model) -> Result<&mut Self, PackageBuildError> {
         let normalized = normalize_model_path(path)?;
         if normalized == self.root_model_path || self.sub_models.contains_key(&normalized) {
@@ -100,6 +112,7 @@ impl ThreemfPackageBuilder {
     //     self
     // }
 
+    /// Adds a thumbnail image to the package.
     pub fn add_thumbnail(
         &mut self,
         path: &str,
@@ -167,6 +180,7 @@ impl ThreemfPackageBuilder {
         }
     }
 
+    /// Adds an unknown OPC part to the package.
     pub fn add_unknown_opc_part(
         &mut self,
         path: &str,
@@ -195,6 +209,7 @@ impl ThreemfPackageBuilder {
         }
     }
 
+    /// Builds the 3MF package.
     pub fn build(mut self) -> Result<ThreemfPackage, PackageBuildError> {
         let root = self.root_model.ok_or(PackageBuildError::RootModelNotSet)?;
         let referenced_paths =
