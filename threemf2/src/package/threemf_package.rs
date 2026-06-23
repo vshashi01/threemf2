@@ -353,7 +353,8 @@ impl ThreemfPackage {
         Ok(processor.into_threemf_package())
     }
 
-    //if path is set or not found then its the root model
+    /// Returns the namespaces used by a specific model in the package.
+    /// If path is None or not found, returns the root model namespaces.
     pub fn get_namespaces_on_model(
         &self,
         model_path: Option<&str>,

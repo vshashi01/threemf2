@@ -115,18 +115,22 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         })
     }
 
+    /// Returns the content types of the package.
     pub fn content_types(&self) -> &ContentTypes {
         &self.content_types
     }
 
+    /// Returns the relationships map of the package.
     pub fn relationships(&self) -> &HashMap<PathResource, Relationships> {
         &self.relationships
     }
 
+    /// Returns the path to the root model.
     pub fn root_model_path(&self) -> &PathResource {
         &self.root_model_path
     }
 
+    /// Returns an iterator over all model paths in the package.
     pub fn model_paths(&self) -> impl Iterator<Item = &PathResource> {
         self.relationships
             .values()
@@ -140,6 +144,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             })
     }
 
+    /// Returns an iterator over all thumbnail paths in the package.
     pub fn thumbnail_paths(&self) -> impl Iterator<Item = &PathResource> {
         self.relationships
             .values()
@@ -153,6 +158,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             })
     }
 
+    /// Returns an iterator over all unknown part paths in the package.
     pub fn unknown_part_paths(&self) -> impl Iterator<Item = &str> {
         self.relationships
             .values()
@@ -166,11 +172,13 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
             })
     }
 
+    /// Returns the root model, loading it lazily if needed.
     pub fn root_model(&self) -> Result<&Model, Error> {
         self.root_model
             .get_or_try_init(|| self.load_model_from_archive(&self.root_model_path))
     }
 
+    /// Executes a function against a model loaded lazily from the given path.
     pub fn with_model<F, T>(&self, path: &PathResource, f: F) -> Result<T, Error>
     where
         F: FnOnce(&Model) -> T,
@@ -227,6 +235,7 @@ impl<R: Read + Seek> ThreemfPackageLazyReader<R> {
         }
     }
 
+    /// Executes a function against a thumbnail loaded lazily from the given path.
     pub fn with_thumbnail<F, T>(&self, path: &PathResource, f: F) -> Result<T, Error>
     where
         F: FnOnce(&ThumbnailHandle) -> T,
