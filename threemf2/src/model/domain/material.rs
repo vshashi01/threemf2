@@ -538,11 +538,14 @@ pub struct Multi {
     pub pindices: ResourceIndexCollection,
 }
 
+/// Type of the Texture image
 #[cfg_attr(feature = "speed-optimized-read", derive(Deserialize))]
 #[cfg_attr(feature = "speed-optimized-read", serde(from = "String"))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum TextureContentType {
+    /// Jpef format
     Jpeg,
+    /// Png format
     Png,
 }
 
@@ -608,6 +611,7 @@ impl From<String> for TextureContentType {
 }
 
 impl TextureContentType {
+    /// Content type namespace
     pub fn to_str(&self) -> &str {
         match self {
             TextureContentType::Jpeg => "image/jpeg",
@@ -616,6 +620,7 @@ impl TextureContentType {
     }
 
     #[allow(clippy::should_implement_trait)]
+    /// Returns the types based on the namespace definition
     pub fn from_str(value: &str) -> Option<Self> {
         match value {
             "image/jpeg" => Some(Self::Jpeg),

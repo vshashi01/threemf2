@@ -48,7 +48,7 @@ pub struct Mesh {
 
     /// Optional Beam Lattice geometry that is part of this mesh
     ///
-    /// See [`BeamLattice`](crate::model::domain::beamlattice::BeamLattice) for more details
+    /// See [`BeamLattice`] for more details
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -65,6 +65,7 @@ pub struct Mesh {
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "vertices"))]
 pub struct Vertices {
+    /// Field containing the collection
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub vertex: Vec<Vertex>,
 }
@@ -142,6 +143,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
+    /// Easy constructor from [`f64`] values
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self {
             x: Double::new(x),
@@ -221,6 +223,7 @@ impl<'xml> FromXml<'xml> for Vertex {
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "write", xml(ns(CORE_NS), rename = "triangles"))]
 pub struct Triangles {
+    /// Field containing the triangles
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub triangle: Vec<Triangle>,
 }

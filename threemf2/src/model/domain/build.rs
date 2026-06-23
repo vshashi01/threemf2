@@ -30,6 +30,7 @@ use crate::{
 #[derive(Default, PartialEq, Debug, Clone)]
 #[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS), rename = "build"))]
 pub struct Build {
+    /// Uuid specified to this Build
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "UUID", default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
@@ -37,6 +38,7 @@ pub struct Build {
     )]
     pub uuid: Option<UuidResource>,
 
+    /// Field of items
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub item: Vec<Item>,
 }
@@ -48,30 +50,35 @@ pub struct Build {
 #[derive(Default, PartialEq, Debug, Clone)]
 #[cfg_attr(any(feature="write", feature="memory-optimized-read"), xml(ns(CORE_NS, p=PROD_NS), rename = "item"))]
 pub struct Item {
+    /// Id of the Object referenced by this Item
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub objectid: ResourceId,
 
+    /// Transform associated to this Item
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub transform: Option<Transform>,
 
+    /// Part number associated with this Item
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub partnumber: Option<StrResource>,
 
+    /// Optional Path to the model where the Object referenced by this Item is located in
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS))
     )]
     pub path: Option<PathResource>,
 
+    /// Uuuid assigned to this Item
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS), rename = "UUID")

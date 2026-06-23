@@ -29,6 +29,7 @@ use crate::model::StrResource;
     xml(ns(CONTENT_TYPES_NS), rename = "Types")
 )]
 pub struct ContentTypes {
+    /// Field containing Content Types
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Default"))]
     pub defaults: Vec<DefaultContentTypes>,
 }
@@ -51,8 +52,8 @@ pub enum DefaultContentTypeEnum {
     /// Represents a JPEG image content.
     ImageJPEG,
 
-    // Represents a Content Type that is not currently known to this library
-    // content namespace is stored in the tuple.
+    /// Represents a Content Type that is not currently known to this library
+    /// content namespace is stored in the tuple.
     Unknown(StrResource),
 }
 
@@ -137,6 +138,7 @@ impl From<String> for DefaultContentTypeEnum {
     xml(ns(CONTENT_TYPES_NS), rename = "Default")
 )]
 pub struct DefaultContentTypes {
+    /// Extension of the Content Type (useful in some ambiguous case like jpeg vs jpg)
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, rename = "Extension")
@@ -144,6 +146,7 @@ pub struct DefaultContentTypes {
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Extension"))]
     pub extension: StrResource,
 
+    /// Enum of the Content Type
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, rename = "ContentType")

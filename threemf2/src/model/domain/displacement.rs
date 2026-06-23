@@ -437,7 +437,7 @@ pub struct DisplacementMesh {
 
     /// Optional Beam Lattice geometry that is part of this mesh
     ///
-    /// See [`BeamLattice`](crate::model::domain::beamlattice::BeamLattice) for more details
+    /// See [`BeamLattice`] for more details
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),

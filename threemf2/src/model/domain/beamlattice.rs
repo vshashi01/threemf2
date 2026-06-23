@@ -254,6 +254,7 @@ impl From<String> for CapMode {
     xml(ns(BEAM_LATTICE_NS), rename = "beams")
 )]
 pub struct Beams {
+    /// Field of beams
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub beam: Vec<Beam>,
 }
@@ -367,6 +368,7 @@ pub struct Beam {
     xml(ns(BEAM_LATTICE_BALLS_NS), rename = "balls", force_prefix)
 )]
 pub struct Balls {
+    /// Field of balls
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub ball: Vec<Ball>,
 }
@@ -435,6 +437,7 @@ pub struct Ball {
     xml(ns(BEAM_LATTICE_NS), rename = "beamsets")
 )]
 pub struct BeamSets {
+    /// Field of beamsets
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub beamset: Vec<BeamSet>,
 }

@@ -66,6 +66,7 @@ pub struct Relationship {
     xml(ns(RELATIONSHIP_NS))
 )]
 pub struct Relationships {
+    /// Field of relationship
     #[cfg_attr(feature = "speed-optimized-read", serde(rename = "Relationship"))]
     pub relationships: Vec<Relationship>,
 }
