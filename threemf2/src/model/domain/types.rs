@@ -157,17 +157,22 @@ impl<'xml> FromXml<'xml> for StrResource {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PathResource(StrResource);
 
+/// Errors that can occur when parsing or validating a package path.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum PathResourceError {
+    /// Empty path is not a valid path resource.
     #[error("Empty path is not a valid Path Resource")]
     EmptyPathNotAllowed,
 
+    /// Relative path segments (. or ..) are not allowed.
     #[error("Relative path is not a valid Path Resource")]
     DotSegmentNotAllowed,
 
+    /// Path resource must be a file with an extension.
     #[error("Path Resource is required to be a file extension")]
     PathMustBeAFileWithExtension,
 
+    /// Path resource cannot contain backslashes.
     #[error("Path Resource cannot contain backslashes")]
     BackslashesNotAllowed,
 }

@@ -1,4 +1,4 @@
-//! Builder API for constructing 3MF models programmatically.
+﻿//! Builder API for constructing 3MF models programmatically.
 //!
 //! This module provides a builder based API to make 3MF Models.
 //! The builder pattern makes it easy to construct complex 3D models with proper validation
@@ -1182,8 +1182,10 @@ pub enum ItemError {
 /// Errors that can occur when building a Texture2D resource.
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum Texture2DError {
+    /// Texture2D path is not set.
     #[error("Texture2D path is not set")]
     PathNotSet,
+    /// Texture2D content type is not set.
     #[error("Texture2D content type is not set")]
     ContentTypeNotSet,
 }
@@ -1191,6 +1193,7 @@ pub enum Texture2DError {
 /// Errors that can occur when building a Texture2DGroup resource.
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum Texture2DGroupError {
+    /// Texture2DGroup texid is not set.
     #[error("Texture2DGroup texid is not set")]
     TexIdNotSet,
 }
@@ -1198,8 +1201,10 @@ pub enum Texture2DGroupError {
 /// Errors that can occur when building CompositeMaterials.
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum CompositeMaterialsError {
+    /// CompositeMaterials matid is not set.
     #[error("CompositeMaterials matid is not set")]
     MatIdNotSet,
+    /// CompositeMaterials matindices are empty.
     #[error("CompositeMaterials matindices are empty")]
     MatIndicesEmpty,
 }
@@ -1207,6 +1212,7 @@ pub enum CompositeMaterialsError {
 /// Errors that can occur when building MultiProperties.
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum MultiPropertiesError {
+    /// MultiProperties pids are empty.
     #[error("MultiProperties pids are empty")]
     PidsEmpty,
 }
@@ -1214,6 +1220,7 @@ pub enum MultiPropertiesError {
 /// Errors that can occur when building Displacement2D.
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum Displacement2DError {
+    /// Displacement2D path is not set.
     #[error("Displacement2D path is not set")]
     PathNotSet,
 }
@@ -1221,10 +1228,13 @@ pub enum Displacement2DError {
 /// Errors that can occur when building Disp2DGroup.
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum Disp2DGroupError {
+    /// Disp2DGroup displacement id is not set.
     #[error("Disp2DGroup displacement id is not set")]
     DispIdNotSet,
+    /// Disp2DGroup norm vector group id is not set.
     #[error("Disp2DGroup norm vector group id is not set")]
     NormVectorGroupIdNotSet,
+    /// Disp2DGroup height is not set.
     #[error("Disp2DGroup height is not set")]
     HeightNotSet,
 }
@@ -1392,6 +1402,7 @@ impl<T> ObjectBuilder<T> {
         self
     }
 
+    /// Sets the UUID for this object.
     pub fn uuid(&mut self, uuid: &str) -> &mut Self {
         self.uuid = Some(UuidResource::from(uuid));
         self
@@ -1813,21 +1824,25 @@ impl TriangleBuilder {
         }
     }
 
+    /// Sets the property index for vertex 1.
     pub fn pindex_1(mut self, pindex: OptionalResourceIndex) -> Self {
         self.p1 = pindex;
         self
     }
 
+    /// Sets the property index for vertex 2.
     pub fn pindex_2(mut self, pindex: OptionalResourceIndex) -> Self {
         self.p2 = pindex;
         self
     }
 
+    /// Sets the property index for vertex 3.
     pub fn pindex_3(mut self, pindex: OptionalResourceIndex) -> Self {
         self.p3 = pindex;
         self
     }
 
+    /// Sets the property resource ID for this triangle.
     pub fn pid(mut self, pid: ResourceId) -> Self {
         self.pid = OptionalResourceId::new(pid);
         self
@@ -1872,6 +1887,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds a vertex to the displacement mesh.
     pub fn add_vertex(&mut self, coords: &[f64; 3]) -> &mut Self {
         self.vertices
             .push(crate::model::domain::displacement::Vertex {
@@ -1882,6 +1898,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds multiple vertices to the displacement mesh.
     pub fn add_vertices(&mut self, vertices: &[[f64; 3]]) -> &mut Self {
         for vertex in vertices {
             self.add_vertex(vertex);
@@ -1889,6 +1906,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds multiple vertices from a flat array to the displacement mesh.
     pub fn add_vertices_flat(&mut self, vertices: &[f64]) -> &mut Self {
         for vertex in vertices.chunks_exact(3) {
             self.vertices
@@ -1901,6 +1919,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds a triangle to the displacement mesh.
     pub fn add_triangle(&mut self, indices: &[usize; 3]) -> &mut Self {
         self.triangles
             .push(crate::model::domain::displacement::Triangle {
@@ -1919,6 +1938,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds a triangle with property indices to the displacement mesh.
     pub fn add_triangle_with_properties(
         &mut self,
         indices: &[usize; 3],
@@ -1944,6 +1964,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds a triangle using an advanced builder closure.
     pub fn add_triangle_advanced<F>(&mut self, indices: &[usize; 3], f: F) -> &mut Self
     where
         F: FnOnce(DisplacementTriangleBuilder) -> DisplacementTriangleBuilder,
@@ -1957,6 +1978,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds multiple triangles to the displacement mesh.
     pub fn add_triangles(&mut self, triangles: &[[usize; 3]]) -> &mut Self {
         for triangle in triangles {
             self.add_triangle(triangle);
@@ -1964,6 +1986,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds multiple triangles from a flat array to the displacement mesh.
     pub fn add_triangles_flat(&mut self, triangles: &[usize]) -> &mut Self {
         for triangle in triangles.chunks_exact(3) {
             self.triangles
@@ -1984,6 +2007,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds triangle sets to the displacement mesh.
     pub fn add_triangle_sets<F>(&mut self, f: F) -> &mut Self
     where
         F: FnOnce(&mut TriangleSetsBuilder),
@@ -1998,6 +2022,7 @@ impl DisplacementMeshBuilder {
         self
     }
 
+    /// Adds a beam lattice to the displacement mesh.
     pub fn add_beam_lattice<F>(&mut self, f: F) -> &mut Self
     where
         F: FnOnce(&mut BeamLatticeBuilder),
@@ -2061,41 +2086,49 @@ impl DisplacementTriangleBuilder {
         }
     }
 
+    /// Sets the displacement index for vertex 1.
     pub fn displacement_index_1(mut self, index: OptionalResourceIndex) -> Self {
         self.d1 = index;
         self
     }
 
+    /// Sets the displacement index for vertex 2.
     pub fn displacement_index_2(mut self, index: OptionalResourceIndex) -> Self {
         self.d2 = index;
         self
     }
 
+    /// Sets the displacement index for vertex 3.
     pub fn displacement_index_3(mut self, index: OptionalResourceIndex) -> Self {
         self.d3 = index;
         self
     }
 
+    /// Sets the displacement group ID for this triangle.
     pub fn displacement_id(mut self, disp2dgroup_id: ResourceId) -> Self {
         self.did = OptionalResourceId::new(disp2dgroup_id);
         self
     }
 
+    /// Sets the property index for vertex 1.
     pub fn pindex_1(mut self, pindex: OptionalResourceIndex) -> Self {
         self.p1 = pindex;
         self
     }
 
+    /// Sets the property index for vertex 2.
     pub fn pindex_2(mut self, pindex: OptionalResourceIndex) -> Self {
         self.p2 = pindex;
         self
     }
 
+    /// Sets the property index for vertex 3.
     pub fn pindex_3(mut self, pindex: OptionalResourceIndex) -> Self {
         self.p3 = pindex;
         self
     }
 
+    /// Sets the property resource ID for this triangle.
     pub fn pid(mut self, pid: ResourceId) -> Self {
         self.pid = OptionalResourceId::new(pid);
         self
@@ -2353,6 +2386,7 @@ pub struct ComponentBuilder {
 }
 
 impl ComponentBuilder {
+    /// Creates a new ComponentBuilder for the given object ID.
     pub fn new(object_id: ObjectId) -> Self {
         Self {
             objectid: object_id.0,
@@ -2362,6 +2396,7 @@ impl ComponentBuilder {
         }
     }
 
+    /// Sets the transform for this component.
     pub fn transform(&mut self, transform: Transform) -> &mut Self {
         self.transform = Some(transform);
         self
@@ -3219,11 +3254,13 @@ impl ColorGroupBuilder {
         }
     }
 
+    /// Adds a color to the color group.
     pub fn add_color(&mut self, color: crate::model::Color) -> &mut Self {
         self.colors.push(material::ColorElement { color });
         self
     }
 
+    /// Adds multiple colors to the color group.
     pub fn add_colors(&mut self, colors: &[crate::model::Color]) -> &mut Self {
         for color in colors {
             self.add_color(*color);
@@ -3261,6 +3298,7 @@ impl Texture2DBuilder {
         }
     }
 
+    /// Sets the path to the texture image file.
     pub fn path(&mut self, path: &str) -> &mut Self {
         match PathResource::try_from(path) {
             Ok(path) => {
@@ -3271,21 +3309,25 @@ impl Texture2DBuilder {
         }
     }
 
+    /// Sets the content type of the texture.
     pub fn content_type(&mut self, content_type: material::TextureContentType) -> &mut Self {
         self.contenttype = Some(content_type);
         self
     }
 
+    /// Sets the tile style for the U coordinate.
     pub fn tilestyle_u(&mut self, tilestyle: material::TileStyle) -> &mut Self {
         self.tilestyleu = Some(tilestyle);
         self
     }
 
+    /// Sets the tile style for the V coordinate.
     pub fn tilestyle_v(&mut self, tilestyle: material::TileStyle) -> &mut Self {
         self.tilestylev = Some(tilestyle);
         self
     }
 
+    /// Sets the filter for the texture.
     pub fn filter(&mut self, filter: material::Filter) -> &mut Self {
         self.filter = Some(filter);
         self
@@ -3319,11 +3361,13 @@ impl Texture2DGroupBuilder {
         }
     }
 
+    /// Sets the texture ID for this group.
     pub fn texid(&mut self, texid: ResourceId) -> &mut Self {
         self.texid = Some(texid);
         self
     }
 
+    /// Adds a texture coordinate to the group.
     pub fn add_tex_coord(&mut self, u: f64, v: f64) -> &mut Self {
         self.tex2coord.push(material::Tex2Coord {
             u: u.into(),
@@ -3332,6 +3376,7 @@ impl Texture2DGroupBuilder {
         self
     }
 
+    /// Adds multiple texture coordinates to the group.
     pub fn add_tex_coords(&mut self, coords: &[(f64, f64)]) -> &mut Self {
         for &(u, v) in coords {
             self.add_tex_coord(u, v);
@@ -3366,21 +3411,25 @@ impl CompositeMaterialsBuilder {
         }
     }
 
+    /// Sets the material ID for this composite material.
     pub fn matid(&mut self, matid: ResourceId) -> &mut Self {
         self.matid = Some(matid);
         self
     }
 
+    /// Sets the material indices for this composite material.
     pub fn matindices(&mut self, matindices: &[ResourceIndex]) -> &mut Self {
         self.matindices = matindices.to_vec();
         self
     }
 
+    /// Adds a material index to this composite material.
     pub fn add_matindex(&mut self, matindex: ResourceIndex) -> &mut Self {
         self.matindices.push(matindex);
         self
     }
 
+    /// Adds a composite value set to this composite material.
     pub fn add_composite(&mut self, values: &[f64]) -> &mut Self {
         self.composite.push(material::Composite {
             values: values.iter().copied().map(Into::into).collect(),
@@ -3388,6 +3437,7 @@ impl CompositeMaterialsBuilder {
         self
     }
 
+    /// Adds multiple composite value sets to this composite material.
     pub fn add_composites(&mut self, values: &[Vec<f64>]) -> &mut Self {
         for composite in values {
             self.add_composite(composite);
@@ -3426,16 +3476,19 @@ impl MultiPropertiesBuilder {
         }
     }
 
+    /// Sets the property IDs for this multi-property.
     pub fn pids(&mut self, pids: &[ResourceId]) -> &mut Self {
         self.pids = pids.to_vec();
         self
     }
 
+    /// Adds a property ID to this multi-property.
     pub fn add_pid(&mut self, pid: ResourceId) -> &mut Self {
         self.pids.push(pid);
         self
     }
 
+    /// Sets the blend methods for this multi-property.
     pub fn blendmethods(&mut self, methods: &[material::BlendMethod]) -> &mut Self {
         let value = methods
             .iter()
@@ -3449,11 +3502,13 @@ impl MultiPropertiesBuilder {
         self
     }
 
+    /// Sets the raw blend methods string for this multi-property.
     pub fn blendmethods_raw(&mut self, methods: &str) -> &mut Self {
         self.blendmethods = Some(StrResource::new(methods));
         self
     }
 
+    /// Adds a multi-property index set to this multi-property.
     pub fn add_multi(&mut self, pindices: &[ResourceIndex]) -> &mut Self {
         self.multi.push(material::Multi {
             pindices: ResourceIndexCollection::from(pindices.to_vec()),
@@ -3488,6 +3543,7 @@ impl BaseMaterialsBuilder {
         }
     }
 
+    /// Adds a base material with a display color string.
     pub fn add_base(&mut self, name: &str, displaycolor: &str) -> &mut Self {
         self.bases.push(Base {
             name: StrResource::new(name),
@@ -3496,6 +3552,7 @@ impl BaseMaterialsBuilder {
         self
     }
 
+    /// Adds a base material with a color value.
     pub fn add_base_color(&mut self, name: &str, displaycolor: crate::model::Color) -> &mut Self {
         self.bases.push(Base {
             name: StrResource::new(name),
@@ -3534,6 +3591,7 @@ impl Displacement2DBuilder {
         }
     }
 
+    /// Sets the path to the displacement map image file.
     pub fn path(&mut self, path: &str) -> &mut Self {
         match PathResource::try_from(path) {
             Ok(path) => {
@@ -3544,21 +3602,25 @@ impl Displacement2DBuilder {
         }
     }
 
+    /// Sets the channel name for this displacement map.
     pub fn channel(&mut self, channel: displacement::ChannelName) -> &mut Self {
         self.channel = Some(channel);
         self
     }
 
+    /// Sets the tile style for the U coordinate.
     pub fn tilestyle_u(&mut self, tilestyle: displacement::TileStyle) -> &mut Self {
         self.tilestyleu = Some(tilestyle);
         self
     }
 
+    /// Sets the tile style for the V coordinate.
     pub fn tilestyle_v(&mut self, tilestyle: displacement::TileStyle) -> &mut Self {
         self.tilestylev = Some(tilestyle);
         self
     }
 
+    /// Sets the filter for this displacement map.
     pub fn filter(&mut self, filter: displacement::Filter) -> &mut Self {
         self.filter = Some(filter);
         self
@@ -3590,6 +3652,7 @@ impl NormVectorGroupBuilder {
         }
     }
 
+    /// Adds a normal vector to the group.
     pub fn add_norm_vector(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
         self.vectors.push(displacement::NormVector {
             x: x.into(),
@@ -3599,6 +3662,7 @@ impl NormVectorGroupBuilder {
         self
     }
 
+    /// Adds multiple normal vectors to the group.
     pub fn add_norm_vectors(&mut self, vectors: &[[f64; 3]]) -> &mut Self {
         for vector in vectors {
             self.add_norm_vector(vector[0], vector[1], vector[2]);
@@ -3636,26 +3700,31 @@ impl Disp2DGroupBuilder {
         }
     }
 
+    /// Sets the displacement map ID for this group.
     pub fn displacement_map_id(&mut self, dispid: ResourceId) -> &mut Self {
         self.dispid = Some(dispid);
         self
     }
 
+    /// Sets the normal vector group ID for this group.
     pub fn norm_vector_group_id(&mut self, nid: ResourceId) -> &mut Self {
         self.nid = Some(nid);
         self
     }
 
+    /// Sets the displacement height for this group.
     pub fn height(&mut self, height: f64) -> &mut Self {
         self.height = Some(height);
         self
     }
 
+    /// Sets the displacement offset for this group.
     pub fn offset(&mut self, offset: f64) -> &mut Self {
         self.offset = Some(offset);
         self
     }
 
+    /// Adds a displacement coordinate to this group.
     pub fn add_coord(&mut self, u: f64, v: f64, n: ResourceIndex, f: Option<f64>) -> &mut Self {
         self.coords.push(displacement::Disp2DCoord {
             u: u.into(),
@@ -3666,6 +3735,7 @@ impl Disp2DGroupBuilder {
         self
     }
 
+    /// Adds multiple displacement coordinates to this group.
     pub fn add_coords(&mut self, coords: &[(f64, f64, ResourceIndex, Option<f64>)]) -> &mut Self {
         for &(u, v, n, f) in coords {
             self.add_coord(u, v, n, f);

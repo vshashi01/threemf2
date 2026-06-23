@@ -117,13 +117,16 @@ pub struct Resources {
     any(feature = "write", feature = "memory-optimized-read"),
     xml(ns(CORE_NS), rename = "base")
 )]
+/// A single base material entry with name and color.
 pub struct Base {
+    /// Name of the base material.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub name: StrResource,
 
+    /// Display color of the base material in hex format.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
@@ -139,13 +142,16 @@ pub struct Base {
     any(feature = "write", feature = "memory-optimized-read"),
     xml(ns(CORE_NS), rename = "basematerials")
 )]
+/// A group of base materials referenced by objects.
 pub struct BaseMaterials {
+    /// Unique identifier for this base materials group.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub id: ResourceId,
 
+    /// Base material entries in this group.
     pub base: Vec<Base>,
 }
 

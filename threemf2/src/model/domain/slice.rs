@@ -133,9 +133,11 @@ pub struct SliceStack {
     )]
     pub zbottom: Option<Double>,
 
+    /// Owned slice data entries.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub slice: Vec<Slice>,
 
+    /// References to external slice data.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub sliceref: Vec<SliceRef>,
 }
@@ -215,6 +217,7 @@ pub struct Slice {
     xml(ns(SLICE_NS), rename = "vertices", force_prefix)
 )]
 pub struct Vertices {
+    /// 2D vertices within a slice.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub vertex: Vec<Vertex>,
 }
@@ -278,9 +281,11 @@ impl<'xml> FromXml<'xml> for Vertices {
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(feature = "write", xml(ns(SLICE_NS), rename = "vertex", force_prefix))]
 pub struct Vertex {
+    /// X coordinate in slice space.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub x: Double,
 
+    /// Y coordinate in slice space.
     #[cfg_attr(feature = "write", xml(attribute))]
     pub y: Double,
 }

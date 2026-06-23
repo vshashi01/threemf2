@@ -13,55 +13,73 @@ use crate::package::ThreemfPackage;
 
 /// Package view for an object with origin model path.
 pub struct ObjectPackageView<'a> {
+    /// The object view.
     pub view: ObjectView<'a>,
+    /// Path to the model containing this object, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// Package view for a mesh object.
 pub struct MeshObjectPackageView<'a> {
+    /// The mesh object view.
     pub view: MeshObjectView<'a>,
+    /// Path to the model containing this mesh, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// Package view for a displacement mesh object.
 pub struct DisplacementMeshObjectPackageView<'a> {
+    /// The displacement mesh object view.
     pub view: DisplacementMeshObjectView<'a>,
+    /// Path to the model containing this object, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// Package view for a components object.
 pub struct ComponentsObjectPackageView<'a> {
+    /// The components object view.
     pub view: ComponentsObjectView<'a>,
+    /// Path to the model containing this object, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// Package view for a boolean shape object.
 pub struct BooleanShapePackageView<'a> {
+    /// The boolean shape view.
     pub view: BooleanShapeView<'a>,
+    /// Path to the model containing this object, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// Package view for a build item.
 pub struct ItemPackageView<'a> {
+    /// The build item view.
     pub view: ItemView<'a>,
+    /// Path to the model containing this item, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// Package view for a slice stack.
 pub struct SliceStackPackageView<'a> {
+    /// The slice stack view.
     pub view: SliceStackView<'a>,
+    /// Path to the model containing this slice stack, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// Package view for a model.
 pub struct ModelPackageView<'a> {
+    /// The model view.
     pub view: ModelView<'a>,
+    /// Path to the model file, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
 
 /// A reference to a model within a package, with path information for sub-models.
 pub struct ModelRef<'a> {
+    /// The referenced model.
     pub model: &'a Model,
+    /// Path to the model file, if a sub-model.
     pub path: Option<&'a str>,
 }
 

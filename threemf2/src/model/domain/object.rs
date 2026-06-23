@@ -269,9 +269,13 @@ impl From<String> for ObjectType {
 /// for better ergonomics of this library. This kind will specify all different variants
 /// of a 3MF Object.
 pub enum ObjectKind {
+    /// Object contains triangle mesh geometry.
     Mesh(Mesh),
+    /// Object references other objects via components.
     Components(Components),
+    /// Object defines a boolean shape operation.
     BooleanShape(BooleanShape),
+    /// Object contains displacement mesh geometry.
     DisplacementMesh(DisplacementMesh),
 }
 

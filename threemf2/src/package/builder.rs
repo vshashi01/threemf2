@@ -25,22 +25,26 @@ use crate::{
 
 const DEFAULT_ROOT_MODEL_PATH: &str = "/3D/3Dmodel.model";
 
+/// Errors that can occur when building a 3MF package.
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum PackageBuildError {
+    /// Root model is not set.
     #[error("Root model is not set")]
     RootModelNotSet,
 
+    /// Duplicate model path detected.
     #[error("Duplicate model path: {0}")]
     DuplicateModelPath(String),
 
+    /// Referenced model path not found in the package.
     #[error("Referenced model path not found: {0}")]
     MissingModel(String),
 
+    /// Invalid model path format.
     #[error("Invalid model path: {0}")]
     InvalidModelPath(String),
 
-    // #[error("ContentTypes missing required defaults: {0}")]
-    // ContentTypesMissingRequiredDefaults(String),
+    /// OPC Part Path is missing an extension.
     #[error("OPC Part Path is missing an extension: {0}")]
     MissingOPCPartExtension(String),
 }

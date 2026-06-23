@@ -2,10 +2,14 @@
 
 use crate::model::StrResource;
 
+/// Image format for thumbnails in a 3MF package.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImageFormat {
+    /// PNG image format.
     Png,
+    /// JPEG image format.
     Jpeg,
+    /// Unknown image format with the extension.
     Unknown(StrResource),
 }
 
@@ -27,9 +31,12 @@ impl ImageFormat {
     }
 }
 
+/// Handle for a thumbnail image within a 3MF package.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ThumbnailHandle {
+    /// Raw image data.
     pub data: Vec<u8>,
+    /// Image format of the thumbnail.
     pub format: ImageFormat,
 }
 

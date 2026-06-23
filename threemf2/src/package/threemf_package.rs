@@ -65,6 +65,7 @@ pub struct ThreemfPackage {
 }
 
 impl ThreemfPackage {
+    /// Creates a new 3MF package from its constituent parts.
     pub fn new(
         root: Model,
         sub_models: HashMap<PathResource, Model>,
@@ -258,6 +259,7 @@ impl ThreemfPackage {
     feature = "io-speed-optimized-read"
 ))]
 impl ThreemfPackage {
+    /// Reads a 3MF package using the memory-optimized XML deserializer.
     #[cfg(feature = "package-memory-optimized-read")]
     pub fn from_reader_with_memory_optimized_deserializer<R: Read + io::Seek>(
         reader: R,
@@ -266,6 +268,7 @@ impl ThreemfPackage {
         Self::from_reader(reader, process_sub_models, XmlDeserializer::MemoryOptimized)
     }
 
+    /// Reads a 3MF package using the speed-optimized XML deserializer (deprecated).
     #[cfg(feature = "io-speed-optimized-read")]
     #[deprecated(
         note = "speed-optimized-read is deprecated; use from_reader_with_memory_optimized_deserializer"

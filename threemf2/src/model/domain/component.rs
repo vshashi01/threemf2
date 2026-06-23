@@ -28,6 +28,7 @@ use crate::{
     xml(ns(CORE_NS, p=PROD_NS), rename = "components")
 )]
 pub struct Components {
+    /// Component references within this components object.
     pub component: Vec<Component>,
 }
 
@@ -45,20 +46,24 @@ pub struct Component {
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
+    /// Unique identifier of the referenced object.
     pub objectid: ResourceId,
 
+    /// Optional transform applied to the referenced object.
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute)
     )]
     pub transform: Option<Transform>,
 
+    /// Optional path to the referenced object (Production extension).
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS))
     )]
     pub path: Option<PathResource>,
 
+    /// Optional UUID for the referenced object (Production extension).
     #[cfg_attr(
         any(feature = "write", feature = "memory-optimized-read"),
         xml(attribute, ns(PROD_NS), rename = "UUID")
