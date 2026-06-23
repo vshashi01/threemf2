@@ -14,6 +14,7 @@ pub enum ImageFormat {
 }
 
 impl ImageFormat {
+    /// Creates an ImageFormat from a file extension.
     pub fn from_ext(ext: &str) -> Self {
         match ext.to_lowercase().as_ref() {
             "png" => Self::Png,
@@ -22,6 +23,7 @@ impl ImageFormat {
         }
     }
 
+    /// Returns the file extension as a string.
     pub fn as_str(&self) -> &str {
         match self {
             ImageFormat::Png => "png",

@@ -134,6 +134,7 @@ impl ThreemfNamespace {
         }
     }
 
+    /// Attempts to create a ThreemfNamespace from a URI.
     pub fn try_from_uri(uri: &str, assigned_prefix: Option<&str>) -> Option<Self> {
         match uri {
             CORE_NS => Some(Self::Core),
@@ -152,6 +153,7 @@ impl ThreemfNamespace {
         }
     }
 
+    /// Attempts to create a ThreemfNamespace from a prefix.
     pub fn try_from_prefix(prefix: &str, specified_uri: Option<&str>) -> Option<Self> {
         match prefix {
             //CORE_NS => Some(Self::Core),

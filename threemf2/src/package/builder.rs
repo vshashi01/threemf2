@@ -75,10 +75,12 @@ impl Default for ThreemfPackageBuilder {
 }
 
 impl ThreemfPackageBuilder {
+    /// Creates a new package builder.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Sets the root model for the package.
     pub fn set_root_model(&mut self, model: Model) -> &mut Self {
         self.root_model = Some(model);
         self.add_model_content_type();
@@ -91,6 +93,7 @@ impl ThreemfPackageBuilder {
     //     Ok(self)
     // }
 
+    /// Adds a sub-model to the package.
     pub fn add_model(&mut self, path: &str, model: Model) -> Result<&mut Self, PackageBuildError> {
         let normalized = normalize_model_path(path)?;
         if normalized == self.root_model_path || self.sub_models.contains_key(&normalized) {
@@ -109,6 +112,7 @@ impl ThreemfPackageBuilder {
     //     self
     // }
 
+    /// Adds a thumbnail image to the package.
     pub fn add_thumbnail(
         &mut self,
         path: &str,
@@ -176,6 +180,7 @@ impl ThreemfPackageBuilder {
         }
     }
 
+    /// Adds an unknown OPC part to the package.
     pub fn add_unknown_opc_part(
         &mut self,
         path: &str,
@@ -204,6 +209,7 @@ impl ThreemfPackageBuilder {
         }
     }
 
+    /// Builds the 3MF package.
     pub fn build(mut self) -> Result<ThreemfPackage, PackageBuildError> {
         let root = self.root_model.ok_or(PackageBuildError::RootModelNotSet)?;
         let referenced_paths =
