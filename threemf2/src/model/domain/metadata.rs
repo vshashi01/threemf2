@@ -83,6 +83,7 @@ impl ToXml for Metadata {
     xml(ns(CORE_NS), rename = "metadatagroup")
 )]
 pub struct MetadataGroup {
+    /// Metadata entries in this group.
     #[cfg_attr(feature = "speed-optimized-read", serde(default))]
     pub metadata: Vec<Metadata>,
 }

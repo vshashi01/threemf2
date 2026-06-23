@@ -1317,13 +1317,29 @@ pub enum MaterialPropertyValue {
     /// Solid color property.
     Color(Color),
     /// Texture coordinate property.
-    TextureCoord { u: f64, v: f64 },
+    TextureCoord {
+        /// U texture coordinate.
+        u: f64,
+        /// V texture coordinate.
+        v: f64,
+    },
     /// Composite material values.
-    Composite { values: Vec<f64> },
+    Composite {
+        /// Composite material values.
+        values: Vec<f64>,
+    },
     /// Multi-property indices.
-    Multi { indices: Vec<u32> },
+    Multi {
+        /// Multi-property indices.
+        indices: Vec<u32>,
+    },
     /// Base material name and color.
-    Base { name: String, displaycolor: String },
+    Base {
+        /// Base material name.
+        name: String,
+        /// Base material display color.
+        displaycolor: String,
+    },
 }
 
 /// Returns a stable view over the given model.

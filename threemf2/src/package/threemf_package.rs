@@ -581,6 +581,7 @@ mod tests {
 
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
+    #[allow(deprecated)]
     pub fn from_reader_root_model_with_speed_optimized_read_test() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/P_XPX_0702_02.3mf");
         let reader = File::open(path).unwrap();

@@ -143,6 +143,7 @@ pub struct SliceStack {
 }
 
 impl SliceStack {
+    /// Returns true if this slice stack contains owned slice data.
     pub fn has_owned_slices(&self) -> bool {
         // matches!(self.kind, SliceDataKind::Slice(_))
         !self.slice.is_empty()

@@ -531,6 +531,7 @@ mod tests {
 
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
+    #[allow(deprecated)]
     fn test_pull_based_speed_optimized() {
         let path =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/mesh-composedpart.3mf");

@@ -42,6 +42,7 @@ mod tests {
 
     #[cfg(feature = "io-speed-optimized-read")]
     #[test]
+    #[allow(deprecated)]
     fn read_displacement_package_speed_optimized() {
         use threemf2::threemf_namespaces::ThreemfNamespace;
 
