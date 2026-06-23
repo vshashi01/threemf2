@@ -5,6 +5,107 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.0 (2026-06-23)
+
+### New Features
+
+ - <csr-id-4b333d0d849596380fac7331eb64b1c37b6cf025/> Add UuidResource type to parse and validate with uuid crate optionally
+   - Introduces `UuidResource` type with capability to deserialize and
+   serialize with both `memory-optimized-read` and `speed-optimized-read`
+   features
+   - `UuidResource` supports native Uuid parsing when the `uuid` feature is
+   enabled with the support `uuid` crate.
+ - <csr-id-b4801dd17d04c3bd2300ba8e2d062ba65713232e/> Introduce ThreemfExtensions type to manage extension namespaces
+   - `requiredextensions` and `recommendedextensions` fields in the Model
+   struct now has strongly defined namespaces
+   - Deserializers smartly evaluates the the namespace prefixes defined in
+   the fields above.
+   - Removed the need to specially parse xmlns definitions on Model
+   deserialization, which improves performance by 10%
+   - Fixed the used_namespaces function to include Core namespace always
+   and fixed processing of some namespace utilities for displacement mesh
+   type.
+   - Further performance optimization to avoid allocation churn in
+   Vertices, Triangles and Transform types upon deserialization.
+   - Moved builder functions to core: This is an ongoing work to continue
+   in future PR.
+   - Moved to instant-xml version 0.7.4 and migrated all writers to use
+   force-prefix flag to always use prefix only.
+
+### Bug Fixes
+
+ - <csr-id-656c7a4874bd2a58a77b06b237b9118134910729/> Improve Docs
+   - Added ARCHITECTURE.md
+   - Updated README.md
+   - Added clippy warning to missing public docs
+   - Added basic docs
+ - <csr-id-e5f967e62461a3da2215feaa320a786ddf761db1/> Updated instant-xml to 0.7.5
+
+### New Features (BREAKING)
+
+ - <csr-id-c9a1a0d7bbe38511fd7aed7e0906aebfe20129c2/> Reorganized core and io modules to model and package modules respectively
+   - `core` module renamed to `model`
+   > - Introduced `domain` sub-module to encapsulate all domain specific
+   types and structs used throughout the 3MF Specification
+   > - `query` and `builder` sub-modules within this module are the direct
+   public API for reading and writing 3MF Model struct(s)
+   > - Re-exports useful domain specific types or enums for `query` and
+   `builder` compatibility
+   
+   - `io` module renamed to `package` module
+   > - Introduced `domain` sub-module to encapsulate all domain specific
+   types and structs used for 3MF Package Archive
+   > - `query` and `builder` modules within this module are the direct
+   public API for reading and writing 3MF Package(s).
+   
+   - `io-write` feature renamed to `package-write`
+   - `io-memory-optimized-read` feature renamed to
+   `package-memory-optimized-read`
+   - `io-lazy-read` feature renamed to `package-lazy-read`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 15 calendar days.
+ - 50 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 13 unique issues were worked on: [#38](https://github.com/vshashi01/threemf2/issues/38), [#39](https://github.com/vshashi01/threemf2/issues/39), [#40](https://github.com/vshashi01/threemf2/issues/40), [#41](https://github.com/vshashi01/threemf2/issues/41), [#42](https://github.com/vshashi01/threemf2/issues/42), [#43](https://github.com/vshashi01/threemf2/issues/43), [#44](https://github.com/vshashi01/threemf2/issues/44), [#45](https://github.com/vshashi01/threemf2/issues/45), [#46](https://github.com/vshashi01/threemf2/issues/46), [#47](https://github.com/vshashi01/threemf2/issues/47), [#48](https://github.com/vshashi01/threemf2/issues/48), [#49](https://github.com/vshashi01/threemf2/issues/49), [#50](https://github.com/vshashi01/threemf2/issues/50)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#38](https://github.com/vshashi01/threemf2/issues/38)**
+    - Introduce ThreemfExtensions type to manage extension namespaces ([`b4801dd`](https://github.com/vshashi01/threemf2/commit/b4801dd17d04c3bd2300ba8e2d062ba65713232e))
+ * **[#39](https://github.com/vshashi01/threemf2/issues/39)**
+    - Add UuidResource type to parse and validate with uuid crate optionally ([`4b333d0`](https://github.com/vshashi01/threemf2/commit/4b333d0d849596380fac7331eb64b1c37b6cf025))
+ * **[#40](https://github.com/vshashi01/threemf2/issues/40)**
+    - Feat!(core): Introduce PathResource type to replace all path fields ([`7af4f80`](https://github.com/vshashi01/threemf2/commit/7af4f802901ca3733ddd1f65fc712a7e4d9b5228))
+ * **[#41](https://github.com/vshashi01/threemf2/issues/41)**
+    - Fix!(core): Remove None as a variant from UuidResource ([`9728217`](https://github.com/vshashi01/threemf2/commit/9728217078c3d0e14b280d07a803308816417355))
+ * **[#42](https://github.com/vshashi01/threemf2/issues/42)**
+    - Updated instant-xml to 0.7.5 ([`e5f967e`](https://github.com/vshashi01/threemf2/commit/e5f967e62461a3da2215feaa320a786ddf761db1))
+ * **[#43](https://github.com/vshashi01/threemf2/issues/43)**
+    - Feat!(core): Introduce StrResource to enable SSO ([`ac75e85`](https://github.com/vshashi01/threemf2/commit/ac75e85da45f87b6a43473d4d1a44e8d9d87495b))
+ * **[#44](https://github.com/vshashi01/threemf2/issues/44)**
+    - Feat!(core,io): Deprecated speed-optimized-read ([`2f9f56f`](https://github.com/vshashi01/threemf2/commit/2f9f56ff47d7b30486e45677e9ab3f5e4a006072))
+ * **[#45](https://github.com/vshashi01/threemf2/issues/45)**
+    - Feat!(core,io): Split query to core and io package ([`7c6f128`](https://github.com/vshashi01/threemf2/commit/7c6f128c0fd66a6872fb86a58f28dae4e773ad8a))
+ * **[#46](https://github.com/vshashi01/threemf2/issues/46)**
+    - Feat!(io,core): Introduced ThreemfPackageBuilder as public API for creating 3MF packages ([`81cfd06`](https://github.com/vshashi01/threemf2/commit/81cfd06c2f8c28d8dbe876d3268b1a66adfb4121))
+ * **[#47](https://github.com/vshashi01/threemf2/issues/47)**
+    - Reorganized core and io modules to model and package modules respectively ([`c9a1a0d`](https://github.com/vshashi01/threemf2/commit/c9a1a0d7bbe38511fd7aed7e0906aebfe20129c2))
+ * **[#48](https://github.com/vshashi01/threemf2/issues/48)**
+    - Feat!(model): PathResource now return an error with Path with backslashes ([`c6d73a9`](https://github.com/vshashi01/threemf2/commit/c6d73a9aab6ae58860b56db34e8a7b60fc9dfce2))
+ * **[#49](https://github.com/vshashi01/threemf2/issues/49)**
+    - Improve Docs ([`656c7a4`](https://github.com/vshashi01/threemf2/commit/656c7a4874bd2a58a77b06b237b9118134910729))
+ * **[#50](https://github.com/vshashi01/threemf2/issues/50)**
+    - Update version to 0.4.0 ([`0df9de7`](https://github.com/vshashi01/threemf2/commit/0df9de74f34597c669bb7df095ce874a14a7a461))
+</details>
+
 ## 0.3.0 (2026-05-04)
 
 ### New Features (BREAKING)
@@ -103,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 14 calendar days.
+ - 5 commits contributed to the release over the course of 14 calendar days.
  - 34 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#33](https://github.com/vshashi01/threemf2/issues/33), [#35](https://github.com/vshashi01/threemf2/issues/35), [#37](https://github.com/vshashi01/threemf2/issues/37)
@@ -121,6 +222,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#37](https://github.com/vshashi01/threemf2/issues/37)**
     - Added partial support 3MF Displacement extension ([`e909244`](https://github.com/vshashi01/threemf2/commit/e9092445f995d41f5aa84c75fd9e064168b44eeb))
  * **Uncategorized**
+    - Bump threemf2 v0.3.0 ([`cd33240`](https://github.com/vshashi01/threemf2/commit/cd3324031d7309366d716302c37c8a0b67b2a56c))
     - Updated docs ([`17a98ee`](https://github.com/vshashi01/threemf2/commit/17a98eef0018f98e688b0c887fd7dcba4ee163d8))
 </details>
 
