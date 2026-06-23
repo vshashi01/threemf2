@@ -114,3 +114,4 @@ required-features = ["package-write"]
 
 [package.metadata.cargo-all-features]
 max_combination_size = 3
+always_include_features = ["write"]

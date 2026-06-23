@@ -1267,10 +1267,10 @@ impl ItemBuilder {
 
     /// Set the transformation matrix for this build item.
     ///
-    /// The transform is a 4x3 affine transformation matrix stored as a 12-element array
+    /// The transform is a 4x4 transformation matrix as column major 1D array
     /// in row-major order.
-    pub fn transform(&mut self, transform: Transform) -> &mut Self {
-        self.transform = Some(transform);
+    pub fn transform(&mut self, transform: &[f64; 16]) -> &mut Self {
+        self.transform = Some(Transform::from_column_major_matrix(transform));
         self
     }
 
@@ -2397,8 +2397,8 @@ impl ComponentBuilder {
     }
 
     /// Sets the transform for this component.
-    pub fn transform(&mut self, transform: Transform) -> &mut Self {
-        self.transform = Some(transform);
+    pub fn transform(&mut self, transform: &[f64; 16]) -> &mut Self {
+        self.transform = Some(Transform::from_column_major_matrix(transform));
         self
     }
 
@@ -2585,9 +2585,9 @@ impl BooleanShapeBuilder {
     ///
     /// # Parameters
     ///
-    /// - `transform`: A 4x3 transformation matrix
-    pub fn base_transform(&mut self, transform: Transform) -> &mut Self {
-        self.base_transform = Some(transform);
+    /// - `transform`: A 4x4 transformation matrix as column major 1D matrix
+    pub fn base_transform(&mut self, transform: &[f64; 16]) -> &mut Self {
+        self.base_transform = Some(Transform::from_column_major_matrix(transform));
         self
     }
 
@@ -2680,9 +2680,9 @@ impl BooleanBuilder {
     ///
     /// # Parameters
     ///
-    /// - `transform`: A 4x3 transformation matrix
-    pub fn transform(&mut self, transform: Transform) -> &mut Self {
-        self.transform = Some(transform);
+    /// - `transform`: A 4x4 transformation matrix as column major 1D array
+    pub fn transform(&mut self, transform: &[f64; 16]) -> &mut Self {
+        self.transform = Some(Transform::from_column_major_matrix(transform));
         self
     }
 
@@ -4384,7 +4384,7 @@ mod tests {
         assert!(obj.get_displacement_mesh().is_some());
     }
 
-    #[cfg(not(feature = "uuid"))]
+    #[cfg(all(not(feature = "uuid"), feature = "write"))]
     #[test]
     fn test_build_item_advanced_tests() {
         use crate::model::StrResource;
@@ -4401,12 +4401,12 @@ mod tests {
             .add_build(Some(UuidResource::from("build-uuid")))
             .unwrap();
 
-        let transform = crate::model::transform::Transform([
-            1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-        ]);
+        let transform = [
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ];
         builder
             .add_build_item_advanced(obj_id, |i| {
-                i.transform(transform.clone())
+                i.transform(&transform)
                     .partnumber("part")
                     .path("/path/path.model")
                     .uuid("uuid");
@@ -4416,7 +4416,10 @@ mod tests {
         let model = builder.build().unwrap();
         let item = &model.build.item[0];
         assert_eq!(item.objectid, 1);
-        assert_eq!(item.transform, Some(transform));
+        assert_eq!(
+            item.transform,
+            Some(crate::model::domain::transform::Transform::from_column_major_matrix(&transform))
+        );
         assert_eq!(item.partnumber, Some(StrResource::new("part")));
         assert_eq!(
             item.path,
@@ -4425,7 +4428,7 @@ mod tests {
         assert_eq!(item.uuid, Some(UuidResource::MaybeUuid("uuid".into())));
     }
 
-    #[cfg(not(feature = "uuid"))]
+    #[cfg(all(not(feature = "uuid"), feature = "write"))]
     #[test]
     fn test_object_builder_tests() {
         use crate::model::StrResource;
@@ -4433,7 +4436,7 @@ mod tests {
         let mut builder = ModelBuilder::new(Unit::Millimeter, true);
         let obj_id = builder
             .add_mesh_object(|obj| {
-                obj.object_type(crate::model::object::ObjectType::Support);
+                obj.object_type(crate::model::domain::object::ObjectType::Support);
                 obj.name("support obj");
                 obj.part_number("part123");
                 obj.uuid("obj-uuid");
