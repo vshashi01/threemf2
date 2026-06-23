@@ -1373,7 +1373,7 @@ checksum = "3bf63baf9f5039dadc247375c29eb13706706cfde997d0330d05aa63a77d8820"
 
 [[package]]
 name = "threemf2"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "compact_str 0.9.1",
  "instant-xml",

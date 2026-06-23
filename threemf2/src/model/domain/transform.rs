@@ -63,8 +63,8 @@ impl Transform {
     ///
     /// We ignore the last row/column (m03, m13, m23, m33) and
     /// keep the affine 3x3 + translation in Transform's 4x3 layout.
-    pub fn from_column_major_matrix(matrix: [f64; 16]) -> Self {
-        let m = &matrix;
+    pub fn from_column_major_matrix(matrix: &[f64; 16]) -> Self {
+        let m = matrix;
         Transform([
             m[0], m[4], m[8], // m00, m01, m02
             m[1], m[5], m[9], // m10, m11, m12

@@ -1,6 +1,6 @@
 [package]
 name = "threemf2"
-version = "0.3.0"
+version = "0.4.0"
 rust-version = "1.89"
 edition = "2024"
 license = "MIT or Apache-2.0"
@@ -29,13 +29,9 @@ package-memory-optimized-read = ["dep:zip", "memory-optimized-read"]
 io-speed-optimized-read = ["dep:zip", "speed-optimized-read"]
 package-lazy-read = ["dep:once_cell", "package-memory-optimized-read"]
 uuid = ["dep:uuid"]
-# memory-optimized-read-experimental = [
-#     "memory-optimized-read",
-# ] #to dump all experiments
 
 [dependencies]
 instant-xml = { version = "0.7.5", optional = true }
-# instant-xml = { version = "0.7.4", path = "../../../../instant-xml/instant-xml/instant-xml", optional = true }
 thiserror = { version = "2.0.3" }
 zip = { version = "8.4.0", default-features = false, features = [
     "deflate",
@@ -114,3 +110,4 @@ required-features = ["package-write"]
 
 [package.metadata.cargo-all-features]
 max_combination_size = 3
+always_include_features = ["write"]
