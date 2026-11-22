@@ -731,8 +731,16 @@ version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a2cad967c3b727c000ebfdcd14974539e8c6f59e1d044c8034179df2c6fe250"
 dependencies = [
- "instant-xml-macros",
+ "instant-xml-macros 0.7.2",
  "thiserror",
+ "xmlparser",
+]
+
+[[package]]
+name = "instant-xml"
+version = "0.7.9"
+dependencies = [
+ "instant-xml-macros 0.7.4",
  "xmlparser",
 ]
 
@@ -743,6 +751,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac3c2e6cbd6e0579ee53a8290fc0015a438cfff0139c8359d5891cae130815d7"
 dependencies = [
  "heck",
+ "proc-macro2",
+ "quote",
+ "syn 3.0.3",
+]
+
+[[package]]
+name = "instant-xml-macros"
+version = "0.7.4"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.3",
@@ -1436,7 +1453,7 @@ name = "threemf2"
 version = "0.4.1"
 dependencies = [
  "compact_str 0.10.0",
- "instant-xml",
+ "instant-xml 0.7.9",
  "lexical-core",
  "once_cell",
  "pretty_assertions",
@@ -1452,7 +1469,7 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "dhat",
- "instant-xml",
+ "instant-xml 0.7.9",
  "lib3mf",
  "lib3mf-core",
  "serde",
@@ -1464,7 +1481,7 @@ dependencies = [
 name = "threemf2-tests"
 version = "0.1.0"
 dependencies = [
- "instant-xml",
+ "instant-xml 0.7.6",
  "pretty_assertions",
  "serde",
  "serde_json",

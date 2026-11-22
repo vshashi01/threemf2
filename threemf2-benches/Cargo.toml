@@ -7,7 +7,7 @@ license = "MIT or Apache-2.0"
 publish = false
 
 [dependencies]
-instant-xml = { version = "0.7.6" }
+instant-xml = { version = "0.7.7", path = "../../../instant-xml/instant-xml/instant-xml" }
 threemf2 = { path = "../threemf2", features = [
     "package-read",
     "package-write",
