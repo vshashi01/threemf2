@@ -593,12 +593,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
-name = "heck"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
-
-[[package]]
 name = "icu_collections"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -727,38 +721,17 @@ dependencies = [
 
 [[package]]
 name = "instant-xml"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a2cad967c3b727c000ebfdcd14974539e8c6f59e1d044c8034179df2c6fe250"
-dependencies = [
- "instant-xml-macros 0.7.2",
- "thiserror",
- "xmlparser",
-]
-
-[[package]]
-name = "instant-xml"
 version = "0.7.9"
+source = "git+https://github.com/vshashi01/instant-xml?branch=add-raw-chuldren-return#e6f9654fc5bd04848f272ae545c818aa1abf48ae"
 dependencies = [
- "instant-xml-macros 0.7.4",
+ "instant-xml-macros",
  "xmlparser",
-]
-
-[[package]]
-name = "instant-xml-macros"
-version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac3c2e6cbd6e0579ee53a8290fc0015a438cfff0139c8359d5891cae130815d7"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn 3.0.3",
 ]
 
 [[package]]
 name = "instant-xml-macros"
 version = "0.7.4"
+source = "git+https://github.com/vshashi01/instant-xml?branch=add-raw-chuldren-return#e6f9654fc5bd04848f272ae545c818aa1abf48ae"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1453,7 +1426,7 @@ name = "threemf2"
 version = "0.4.1"
 dependencies = [
  "compact_str 0.10.0",
- "instant-xml 0.7.9",
+ "instant-xml",
  "lexical-core",
  "once_cell",
  "pretty_assertions",
@@ -1469,7 +1442,7 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "dhat",
- "instant-xml 0.7.9",
+ "instant-xml",
  "lib3mf",
  "lib3mf-core",
  "serde",
@@ -1481,7 +1454,7 @@ dependencies = [
 name = "threemf2-tests"
 version = "0.1.0"
 dependencies = [
- "instant-xml 0.7.6",
+ "instant-xml",
  "pretty_assertions",
  "serde",
  "serde_json",
