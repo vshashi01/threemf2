@@ -244,15 +244,19 @@ impl<'xml> FromXml<'xml> for Vertex {
             match node {
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
+                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
+                    if !id.ns.is_empty() {
+                        continue;
+                    }
 
-                    match id.name.as_bytes().first() {
-                        Some(b'x') => {
+                    match id.name {
+                        "x" => {
                             x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
                         }
-                        Some(b'y') => {
+                        "y" => {
                             y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
                         }
-                        Some(b'z') => {
+                        "z" => {
                             z = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
                         }
                         _ => {}
@@ -463,6 +467,10 @@ impl<'xml> FromXml<'xml> for Triangle {
             match node {
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
+                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
+                    if !id.ns.is_empty() {
+                        continue;
+                    }
 
                     match id.name {
                         "v1" => v1 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
@@ -679,6 +687,39 @@ mod memory_optimized_read_tests {
         let vertex = from_str::<Vertex>(&xml_string).unwrap();
 
         assert_eq!(vertex, Vertex::new(100.5, 100.0, 0.0,));
+    }
+
+    #[test]
+    pub fn fromxml_vertex_ignores_foreign_attributes_test() {
+        let xml_string = format!(
+            r#"<vertex xmlns="{}" xmlns:f="urn:foreign" x="1" y="2" z="3" f:x="9" f:yaw="8" zeta="7" />"#,
+            CORE_NS
+        );
+        let vertex = from_str::<Vertex>(&xml_string).unwrap();
+
+        assert_eq!(vertex, Vertex::new(1.0, 2.0, 3.0));
+    }
+
+    #[test]
+    pub fn fromxml_triangle_ignores_foreign_attributes_test() {
+        let xml_string = format!(
+            r#"<triangle xmlns="{}" xmlns:f="urn:foreign" v1="1" v2="2" v3="3" f:v1="9" f:pid="4" />"#,
+            CORE_NS
+        );
+        let triangle = from_str::<Triangle>(&xml_string).unwrap();
+
+        assert_eq!(
+            triangle,
+            Triangle {
+                v1: 1,
+                v2: 2,
+                v3: 3,
+                p1: OptionalResourceIndex::none(),
+                p2: OptionalResourceIndex::none(),
+                p3: OptionalResourceIndex::none(),
+                pid: OptionalResourceId::none(),
+            }
+        );
     }
 
     #[test]

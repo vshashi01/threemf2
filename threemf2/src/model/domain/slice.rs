@@ -331,12 +331,16 @@ impl<'xml> FromXml<'xml> for Vertex {
             match node {
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
+                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
+                    if !id.ns.is_empty() {
+                        continue;
+                    }
 
-                    match id.name.as_bytes().first() {
-                        Some(b'x') => {
+                    match id.name {
+                        "x" => {
                             x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
                         }
-                        Some(b'y') => {
+                        "y" => {
                             y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
                         }
                         _ => {}
@@ -433,6 +437,10 @@ impl<'xml> FromXml<'xml> for Segment {
             match node {
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
+                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
+                    if !id.ns.is_empty() {
+                        continue;
+                    }
 
                     match id.name {
                         "v2" => v2 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),

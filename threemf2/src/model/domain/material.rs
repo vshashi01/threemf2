@@ -274,12 +274,16 @@ impl<'xml> FromXml<'xml> for Tex2Coord {
             match node {
                 Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
+                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
+                    if !id.ns.is_empty() {
+                        continue;
+                    }
 
-                    match id.name.as_bytes().first() {
-                        Some(b'u') => {
+                    match id.name {
+                        "u" => {
                             u = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
                         }
-                        Some(b'v') => {
+                        "v" => {
                             v = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
                         }
                         _ => {}
@@ -425,6 +429,10 @@ impl<'xml> instant_xml::FromXml<'xml> for Composite {
             match node {
                 instant_xml::de::Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
+                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
+                    if !id.ns.is_empty() {
+                        continue;
+                    }
                     if id.name == "values" && !attr.value.is_empty() {
                         values = attr
                             .value
