@@ -527,6 +527,64 @@ impl ItemCapture {
     }
 }
 
+/// Generates a `&mut` accessor to a foreign content field of a builder, inside its `impl` block.
+/// The accessor only exists with the `any` feature.
+///
+/// - `content method => field: Type, "tag"`: the foreign content of the element `<tag>`.
+/// - `entries method => field: Type, "tag"`: the per-entry table of the `<tag>` entries.
+macro_rules! foreign_content_accessor {
+    (content $method:ident => $field:ident: $ty:ty, $tag:literal) => {
+        #[doc = concat!("Direct access to the foreign content of `<", $tag, ">`.")]
+        ///
+        /// Content added here is checked when the model is written. Requires the `any` feature.
+        #[cfg(feature = "any")]
+        pub fn $method(&mut self) -> &mut $ty {
+            &mut self.$field
+        }
+    };
+    (entries $method:ident => $field:ident: $ty:ty, $tag:literal) => {
+        #[doc = concat!(
+            "Foreign content of the individual `<", $tag, ">` entries, by index in the order the ",
+            "entries were added."
+        )]
+        ///
+        /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+        /// feature.
+        #[cfg(feature = "any")]
+        pub fn $method(&mut self) -> &mut $ty {
+            &mut self.$field
+        }
+    };
+}
+
+pub(crate) use foreign_content_accessor;
+
+/// Generates getters `pub fn method(&self) -> &'a Type { &self.path }` on a view `View<'a>`;
+/// the doc comment above each entry becomes the getter's documentation.
+///
+/// ```ignore
+/// foreign_content_getters!(MeshObjectView {
+///     /// Foreign content of the `<mesh>` element.
+///     mesh_any_extensions: AnyExtensions = mesh.any_extensions,
+/// });
+/// ```
+#[cfg(feature = "any")]
+macro_rules! foreign_content_getters {
+    ($view:ident { $($(#[$doc:meta])* $method:ident: $ty:ty = $($path:ident).+,)* }) => {
+        impl<'a> $view<'a> {
+            $(
+                $(#[$doc])*
+                pub fn $method(&self) -> &'a $ty {
+                    &self.$($path).+
+                }
+            )*
+        }
+    };
+}
+
+#[cfg(feature = "any")]
+pub(crate) use foreign_content_getters;
+
 /// Generates the `any_*` builder methods for a builder with a private
 /// `any_extensions: AnyExtensions` field. Pass the generic parameter for generic builders, as in
 /// `any_extensions_builder_methods!(ObjectBuilder<T>, T)`.

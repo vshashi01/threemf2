@@ -1737,37 +1737,29 @@ mod any_views {
         any::AnyElement,
         any_extensions::{
             AnyAttributeExtensions, AnyElementExtensions, AnyExtensions, ItemAnyExtensions,
-            ItemAttributeExtensions, any_extensions_view_methods,
+            ItemAttributeExtensions, any_extensions_view_methods, foreign_content_getters,
         },
         object::ObjectKind,
     };
 
-    impl<'a> ModelView<'a> {
+    foreign_content_getters!(ModelView {
         /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the `<model>` element.
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.model.any_extensions
-        }
-
+        any_extensions: AnyExtensions = model.any_extensions,
         /// Foreign attributes of the `<build>` element. Requires the `any` feature.
-        pub fn build_any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.model.build.any_extensions
-        }
-
+        build_any_extensions: AnyAttributeExtensions = model.build.any_extensions,
         /// Foreign attributes and foreign resources of the `<resources>` element.
         /// Requires the `any` feature.
-        pub fn resources_any_extensions(&self) -> &'a AnyExtensions {
-            &self.model.resources.any_extensions
-        }
-    }
+        resources_any_extensions: AnyExtensions = model.resources.any_extensions,
+    });
 
-    impl<'a> ObjectView<'a> {
+    foreign_content_getters!(ObjectView {
         /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the object.
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.object.any_extensions
-        }
+        any_extensions: AnyExtensions = object.any_extensions,
+    });
 
+    impl<'a> ObjectView<'a> {
         /// The object shape, if it is a foreign element instead of a mesh, components, boolean
         /// shape or displacement mesh. Requires the `any` feature.
         pub fn any_shape(&self) -> Option<&'a AnyElement> {
@@ -1778,44 +1770,30 @@ mod any_views {
         }
     }
 
-    impl<'a> MeshObjectView<'a> {
+    foreign_content_getters!(MeshObjectView {
         /// Foreign content of the object. Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.object.any_extensions
-        }
-
+        any_extensions: AnyExtensions = object.any_extensions,
         /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the `<mesh>` element.
         /// Requires the `any` feature.
-        pub fn mesh_any_extensions(&self) -> &'a AnyExtensions {
-            &self.mesh.any_extensions
-        }
-    }
+        mesh_any_extensions: AnyExtensions = mesh.any_extensions,
+    });
 
-    impl<'a> DisplacementMeshObjectView<'a> {
+    foreign_content_getters!(DisplacementMeshObjectView {
         /// Foreign content of the object. Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.object.any_extensions
-        }
-    }
+        any_extensions: AnyExtensions = object.any_extensions,
+    });
 
-    impl<'a> ComponentsObjectView<'a> {
+    foreign_content_getters!(ComponentsObjectView {
         /// Foreign content of the object. Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.object.any_extensions
-        }
-
+        any_extensions: AnyExtensions = object.any_extensions,
         /// Foreign attributes of the `<components>` element. Requires the `any` feature.
-        pub fn components_any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.components.any_extensions
-        }
-    }
+        components_any_extensions: AnyAttributeExtensions = components.any_extensions,
+    });
 
-    impl<'a> BooleanShapeView<'a> {
+    foreign_content_getters!(BooleanShapeView {
         /// Foreign content of the object. Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.object.any_extensions
-        }
-    }
+        any_extensions: AnyExtensions = object.any_extensions,
+    });
 
     impl<'a> ComponentView<'a> {
         /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the component.
@@ -1833,41 +1811,31 @@ mod any_views {
     any_extensions_view_methods!(BooleanShapeView);
     any_extensions_view_methods!(ComponentView);
 
-    impl<'a> MeshObjectView<'a> {
+    foreign_content_getters!(MeshObjectView {
         /// Foreign attributes of the individual `<vertex>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn vertex_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.mesh.vertices.vertex_any_extensions
-        }
-
+        vertex_any_extensions: ItemAttributeExtensions = mesh.vertices.vertex_any_extensions,
         /// Foreign attributes of the individual `<triangle>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn triangle_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.mesh.triangles.triangle_any_extensions
-        }
-    }
+        triangle_any_extensions: ItemAttributeExtensions = mesh.triangles.triangle_any_extensions,
+    });
 
-    impl<'a> DisplacementMeshObjectView<'a> {
+    foreign_content_getters!(DisplacementMeshObjectView {
         /// Foreign attributes of the individual `<d:vertex>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn vertex_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.mesh.vertices.vertex_any_extensions
-        }
-
+        vertex_any_extensions: ItemAttributeExtensions = mesh.vertices.vertex_any_extensions,
         /// Foreign attributes of the individual `<d:triangle>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn triangle_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.mesh.triangles.triangle_any_extensions
-        }
-    }
+        triangle_any_extensions: ItemAttributeExtensions = mesh.triangles.triangle_any_extensions,
+    });
 
-    impl<'a> LatticeView<'a> {
+    foreign_content_getters!(LatticeView {
         /// Foreign attributes and child elements of the individual `<b:beam>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn beam_any_extensions(&self) -> &'a ItemAnyExtensions {
-            &self.lattice.beams.beam_any_extensions
-        }
+        beam_any_extensions: ItemAnyExtensions = lattice.beams.beam_any_extensions,
+    });
 
+    impl<'a> LatticeView<'a> {
         /// Foreign attributes and child elements of the individual `<b2:ball>` entries, by entry index, or `None` if the
         /// list is absent. Requires the `any` feature.
         pub fn ball_any_extensions(&self) -> Option<&'a ItemAnyExtensions> {
@@ -1878,65 +1846,47 @@ mod any_views {
         }
     }
 
-    impl<'a> BeamSetView<'a> {
+    foreign_content_getters!(BeamSetView {
         /// Foreign attributes and child elements of the individual `<b:ref>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn ref_any_extensions(&self) -> &'a ItemAnyExtensions {
-            &self.set.refs_any_extensions
-        }
-
+        ref_any_extensions: ItemAnyExtensions = set.refs_any_extensions,
         /// Foreign attributes and child elements of the individual `<b2:ballref>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn ballref_any_extensions(&self) -> &'a ItemAnyExtensions {
-            &self.set.ballref_any_extensions
-        }
-    }
+        ballref_any_extensions: ItemAnyExtensions = set.ballref_any_extensions,
+    });
 
-    impl<'a> TriangleSetView<'a> {
+    foreign_content_getters!(TriangleSetView {
         /// Foreign attributes and child elements of the individual `<t:ref>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn ref_any_extensions(&self) -> &'a ItemAnyExtensions {
-            &self.set.triangle_ref_any_extensions
-        }
-
+        ref_any_extensions: ItemAnyExtensions = set.triangle_ref_any_extensions,
         /// Foreign attributes and child elements of the individual `<t:refrange>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn refrange_any_extensions(&self) -> &'a ItemAnyExtensions {
-            &self.set.triangle_refrange_any_extensions
-        }
-    }
+        refrange_any_extensions: ItemAnyExtensions = set.triangle_refrange_any_extensions,
+    });
 
-    impl<'a> Texture2DGroupView<'a> {
+    foreign_content_getters!(Texture2DGroupView {
         /// Foreign attributes of the individual `<m:tex2coord>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn tex2coord_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.group.tex2coord_any_extensions
-        }
-    }
+        tex2coord_any_extensions: ItemAttributeExtensions = group.tex2coord_any_extensions,
+    });
 
-    impl<'a> MultiPropertiesView<'a> {
+    foreign_content_getters!(MultiPropertiesView {
         /// Foreign attributes of the individual `<m:multi>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn multi_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.props.multi_any_extensions
-        }
-    }
+        multi_any_extensions: ItemAttributeExtensions = props.multi_any_extensions,
+    });
 
-    impl<'a> NormVectorGroupView<'a> {
+    foreign_content_getters!(NormVectorGroupView {
         /// Foreign attributes of the individual `<d:normvector>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn normvector_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.group.normvector_any_extensions
-        }
-    }
+        normvector_any_extensions: ItemAttributeExtensions = group.normvector_any_extensions,
+    });
 
-    impl<'a> Disp2DGroupView<'a> {
+    foreign_content_getters!(Disp2DGroupView {
         /// Foreign attributes of the individual `<d:disp2dcoord>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn disp2dcoord_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.group.disp2dcoord_any_extensions
-        }
-    }
+        disp2dcoord_any_extensions: ItemAttributeExtensions = group.disp2dcoord_any_extensions,
+    });
 
     impl<'a> SliceView<'a> {
         /// Foreign attributes of the individual `<s:vertex>` entries, by entry index, or `None` if the
@@ -1949,36 +1899,29 @@ mod any_views {
         }
     }
 
-    impl<'a> PolygonView<'a> {
+    foreign_content_getters!(PolygonView {
         /// Foreign attributes of the individual `<s:segment>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn segment_any_extensions(&self) -> &'a ItemAttributeExtensions {
-            &self.polygon.segment_any_extensions
-        }
-    }
+        segment_any_extensions: ItemAttributeExtensions = polygon.segment_any_extensions,
+    });
 
-    impl<'a> TriangleSetView<'a> {
+    foreign_content_getters!(TriangleSetView {
         /// Foreign attributes and child elements of the triangle set (`<t:triangleset>`).
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.set.any_extensions
-        }
-    }
+        any_extensions: AnyExtensions = set.any_extensions,
+    });
 
     any_extensions_view_methods!(TriangleSetView);
 
-    impl<'a> LatticeView<'a> {
+    foreign_content_getters!(LatticeView {
         /// Foreign attributes and child elements of the beam lattice (`<b:beamlattice>`).
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.lattice.any_extensions
-        }
-
+        any_extensions: AnyExtensions = lattice.any_extensions,
         /// Foreign child elements of `<b:beams>`. Requires the `any` feature.
-        pub fn beams_any_extensions(&self) -> &'a AnyElementExtensions {
-            &self.lattice.beams.any_extensions
-        }
+        beams_any_extensions: AnyElementExtensions = lattice.beams.any_extensions,
+    });
 
+    impl<'a> LatticeView<'a> {
         /// Foreign child elements of `<b2:balls>`, if present. Requires the `any` feature.
         pub fn balls_any_extensions(&self) -> Option<&'a AnyElementExtensions> {
             self.lattice
@@ -1998,52 +1941,42 @@ mod any_views {
 
     any_extensions_view_methods!(LatticeView);
 
-    impl<'a> BeamSetView<'a> {
+    foreign_content_getters!(BeamSetView {
         /// Foreign attributes and child elements of the beam set (`<b:beamset>`).
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.set.any_extensions
-        }
-    }
+        any_extensions: AnyExtensions = set.any_extensions,
+    });
 
     any_extensions_view_methods!(BeamSetView);
 
-    impl<'a> SliceView<'a> {
+    foreign_content_getters!(SliceView {
         /// Foreign attributes and child elements of the slice (`<s:slice>`).
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.slice.any_extensions
-        }
-    }
+        any_extensions: AnyExtensions = slice.any_extensions,
+    });
 
     any_extensions_view_methods!(SliceView);
 
-    impl<'a> NormVectorGroupView<'a> {
+    foreign_content_getters!(NormVectorGroupView {
         /// Foreign attributes and child elements of the normal vector group (`<d:normvectorgroup>`).
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.group.any_extensions
-        }
-    }
+        any_extensions: AnyExtensions = group.any_extensions,
+    });
 
     any_extensions_view_methods!(NormVectorGroupView);
 
-    impl<'a> Disp2DGroupView<'a> {
+    foreign_content_getters!(Disp2DGroupView {
         /// Foreign attributes and child elements of the displacement coordinate group (`<d:disp2dgroup>`).
         /// Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyExtensions {
-            &self.group.any_extensions
-        }
-    }
+        any_extensions: AnyExtensions = group.any_extensions,
+    });
 
     any_extensions_view_methods!(Disp2DGroupView);
 
-    impl<'a> SliceStackView<'a> {
+    foreign_content_getters!(SliceStackView {
         /// Foreign attributes of the slice stack (`<s:slicestack>`). Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.stack.any_extensions
-        }
-    }
+        any_extensions: AnyAttributeExtensions = stack.any_extensions,
+    });
 
     impl<'a> SliceRefView<'a> {
         /// Foreign attributes of the slice reference (`<s:sliceref>`). Requires the `any` feature.
@@ -2052,63 +1985,47 @@ mod any_views {
         }
     }
 
-    impl<'a> ColorGroupView<'a> {
+    foreign_content_getters!(ColorGroupView {
         /// Foreign attributes of the color group (`<m:colorgroup>`). Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.group.any_extensions
-        }
-    }
+        any_extensions: AnyAttributeExtensions = group.any_extensions,
+    });
 
-    impl<'a> Texture2DGroupView<'a> {
+    foreign_content_getters!(Texture2DGroupView {
         /// Foreign attributes of the texture coordinate group (`<m:texture2dgroup>`). Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.group.any_extensions
-        }
-    }
+        any_extensions: AnyAttributeExtensions = group.any_extensions,
+    });
 
-    impl<'a> CompositeMaterialsView<'a> {
+    foreign_content_getters!(CompositeMaterialsView {
         /// Foreign attributes of the composite materials (`<m:compositematerials>`). Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.materials.any_extensions
-        }
-    }
+        any_extensions: AnyAttributeExtensions = materials.any_extensions,
+    });
 
-    impl<'a> MultiPropertiesView<'a> {
+    foreign_content_getters!(MultiPropertiesView {
         /// Foreign attributes of the multi properties (`<m:multiproperties>`). Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.props.any_extensions
-        }
-    }
+        any_extensions: AnyAttributeExtensions = props.any_extensions,
+    });
 
-    impl<'a> Texture2DView<'a> {
+    foreign_content_getters!(Texture2DView {
         /// Foreign attributes of the texture (`<m:texture2d>`). Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.texture.any_extensions
-        }
-    }
+        any_extensions: AnyAttributeExtensions = texture.any_extensions,
+    });
 
-    impl<'a> Displacement2DView<'a> {
+    foreign_content_getters!(Displacement2DView {
         /// Foreign attributes of the displacement texture (`<d:displacement2d>`). Requires the `any` feature.
-        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
-            &self.displacement.any_extensions
-        }
-    }
+        any_extensions: AnyAttributeExtensions = displacement.any_extensions,
+    });
 
-    impl<'a> BooleanShapeView<'a> {
+    foreign_content_getters!(BooleanShapeView {
         /// Foreign attributes and child elements of `<bo:booleanshape>`.
         /// Requires the `any` feature.
-        pub fn shape_any_extensions(&self) -> &'a AnyExtensions {
-            &self.shape.any_extensions
-        }
-    }
+        shape_any_extensions: AnyExtensions = shape.any_extensions,
+    });
 
-    impl<'a> DisplacementMeshObjectView<'a> {
+    foreign_content_getters!(DisplacementMeshObjectView {
         /// Foreign attributes and child elements of `<d:displacementmesh>`.
         /// Requires the `any` feature.
-        pub fn mesh_any_extensions(&self) -> &'a AnyExtensions {
-            &self.mesh.any_extensions
-        }
-    }
+        mesh_any_extensions: AnyExtensions = mesh.any_extensions,
+    });
 
     impl<'a> MeshObjectView<'a> {
         /// Foreign attributes of `<t:trianglesets>`, if present. Requires the `any` feature.
