@@ -4,8 +4,11 @@ use instant_xml::ToXml;
 #[cfg(feature = "read")]
 use instant_xml::FromXml;
 
+use crate::model::domain::any_extensions::{AnyAttributeExtensions, AnyExtensions};
 #[cfg(feature = "read")]
 use crate::model::domain::constants;
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
 
 use crate::{
     model::domain::{beamlattice::BeamLattice, triangle_set::TriangleSets},
@@ -16,37 +19,51 @@ use crate::{
 };
 
 /// Displacement texture resource.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(DISPLACEMENT_NS), rename = "displacement2d")
-)]
 pub struct Displacement2D {
     /// Unique identifier for this displacement texture.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Path to the displacement texture image inside the package.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub path: PathResource,
 
     /// Color channel to use for displacement.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub channel: Option<ChannelName>,
 
     /// Horizontal tiling style.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub tilestyleu: Option<TileStyle>,
 
     /// Vertical tiling style.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub tilestylev: Option<TileStyle>,
 
     /// Sampling filter for displacement map.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub filter: Option<Filter>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Displacement2D {
+        tag: "displacement2d",
+        ns: DISPLACEMENT_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            path: PathResource => ("", "path"),
+            channel: Option<ChannelName> => ("", "channel"),
+            tilestyleu: Option<TileStyle> => ("", "tilestyleu"),
+            tilestylev: Option<TileStyle> => ("", "tilestylev"),
+            filter: Option<Filter> => ("", "filter"),
+        },
+        elements: {
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// Displacement channel.
@@ -143,19 +160,59 @@ impl From<String> for Filter {
 }
 
 /// Group of normalized vectors.
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    feature = "write",
-    xml(ns(DISPLACEMENT_NS), rename = "normvectorgroup")
-)]
 pub struct NormVectorGroup {
     /// Unique identifier for this normal vector group.
-    #[cfg_attr(feature = "write", xml(attribute))]
     pub id: ResourceId,
 
     /// Normalized vectors in this group.
     pub normvector: Vec<NormVector>,
+
+    /// Foreign attributes and child elements (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(feature = "write")]
+impl ToXml for NormVectorGroup {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let mut context = instant_xml::ser::Context::<0>::default();
+        context.default_ns = DISPLACEMENT_NS;
+        let element = serializer.write_start("normvectorgroup", DISPLACEMENT_NS, Some(context))?;
+        if self.id.present() {
+            serializer.write_attr("id", "", &self.id)?;
+        }
+        #[cfg(feature = "any")]
+        let scope = crate::model::domain::any::write::write_foreign_attributes(
+            serializer,
+            &[],
+            DISPLACEMENT_NS,
+            self.any_extensions.attributes(),
+            self.any_extensions.elements(),
+        )?;
+        serializer.end_start()?;
+        for item in &self.normvector {
+            item.serialize(
+                Some(instant_xml::Id {
+                    ns: DISPLACEMENT_NS,
+                    name: "normvector",
+                }),
+                serializer,
+            )?;
+        }
+        #[cfg(feature = "any")]
+        crate::model::domain::any::write::write_foreign_elements(
+            serializer,
+            &scope,
+            self.any_extensions.elements(),
+        )?;
+        serializer.write_close(element)
+    }
 }
 
 #[cfg(feature = "read")]
@@ -178,13 +235,15 @@ impl<'xml> FromXml<'xml> for NormVectorGroup {
 
         let mut norm_id: u32 = 0;
         let mut norm_vectors: Vec<NormVector> = Vec::with_capacity(constants::MAX_VERTEX_BUFFER);
+        #[allow(unused_mut)]
+        let mut any_extensions = AnyExtensions::default();
         while let Some(node) = deserializer.next()
             && let Ok(node) = node
         {
             match node {
                 instant_xml::de::Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
-                    if id.name == "id" && !attr.value.is_empty() {
+                    if id.ns.is_empty() && id.name == "id" && !attr.value.is_empty() {
                         match lexical_core::parse::<u32>(attr.value.as_bytes()) {
                             Ok(value) => norm_id = value,
                             Err(_) => {
@@ -193,9 +252,29 @@ impl<'xml> FromXml<'xml> for NormVectorGroup {
                                 ));
                             }
                         }
+                    } else {
+                        #[cfg(feature = "any")]
+                        crate::model::domain::any::read::capture_attribute(
+                            any_extensions.attributes_mut(),
+                            id,
+                            DISPLACEMENT_NS,
+                            attr.prefix,
+                            &attr.value,
+                        );
                     }
                 }
                 instant_xml::de::Node::Open(element) => {
+                    #[cfg(feature = "any")]
+                    {
+                        let id = deserializer.element_id(&element)?;
+                        if crate::model::domain::any::is_foreign_for(id.ns, DISPLACEMENT_NS) {
+                            let mut nested = deserializer.nested(element);
+                            let foreign =
+                                crate::model::domain::any::read::read_element(&mut nested, id)?;
+                            any_extensions.elements_mut().push(foreign);
+                            continue;
+                        }
+                    }
                     let mut norm_vector_value: Option<NormVector> = None;
                     let mut nested = deserializer.nested(element);
                     if <NormVector as instant_xml::FromXml>::deserialize(
@@ -217,6 +296,7 @@ impl<'xml> FromXml<'xml> for NormVectorGroup {
         *into = Some(Self {
             id: norm_id,
             normvector: norm_vectors,
+            any_extensions,
         });
 
         Ok(())
@@ -308,36 +388,51 @@ impl<'xml> FromXml<'xml> for NormVector {
 }
 
 /// Group of displacement map coordinates.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(DISPLACEMENT_NS), rename = "disp2dgroup")
-)]
 pub struct Disp2DGroup {
     /// Unique identifier for this displacement coordinate group.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Reference to the displacement texture resource.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub dispid: ResourceId,
 
     /// Reference to the normal vector group.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub nid: ResourceId,
 
     /// Maximum displacement height.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub height: Double,
 
     /// Optional displacement offset.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub offset: Option<Double>,
 
     /// Displacement coordinates for this group.
     pub disp2dcoord: Vec<Disp2DCoord>,
+
+    /// Foreign attributes and child elements (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Disp2DGroup {
+        tag: "disp2dgroup",
+        ns: DISPLACEMENT_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            dispid: ResourceId => ("", "dispid"),
+            nid: ResourceId => ("", "nid"),
+            height: Double => ("", "height"),
+            offset: Option<Double> => ("", "offset"),
+        },
+        elements: {
+            disp2dcoord: Vec<Disp2DCoord> => (DISPLACEMENT_NS, "disp2dcoord"),
+        },
+        any: any_extensions: AnyExtensions,
+    }
 }
 
 /// A displacement map coordinate entry.
@@ -367,13 +462,7 @@ pub struct Disp2DCoord {
 }
 
 /// Displacement mesh object payload.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(DISPLACEMENT_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS), rename = "displacementmesh")
-)]
 pub struct DisplacementMesh {
     /// Vertices of the displacement mesh.
     pub vertices: Vertices,
@@ -383,23 +472,80 @@ pub struct DisplacementMesh {
     /// Optional TriangleSets that allows to create identifiable group of triangles
     ///
     /// See [`TriangleSet`](crate::model::domain::triangle_set::TriangleSet) for more details
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(CORE_TRIANGLESET_NS)))]
     pub trianglesets: Option<TriangleSets>,
 
     /// Optional Beam Lattice geometry that is part of this mesh
     ///
     /// See [`BeamLattice`] for more details
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(BEAM_LATTICE_NS)))]
     pub beamlattice: Option<BeamLattice>,
+
+    /// Foreign attributes and child elements (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    DisplacementMesh {
+        tag: "displacementmesh",
+        ns: DISPLACEMENT_NS,
+        prefixes: [("b", BEAM_LATTICE_NS), ("t", CORE_TRIANGLESET_NS)],
+        force_prefix: false,
+        attributes: {
+        },
+        elements: {
+            vertices: Vertices => (DISPLACEMENT_NS, "vertices"),
+            triangles: Triangles => (DISPLACEMENT_NS, "triangles"),
+            trianglesets: Option<TriangleSets> => (CORE_TRIANGLESET_NS, "trianglesets"),
+            beamlattice: Option<BeamLattice> => (BEAM_LATTICE_NS, "beamlattice"),
+        },
+        any: any_extensions: AnyExtensions,
+    }
 }
 
 /// Collection of displacement mesh vertices.
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(feature = "write", xml(ns(DISPLACEMENT_NS), rename = "vertices"))]
 pub struct Vertices {
     /// Vertex entries in this mesh.
     pub vertex: Vec<Vertex>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(feature = "write")]
+impl ToXml for Vertices {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let mut context = instant_xml::ser::Context::<0>::default();
+        context.default_ns = DISPLACEMENT_NS;
+        let element = serializer.write_start("vertices", DISPLACEMENT_NS, Some(context))?;
+        #[cfg(feature = "any")]
+        crate::model::domain::any::write::write_foreign_attributes(
+            serializer,
+            &[],
+            DISPLACEMENT_NS,
+            self.any_extensions.attributes(),
+            &[],
+        )?;
+        serializer.end_start()?;
+        for item in &self.vertex {
+            item.serialize(
+                Some(instant_xml::Id {
+                    ns: DISPLACEMENT_NS,
+                    name: "vertex",
+                }),
+                serializer,
+            )?;
+        }
+        serializer.write_close(element)
+    }
 }
 
 #[cfg(feature = "read")]
@@ -420,9 +566,24 @@ impl<'xml> FromXml<'xml> for Vertices {
             return Err(instant_xml::Error::DuplicateValue(field));
         }
 
+        #[allow(unused_mut)]
+        let mut any_extensions = AnyAttributeExtensions::default();
         let mut vertices: Vec<Vertex> = Vec::with_capacity(constants::MAX_VERTEX_BUFFER);
 
         while let Some(node) = deserializer.next() {
+            #[cfg(feature = "any")]
+            if let Ok(instant_xml::de::Node::Attribute(attr)) = &node
+                && let Ok(id) = deserializer.attribute_id(attr)
+            {
+                crate::model::domain::any::read::capture_attribute(
+                    any_extensions.attributes_mut(),
+                    id,
+                    DISPLACEMENT_NS,
+                    attr.prefix,
+                    &attr.value,
+                );
+                continue;
+            }
             if let Ok(n) = node
                 && let instant_xml::de::Node::Open(element) = n
             {
@@ -444,7 +605,10 @@ impl<'xml> FromXml<'xml> for Vertices {
         }
 
         vertices.shrink_to_fit();
-        *into = Some(Vertices { vertex: vertices });
+        *into = Some(Vertices {
+            vertex: vertices,
+            any_extensions,
+        });
 
         Ok(())
     }
@@ -534,16 +698,53 @@ impl<'xml> FromXml<'xml> for Vertex {
 }
 
 /// Collection of displacement mesh triangles.
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(feature = "write", xml(ns(DISPLACEMENT_NS), rename = "triangles"))]
 pub struct Triangles {
     /// Optional default displacement group id.
-    #[cfg_attr(feature = "write", xml(attribute))]
     pub did: OptionalResourceId,
 
     /// Triangle entries in this mesh.
     pub triangle: Vec<Triangle>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(feature = "write")]
+impl ToXml for Triangles {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let mut context = instant_xml::ser::Context::<0>::default();
+        context.default_ns = DISPLACEMENT_NS;
+        let element = serializer.write_start("triangles", DISPLACEMENT_NS, Some(context))?;
+        if self.did.present() {
+            serializer.write_attr("did", "", &self.did)?;
+        }
+        #[cfg(feature = "any")]
+        crate::model::domain::any::write::write_foreign_attributes(
+            serializer,
+            &[],
+            DISPLACEMENT_NS,
+            self.any_extensions.attributes(),
+            &[],
+        )?;
+        serializer.end_start()?;
+        for item in &self.triangle {
+            item.serialize(
+                Some(instant_xml::Id {
+                    ns: DISPLACEMENT_NS,
+                    name: "triangle",
+                }),
+                serializer,
+            )?;
+        }
+        serializer.write_close(element)
+    }
 }
 
 #[cfg(feature = "read")]
@@ -565,6 +766,8 @@ impl<'xml> FromXml<'xml> for Triangles {
         }
 
         let mut did = OptionalResourceId::none();
+        #[allow(unused_mut)]
+        let mut any_extensions = AnyAttributeExtensions::default();
         let mut triangles: Vec<Triangle> = Vec::with_capacity(constants::MAX_TRIANGLE_BUFFER);
         while let Some(node) = deserializer.next()
             && let Ok(node) = node
@@ -572,8 +775,17 @@ impl<'xml> FromXml<'xml> for Triangles {
             match node {
                 instant_xml::de::Node::Attribute(attr) => {
                     let id = deserializer.attribute_id(&attr)?;
-                    if id.name == "did" && !attr.value.is_empty() {
+                    if id.ns.is_empty() && id.name == "did" && !attr.value.is_empty() {
                         did = attr.value.as_bytes().into();
+                    } else {
+                        #[cfg(feature = "any")]
+                        crate::model::domain::any::read::capture_attribute(
+                            any_extensions.attributes_mut(),
+                            id,
+                            DISPLACEMENT_NS,
+                            attr.prefix,
+                            &attr.value,
+                        );
                     }
                 }
                 instant_xml::de::Node::Open(element) => {
@@ -598,6 +810,7 @@ impl<'xml> FromXml<'xml> for Triangles {
         *into = Some(Triangles {
             did,
             triangle: triangles,
+            any_extensions,
         });
 
         Ok(())
@@ -864,6 +1077,7 @@ mod write_tests {
             tilestyleu: None,
             tilestylev: None,
             filter: None,
+            any_extensions: Default::default(),
         };
         let xml_output = to_string(&displacement2d).unwrap();
 
@@ -883,6 +1097,7 @@ mod write_tests {
             tilestyleu: Some(TileStyle::Mirror),
             tilestylev: Some(TileStyle::Clamp),
             filter: Some(Filter::Linear),
+            any_extensions: Default::default(),
         };
         let xml_output = to_string(&displacement2d).unwrap();
 
@@ -936,6 +1151,7 @@ mod write_tests {
                     z: 0.0.into(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let xml_output = to_string(&group).unwrap();
 
@@ -968,6 +1184,7 @@ mod write_tests {
                     f: Some(0.3.into()),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let xml_output = to_string(&group).unwrap();
 
@@ -993,6 +1210,7 @@ mod write_tests {
                     z: 0.0.into(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let xml_output = to_string(&vertices).unwrap();
 
@@ -1020,6 +1238,7 @@ mod write_tests {
                 p3: OptionalResourceIndex::none(),
                 pid: OptionalResourceId::none(),
             }],
+            any_extensions: Default::default(),
         };
         let xml_output = to_string(&triangles).unwrap();
 
@@ -1055,6 +1274,7 @@ mod write_tests {
                         z: 0.0.into(),
                     },
                 ],
+                any_extensions: Default::default(),
             },
             triangles: Triangles {
                 did: OptionalResourceId::none(),
@@ -1071,9 +1291,11 @@ mod write_tests {
                     p3: OptionalResourceIndex::none(),
                     pid: OptionalResourceId::none(),
                 }],
+                any_extensions: Default::default(),
             },
             trianglesets: None,
             beamlattice: None,
+            any_extensions: Default::default(),
         };
         let xml_output = to_string(&mesh).unwrap();
 
@@ -1108,6 +1330,7 @@ mod memory_optimized_read_tests {
                 tilestyleu: None,
                 tilestylev: None,
                 filter: None,
+                any_extensions: Default::default(),
             }
         );
     }
@@ -1195,6 +1418,7 @@ mod memory_optimized_read_tests {
                         z: 0.0.into(),
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -1229,6 +1453,7 @@ mod memory_optimized_read_tests {
                         f: Some(0.3.into()),
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -1256,6 +1481,7 @@ mod memory_optimized_read_tests {
                         z: 0.0.into(),
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -1285,6 +1511,7 @@ mod memory_optimized_read_tests {
                     p3: OptionalResourceIndex::new(2),
                     pid: OptionalResourceId::new(6),
                 }],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -1318,6 +1545,7 @@ mod memory_optimized_read_tests {
                             z: 0.0.into(),
                         },
                     ],
+                    any_extensions: Default::default(),
                 },
                 triangles: Triangles {
                     did: OptionalResourceId::none(),
@@ -1334,9 +1562,11 @@ mod memory_optimized_read_tests {
                         p3: OptionalResourceIndex::none(),
                         pid: OptionalResourceId::none(),
                     }],
+                    any_extensions: Default::default(),
                 },
                 trianglesets: None,
                 beamlattice: None,
+                any_extensions: Default::default(),
             }
         );
     }

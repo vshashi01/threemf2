@@ -4,40 +4,50 @@ use instant_xml::ToXml;
 #[cfg(feature = "read")]
 use instant_xml::FromXml;
 
+use crate::model::domain::any_extensions::{AnyAttributeExtensions, AnyExtensions};
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
 use crate::{
     model::{ResourceIndex, StrResource},
     threemf_namespaces::CORE_TRIANGLESET_NS,
 };
 
 /// Collection of Triangle Set. See [`TriangleSet`] for more details.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[cfg_attr(
-    any(feature = "read", feature = "write"),
-    xml(ns(CORE_TRIANGLESET_NS), rename = "trianglesets", force_prefix)
-)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriangleSets {
     /// Field of triangle set
     pub trianglesets: Vec<TriangleSet>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    TriangleSets {
+        tag: "trianglesets",
+        ns: CORE_TRIANGLESET_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+        },
+        elements: {
+            trianglesets: Vec<TriangleSet> => (CORE_TRIANGLESET_NS, "trianglesets"),
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// Triangle Set allows to define a collection of triangles as grouped collection
 /// with a unique identifier for reusable references.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[cfg_attr(
-    any(feature = "read", feature = "write"),
-    xml(ns(CORE_TRIANGLESET_NS), rename = "triangleset", force_prefix)
-)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriangleSet {
     /// Name of this set.
-    #[cfg_attr(any(feature = "read", feature = "write"), xml(attribute))]
     pub name: StrResource,
 
     /// A string based unique identifier of this set.
-    #[cfg_attr(any(feature = "read", feature = "write"), xml(attribute))]
     pub identifier: StrResource,
 
     /// A collection of Triangle references. See [`TriangleRef`] for more details.
@@ -45,6 +55,30 @@ pub struct TriangleSet {
 
     /// A collection of Triangle range references. See [`TriangleRefRange`] for more details.
     pub triangle_refrange: Vec<TriangleRefRange>,
+
+    /// Foreign attributes and child elements (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    TriangleSet {
+        tag: "triangleset",
+        ns: CORE_TRIANGLESET_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            name: StrResource => ("", "name"),
+            identifier: StrResource => ("", "identifier"),
+        },
+        elements: {
+            triangle_ref: Vec<TriangleRef> => (CORE_TRIANGLESET_NS, "triangle_ref"),
+            triangle_refrange: Vec<TriangleRefRange> => (CORE_TRIANGLESET_NS, "triangle_refrange"),
+        },
+        any: any_extensions: AnyExtensions,
+    }
 }
 
 /// A reference to a Triangle in the Mesh as an index into [`Triangles`](crate::model::domain::mesh::Triangles).
@@ -145,6 +179,7 @@ mod write_tests {
                             startindex: 22,
                             endindex: 102,
                         }],
+                        any_extensions: Default::default(),
                     },
                     TriangleSet {
                         name: "Triangle Set 2".into(),
@@ -160,8 +195,10 @@ mod write_tests {
                                 endindex: 4566893,
                             },
                         ],
+                        any_extensions: Default::default(),
                     },
                 ],
+                any_extensions: Default::default(),
             }),
             beamlattice: None,
             any_extensions: Default::default(),
@@ -187,6 +224,7 @@ mod write_tests {
                         startindex: 22,
                         endindex: 102,
                     }],
+                    any_extensions: Default::default(),
                 },
                 TriangleSet {
                     name: "Triangle Set 2".into(),
@@ -202,8 +240,10 @@ mod write_tests {
                             endindex: 4566893,
                         },
                     ],
+                    any_extensions: Default::default(),
                 },
             ],
+            any_extensions: Default::default(),
         };
 
         let trianglesets_string = to_string(&trianglesets).unwrap();
@@ -282,6 +322,7 @@ mod memory_optimized_read_tests {
                                 startindex: 22,
                                 endindex: 102,
                             }],
+                            any_extensions: Default::default(),
                         },
                         TriangleSet {
                             name: "Triangle Set 2".into(),
@@ -297,8 +338,10 @@ mod memory_optimized_read_tests {
                                     endindex: 4566893,
                                 },
                             ],
+                            any_extensions: Default::default(),
                         },
                     ],
+                    any_extensions: Default::default(),
                 }),
                 beamlattice: None,
                 any_extensions: Default::default(),
@@ -326,6 +369,7 @@ mod memory_optimized_read_tests {
                             startindex: 22,
                             endindex: 102,
                         }],
+                        any_extensions: Default::default(),
                     },
                     TriangleSet {
                         name: "Triangle Set 2".into(),
@@ -341,8 +385,10 @@ mod memory_optimized_read_tests {
                                 endindex: 4566893,
                             },
                         ],
+                        any_extensions: Default::default(),
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }

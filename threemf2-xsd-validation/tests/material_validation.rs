@@ -63,6 +63,7 @@ fn validate_simple_colorgroup() {
                 color: Color::from_hex("#FFFFFFFF").unwrap(),
             }, // White
         ],
+        any_extensions: Default::default(),
     };
 
     // Create a mesh with at least 4 vertices (XSD requirement)
@@ -201,6 +202,7 @@ fn validate_texture2d_with_uv_mapping() {
         tilestyleu: Some(TileStyle::Wrap),
         tilestylev: Some(TileStyle::Mirror),
         filter: Some(Filter::Linear),
+        any_extensions: Default::default(),
     };
 
     // Create texture coordinates (UV mapping)
@@ -221,6 +223,7 @@ fn validate_texture2d_with_uv_mapping() {
                 v: Double::new(1.0),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     // Create a mesh with at least 4 vertices (XSD requirement)
@@ -367,6 +370,7 @@ fn validate_multi_properties() {
                 color: Color::from_hex("#00FF00FF").unwrap(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     // Create a texture
@@ -377,6 +381,7 @@ fn validate_multi_properties() {
         tilestyleu: None,
         tilestylev: None,
         filter: None,
+        any_extensions: Default::default(),
     };
 
     // Create texture coordinate group
@@ -397,6 +402,7 @@ fn validate_multi_properties() {
                 v: Double::new(1.0),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     // Create multi properties using new ResourceIdCollection
@@ -412,6 +418,7 @@ fn validate_multi_properties() {
                 pindices: ResourceIndexCollection::from(vec![1, 1]), // Color 1, Texture coord 1
             },
         ],
+        any_extensions: Default::default(),
     };
 
     // Create a simple mesh with at least 4 vertices (XSD requirement)
@@ -562,6 +569,7 @@ fn validate_vertex_color_application() {
                 color: Color::from_hex("#FFFFFFFF").unwrap(),
             }, // White
         ],
+        any_extensions: Default::default(),
     };
 
     // Create vertices for a simple quad (2 triangles)

@@ -67,6 +67,7 @@ fn validate_displacement_model_schema() {
                                 z: 1.0.into(),
                             },
                         ],
+                        any_extensions: Default::default(),
                     },
                     triangles: Triangles {
                         did: OptionalResourceId::new(7),
@@ -124,9 +125,11 @@ fn validate_displacement_model_schema() {
                                 pid: OptionalResourceId::none(),
                             },
                         ],
+                        any_extensions: Default::default(),
                     },
                     trianglesets: None,
                     beamlattice: None,
+                    any_extensions: Default::default(),
                 })),
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
@@ -148,6 +151,7 @@ fn validate_displacement_model_schema() {
                 tilestyleu: None,
                 tilestylev: None,
                 filter: None,
+                any_extensions: Default::default(),
             }],
             normvectorgroup: vec![NormVectorGroup {
                 id: 5,
@@ -168,6 +172,7 @@ fn validate_displacement_model_schema() {
                         z: 0.0.into(),
                     },
                 ],
+                any_extensions: Default::default(),
             }],
             disp2dgroup: vec![Disp2DGroup {
                 id: 7,
@@ -195,6 +200,7 @@ fn validate_displacement_model_schema() {
                         f: Some(1.0.into()),
                     },
                 ],
+                any_extensions: Default::default(),
             }],
             any_extensions: Default::default(),
         },

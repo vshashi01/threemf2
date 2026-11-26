@@ -394,4 +394,175 @@ mod tests {
         let component = assembly.components().next().unwrap();
         assert_eq!(component.any_attribute(ACME_NS, "comp"), Some("3"));
     }
+    /// Reads `xml`, writes it back and reads it again; returns the first read value after
+    /// checking the round trip.
+    fn roundtrip<T>(xml: &str) -> T
+    where
+        T: for<'xml> instant_xml::FromXml<'xml> + instant_xml::ToXml + PartialEq + std::fmt::Debug,
+    {
+        let value = instant_xml::from_str::<T>(xml).expect("read");
+        let written = instant_xml::to_string(&value).expect("write");
+        let reread = instant_xml::from_str::<T>(&written).expect("read back");
+        assert_eq!(
+            reread, value,
+            "round trip changed the value; written: {written}"
+        );
+        value
+    }
+
+    #[test]
+    fn foreign_content_in_extension_elements_roundtrips() {
+        use threemf2::model::domain::{
+            beamlattice::BeamLattice, displacement::DisplacementMesh,
+            displacement::NormVectorGroup, material::ColorGroup, slice::Slice,
+            triangle_set::TriangleSets,
+        };
+        use threemf2::threemf_namespaces::{
+            BEAM_LATTICE_NS, CORE_TRIANGLESET_NS, DISPLACEMENT_NS, MATERIAL_NS, SLICE_NS,
+        };
+
+        let a = |attrs: &threemf2::model::domain::any::AnyAttributes, name: &str| {
+            attrs.get(ACME_NS, name).map(str::to_owned)
+        };
+
+        // Attribute-only slot (material).
+        let group: ColorGroup = roundtrip(&format!(
+            r##"<colorgroup xmlns="{MATERIAL_NS}" xmlns:acme="{ACME_NS}" id="1" acme:cg="1"><color color="#FF0000FF" /></colorgroup>"##
+        ));
+        assert_eq!(
+            a(group.any_extensions.attributes(), "cg").as_deref(),
+            Some("1")
+        );
+
+        // Attributes and elements (slice), with a foreign element after the known children.
+        let slice: Slice = roundtrip(&format!(
+            r#"<slice xmlns="{SLICE_NS}" xmlns:acme="{ACME_NS}" ztop="0.1" acme:s="2"><vertices><vertex x="0" y="0" /><vertex x="1" y="0" /></vertices><polygon startv="0"><segment v2="1" /></polygon><acme:layerinfo n="7"/></slice>"#
+        ));
+        assert_eq!(
+            a(slice.any_extensions.attributes(), "s").as_deref(),
+            Some("2")
+        );
+        assert_eq!(
+            slice.any_extensions.elements()[0].attribute("", "n"),
+            Some("7")
+        );
+
+        // Elements-only slot (<b:beams>) inside a full slot (<b:beamlattice>); `cap` is an
+        // unprefixed attribute declared in the beam lattice namespace.
+        let lattice: BeamLattice = roundtrip(&format!(
+            r#"<beamlattice xmlns="{BEAM_LATTICE_NS}" xmlns:acme="{ACME_NS}" minlength="0.0001" radius="1" cap="sphere" acme:bl="3"><beams><beam v1="0" v2="1" r1="1.5" r2="1.6" /><acme:beamnote/></beams><acme:latticenote/></beamlattice>"#
+        ));
+        assert_eq!(
+            a(lattice.any_extensions.attributes(), "bl").as_deref(),
+            Some("3")
+        );
+        assert_eq!(lattice.any_extensions.elements()[0].name(), "latticenote");
+        assert_eq!(
+            lattice.beams.any_extensions.elements()[0].name(),
+            "beamnote"
+        );
+        assert!(lattice.cap.is_some());
+
+        // Triangle sets.
+        let sets: TriangleSets = roundtrip(&format!(
+            r#"<trianglesets xmlns="{CORE_TRIANGLESET_NS}" xmlns:acme="{ACME_NS}" acme:ts="4"><triangleset name="A" identifier="a" acme:set="5"><ref index="2" /><acme:setnote/></triangleset></trianglesets>"#
+        ));
+        assert_eq!(
+            a(sets.any_extensions.attributes(), "ts").as_deref(),
+            Some("4")
+        );
+        let set = &sets.trianglesets[0];
+        assert_eq!(
+            a(set.any_extensions.attributes(), "set").as_deref(),
+            Some("5")
+        );
+        assert_eq!(set.any_extensions.elements()[0].name(), "setnote");
+
+        // Hand-written readers (displacement).
+        let group: NormVectorGroup = roundtrip(&format!(
+            r#"<normvectorgroup xmlns="{DISPLACEMENT_NS}" xmlns:acme="{ACME_NS}" id="1" acme:nvg="6"><normvector x="0" y="0" z="1" /><acme:nvgnote/></normvectorgroup>"#
+        ));
+        assert_eq!(
+            a(group.any_extensions.attributes(), "nvg").as_deref(),
+            Some("6")
+        );
+        assert_eq!(group.any_extensions.elements()[0].name(), "nvgnote");
+        assert_eq!(group.normvector.len(), 1);
+
+        let mesh: DisplacementMesh = roundtrip(&format!(
+            r#"<displacementmesh xmlns="{DISPLACEMENT_NS}" xmlns:acme="{ACME_NS}" acme:dm="7"><vertices acme:v="8"><vertex x="0" y="0" z="0" /><vertex x="1" y="0" z="0" /><vertex x="0" y="1" z="0" /></vertices><triangles acme:t="9"><triangle v1="0" v2="1" v3="2" /></triangles><acme:meshnote/></displacementmesh>"#
+        ));
+        assert_eq!(
+            a(mesh.any_extensions.attributes(), "dm").as_deref(),
+            Some("7")
+        );
+        assert_eq!(
+            a(mesh.vertices.any_extensions.attributes(), "v").as_deref(),
+            Some("8")
+        );
+        assert_eq!(
+            a(mesh.triangles.any_extensions.attributes(), "t").as_deref(),
+            Some("9")
+        );
+        assert_eq!(mesh.any_extensions.elements()[0].name(), "meshnote");
+        assert_eq!(mesh.vertices.vertex.len(), 3);
+    }
+
+    #[test]
+    fn own_namespace_content_is_not_foreign() {
+        use threemf2::model::domain::material::ColorGroup;
+        use threemf2::threemf_namespaces::MATERIAL_NS;
+
+        // `##other` excludes the extension's own namespace: an unknown `m:` attribute or element
+        // on <m:colorgroup> is not foreign content and is not kept.
+        let group = instant_xml::from_str::<ColorGroup>(&format!(
+            r##"<m:colorgroup xmlns:m="{MATERIAL_NS}" id="1" m:unknown="x"><m:color color="#FF0000FF" /></m:colorgroup>"##
+        ))
+        .expect("read");
+        assert!(group.any_extensions.is_empty());
+        assert_eq!(group.color.len(), 1);
+    }
+
+    #[test]
+    fn extension_builders_expose_foreign_content() {
+        use threemf2::model::query::{get_color_groups_from_model, get_mesh_objects_from_model};
+
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        builder.add_color_group(|group| {
+            group
+                .any_extensions_mut()
+                .attributes_mut()
+                .set(ACME_NS, "cg", "1")
+                .unwrap();
+            group.add_color(threemf2::model::Color {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 255,
+            });
+        });
+        let object = builder
+            .add_mesh_object(|obj| {
+                obj.add_vertices(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+                    .add_triangle(&[0, 1, 2]);
+                obj.mesh_any_extensions_mut()
+                    .push_element(AnyElement::new(ACME_NS, "meshnote").unwrap())?;
+                Ok(())
+            })
+            .unwrap();
+        builder.add_build(None).unwrap();
+        builder.add_build_item(object).unwrap();
+
+        let mut buf = write(builder.build().unwrap());
+        let package = ThreemfPackage::from_reader(&mut buf, false).expect("read package");
+        let model = &package.root;
+
+        let group = get_color_groups_from_model(model).next().unwrap();
+        assert_eq!(
+            group.any_extensions().attributes().get(ACME_NS, "cg"),
+            Some("1")
+        );
+        let mesh = get_mesh_objects_from_model(model).next().unwrap();
+        assert_eq!(mesh.mesh_any_extensions().elements()[0].name(), "meshnote");
+    }
 }

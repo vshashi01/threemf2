@@ -125,6 +125,7 @@ fn validate_beamlattice_with_trianglesets() {
                 p2: OptionalResourceIndex::none(),
                 pid: OptionalResourceId::none(),
             }],
+            any_extensions: Default::default(),
         },
         ballmode: Some(BallMode::Mixed),
         ballradius: Some(0.3),
@@ -135,6 +136,7 @@ fn validate_beamlattice_with_trianglesets() {
                 p: OptionalResourceIndex::none(),
                 pid: OptionalResourceId::none(),
             }],
+            any_extensions: Default::default(),
         }),
         beamsets: None,
         clippingmode: None,
@@ -142,6 +144,7 @@ fn validate_beamlattice_with_trianglesets() {
         representationmesh: OptionalResourceId::none(),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
+        any_extensions: Default::default(),
     };
 
     let triangle_sets = TriangleSets {
@@ -151,14 +154,17 @@ fn validate_beamlattice_with_trianglesets() {
                 identifier: "trianglessetscombined".into(),
                 triangle_ref: vec![TriangleRef { index: 0 }],
                 triangle_refrange: vec![],
+                any_extensions: Default::default(),
             },
             TriangleSet {
                 name: "Mesh Surface".into(),
                 identifier: "trianglesetscombined2".into(),
                 triangle_ref: vec![TriangleRef { index: 1 }],
                 triangle_refrange: vec![],
+                any_extensions: Default::default(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {

@@ -30,6 +30,15 @@ pub fn is_foreign_namespace(ns: &str) -> bool {
     !ns.is_empty() && ns != CORE_NS && ns != XMLNS_NS
 }
 
+/// Returns `true` if `ns` may be used for `##other` content of an element in namespace `own`.
+///
+/// `##other` excludes the namespace of the schema that declares the slot, so foreign content of
+/// an extension element must not use that extension's namespace either.
+#[cfg(any(feature = "read", feature = "write"))]
+pub(crate) fn is_foreign_for(ns: &str, own: &str) -> bool {
+    is_foreign_namespace(ns) && ns != own
+}
+
 fn check_foreign(ns: &str) -> Result<(), AnyError> {
     match is_foreign_namespace(ns) {
         true => Ok(()),
@@ -137,6 +146,12 @@ impl Eq for AnyAttribute {}
 pub struct AnyAttributes(Vec<AnyAttribute>);
 
 impl AnyAttributes {
+    /// A shared empty collection, for slots that cannot hold attributes.
+    pub(crate) fn empty() -> &'static Self {
+        static EMPTY: AnyAttributes = AnyAttributes(Vec::new());
+        &EMPTY
+    }
+
     /// Creates an empty collection.
     pub fn new() -> Self {
         Self::default()
@@ -427,16 +442,17 @@ pub(crate) mod read {
 
     use instant_xml::{Deserializer, Error, Id, de::Node};
 
-    use super::{AnyAttribute, AnyAttributes, AnyElement, AnyNode, is_foreign_namespace};
+    use super::{AnyAttribute, AnyAttributes, AnyElement, AnyNode, is_foreign_for};
 
     /// Keeps the attribute if it is in a foreign namespace, otherwise ignores it.
     pub(crate) fn capture_attribute(
         attributes: &mut AnyAttributes,
         id: Id<'_>,
+        own: &str,
         prefix: Option<&str>,
         value: &str,
     ) {
-        if !is_foreign_namespace(id.ns) {
+        if !is_foreign_for(id.ns, own) {
             return;
         }
 
@@ -504,7 +520,8 @@ pub(crate) mod write {
     };
 
     use super::{
-        AnyAttribute, AnyAttributes, AnyElement, AnyNode, XML_NS, is_foreign_namespace, is_ncname,
+        AnyAttribute, AnyAttributes, AnyElement, AnyNode, XML_NS, is_foreign_for,
+        is_foreign_namespace, is_ncname,
     };
     use crate::threemf_namespaces::{
         BEAM_LATTICE_BALLS_PREFIX, BEAM_LATTICE_PREFIX, BOOLEAN_PREFIX, CORE_TRIANGLESET_PREFIX,
@@ -611,10 +628,12 @@ pub(crate) mod write {
     /// Must be called while the serializer is in the attribute state of that element.
     ///
     /// `declared` lists `(prefix, namespace)` pairs already declared on this start tag, so they
-    /// are reused instead of declared twice.
+    /// are reused instead of declared twice. `own` is the namespace of that element; foreign
+    /// content must use a different one.
     pub(crate) fn write_foreign_attributes<W: fmt::Write + ?Sized>(
         serializer: &mut Serializer<'_, W>,
         declared: &[(String, String)],
+        own: &str,
         attributes: &AnyAttributes,
         elements: &[AnyElement],
     ) -> Result<ForeignScope, Error> {
@@ -625,7 +644,7 @@ pub(crate) mod write {
             .iter()
             .map(|a| (a.ns(), a.prefix_hint()))
             .chain(elements.iter().map(|e| (e.ns(), e.prefix_hint())));
-        if let Some((ns, _)) = names.clone().find(|(ns, _)| !is_foreign_namespace(ns)) {
+        if let Some((ns, _)) = names.clone().find(|(ns, _)| !is_foreign_for(ns, own)) {
             return Err(not_foreign(ns));
         }
 

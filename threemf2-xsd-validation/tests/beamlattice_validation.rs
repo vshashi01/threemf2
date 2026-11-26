@@ -139,6 +139,7 @@ fn validate_simple_beamlattice() {
                     pid: OptionalResourceId::none(),
                 },
             ],
+            any_extensions: Default::default(),
         },
         balls: None,
         ballmode: None,
@@ -149,6 +150,7 @@ fn validate_simple_beamlattice() {
         representationmesh: OptionalResourceId::none(),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -280,6 +282,7 @@ fn validate_beamlattice_with_balls() {
                     pid: OptionalResourceId::none(),
                 },
             ],
+            any_extensions: Default::default(),
         },
         ballmode: Some(BallMode::Mixed),
         ballradius: Some(1.0),
@@ -298,6 +301,7 @@ fn validate_beamlattice_with_balls() {
                     pid: OptionalResourceId::none(),
                 },
             ],
+            any_extensions: Default::default(),
         }),
         beamsets: None,
         clippingmode: None,
@@ -305,6 +309,7 @@ fn validate_beamlattice_with_balls() {
         representationmesh: OptionalResourceId::none(),
         pid: OptionalResourceId::none(),
         pindex: OptionalResourceIndex::none(),
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {

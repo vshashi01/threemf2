@@ -130,6 +130,7 @@ fn validate_simple_slice() {
                 },
             ],
         }],
+        any_extensions: Default::default(),
     };
 
     let slicestack = SliceStack {
@@ -137,6 +138,7 @@ fn validate_simple_slice() {
         zbottom: Some(0.0.into()),
         slice: vec![slice],
         sliceref: vec![],
+        any_extensions: Default::default(),
     };
 
     let object = Object {
@@ -301,6 +303,7 @@ fn validate_slice_multiple_polygons() {
                 ],
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let slicestack = SliceStack {
@@ -308,6 +311,7 @@ fn validate_slice_multiple_polygons() {
         zbottom: Some(0.0.into()),
         slice: vec![slice],
         sliceref: vec![],
+        any_extensions: Default::default(),
     };
 
     let object = Object {

@@ -1,3 +1,6 @@
+use crate::model::domain::any_extensions::{AnyElementExtensions, AnyExtensions};
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
 use crate::{
     model::{OptionalResourceId, OptionalResourceIndex, ResourceIndex, StrResource},
     threemf_namespaces::{BEAM_LATTICE_BALLS_NS, BEAM_LATTICE_NS},
@@ -10,82 +13,83 @@ use instant_xml::ToXml;
 use instant_xml::FromXml;
 
 /// A beam lattice provides information about lattice data, in the form of a simplistic node-beam model
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(BEAM_LATTICE_NS, b2 = BEAM_LATTICE_BALLS_NS), rename = "beamlattice")
-)]
 pub struct BeamLattice {
     /// A producer MUST specify the minimal length of all beams in the lattice.
     /// The producer SHOULD NOT produce zero length beams (i.e. shorter than minlength).
     /// The consumer MUST ignore all beams with length shorter than minlength.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub minlength: f64,
 
     /// Default uniform radius value for the beams.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub radius: f64,
 
     /// Specifies whether balls are created at beam vertices
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(ns(BEAM_LATTICE_BALLS_NS), attribute)
-    )]
     pub ballmode: Option<BallMode>,
 
     /// Default uniform radius value for the balls. Required if ballmode is different to "none".
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(ns(BEAM_LATTICE_BALLS_NS), attribute)
-    )]
     pub ballradius: Option<f64>,
 
     /// Specifies the clipping mode of the beam lattice
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(ns(BEAM_LATTICE_NS), attribute)
-    )]
     pub clippingmode: Option<ClippingMode>,
 
     /// References the clippingmesh object. Required if clippingmode is different to "none".
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub clippingmesh: OptionalResourceId,
 
     /// References a mesh object that represents the intentional shape of the lattice geometry
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub representationmesh: OptionalResourceId,
 
     /// Overrides the object-level pid as default for all beams
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub pid: OptionalResourceId,
 
     /// Overrides the object-level pindex as default for all beams
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub pindex: OptionalResourceIndex,
 
     /// Default capping mode for beam ends
     ///
     /// See [`CapMode`] for more details.
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(ns(BEAM_LATTICE_NS), attribute)
-    )]
     pub cap: Option<CapMode>,
 
     /// Beams in this beam lattice.
     pub beams: Beams,
 
     /// Optional balls in this beam lattice.
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(ns(BEAM_LATTICE_BALLS_NS))
-    )]
     pub balls: Option<Balls>,
 
     /// Optional beam sets in this beam lattice.
     pub beamsets: Option<BeamSets>,
+
+    /// Foreign attributes and child elements (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    BeamLattice {
+        tag: "beamlattice",
+        ns: BEAM_LATTICE_NS,
+        prefixes: [("b2", BEAM_LATTICE_BALLS_NS)],
+        force_prefix: false,
+        attributes: {
+            minlength: f64 => ("", "minlength"),
+            radius: f64 => ("", "radius"),
+            ballmode: Option<BallMode> => (BEAM_LATTICE_BALLS_NS, "ballmode"),
+            ballradius: Option<f64> => (BEAM_LATTICE_BALLS_NS, "ballradius"),
+            clippingmode: Option<ClippingMode> => (BEAM_LATTICE_NS, "clippingmode"),
+            clippingmesh: OptionalResourceId => ("", "clippingmesh"),
+            representationmesh: OptionalResourceId => ("", "representationmesh"),
+            pid: OptionalResourceId => ("", "pid"),
+            pindex: OptionalResourceIndex => ("", "pindex"),
+            cap: Option<CapMode> => (BEAM_LATTICE_NS, "cap"),
+        },
+        elements: {
+            beams: Beams => (BEAM_LATTICE_NS, "beams"),
+            balls: Option<Balls> => (BEAM_LATTICE_BALLS_NS, "balls"),
+            beamsets: Option<BeamSets> => (BEAM_LATTICE_NS, "beamsets"),
+        },
+        any: any_extensions: AnyExtensions,
+    }
 }
 
 /// Ball mode for beam lattices - specifies whether balls are created at beam vertices
@@ -185,16 +189,31 @@ impl From<String> for CapMode {
 }
 
 /// A container for beams
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(BEAM_LATTICE_NS), rename = "beams")
-)]
 pub struct Beams {
     /// Field of beams
     pub beam: Vec<Beam>,
+
+    /// Foreign child elements (`xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyElementExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Beams {
+        tag: "beams",
+        ns: BEAM_LATTICE_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: {
+        },
+        elements: {
+            beam: Vec<Beam> => (BEAM_LATTICE_NS, "beam"),
+        },
+        any: any_extensions: AnyElementExtensions,
+    }
 }
 
 /// A single beam of the beamlattice
@@ -248,16 +267,31 @@ pub struct Beam {
 }
 
 /// A Collection of Ball elements. See [`Ball`] for more details.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(BEAM_LATTICE_BALLS_NS), rename = "balls", force_prefix)
-)]
 pub struct Balls {
     /// Field of balls
     pub ball: Vec<Ball>,
+
+    /// Foreign child elements (`xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyElementExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Balls {
+        tag: "balls",
+        ns: BEAM_LATTICE_BALLS_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+        },
+        elements: {
+            ball: Vec<Ball> => (BEAM_LATTICE_BALLS_NS, "ball"),
+        },
+        any: any_extensions: AnyElementExtensions,
+    }
 }
 
 /// A ball element defines a sphere of a given radius centered at the position of the vertex
@@ -288,46 +322,72 @@ pub struct Ball {
 }
 
 /// A container for beam sets
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(BEAM_LATTICE_NS), rename = "beamsets")
-)]
 pub struct BeamSets {
     /// Field of beamsets
     pub beamset: Vec<BeamSet>,
+
+    /// Foreign child elements (`xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyElementExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    BeamSets {
+        tag: "beamsets",
+        ns: BEAM_LATTICE_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: {
+        },
+        elements: {
+            beamset: Vec<BeamSet> => (BEAM_LATTICE_NS, "beamset"),
+        },
+        any: any_extensions: AnyElementExtensions,
+    }
 }
 
 /// A beam set contains a reference list to a subset of beams and a reference list to a subset of balls
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(BEAM_LATTICE_NS), rename = "beamset")
-)]
 pub struct BeamSet {
     /// Human-readable name of the beam collection
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub name: Option<StrResource>,
 
     /// Might be used for external identification of the beam collection data.
     /// The identifier attribute MUST be unique within the beam lattice.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub identifier: Option<StrResource>,
 
     /// References to beams in this set
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(rename = "ref"))]
     pub refs: Vec<BeamRef>,
 
     /// References to balls in this set  
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(ns(BEAM_LATTICE_BALLS_NS))
-    )]
     pub ballref: Vec<BallRef>,
+
+    /// Foreign attributes and child elements (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    BeamSet {
+        tag: "beamset",
+        ns: BEAM_LATTICE_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: {
+            name: Option<StrResource> => ("", "name"),
+            identifier: Option<StrResource> => ("", "identifier"),
+        },
+        elements: {
+            refs: Vec<BeamRef> => (BEAM_LATTICE_NS, "ref"),
+            ballref: Vec<BallRef> => (BEAM_LATTICE_BALLS_NS, "ballref"),
+        },
+        any: any_extensions: AnyExtensions,
+    }
 }
 
 /// A reference to a beam element
@@ -438,9 +498,11 @@ mod write_tests {
                     cap1: None,
                     cap2: None,
                 }],
+                any_extensions: Default::default(),
             },
             balls: None,
             beamsets: None,
+            any_extensions: Default::default(),
         };
         let beamlattice_string = to_string(&beamlattice).unwrap();
 
@@ -483,6 +545,7 @@ mod write_tests {
                     cap1: None,
                     cap2: None,
                 }],
+                any_extensions: Default::default(),
             },
             balls: Some(Balls {
                 ball: vec![Ball {
@@ -491,8 +554,10 @@ mod write_tests {
                     p: OptionalResourceIndex::none(),
                     pid: OptionalResourceId::none(),
                 }],
+                any_extensions: Default::default(),
             }),
             beamsets: None,
+            any_extensions: Default::default(),
         };
         let beamlattice_string = to_string(&beamlattice).unwrap();
 
@@ -628,9 +693,11 @@ mod memory_optimized_read_tests {
                         cap1: None,
                         cap2: None,
                     }],
+                    any_extensions: Default::default(),
                 },
                 balls: None,
                 beamsets: None,
+                any_extensions: Default::default(),
             }
         );
     }
@@ -670,6 +737,7 @@ mod memory_optimized_read_tests {
                         cap1: None,
                         cap2: None,
                     }],
+                    any_extensions: Default::default(),
                 },
                 balls: Some(Balls {
                     ball: vec![Ball {
@@ -678,8 +746,10 @@ mod memory_optimized_read_tests {
                         p: OptionalResourceIndex::none(),
                         pid: OptionalResourceId::none(),
                     }],
+                    any_extensions: Default::default(),
                 }),
                 beamsets: None,
+                any_extensions: Default::default(),
             }
         );
     }
@@ -785,10 +855,12 @@ mod memory_optimized_read_tests {
                                 cap1: None,
                                 cap2: None
                             }
-                        ]
+                        ],
+                        any_extensions: Default::default(),
                     },
                     balls: None,
                     beamsets: None,
+                    any_extensions: Default::default(),
                 }),
                 any_extensions: Default::default(),
             }
@@ -892,7 +964,8 @@ mod memory_optimized_read_tests {
                                             cap1: None,
                                             cap2: None
                                         }
-                                    ]
+                                    ],
+                                    any_extensions: Default::default(),
                                 },
                                 balls: Some(Balls {
                                     ball: vec![Ball {
@@ -900,9 +973,11 @@ mod memory_optimized_read_tests {
                                         r: Some(0.5),
                                         p: OptionalResourceIndex::none(),
                                         pid: OptionalResourceId::none()
-                                    }]
+                                    }],
+                                    any_extensions: Default::default(),
                                 }),
                                 beamsets: None,
+                                any_extensions: Default::default(),
                             }),
                             any_extensions: Default::default(),
                         })),

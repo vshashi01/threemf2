@@ -5,6 +5,7 @@
 //!
 //! - [`AnyExtensions`] for elements with both `xs:anyAttribute` and an `xs:any` element slot.
 //! - [`AnyAttributeExtensions`] for elements that only allow `xs:anyAttribute`.
+//! - [`AnyElementExtensions`] for elements that only allow `xs:any` child elements.
 //!
 //! The field exists regardless of features so that struct literals compile the same way in every
 //! build. The content is only kept, and the accessors are only available, with the `any` feature.
@@ -152,7 +153,8 @@ impl AnyAttributeExtensions {
 #[cfg_attr(not(all(feature = "read", feature = "write")), allow(dead_code))]
 pub(crate) trait AnySlot {
     fn slot_attributes(&self) -> &AnyAttributes;
-    fn slot_attributes_mut(&mut self) -> &mut AnyAttributes;
+    /// `None` if the slot cannot hold attributes.
+    fn slot_attributes_mut(&mut self) -> Option<&mut AnyAttributes>;
     fn slot_elements(&self) -> &[AnyElement];
     /// `None` if the slot cannot hold elements.
     fn slot_elements_mut(&mut self) -> Option<&mut Vec<AnyElement>>;
@@ -163,8 +165,8 @@ impl AnySlot for AnyExtensions {
     fn slot_attributes(&self) -> &AnyAttributes {
         &self.attributes
     }
-    fn slot_attributes_mut(&mut self) -> &mut AnyAttributes {
-        &mut self.attributes
+    fn slot_attributes_mut(&mut self) -> Option<&mut AnyAttributes> {
+        Some(&mut self.attributes)
     }
     fn slot_elements(&self) -> &[AnyElement] {
         &self.elements
@@ -179,14 +181,87 @@ impl AnySlot for AnyAttributeExtensions {
     fn slot_attributes(&self) -> &AnyAttributes {
         &self.attributes
     }
-    fn slot_attributes_mut(&mut self) -> &mut AnyAttributes {
-        &mut self.attributes
+    fn slot_attributes_mut(&mut self) -> Option<&mut AnyAttributes> {
+        Some(&mut self.attributes)
     }
     fn slot_elements(&self) -> &[AnyElement] {
         &[]
     }
     fn slot_elements_mut(&mut self) -> Option<&mut Vec<AnyElement>> {
         None
+    }
+}
+
+/// Foreign child elements of an element that only has an `xs:any` slot (no `xs:anyAttribute`),
+/// such as `<b:beams>`.
+///
+/// Only populated with the `any` feature; empty and zero-sized otherwise.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct AnyElementExtensions {
+    #[cfg(feature = "any")]
+    pub(crate) elements: Vec<AnyElement>,
+}
+
+impl AnyElementExtensions {
+    /// Creates an empty container.
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[cfg(feature = "any")]
+impl AnyElementExtensions {
+    /// Foreign child elements (`xs:any`), in document order.
+    pub fn elements(&self) -> &[AnyElement] {
+        &self.elements
+    }
+
+    /// Mutable access to the foreign child elements.
+    ///
+    /// Elements added here are not validated until the model is written; prefer
+    /// [`AnyElementExtensions::push_element`].
+    pub fn elements_mut(&mut self) -> &mut Vec<AnyElement> {
+        &mut self.elements
+    }
+
+    /// Appends a foreign child element.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AnyError::NotForeignNamespace`] if the element is not in a foreign namespace.
+    pub fn push_element(&mut self, element: AnyElement) -> Result<(), AnyError> {
+        if !is_foreign_namespace(element.ns()) {
+            return Err(AnyError::NotForeignNamespace(element.ns().to_owned()));
+        }
+        self.elements.push(element);
+        Ok(())
+    }
+
+    /// Builder style: appends a foreign child element.
+    pub fn with_element(mut self, element: AnyElement) -> Self {
+        self.elements.push(element);
+        self
+    }
+
+    /// Returns `true` if there are no foreign elements.
+    pub fn is_empty(&self) -> bool {
+        self.elements.is_empty()
+    }
+}
+
+#[cfg(feature = "any")]
+impl AnySlot for AnyElementExtensions {
+    fn slot_attributes(&self) -> &AnyAttributes {
+        AnyAttributes::empty()
+    }
+    fn slot_attributes_mut(&mut self) -> Option<&mut AnyAttributes> {
+        None
+    }
+    fn slot_elements(&self) -> &[AnyElement] {
+        &self.elements
+    }
+    fn slot_elements_mut(&mut self) -> Option<&mut Vec<AnyElement>> {
+        Some(&mut self.elements)
     }
 }
 

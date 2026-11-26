@@ -35,6 +35,9 @@
 //! </m:texture2dgroup>
 //! ```
 
+use crate::model::domain::any_extensions::AnyAttributeExtensions;
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
 use crate::{
     model::{
         Color, Double, PathResource, ResourceId, ResourceIdCollection, ResourceIndexCollection,
@@ -140,20 +143,35 @@ impl From<String> for BlendMethod {
 ///
 /// A color group defines a set of sRGB colors that can be referenced by index.
 /// The order of colors forms an implicit 0-based index.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(MATERIAL_NS), rename = "colorgroup", force_prefix)
-)]
 pub struct ColorGroup {
     /// Unique identifier for this color group.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Colors in this group, ordered by implicit 0-based index.
     pub color: Vec<ColorElement>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    ColorGroup {
+        tag: "colorgroup",
+        ns: MATERIAL_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            id: ResourceId => ("", "id"),
+        },
+        elements: {
+            color: Vec<ColorElement> => (MATERIAL_NS, "color"),
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// A single color value in sRGB format.
@@ -177,27 +195,39 @@ pub struct ColorElement {
 ///
 /// A texture 2D group defines UV coordinates for mapping a texture image to mesh vertices.
 /// The order of coordinates forms an implicit 0-based index.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(MATERIAL_NS), rename = "texture2dgroup", force_prefix)
-)]
 pub struct Texture2DGroup {
     /// Unique identifier for this texture coordinate group.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Reference to the texture2d resource to use.
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(attribute, rename = "texid")
-    )]
     pub texid: ResourceId,
 
     /// Texture coordinates in this group, ordered by implicit 0-based index.
     pub tex2coord: Vec<Tex2Coord>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Texture2DGroup {
+        tag: "texture2dgroup",
+        ns: MATERIAL_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            texid: ResourceId => ("", "texid"),
+        },
+        elements: {
+            tex2coord: Vec<Tex2Coord> => (MATERIAL_NS, "tex2coord"),
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// A single texture coordinate (UV) pair.
@@ -281,32 +311,44 @@ impl<'xml> FromXml<'xml> for Tex2Coord {
 ///
 /// Composite materials are created by mixing 2 or more base materials in defined ratios.
 /// Each composite represents a specific mixture ratio of the materials.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(MATERIAL_NS), rename = "compositematerials", force_prefix)
-)]
 pub struct CompositeMaterials {
     /// Unique identifier for this composite material group.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Reference to the base materials group containing the constituent materials.
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(attribute, rename = "matid")
-    )]
     pub matid: ResourceId,
 
     /// Space-delimited list of material indices from the base materials group.
     /// These are the constituents that will be mixed.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub matindices: ResourceIndexCollection,
 
     /// Composite definitions, ordered by implicit 0-based index.
     pub composite: Vec<Composite>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    CompositeMaterials {
+        tag: "compositematerials",
+        ns: MATERIAL_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            matid: ResourceId => ("", "matid"),
+            matindices: ResourceIndexCollection => ("", "matindices"),
+        },
+        elements: {
+            composite: Vec<Composite> => (MATERIAL_NS, "composite"),
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// A single composite material definition.
@@ -415,30 +457,45 @@ impl<'xml> instant_xml::FromXml<'xml> for Composite {
 /// Multi-properties allow layering multiple property types (e.g., material + color + texture)
 /// to create complex material appearances. Properties are blended in the order specified
 /// by the `pids` attribute.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(MATERIAL_NS), rename = "multiproperties", force_prefix)
-)]
 pub struct MultiProperties {
     /// Unique identifier for this multi-property group.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Space-delimited list of property group IDs to layer.
     /// First element should be the material (base or composite), followed by color/texture layers.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub pids: ResourceIdCollection,
 
     /// Optional space-delimited list of blend methods for each layer.
     /// One value per layer after the first. Defaults to "mix" if not specified.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub blendmethods: Option<StrResource>,
 
     /// Multi-property index combinations, ordered by implicit 0-based index.
     pub multi: Vec<Multi>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    MultiProperties {
+        tag: "multiproperties",
+        ns: MATERIAL_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            pids: ResourceIdCollection => ("", "pids"),
+            blendmethods: Option<StrResource> => ("", "blendmethods"),
+        },
+        elements: {
+            multi: Vec<Multi> => (MATERIAL_NS, "multi"),
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// A single multi-property index combination.
@@ -553,37 +610,51 @@ impl TextureContentType {
 ///
 /// References an image file in the 3MF package that can be used for texture mapping.
 /// The texture is referenced by `Texture2DGroup` elements via the `texid` attribute.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(MATERIAL_NS), rename = "texture2d", force_prefix)
-)]
 pub struct Texture2D {
     /// Unique identifier for this texture resource.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Path to the texture image part within the 3MF package.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub path: PathResource,
 
     /// Content type of the texture image. Must be "image/jpeg" or "image/png".
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub contenttype: TextureContentType,
 
     /// Tile style for u-coordinates outside `[0,1]` range. Defaults to "wrap".
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub tilestyleu: Option<TileStyle>,
 
     /// Tile style for v-coordinates outside `[0,1]` range. Defaults to "wrap".
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub tilestylev: Option<TileStyle>,
 
     /// Filter to apply when scaling the texture. Defaults to "auto".
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub filter: Option<Filter>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Texture2D {
+        tag: "texture2d",
+        ns: MATERIAL_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            path: PathResource => ("", "path"),
+            contenttype: TextureContentType => ("", "contenttype"),
+            tilestyleu: Option<TileStyle> => ("", "tilestyleu"),
+            tilestylev: Option<TileStyle> => ("", "tilestylev"),
+            filter: Option<Filter> => ("", "filter"),
+        },
+        elements: {
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 #[cfg(feature = "write")]
@@ -624,6 +695,7 @@ mod write_tests {
                     color: Color::from_hex("#00FF00").unwrap(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let colorgroup_string = to_string(&colorgroup).unwrap();
 
@@ -664,6 +736,7 @@ mod write_tests {
                     v: 1.0.into(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let texture2dgroup_string = to_string(&texture2dgroup).unwrap();
 
@@ -710,6 +783,7 @@ mod write_tests {
                     values: vec![Double::new(0.5), Double::new(0.5)],
                 },
             ],
+            any_extensions: Default::default(),
         };
         let compositematerials_string = to_string(&compositematerials).unwrap();
 
@@ -745,6 +819,7 @@ mod write_tests {
                     pindices: ResourceIndexCollection::from(vec![1, 2, 3]),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let multiproperties_string = to_string(&multiproperties).unwrap();
 
@@ -764,6 +839,7 @@ mod write_tests {
             tilestyleu: Some(TileStyle::Wrap),
             tilestylev: Some(TileStyle::Mirror),
             filter: Some(Filter::Linear),
+            any_extensions: Default::default(),
         };
         let texture2d_string = to_string(&texture2d).unwrap();
 
@@ -784,6 +860,7 @@ mod write_tests {
             tilestyleu: None,
             tilestylev: None,
             filter: None,
+            any_extensions: Default::default(),
         };
         let texture2d_string = to_string(&texture2d).unwrap();
 
@@ -864,6 +941,7 @@ mod memory_optimized_read_tests {
                         color: Color::from_hex("#00FF00").unwrap(),
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -908,6 +986,7 @@ mod memory_optimized_read_tests {
                         v: 1.0.into()
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -947,6 +1026,7 @@ mod memory_optimized_read_tests {
                         values: vec![Double::new(0.5), Double::new(0.5)]
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -986,6 +1066,7 @@ mod memory_optimized_read_tests {
                         pindices: ResourceIndexCollection::from(vec![1, 2, 3])
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -1023,6 +1104,7 @@ mod memory_optimized_read_tests {
                 tilestyleu: None,
                 tilestylev: None,
                 filter: None,
+                any_extensions: Default::default(),
             }
         );
     }

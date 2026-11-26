@@ -804,9 +804,13 @@ mod write_tests {
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
                             cap: None,
-                            beams: beamlattice::Beams { beam: vec![] },
+                            beams: beamlattice::Beams {
+                                beam: vec![],
+                                any_extensions: Default::default(),
+                            },
                             balls: None,
                             beamsets: None,
+                            any_extensions: Default::default(),
                         }),
                         any_extensions: Default::default(),
                     })),
@@ -888,9 +892,16 @@ mod write_tests {
                             pid: OptionalResourceId::none(),
                             pindex: OptionalResourceIndex::none(),
                             cap: None,
-                            beams: beamlattice::Beams { beam: vec![] },
-                            balls: Some(beamlattice::Balls { ball: vec![] }),
+                            beams: beamlattice::Beams {
+                                beam: vec![],
+                                any_extensions: Default::default(),
+                            },
+                            balls: Some(beamlattice::Balls {
+                                ball: vec![],
+                                any_extensions: Default::default(),
+                            }),
                             beamsets: None,
+                            any_extensions: Default::default(),
                         }),
                         any_extensions: Default::default(),
                     })),
@@ -966,6 +977,7 @@ mod write_tests {
                         },
                         trianglesets: Some(triangle_set::TriangleSets {
                             trianglesets: vec![],
+                            any_extensions: Default::default(),
                         }),
                         beamlattice: None,
                         any_extensions: Default::default(),
@@ -1031,6 +1043,7 @@ mod write_tests {
                         transform: None,
                         path: None,
                         booleans: vec![],
+                        any_extensions: Default::default(),
                     })),
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
@@ -1098,7 +1111,9 @@ mod write_tests {
                                 pid: OptionalResourceId::none(),
                             }],
                         }],
+                        any_extensions: Default::default(),
                     }],
+                    any_extensions: Default::default(),
                 }],
                 colorgroup: Vec::new(),
                 texture2dgroup: Vec::new(),
@@ -1156,6 +1171,7 @@ mod write_tests {
                             },
                             trianglesets: Some(triangle_set::TriangleSets {
                                 trianglesets: vec![],
+                                any_extensions: Default::default(),
                             }),
                             beamlattice: Some(beamlattice::BeamLattice {
                                 minlength: 0.1,
@@ -1168,9 +1184,13 @@ mod write_tests {
                                 pid: OptionalResourceId::none(),
                                 pindex: OptionalResourceIndex::none(),
                                 cap: None,
-                                beams: beamlattice::Beams { beam: vec![] },
+                                beams: beamlattice::Beams {
+                                    beam: vec![],
+                                    any_extensions: Default::default(),
+                                },
                                 balls: None,
                                 beamsets: None,
+                                any_extensions: Default::default(),
                             }),
                             any_extensions: Default::default(),
                         })),
@@ -1198,6 +1218,7 @@ mod write_tests {
                             transform: None,
                             path: None,
                             booleans: vec![],
+                            any_extensions: Default::default(),
                         })),
                         any_extensions: Default::default(),
                         metadatagroup: Default::default(),
@@ -1259,6 +1280,7 @@ mod write_tests {
                     color: vec![ColorElement {
                         color: Color::from_hex("#FF0000").unwrap(),
                     }],
+                    any_extensions: Default::default(),
                 }],
                 texture2dgroup: vec![Texture2DGroup {
                     id: 2,
@@ -1267,6 +1289,7 @@ mod write_tests {
                         u: 0.0.into(),
                         v: 0.0.into(),
                     }],
+                    any_extensions: Default::default(),
                 }],
                 compositematerials: vec![CompositeMaterials {
                     id: 3,
@@ -1275,6 +1298,7 @@ mod write_tests {
                     composite: vec![Composite {
                         values: vec![Double::new(1.0), Double::new(0.0)],
                     }],
+                    any_extensions: Default::default(),
                 }],
                 multiproperties: vec![MultiProperties {
                     id: 4,
@@ -1283,6 +1307,7 @@ mod write_tests {
                     multi: vec![Multi {
                         pindices: ResourceIndexCollection::from(vec![0, 0]),
                     }],
+                    any_extensions: Default::default(),
                 }],
                 texture2d: vec![Texture2D {
                     id: 5,
@@ -1291,6 +1316,7 @@ mod write_tests {
                     tilestyleu: Some(TileStyle::Wrap),
                     tilestylev: Some(TileStyle::Mirror),
                     filter: Some(Filter::Linear),
+                    any_extensions: Default::default(),
                 }],
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
@@ -1335,6 +1361,7 @@ mod write_tests {
                     tilestyleu: None,
                     tilestylev: None,
                     filter: None,
+                    any_extensions: Default::default(),
                 }],
                 normvectorgroup: vec![],
                 disp2dgroup: vec![],
@@ -1395,6 +1422,7 @@ mod write_tests {
                     color: vec![ColorElement {
                         color: Color::from_hex("#FF0000").unwrap(),
                     }],
+                    any_extensions: Default::default(),
                 }],
                 texture2dgroup: Vec::new(),
                 compositematerials: Vec::new(),
@@ -1406,6 +1434,7 @@ mod write_tests {
                     tilestyleu: None,
                     tilestylev: None,
                     filter: None,
+                    any_extensions: Default::default(),
                 }],
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
@@ -1671,6 +1700,7 @@ mod memory_optimized_read_tests {
                         color: vec![ColorElement {
                             color: Color::from_hex("#FF0000").unwrap()
                         }],
+                        any_extensions: Default::default(),
                     }],
                     texture2dgroup: Vec::new(),
                     compositematerials: Vec::new(),
@@ -1682,6 +1712,7 @@ mod memory_optimized_read_tests {
                         tilestyleu: None,
                         tilestylev: None,
                         filter: None,
+                        any_extensions: Default::default(),
                     }],
                     displacement2d: Vec::new(),
                     normvectorgroup: Vec::new(),

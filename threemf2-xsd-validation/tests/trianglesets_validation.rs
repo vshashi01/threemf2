@@ -101,14 +101,17 @@ fn validate_simple_trianglesets() {
                 identifier: "topsurface".into(),
                 triangle_ref: vec![TriangleRef { index: 0 }, TriangleRef { index: 1 }],
                 triangle_refrange: vec![],
+                any_extensions: Default::default(),
             },
             TriangleSet {
                 name: "Side Surface".into(),
                 identifier: "sidesurface".into(),
                 triangle_ref: vec![TriangleRef { index: 2 }],
                 triangle_refrange: vec![],
+                any_extensions: Default::default(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -231,6 +234,7 @@ fn validate_trianglesets_with_ref_ranges() {
                     startindex: 0,
                     endindex: 7,
                 }],
+                any_extensions: Default::default(),
             },
             TriangleSet {
                 name: "Second Half".into(),
@@ -240,8 +244,10 @@ fn validate_trianglesets_with_ref_ranges() {
                     startindex: 8,
                     endindex: 14,
                 }],
+                any_extensions: Default::default(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {

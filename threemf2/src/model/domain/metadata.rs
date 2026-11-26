@@ -84,6 +84,7 @@ impl<'xml> FromXml<'xml> for Metadata {
                         _ => crate::model::domain::any::read::capture_attribute(
                             any_extensions.attributes_mut(),
                             id,
+                            CORE_NS,
                             attr.prefix,
                             &attr.value,
                         ),
@@ -135,6 +136,7 @@ impl ToXml for Metadata {
         crate::model::domain::any::write::write_foreign_attributes(
             serializer,
             &[],
+            CORE_NS,
             self.any_extensions.attributes(),
             &[],
         )?;

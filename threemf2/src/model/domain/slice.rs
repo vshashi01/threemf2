@@ -41,6 +41,9 @@
 //! </s:slicestack>
 //! ```
 
+use crate::model::domain::any_extensions::{AnyAttributeExtensions, AnyExtensions};
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
 use crate::{
     model::{
         Double, OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIndex,
@@ -101,21 +104,13 @@ impl From<String> for MeshResolution {
 /// - SliceStacks MUST NOT contain both `<slice>` and `<sliceref>` elements concurrently
 /// - The zbottom attribute indicates the starting level relative to the build platform
 /// - SliceStack IDs must be unique within a single model part
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(SLICE_NS), rename = "slicestack", force_prefix)
-)]
 pub struct SliceStack {
     /// Unique identifier for this slice stack within the model part.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Starting level relative to the build platform in model units.
     /// This allows alignment between mesh vertices and slice data.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub zbottom: Option<Double>,
 
     /// Owned slice data entries.
@@ -123,6 +118,30 @@ pub struct SliceStack {
 
     /// References to external slice data.
     pub sliceref: Vec<SliceRef>,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    SliceStack {
+        tag: "slicestack",
+        ns: SLICE_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            zbottom: Option<Double> => ("", "zbottom"),
+        },
+        elements: {
+            slice: Vec<Slice> => (SLICE_NS, "slice"),
+            sliceref: Vec<SliceRef> => (SLICE_NS, "sliceref"),
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 impl SliceStack {
@@ -137,21 +156,35 @@ impl SliceStack {
 ///
 /// This allows slice data to be stored in separate XML files for easier parsing
 /// and better organization of large datasets.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(SLICE_NS), rename = "sliceref", force_prefix)
-)]
 pub struct SliceRef {
     /// Identifies the SliceStack in the referenced file.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub slicestackid: ResourceId,
 
     /// Absolute path to the model file containing the slice data.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub slicepath: PathResource,
+
+    /// Foreign attributes (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    SliceRef {
+        tag: "sliceref",
+        ns: SLICE_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            slicestackid: ResourceId => ("", "slicestackid"),
+            slicepath: PathResource => ("", "slicepath"),
+        },
+        elements: {
+        },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// Individual 2D slice layer representing a horizontal cross-section.
@@ -159,17 +192,10 @@ pub struct SliceRef {
 /// A slice defines the geometry at a specific z-height. It contains vertices
 /// and polygons that describe the 2D contours. A slice can be empty (containing
 /// only ztop) to represent void space.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(SLICE_NS), rename = "slice", force_prefix)
-)]
 pub struct Slice {
     /// Z-position of the top of this slice relative to the build platform.
     /// Must be monotonically increasing throughout the slice stack.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub ztop: Double,
 
     /// 2D vertices for this slice. Required if slice contains geometry.
@@ -177,6 +203,29 @@ pub struct Slice {
 
     /// Polygons defining the contours of this slice.
     pub polygon: Vec<Polygon>,
+
+    /// Foreign attributes and child elements (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Slice {
+        tag: "slice",
+        ns: SLICE_NS,
+        prefixes: [],
+        force_prefix: true,
+        attributes: {
+            ztop: Double => ("", "ztop"),
+        },
+        elements: {
+            vertices: Option<Vertices> => (SLICE_NS, "vertices"),
+            polygon: Vec<Polygon> => (SLICE_NS, "polygon"),
+        },
+        any: any_extensions: AnyExtensions,
+    }
 }
 
 /// Container for 2D vertices within a slice.
@@ -533,6 +582,7 @@ mod write_tests {
                     },
                 ],
             }],
+            any_extensions: Default::default(),
         };
         let slice_string = to_string(&slice).unwrap();
 
@@ -548,6 +598,7 @@ mod write_tests {
         let sliceref = SliceRef {
             slicestackid: 2,
             slicepath: PathResource::try_from("/2D/slices.model").unwrap(),
+            any_extensions: Default::default(),
         };
         let sliceref_string = to_string(&sliceref).unwrap();
 
@@ -587,7 +638,9 @@ mod write_tests {
                         pid: OptionalResourceId::none(),
                     }],
                 }],
+                any_extensions: Default::default(),
             }],
+            any_extensions: Default::default(),
         };
         let slicestack_string = to_string(&slicestack).unwrap();
 
@@ -608,12 +661,15 @@ mod write_tests {
                 SliceRef {
                     slicestackid: 2,
                     slicepath: PathResource::try_from("/2D/slices1.model").unwrap(),
+                    any_extensions: Default::default(),
                 },
                 SliceRef {
                     slicestackid: 3,
                     slicepath: PathResource::try_from("/2D/slices2.model").unwrap(),
+                    any_extensions: Default::default(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let slicestack_string = to_string(&slicestack).unwrap();
 
@@ -701,6 +757,7 @@ mod memory_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                     }],
                 }],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -718,6 +775,7 @@ mod memory_optimized_read_tests {
             SliceRef {
                 slicestackid: 2,
                 slicepath: PathResource::try_from("/2D/slices.model").unwrap(),
+                any_extensions: Default::default(),
             }
         );
     }

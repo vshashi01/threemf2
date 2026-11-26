@@ -83,7 +83,12 @@ macro_rules! xml_struct {
                             #[allow(unused_variables)]
                             let id = deserializer.attribute_id(&attr)?;
                             $(
-                                if id == (::instant_xml::Id { ns: $ans, name: $aname }) {
+                                // An unprefixed attribute also matches a field declared in the
+                                // element's own namespace, as the derive allows; it is written
+                                // unprefixed too.
+                                if id.name == $aname
+                                    && (id.ns == $ans || (id.ns.is_empty() && $ans == $ns))
+                                {
                                     $crate::model::domain::xml_helpers::read_attribute::<$aty>(
                                         &mut $afield,
                                         stringify!($afield),
@@ -94,14 +99,19 @@ macro_rules! xml_struct {
                                 }
                             )*
                             #[cfg(feature = "any")]
-                            $crate::model::domain::any::read::capture_attribute(
+                            if let Some(attributes) =
                                 $crate::model::domain::any_extensions::AnySlot::slot_attributes_mut(
                                     &mut $any,
-                                ),
-                                id,
-                                attr.prefix,
-                                &attr.value,
-                            );
+                                )
+                            {
+                                $crate::model::domain::any::read::capture_attribute(
+                                    attributes,
+                                    id,
+                                    $ns,
+                                    attr.prefix,
+                                    &attr.value,
+                                );
+                            }
                         }
                         Node::Open(element) => {
                             #[allow(unused_variables)]
@@ -123,7 +133,7 @@ macro_rules! xml_struct {
                             let mut nested = deserializer.nested(element);
 
                             #[cfg(feature = "any")]
-                            if $crate::model::domain::any::is_foreign_namespace(id.ns) {
+                            if $crate::model::domain::any::is_foreign_for(id.ns, $ns) {
                                 let element =
                                     $crate::model::domain::any::read::read_element(&mut nested, id)?;
                                 $(
@@ -199,6 +209,7 @@ macro_rules! xml_struct {
                 let scope = $crate::model::domain::any::write::write_foreign_attributes(
                     serializer,
                     &declared,
+                    $ns,
                     $crate::model::domain::any_extensions::AnySlot::slot_attributes(&self.$any),
                     foreign_elements,
                 )?;

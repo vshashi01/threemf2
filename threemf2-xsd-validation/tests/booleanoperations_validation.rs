@@ -444,7 +444,9 @@ fn validate_simple_boolean_difference() {
             objectid: 2u32,
             transform: None,
             path: None,
+            any_extensions: Default::default(),
         }],
+        any_extensions: Default::default(),
     };
 
     let write_package = build_package(Model {
@@ -558,7 +560,9 @@ fn validate_simple_boolean_intersection() {
             objectid: 2u32,
             transform: None,
             path: None,
+            any_extensions: Default::default(),
         }],
+        any_extensions: Default::default(),
     };
 
     let write_package = build_package(Model {
@@ -673,6 +677,7 @@ fn validate_boolean_with_multiple_operands() {
                     0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1, 79.0, 206.0, 43.0,
                 ])),
                 path: None,
+                any_extensions: Default::default(),
             },
             Boolean {
                 objectid: 2u32,
@@ -680,6 +685,7 @@ fn validate_boolean_with_multiple_operands() {
                     0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1, 79.0, 129.0, 0.0,
                 ])),
                 path: None,
+                any_extensions: Default::default(),
             },
             Boolean {
                 objectid: 2u32,
@@ -687,8 +693,10 @@ fn validate_boolean_with_multiple_operands() {
                     0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1, 42.0, 129.0, 82.0,
                 ])),
                 path: None,
+                any_extensions: Default::default(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let write_package = build_package(Model {
@@ -805,7 +813,9 @@ fn validate_nested_boolean_shapes() {
                 0.87, 0.0, 0.0, 0.0, 0.87, 0.0, 0.0, 0.0, 0.87, -86.0, -2.0, -36.0,
             ])),
             path: None,
+            any_extensions: Default::default(),
         }],
+        any_extensions: Default::default(),
     };
 
     // Create second boolean shape using first as base: Intersected - Cylinder
@@ -818,7 +828,9 @@ fn validate_nested_boolean_shapes() {
             objectid: 4u32,
             transform: None,
             path: None,
+            any_extensions: Default::default(),
         }],
+        any_extensions: Default::default(),
     };
 
     let write_package = build_package(Model {
@@ -963,7 +975,9 @@ fn validate_boolean_with_production_extension() {
             objectid: 2u32,
             transform: None,
             path: None,
+            any_extensions: Default::default(),
         }],
+        any_extensions: Default::default(),
     };
 
     let write_package = build_package(Model {

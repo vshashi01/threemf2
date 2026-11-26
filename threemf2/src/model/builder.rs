@@ -83,7 +83,9 @@ use crate::model::{
 
 use crate::model::domain::any_extensions::AnyError;
 #[cfg(feature = "any")]
-use crate::model::domain::any_extensions::{AnyExtensions, any_extensions_builder_methods};
+use crate::model::domain::any_extensions::{
+    AnyAttributeExtensions, AnyExtensions, any_extensions_builder_methods,
+};
 
 use std::ops::{Deref, DerefMut};
 
@@ -1714,6 +1716,8 @@ impl DisplacementMeshObjectBuilder {
 /// Vertices are referenced by their 0-based index in the order they were added.
 /// Triangles reference vertices by index.
 pub struct MeshBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     vertices: Vec<mesh::Vertex>,
     triangles: Vec<mesh::Triangle>,
     triangle_sets: Option<TriangleSetsBuilder>,
@@ -1723,6 +1727,8 @@ pub struct MeshBuilder {
 impl MeshBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             vertices: Vec::new(),
             triangles: Vec::new(),
             triangle_sets: None,
@@ -1913,8 +1919,19 @@ impl MeshBuilder {
             },
             trianglesets,
             beamlattice,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<mesh>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn mesh_any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -1981,6 +1998,8 @@ impl TriangleBuilder {
 
 /// Builder for constructing displacement mesh geometry.
 pub struct DisplacementMeshBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     vertices: Vec<displacement::Vertex>,
     triangles: Vec<displacement::Triangle>,
     triangle_sets: Option<TriangleSetsBuilder>,
@@ -1991,6 +2010,8 @@ pub struct DisplacementMeshBuilder {
 impl DisplacementMeshBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             vertices: Vec::new(),
             triangles: Vec::new(),
             triangle_sets: None,
@@ -2161,14 +2182,28 @@ impl DisplacementMeshBuilder {
         displacement::DisplacementMesh {
             vertices: crate::model::domain::displacement::Vertices {
                 vertex: self.vertices,
+                any_extensions: Default::default(),
             },
             triangles: crate::model::domain::displacement::Triangles {
                 did: self.triangles_did,
                 triangle: self.triangles,
+                any_extensions: Default::default(),
             },
             trianglesets,
             beamlattice,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<d:displacementmesh>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn mesh_any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -2709,6 +2744,8 @@ impl BooleanObjectBuilder {
 /// `BooleanShapeBuilder` manages the base object reference, boolean operation type,
 /// and the list of operand objects for CSG operations.
 pub struct BooleanShapeBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     base_object_id: Option<ObjectId>,
     operation: boolean::BooleanOperation,
     base_transform: Option<Transform>,
@@ -2719,6 +2756,8 @@ pub struct BooleanShapeBuilder {
 impl BooleanShapeBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             base_object_id: None,
             operation: boolean::BooleanOperation::Union,
             base_transform: None,
@@ -2832,7 +2871,19 @@ impl BooleanShapeBuilder {
             transform: self.base_transform,
             path: self.base_path,
             booleans: self.booleans,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<bo:booleanshape>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn shape_any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -2840,6 +2891,8 @@ impl BooleanShapeBuilder {
 ///
 /// `BooleanBuilder` allows you to set transforms and paths for boolean operands.
 pub struct BooleanBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     objectid: ObjectId,
     transform: Option<Transform>,
     path: Option<PathResource>,
@@ -2848,6 +2901,8 @@ pub struct BooleanBuilder {
 impl BooleanBuilder {
     fn new(objectid: ObjectId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             objectid,
             transform: None,
             path: None,
@@ -2885,7 +2940,19 @@ impl BooleanBuilder {
             objectid: self.objectid.0,
             transform: self.transform,
             path: self.path,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<bo:boolean>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -2897,12 +2964,18 @@ impl BooleanBuilder {
 ///
 /// Triangle sets are added as a recommended extension (not required).
 pub struct TriangleSetsBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     sets: Vec<triangle_set::TriangleSet>,
 }
 
 impl TriangleSetsBuilder {
     fn new() -> Self {
-        Self { sets: Vec::new() }
+        Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
+            sets: Vec::new(),
+        }
     }
 
     /// Add a triangle set with a name, identifier, and triangle references.
@@ -2939,6 +3012,7 @@ impl TriangleSetsBuilder {
             identifier: identifier.into(),
             triangle_ref,
             triangle_refrange,
+            any_extensions: Default::default(),
         });
         self
     }
@@ -2946,7 +3020,19 @@ impl TriangleSetsBuilder {
     fn build(self) -> crate::model::domain::triangle_set::TriangleSets {
         crate::model::domain::triangle_set::TriangleSets {
             trianglesets: self.sets,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<t:trianglesets>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -2964,6 +3050,8 @@ impl TriangleSetsBuilder {
 ///
 /// The Beam Lattice extension namespace is automatically added when beams are present.
 pub struct BeamLatticeBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     minlength: Option<f64>,
     radius: Option<f64>,
     ballmode: Option<beamlattice::BallMode>,
@@ -2982,6 +3070,8 @@ pub struct BeamLatticeBuilder {
 impl BeamLatticeBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             minlength: None,
             radius: None,
             ballmode: None,
@@ -3178,12 +3268,18 @@ impl BeamLatticeBuilder {
     }
 
     fn build(self) -> beamlattice::BeamLattice {
-        let beams = beamlattice::Beams { beam: self.beams };
+        let beams = beamlattice::Beams {
+            beam: self.beams,
+            any_extensions: Default::default(),
+        };
 
         let balls = if self.balls.is_empty() {
             None
         } else {
-            Some(beamlattice::Balls { ball: self.balls })
+            Some(beamlattice::Balls {
+                ball: self.balls,
+                any_extensions: Default::default(),
+            })
         };
 
         let beamsets = if self.beamsets.is_empty() {
@@ -3191,6 +3287,7 @@ impl BeamLatticeBuilder {
         } else {
             Some(beamlattice::BeamSets {
                 beamset: self.beamsets,
+                any_extensions: Default::default(),
             })
         };
 
@@ -3208,7 +3305,19 @@ impl BeamLatticeBuilder {
             beams,
             balls,
             beamsets,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<b:beamlattice>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -3347,6 +3456,8 @@ impl BallBuilder {
 
 /// Builder for beam sets in a beam lattice
 pub struct BeamSetBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     name: Option<String>,
     identifier: Option<String>,
     beam_refs: Vec<ResourceIndex>,
@@ -3356,6 +3467,8 @@ pub struct BeamSetBuilder {
 impl BeamSetBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             name: None,
             identifier: None,
             beam_refs: Vec::new(),
@@ -3413,12 +3526,26 @@ impl BeamSetBuilder {
                 .into_iter()
                 .map(|index| beamlattice::BallRef { index })
                 .collect(),
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<b:beamset>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 
 /// Builder for a color group resource.
 pub struct ColorGroupBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     colors: Vec<material::ColorElement>,
 }
@@ -3426,6 +3553,8 @@ pub struct ColorGroupBuilder {
 impl ColorGroupBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             colors: Vec::new(),
         }
@@ -3449,12 +3578,26 @@ impl ColorGroupBuilder {
         material::ColorGroup {
             id: self.id,
             color: self.colors,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<m:colorgroup>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
 /// Builder for a texture2d resource.
 pub struct Texture2DBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     path: Option<PathResource>,
     contenttype: Option<material::TextureContentType>,
@@ -3466,6 +3609,8 @@ pub struct Texture2DBuilder {
 impl Texture2DBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             path: None,
             contenttype: None,
@@ -3517,12 +3662,26 @@ impl Texture2DBuilder {
             tilestyleu: self.tilestyleu,
             tilestylev: self.tilestylev,
             filter: self.filter,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<m:texture2d>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
 /// Builder for a texture2d group resource.
 pub struct Texture2DGroupBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     texid: Option<ResourceId>,
     tex2coord: Vec<material::Tex2Coord>,
@@ -3531,6 +3690,8 @@ pub struct Texture2DGroupBuilder {
 impl Texture2DGroupBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             texid: None,
             tex2coord: Vec::new(),
@@ -3565,12 +3726,26 @@ impl Texture2DGroupBuilder {
             id: self.id,
             texid: self.texid.ok_or(Texture2DGroupError::TexIdNotSet)?,
             tex2coord: self.tex2coord,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<m:texture2dgroup>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
 /// Builder for composite materials.
 pub struct CompositeMaterialsBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     matid: Option<ResourceId>,
     matindices: Vec<ResourceIndex>,
@@ -3580,6 +3755,8 @@ pub struct CompositeMaterialsBuilder {
 impl CompositeMaterialsBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             matid: None,
             matindices: Vec::new(),
@@ -3630,12 +3807,26 @@ impl CompositeMaterialsBuilder {
             matid: self.matid.ok_or(CompositeMaterialsError::MatIdNotSet)?,
             matindices: ResourceIndexCollection::from(self.matindices),
             composite: self.composite,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<m:compositematerials>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
 /// Builder for multi-properties.
 pub struct MultiPropertiesBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     pids: Vec<ResourceId>,
     blendmethods: Option<StrResource>,
@@ -3645,6 +3836,8 @@ pub struct MultiPropertiesBuilder {
 impl MultiPropertiesBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             pids: Vec::new(),
             blendmethods: None,
@@ -3701,7 +3894,19 @@ impl MultiPropertiesBuilder {
             pids: ResourceIdCollection::from(self.pids),
             blendmethods: self.blendmethods,
             multi: self.multi,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<m:multiproperties>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -3750,6 +3955,8 @@ impl BaseMaterialsBuilder {
 
 /// Builder for displacement2d resources.
 pub struct Displacement2DBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     path: Option<PathResource>,
     channel: Option<displacement::ChannelName>,
@@ -3761,6 +3968,8 @@ pub struct Displacement2DBuilder {
 impl Displacement2DBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             path: None,
             channel: None,
@@ -3812,12 +4021,26 @@ impl Displacement2DBuilder {
             tilestyleu: self.tilestyleu,
             tilestylev: self.tilestylev,
             filter: self.filter,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<d:displacement2d>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
 /// Builder for norm vector groups.
 pub struct NormVectorGroupBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     id: ResourceId,
     vectors: Vec<displacement::NormVector>,
 }
@@ -3825,6 +4048,8 @@ pub struct NormVectorGroupBuilder {
 impl NormVectorGroupBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             vectors: Vec::new(),
         }
@@ -3852,12 +4077,26 @@ impl NormVectorGroupBuilder {
         displacement::NormVectorGroup {
             id: self.id,
             normvector: self.vectors,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<d:normvectorgroup>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 
 /// Builder for displacement 2d groups.
 pub struct Disp2DGroupBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     id: ResourceId,
     dispid: Option<ResourceId>,
     nid: Option<ResourceId>,
@@ -3869,6 +4108,8 @@ pub struct Disp2DGroupBuilder {
 impl Disp2DGroupBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             dispid: None,
             nid: None,
@@ -3929,7 +4170,19 @@ impl Disp2DGroupBuilder {
             height: self.height.ok_or(Disp2DGroupError::HeightNotSet)?.into(),
             offset: self.offset.map(Into::into),
             disp2dcoord: self.coords,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
+    }
+
+    /// Direct access to the foreign content of `<d:disp2dgroup>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -3993,6 +4246,8 @@ pub enum SliceStackBuilderError {
 /// }).unwrap();
 /// ```
 pub struct SliceStackBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyAttributeExtensions,
     id: SliceStackId,
     zbottom: Option<f64>,
     slices: Vec<slice::Slice>,
@@ -4002,6 +4257,8 @@ pub struct SliceStackBuilder {
 impl SliceStackBuilder {
     fn new(id: SliceStackId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             id,
             zbottom: None,
             slices: Vec::new(),
@@ -4056,6 +4313,7 @@ impl SliceStackBuilder {
         self.slicerefs.push(slice::SliceRef {
             slicestackid,
             slicepath: PathResource::try_from(slicepath)?,
+            any_extensions: Default::default(),
         });
         Ok(self)
     }
@@ -4069,8 +4327,20 @@ impl SliceStackBuilder {
                 zbottom: self.zbottom.map(|zbot| zbot.into()),
                 slice: self.slices,
                 sliceref: self.slicerefs,
+                #[cfg(feature = "any")]
+                any_extensions: self.any_extensions,
+                #[cfg(not(feature = "any"))]
+                any_extensions: Default::default(),
             })
         }
+    }
+
+    /// Direct access to the foreign content of `<s:slicestack>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
+        &mut self.any_extensions
     }
 }
 
@@ -4078,6 +4348,8 @@ impl SliceStackBuilder {
 ///
 /// Each slice represents a horizontal cross-section at a specific z-height.
 pub struct SliceBuilder {
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
     ztop: Option<f64>,
     vertices: Vec<slice::Vertex>,
     polygons: Vec<slice::Polygon>,
@@ -4086,6 +4358,8 @@ pub struct SliceBuilder {
 impl SliceBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            any_extensions: Default::default(),
             ztop: None,
             vertices: Vec::new(),
             polygons: Vec::new(),
@@ -4161,7 +4435,19 @@ impl SliceBuilder {
             ztop: self.ztop.unwrap_or(0.0).into(),
             vertices,
             polygon: self.polygons,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
+    }
+
+    /// Direct access to the foreign content of `<s:slice>`.
+    ///
+    /// Content added here is checked when the model is written. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
+        &mut self.any_extensions
     }
 }
 

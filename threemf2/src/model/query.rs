@@ -931,6 +931,8 @@ any_extensions_view_methods!(ItemView);
 pub struct SliceRefView<'a> {
     slicestack_id: u32,
     slicepath: &'a str,
+    #[cfg(feature = "any")]
+    any_extensions: &'a crate::model::domain::any_extensions::AnyAttributeExtensions,
 }
 
 impl<'a> SliceRefView<'a> {
@@ -1060,6 +1062,8 @@ impl<'a> SliceStackView<'a> {
         self.stack.sliceref.iter().map(|r| SliceRefView {
             slicestack_id: r.slicestackid,
             slicepath: r.slicepath.as_str(),
+            #[cfg(feature = "any")]
+            any_extensions: &r.any_extensions,
         })
     }
 
@@ -1723,12 +1727,18 @@ pub fn get_texture_for_group<'a>(
 #[cfg(feature = "any")]
 mod any_views {
     use super::{
-        BooleanShapeView, ComponentView, ComponentsObjectView, DisplacementMeshObjectView,
-        MeshObjectView, ModelView, ObjectView,
+        BeamSetView, BooleanShapeView, ColorGroupView, ComponentView, ComponentsObjectView,
+        CompositeMaterialsView, Disp2DGroupView, Displacement2DView, DisplacementMeshObjectView,
+        LatticeView, MeshObjectView, ModelView, MultiPropertiesView, NormVectorGroupView,
+        ObjectView, SliceRefView, SliceStackView, SliceView, Texture2DGroupView, Texture2DView,
+        TriangleSetView,
     };
     use crate::model::domain::{
         any::AnyElement,
-        any_extensions::{AnyAttributeExtensions, AnyExtensions, any_extensions_view_methods},
+        any_extensions::{
+            AnyAttributeExtensions, AnyElementExtensions, AnyExtensions,
+            any_extensions_view_methods,
+        },
         object::ObjectKind,
     };
 
@@ -1822,6 +1832,169 @@ mod any_views {
     any_extensions_view_methods!(ComponentsObjectView);
     any_extensions_view_methods!(BooleanShapeView);
     any_extensions_view_methods!(ComponentView);
+
+    impl<'a> TriangleSetView<'a> {
+        /// Foreign attributes and child elements of the triangle set (`<t:triangleset>`).
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.set.any_extensions
+        }
+    }
+
+    any_extensions_view_methods!(TriangleSetView);
+
+    impl<'a> LatticeView<'a> {
+        /// Foreign attributes and child elements of the beam lattice (`<b:beamlattice>`).
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.lattice.any_extensions
+        }
+
+        /// Foreign child elements of `<b:beams>`. Requires the `any` feature.
+        pub fn beams_any_extensions(&self) -> &'a AnyElementExtensions {
+            &self.lattice.beams.any_extensions
+        }
+
+        /// Foreign child elements of `<b2:balls>`, if present. Requires the `any` feature.
+        pub fn balls_any_extensions(&self) -> Option<&'a AnyElementExtensions> {
+            self.lattice
+                .balls
+                .as_ref()
+                .map(|balls| &balls.any_extensions)
+        }
+
+        /// Foreign child elements of `<b:beamsets>`, if present. Requires the `any` feature.
+        pub fn beamsets_any_extensions(&self) -> Option<&'a AnyElementExtensions> {
+            self.lattice
+                .beamsets
+                .as_ref()
+                .map(|sets| &sets.any_extensions)
+        }
+    }
+
+    any_extensions_view_methods!(LatticeView);
+
+    impl<'a> BeamSetView<'a> {
+        /// Foreign attributes and child elements of the beam set (`<b:beamset>`).
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.set.any_extensions
+        }
+    }
+
+    any_extensions_view_methods!(BeamSetView);
+
+    impl<'a> SliceView<'a> {
+        /// Foreign attributes and child elements of the slice (`<s:slice>`).
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.slice.any_extensions
+        }
+    }
+
+    any_extensions_view_methods!(SliceView);
+
+    impl<'a> NormVectorGroupView<'a> {
+        /// Foreign attributes and child elements of the normal vector group (`<d:normvectorgroup>`).
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.group.any_extensions
+        }
+    }
+
+    any_extensions_view_methods!(NormVectorGroupView);
+
+    impl<'a> Disp2DGroupView<'a> {
+        /// Foreign attributes and child elements of the displacement coordinate group (`<d:disp2dgroup>`).
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.group.any_extensions
+        }
+    }
+
+    any_extensions_view_methods!(Disp2DGroupView);
+
+    impl<'a> SliceStackView<'a> {
+        /// Foreign attributes of the slice stack (`<s:slicestack>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.stack.any_extensions
+        }
+    }
+
+    impl<'a> SliceRefView<'a> {
+        /// Foreign attributes of the slice reference (`<s:sliceref>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            self.any_extensions
+        }
+    }
+
+    impl<'a> ColorGroupView<'a> {
+        /// Foreign attributes of the color group (`<m:colorgroup>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.group.any_extensions
+        }
+    }
+
+    impl<'a> Texture2DGroupView<'a> {
+        /// Foreign attributes of the texture coordinate group (`<m:texture2dgroup>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.group.any_extensions
+        }
+    }
+
+    impl<'a> CompositeMaterialsView<'a> {
+        /// Foreign attributes of the composite materials (`<m:compositematerials>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.materials.any_extensions
+        }
+    }
+
+    impl<'a> MultiPropertiesView<'a> {
+        /// Foreign attributes of the multi properties (`<m:multiproperties>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.props.any_extensions
+        }
+    }
+
+    impl<'a> Texture2DView<'a> {
+        /// Foreign attributes of the texture (`<m:texture2d>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.texture.any_extensions
+        }
+    }
+
+    impl<'a> Displacement2DView<'a> {
+        /// Foreign attributes of the displacement texture (`<d:displacement2d>`). Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.displacement.any_extensions
+        }
+    }
+
+    impl<'a> BooleanShapeView<'a> {
+        /// Foreign attributes and child elements of `<bo:booleanshape>`.
+        /// Requires the `any` feature.
+        pub fn shape_any_extensions(&self) -> &'a AnyExtensions {
+            &self.shape.any_extensions
+        }
+    }
+
+    impl<'a> DisplacementMeshObjectView<'a> {
+        /// Foreign attributes and child elements of `<d:displacementmesh>`.
+        /// Requires the `any` feature.
+        pub fn mesh_any_extensions(&self) -> &'a AnyExtensions {
+            &self.mesh.any_extensions
+        }
+    }
+
+    impl<'a> MeshObjectView<'a> {
+        /// Foreign attributes of `<t:trianglesets>`, if present. Requires the `any` feature.
+        pub fn triangle_sets_any_extensions(&self) -> Option<&'a AnyAttributeExtensions> {
+            self.mesh
+                .trianglesets
+                .as_ref()
+                .map(|sets| &sets.any_extensions)
+        }
+    }
 }
 
 fn group_metadata<'a>(
