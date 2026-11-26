@@ -167,6 +167,162 @@ macro_rules! xml_item {
 
 pub(crate) use xml_item;
 
+/// Implements `FromXml` and [`XmlItem`] for a numerous list entry (such as `<vertex>`) with a
+/// lenient fast reader: values are parsed with `lexical_core`, and a missing or unparsable value
+/// falls back to its default instead of failing the entry, so list indices never shift. Its
+/// `ToXml` stays derived; `write_open` writes the same start tag and attributes.
+///
+/// Each attribute is `field: Type = kind`, where `kind` is one of:
+/// - `number`: a [`Double`](crate::model::Double), `0` if missing or invalid.
+/// - `index`: a plain integer, `0` if missing or invalid.
+/// - `optional`: an `OptionalResourceIndex` / `OptionalResourceId`, `none()` if missing or
+///   invalid.
+/// - `bytes`: a type built with `From<&[u8]>` from the raw value, `none()` if missing.
+///
+/// ```ignore
+/// fast_item! {
+///     Vertex {
+///         tag: "vertex",
+///         ns: CORE_NS,
+///         force_prefix: false,
+///         attributes: { x: Double = number, y: Double = number, z: Double = number },
+///     }
+/// }
+/// ```
+macro_rules! fast_item {
+    (@init number $ty:ty) => { 0.0_f64 };
+    (@init index $ty:ty) => { <$ty as ::std::default::Default>::default() };
+    (@init optional $ty:ty) => { <$ty>::none() };
+    (@init bytes $ty:ty) => { <$ty>::none() };
+
+    (@assign number $ty:ty, $var:ident, $value:expr) => {
+        $var = ::lexical_core::parse($value).unwrap_or_default()
+    };
+    (@assign index $ty:ty, $var:ident, $value:expr) => {
+        $var = ::lexical_core::parse($value).unwrap_or_default()
+    };
+    (@assign optional $ty:ty, $var:ident, $value:expr) => {
+        if let Ok(value) = ::lexical_core::parse($value) {
+            $var = <$ty>::new(value);
+        }
+    };
+    (@assign bytes $ty:ty, $var:ident, $value:expr) => {
+        $var = $value.into()
+    };
+
+    (@done number $var:ident) => { $crate::model::Double::new($var) };
+    (@done $kind:ident $var:ident) => { $var };
+
+    (
+        $ty:ident {
+            tag: $tag:literal,
+            ns: $ns:expr,
+            force_prefix: $force:literal,
+            attributes: { $($afield:ident: $aty:ty = $kind:ident),* $(,)? },
+        }
+    ) => {
+        #[cfg(feature = "read")]
+        impl<'xml> ::instant_xml::FromXml<'xml> for $ty {
+            #[inline]
+            fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+                id == ::instant_xml::Id { ns: $ns, name: $tag }
+            }
+
+            fn deserialize<'cx>(
+                into: &mut Self::Accumulator,
+                _: &'static str,
+                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+            ) -> ::std::result::Result<(), ::instant_xml::Error> {
+                *into = Some(<Self as $crate::model::domain::xml_item::XmlItem>::read_item(
+                    deserializer,
+                    &mut $crate::model::domain::any_extensions::ItemCapture::default(),
+                )?);
+                Ok(())
+            }
+
+            type Accumulator = Option<Self>;
+            const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+        }
+
+        impl $crate::model::domain::xml_item::XmlItem for $ty {
+            const TAG: &'static str = $tag;
+            const NS: &'static str = $ns;
+
+            #[cfg(feature = "read")]
+            fn read_item(
+                deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
+                capture: &mut $crate::model::domain::any_extensions::ItemCapture,
+            ) -> ::std::result::Result<Self, ::instant_xml::Error> {
+                use ::instant_xml::de::Node;
+
+                $(let mut $afield = $crate::model::domain::xml_item::fast_item!(@init $kind $aty);)*
+
+                while let Some(node) = deserializer.next() {
+                    match node? {
+                        Node::Attribute(attr) => {
+                            let id = deserializer.attribute_id(&attr)?;
+                            // Schema attributes are unqualified; prefixed ones belong to other
+                            // namespaces.
+                            if !id.ns.is_empty() {
+                                capture.attribute(id, $ns, attr.prefix, &attr.value);
+                                continue;
+                            }
+
+                            match id.name {
+                                $(
+                                    stringify!($afield) => {
+                                        $crate::model::domain::xml_item::fast_item!(
+                                            @assign $kind $aty, $afield, attr.value.as_bytes()
+                                        );
+                                    }
+                                )*
+                                _ => {}
+                            }
+                        }
+                        Node::Open(data) => {
+                            let mut nested = deserializer.nested(data);
+                            nested.ignore()?;
+                        }
+                        Node::Text(_) => {}
+                        _ => {
+                            return Err(::instant_xml::Error::UnexpectedNode(
+                                "Unexpected".to_owned(),
+                            ));
+                        }
+                    }
+                }
+
+                Ok(Self {
+                    $($afield: $crate::model::domain::xml_item::fast_item!(@done $kind $afield),)*
+                })
+            }
+
+            #[cfg(feature = "write")]
+            fn write_open<W: ::std::fmt::Write + ?Sized>(
+                &self,
+                serializer: &mut ::instant_xml::Serializer<'_, W>,
+            ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error>
+            {
+                #[allow(unused_imports)]
+                use ::instant_xml::ToXml;
+
+                let mut context = ::instant_xml::ser::Context::<0>::default();
+                context.default_ns = $ns;
+                context.force_prefix = $force;
+                let element = serializer.write_start($tag, $ns, Some(context))?;
+                $(
+                    if ToXml::present(&self.$afield) {
+                        serializer.write_attr(stringify!($afield), "", &self.$afield)?;
+                    }
+                )*
+                Ok(element)
+            }
+        }
+    };
+}
+
+pub(crate) use fast_item;
+
 /// Reads one entry and appends it to `items`, recording its foreign content in `table`.
 #[cfg(feature = "read")]
 #[inline]

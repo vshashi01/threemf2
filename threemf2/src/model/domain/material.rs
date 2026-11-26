@@ -259,98 +259,16 @@ pub struct Tex2Coord {
     pub v: Double,
 }
 
-#[cfg(feature = "read")]
-impl<'xml> FromXml<'xml> for Tex2Coord {
-    #[inline]
-    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
-        id == ::instant_xml::Id {
-            ns: MATERIAL_NS,
-            name: "tex2coord",
-        }
-    }
-    fn deserialize<'cx>(
-        into: &mut Self::Accumulator,
-        _: &'static str,
-        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
-        *into = Some(
-            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
-                deserializer,
-                &mut crate::model::domain::any_extensions::ItemCapture::default(),
-            )?,
-        );
-        Ok(())
-    }
-
-    type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
-}
-
 #[cfg(any(feature = "read", feature = "write"))]
-impl crate::model::domain::xml_item::XmlItem for Tex2Coord {
-    const TAG: &'static str = "tex2coord";
-    const NS: &'static str = MATERIAL_NS;
-
-    #[cfg(feature = "read")]
-    fn read_item(
-        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
-        capture: &mut crate::model::domain::any_extensions::ItemCapture,
-    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
-        use ::instant_xml::Error;
-        use ::instant_xml::de::Node;
-        let mut u: f64 = 0.0;
-        let mut v: f64 = 0.0;
-
-        while let Some(node) = deserializer.next() {
-            let node = node?;
-            match node {
-                Node::Attribute(attr) => {
-                    let id = deserializer.attribute_id(&attr)?;
-                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
-                    if !id.ns.is_empty() {
-                        capture.attribute(id, MATERIAL_NS, attr.prefix, &attr.value);
-                        continue;
-                    }
-
-                    match id.name {
-                        "u" => u = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        "v" => v = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        _ => {}
-                    };
-                }
-                Node::Open(data) => {
-                    let mut nested = deserializer.nested(data);
-                    nested.ignore()?;
-                }
-                Node::Text(_) => {}
-                _ => {
-                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
-                }
-            }
-        }
-
-        Ok(Self {
-            u: Double::new(u),
-            v: Double::new(v),
-        })
-    }
-
-    #[cfg(feature = "write")]
-    fn write_open<W: std::fmt::Write + ?Sized>(
-        &self,
-        serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
-        let mut context = ::instant_xml::ser::Context::<0>::default();
-        context.default_ns = MATERIAL_NS;
-        context.force_prefix = true;
-        let element = serializer.write_start(Self::TAG, MATERIAL_NS, Some(context))?;
-        if ToXml::present(&self.u) {
-            serializer.write_attr("u", "", &self.u)?;
-        }
-        if ToXml::present(&self.v) {
-            serializer.write_attr("v", "", &self.v)?;
-        }
-        Ok(element)
+crate::model::domain::xml_item::fast_item! {
+    Tex2Coord {
+        tag: "tex2coord",
+        ns: MATERIAL_NS,
+        force_prefix: true,
+        attributes: {
+            u: Double = number,
+            v: Double = number,
+        },
     }
 }
 

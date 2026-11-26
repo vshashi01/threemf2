@@ -364,98 +364,16 @@ pub struct Vertex {
     pub y: Double,
 }
 
-#[cfg(feature = "read")]
-impl<'xml> FromXml<'xml> for Vertex {
-    #[inline]
-    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
-        id == ::instant_xml::Id {
-            ns: SLICE_NS,
-            name: "vertex",
-        }
-    }
-    fn deserialize<'cx>(
-        into: &mut Self::Accumulator,
-        _: &'static str,
-        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
-        *into = Some(
-            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
-                deserializer,
-                &mut crate::model::domain::any_extensions::ItemCapture::default(),
-            )?,
-        );
-        Ok(())
-    }
-
-    type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
-}
-
 #[cfg(any(feature = "read", feature = "write"))]
-impl crate::model::domain::xml_item::XmlItem for Vertex {
-    const TAG: &'static str = "vertex";
-    const NS: &'static str = SLICE_NS;
-
-    #[cfg(feature = "read")]
-    fn read_item(
-        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
-        capture: &mut crate::model::domain::any_extensions::ItemCapture,
-    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
-        use ::instant_xml::Error;
-        use ::instant_xml::de::Node;
-        let mut x: f64 = 0.0;
-        let mut y: f64 = 0.0;
-
-        while let Some(node) = deserializer.next() {
-            let node = node?;
-            match node {
-                Node::Attribute(attr) => {
-                    let id = deserializer.attribute_id(&attr)?;
-                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
-                    if !id.ns.is_empty() {
-                        capture.attribute(id, SLICE_NS, attr.prefix, &attr.value);
-                        continue;
-                    }
-
-                    match id.name {
-                        "x" => x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        "y" => y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        _ => {}
-                    };
-                }
-                Node::Open(data) => {
-                    let mut nested = deserializer.nested(data);
-                    nested.ignore()?;
-                }
-                Node::Text(_) => {}
-                _ => {
-                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
-                }
-            }
-        }
-
-        Ok(Self {
-            x: Double::new(x),
-            y: Double::new(y),
-        })
-    }
-
-    #[cfg(feature = "write")]
-    fn write_open<W: std::fmt::Write + ?Sized>(
-        &self,
-        serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
-        let mut context = ::instant_xml::ser::Context::<0>::default();
-        context.default_ns = SLICE_NS;
-        context.force_prefix = true;
-        let element = serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
-        if ToXml::present(&self.x) {
-            serializer.write_attr("x", "", &self.x)?;
-        }
-        if ToXml::present(&self.y) {
-            serializer.write_attr("y", "", &self.y)?;
-        }
-        Ok(element)
+crate::model::domain::xml_item::fast_item! {
+    Vertex {
+        tag: "vertex",
+        ns: SLICE_NS,
+        force_prefix: true,
+        attributes: {
+            x: Double = number,
+            y: Double = number,
+        },
     }
 }
 
@@ -604,117 +522,18 @@ pub struct Segment {
     pub pid: OptionalResourceId,
 }
 
-#[cfg(feature = "read")]
-impl<'xml> FromXml<'xml> for Segment {
-    #[inline]
-    fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
-        id == ::instant_xml::Id {
-            ns: SLICE_NS,
-            name: "segment",
-        }
-    }
-    fn deserialize<'cx>(
-        into: &mut Self::Accumulator,
-        _: &'static str,
-        deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
-        *into = Some(
-            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
-                deserializer,
-                &mut crate::model::domain::any_extensions::ItemCapture::default(),
-            )?,
-        );
-        Ok(())
-    }
-
-    type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
-}
-
 #[cfg(any(feature = "read", feature = "write"))]
-impl crate::model::domain::xml_item::XmlItem for Segment {
-    const TAG: &'static str = "segment";
-    const NS: &'static str = SLICE_NS;
-
-    #[cfg(feature = "read")]
-    fn read_item(
-        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
-        capture: &mut crate::model::domain::any_extensions::ItemCapture,
-    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
-        use ::instant_xml::Error;
-        use ::instant_xml::de::Node;
-        let mut v2: ResourceIndex = 0;
-        let mut p1: OptionalResourceIndex = OptionalResourceIndex::none();
-        let mut p2: OptionalResourceIndex = OptionalResourceIndex::none();
-        let mut pid: OptionalResourceId = OptionalResourceId::none();
-
-        while let Some(node) = deserializer.next() {
-            let node = node?;
-            match node {
-                Node::Attribute(attr) => {
-                    let id = deserializer.attribute_id(&attr)?;
-                    // Schema attributes are unqualified; prefixed ones belong to other namespaces.
-                    if !id.ns.is_empty() {
-                        capture.attribute(id, SLICE_NS, attr.prefix, &attr.value);
-                        continue;
-                    }
-
-                    match id.name {
-                        "v2" => v2 = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
-                        "p1" => {
-                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
-                                p1 = OptionalResourceIndex::new(value);
-                            }
-                        }
-                        "p2" => {
-                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
-                                p2 = OptionalResourceIndex::new(value);
-                            }
-                        }
-                        "pid" => {
-                            if let Ok(value) = lexical_core::parse(attr.value.as_bytes()) {
-                                pid = OptionalResourceId::new(value);
-                            }
-                        }
-                        _ => {}
-                    };
-                }
-                Node::Open(data) => {
-                    let mut nested = deserializer.nested(data);
-                    nested.ignore()?;
-                }
-                Node::Text(_) => {}
-                _ => {
-                    return Err(Error::UnexpectedNode("Unexpected".to_owned()));
-                }
-            }
-        }
-
-        Ok(Self { v2, p1, p2, pid })
-    }
-
-    #[cfg(feature = "write")]
-    fn write_open<W: std::fmt::Write + ?Sized>(
-        &self,
-        serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
-        let mut context = ::instant_xml::ser::Context::<0>::default();
-        context.default_ns = SLICE_NS;
-        context.force_prefix = true;
-        let element = serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
-        if ToXml::present(&self.v2) {
-            serializer.write_attr("v2", "", &self.v2)?;
-        }
-        if ToXml::present(&self.p1) {
-            serializer.write_attr("p1", "", &self.p1)?;
-        }
-        if ToXml::present(&self.p2) {
-            serializer.write_attr("p2", "", &self.p2)?;
-        }
-        if ToXml::present(&self.pid) {
-            serializer.write_attr("pid", "", &self.pid)?;
-        }
-        Ok(element)
+crate::model::domain::xml_item::fast_item! {
+    Segment {
+        tag: "segment",
+        ns: SLICE_NS,
+        force_prefix: true,
+        attributes: {
+            v2: ResourceIndex = index,
+            p1: OptionalResourceIndex = optional,
+            p2: OptionalResourceIndex = optional,
+            pid: OptionalResourceId = optional,
+        },
     }
 }
 
