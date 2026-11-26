@@ -12,9 +12,9 @@ mod tests {
 
     use threemf2::{
         model::{
-            builder::{ItemError, ModelBuilder, ModelError, ObjectId, Unit},
+            builder::{ItemBuilder, ItemError, ModelBuilder, ModelError, ObjectId, Unit},
             domain::{
-                any::{AnyElement, AnyNode},
+                any::{AnyElement, AnyError, AnyNode},
                 model::Model,
             },
             query::get_items_from_model,
@@ -55,8 +55,9 @@ mod tests {
         builder
             .add_build_item_advanced(object, |item| {
                 item.partnumber("part-1")
-                    .any_attribute(ACME_NS, "batch", "42")
-                    .any_element(acme_info());
+                    .any_attribute(ACME_NS, "batch", "42")?
+                    .any_element(acme_info())?;
+                Ok(())
             })
             .unwrap();
         builder.add_build_item(object).unwrap();
@@ -133,28 +134,53 @@ mod tests {
 
     #[test]
     fn builder_rejects_invalid_foreign_content() {
-        let invalid: [fn(&mut threemf2::model::builder::ItemBuilder); 3] = [
-            |item| {
-                item.any_attribute("", "batch", "42");
-            },
-            |item| {
-                item.any_attribute(ACME_NS, "not:valid", "42");
-            },
-            |item| {
-                item.any_element(AnyElement::new("", "info").unwrap());
-            },
+        type AddItem = fn(&mut ItemBuilder) -> Result<(), ItemError>;
+        let invalid: [(AddItem, AnyError); 3] = [
+            (
+                |item| item.any_attribute("", "batch", "42").map(|_| ()),
+                AnyError::NotForeignNamespace(String::new()),
+            ),
+            (
+                |item| item.any_attribute(ACME_NS, "not:valid", "42").map(|_| ()),
+                AnyError::InvalidName("not:valid".to_owned()),
+            ),
+            (
+                |item| {
+                    item.any_element(AnyElement::new("", "info").unwrap())?;
+                    Ok(())
+                },
+                AnyError::NotForeignNamespace(String::new()),
+            ),
         ];
 
-        for add in invalid {
+        for (add, expected) in invalid {
             let mut builder = ModelBuilder::new(Unit::Millimeter, true);
             let object = add_triangle_object(&mut builder);
             builder.add_build(None).unwrap();
 
             let result = builder.add_build_item_advanced(object, add);
-            assert!(matches!(
-                result,
-                Err(ModelError::ItemError(ItemError::InvalidAnyExtension))
-            ));
+            match result {
+                Err(ModelError::ItemError(ItemError::InvalidAnyExtension(err))) => {
+                    assert_eq!(err, expected)
+                }
+                other => panic!("unexpected result: {:?}", other.map(|_| ())),
+            }
         }
+    }
+
+    #[test]
+    fn builder_rejects_invalid_item_path() {
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        let object = add_triangle_object(&mut builder);
+        builder.add_build(None).unwrap();
+
+        let result = builder.add_build_item_advanced(object, |item| {
+            item.path("")?;
+            Ok(())
+        });
+        assert!(matches!(
+            result,
+            Err(ModelError::ItemError(ItemError::InvalidPath(_)))
+        ));
     }
 }

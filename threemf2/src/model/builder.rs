@@ -1,4 +1,4 @@
-﻿//! Builder API for constructing 3MF models programmatically.
+//! Builder API for constructing 3MF models programmatically.
 //!
 //! This module provides a builder based API to make 3MF Models.
 //! The builder pattern makes it easy to construct complex 3D models with proper validation
@@ -77,15 +77,13 @@ pub use object::ObjectType;
 pub use slice::MeshResolution;
 
 use crate::model::{
-    OptionalResourceId, OptionalResourceIndex, PathResource, ResourceId, ResourceIdCollection,
-    ResourceIndex, ResourceIndexCollection, StrResource, UuidResource,
+    OptionalResourceId, OptionalResourceIndex, PathResource, PathResourceError, ResourceId,
+    ResourceIdCollection, ResourceIndex, ResourceIndexCollection, StrResource, UuidResource,
 };
 
+use crate::model::domain::any_extensions::AnyError;
 #[cfg(feature = "any")]
-use crate::model::domain::{
-    any::AnyError,
-    any_extensions::{AnyExtensions, any_extensions_builder_methods},
-};
+use crate::model::domain::any_extensions::{AnyExtensions, any_extensions_builder_methods};
 
 use std::ops::{Deref, DerefMut};
 
@@ -586,7 +584,7 @@ impl ModelBuilder {
     ///
     /// Returns [`ModelError::BuildItemNotSet`] if [`add_build()`](ModelBuilder::add_build) hasn't been called yet.
     pub fn add_build_item(&mut self, object_id: ObjectId) -> Result<&mut Self, ModelError> {
-        self.add_build_item_advanced(object_id, |_f| {})
+        self.add_build_item_advanced(object_id, |_| Ok(()))
     }
 
     /// Add a build item with advanced configuration.
@@ -602,13 +600,14 @@ impl ModelBuilder {
     /// # Errors
     ///
     /// Returns [`ModelError::BuildItemNotSet`] if [`add_build()`](ModelBuilder::add_build) hasn't been called yet.
+    /// Returns [`ModelError::ItemError`] if the closure returns an error or the item is invalid.
     pub fn add_build_item_advanced<F>(
         &mut self,
         object_id: ObjectId,
         f: F,
     ) -> Result<&mut Self, ModelError>
     where
-        F: FnOnce(&mut ItemBuilder),
+        F: FnOnce(&mut ItemBuilder) -> Result<(), ItemError>,
     {
         match &mut self.build {
             Some(build) => {
@@ -1141,10 +1140,10 @@ impl BuildBuilder {
         f: F,
     ) -> Result<&mut Self, ItemError>
     where
-        F: FnOnce(&mut ItemBuilder),
+        F: FnOnce(&mut ItemBuilder) -> Result<(), ItemError>,
     {
         let mut builder = ItemBuilder::new(objectid);
-        f(&mut builder);
+        f(&mut builder)?;
 
         let item = builder.build(is_production_ext_enabled)?;
         self.items.push(item);
@@ -1170,7 +1169,7 @@ impl BuildBuilder {
 }
 
 /// Errors that can occur when building a build item.
-#[derive(Debug, Error, Clone, Copy, PartialEq)]
+#[derive(Debug, Error, Clone, PartialEq)]
 pub enum ItemError {
     /// Build item has a path set but Production extension is not enabled.
     ///
@@ -1184,12 +1183,16 @@ pub enum ItemError {
     #[error("Production extension is enabled but Uuid is not set!")]
     ItemUuidNotSet,
 
-    /// Foreign content added with [`ItemBuilder::any_attribute`] or [`ItemBuilder::any_element`]
-    /// is invalid: a name is not a valid XML name or a namespace is not foreign.
+    /// The path passed to [`ItemBuilder::path()`] is not a valid package path.
+    #[error("Invalid build item path: {0}")]
+    InvalidPath(#[from] PathResourceError),
+
+    /// Foreign content passed to `ItemBuilder::any_attribute` or `ItemBuilder::any_element` is
+    /// invalid: a name is not a valid XML name or a namespace is not foreign.
     ///
     /// Only produced with the `any` feature.
-    #[error("Invalid foreign (xs:any) content on the build item!")]
-    InvalidAnyExtension,
+    #[error("Invalid foreign (xs:any) content on the build item: {0}")]
+    InvalidAnyExtension(#[from] AnyError),
 }
 
 /// Errors that can occur when building a Texture2D resource.
@@ -1267,12 +1270,10 @@ pub struct ItemBuilder {
     uuid: Option<UuidResource>,
     #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
-    #[cfg(feature = "any")]
-    any_extensions_error: Option<AnyError>,
 }
 
 #[cfg(feature = "any")]
-any_extensions_builder_methods!(ItemBuilder);
+any_extensions_builder_methods!(ItemBuilder, ItemError);
 
 impl ItemBuilder {
     fn new(objectid: ObjectId) -> Self {
@@ -1284,8 +1285,6 @@ impl ItemBuilder {
             uuid: None,
             #[cfg(feature = "any")]
             any_extensions: AnyExtensions::default(),
-            #[cfg(feature = "any")]
-            any_extensions_error: None,
         }
     }
 
@@ -1318,14 +1317,13 @@ impl ItemBuilder {
     ///
     /// Only allowed when Production extension is enabled. The path specifies
     /// an alternative model file where the referenced object can be found.
-    pub fn path(&mut self, path: &str) -> &mut Self {
-        match PathResource::try_from(path) {
-            Ok(path) => {
-                self.path = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ItemError::InvalidPath`] if `path` is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, ItemError> {
+        self.path = Some(PathResource::try_from(path)?);
+        Ok(self)
     }
 
     fn build(self, is_production_ext_enabled: bool) -> Result<Item, ItemError> {
@@ -1333,10 +1331,6 @@ impl ItemBuilder {
             return Err(ItemError::ItemPathSetWithoutProductionExtension);
         } else if is_production_ext_enabled && self.uuid.is_none() {
             return Err(ItemError::ItemUuidNotSet);
-        }
-        #[cfg(feature = "any")]
-        if self.any_extensions_error.is_some() {
-            return Err(ItemError::InvalidAnyExtension);
         }
 
         Ok(Item {
@@ -2211,6 +2205,10 @@ pub enum ComponentsObjectError {
     /// Call [`ComponentsObjectBuilder::uuid()`] to set the UUID.
     #[error("Production extension is enabled but Uuid is not set")]
     ObjectUuidNotSet,
+
+    /// The path passed to [`ComponentBuilder::path()`] is not a valid package path.
+    #[error("Invalid component path: {0}")]
+    InvalidPath(#[from] PathResourceError),
 }
 
 /// Builder for creating assembly objects that reference other objects.
@@ -2340,7 +2338,8 @@ impl ComponentsBuilder {
     /// obj.add_component(part_id);
     /// ```
     pub fn add_component(&mut self, object_id: ObjectId) -> &mut Self {
-        self.add_component_advanced(object_id, |_| {});
+        self.components
+            .push(ComponentBuilder::new(object_id).build());
         self
     }
 
@@ -2360,20 +2359,29 @@ impl ComponentsBuilder {
     /// obj.add_component_advanced(part_id, |comp| {
     ///     comp.transform(Transform([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 10.0, 0.0, 0.0]));
     ///     comp.uuid("component-uuid");
-    ///     comp.path("/path/to/model.model");
-    /// });
+    ///     comp.path("/path/to/model.model")?;
+    ///     Ok(())
+    /// })?;
     /// ```
-    pub fn add_component_advanced<F>(&mut self, object_id: ObjectId, f: F) -> &mut Self
+    ///
+    /// # Errors
+    ///
+    /// Returns the error returned by the closure.
+    pub fn add_component_advanced<F>(
+        &mut self,
+        object_id: ObjectId,
+        f: F,
+    ) -> Result<&mut Self, ComponentsObjectError>
     where
-        F: FnOnce(&mut ComponentBuilder),
+        F: FnOnce(&mut ComponentBuilder) -> Result<(), ComponentsObjectError>,
     {
         let mut builder = ComponentBuilder::new(object_id);
-        f(&mut builder);
+        f(&mut builder)?;
 
         let component = builder.build();
         self.components.push(component);
 
-        self
+        Ok(self)
     }
 
     fn build_components(
@@ -2447,14 +2455,13 @@ impl ComponentBuilder {
     ///
     /// Only allowed when Production extension is enabled. The path specifies
     /// an alternative model file where the referenced object can be found.
-    pub fn path(&mut self, path: &str) -> &mut Self {
-        match PathResource::try_from(path) {
-            Ok(path) => {
-                self.path = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ComponentsObjectError::InvalidPath`] if `path` is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, ComponentsObjectError> {
+        self.path = Some(PathResource::try_from(path)?);
+        Ok(self)
     }
 
     fn build(self) -> Component {
@@ -2468,7 +2475,7 @@ impl ComponentBuilder {
 }
 
 /// Errors that can occur when building a boolean shape object.
-#[derive(Debug, Error, Clone, Copy, PartialEq)]
+#[derive(Debug, Error, Clone, PartialEq)]
 pub enum BooleanShapeError {
     /// Base object ID is not set.
     ///
@@ -2487,6 +2494,10 @@ pub enum BooleanShapeError {
     /// Call [`BooleanObjectBuilder::uuid()`] to set the UUID.
     #[error("Production extension is enabled but Uuid is not set")]
     ObjectUuidNotSet,
+
+    /// The path passed to [`BooleanBuilder::path()`] is not a valid package path.
+    #[error("Invalid boolean operand path: {0}")]
+    InvalidPath(#[from] PathResourceError),
 }
 
 /// Builder for creating boolean shape objects for CSG operations.
@@ -2649,7 +2660,7 @@ impl BooleanShapeBuilder {
     ///
     /// - `object_id`: The ID of the operand object
     pub fn add_boolean(&mut self, object_id: ObjectId) -> &mut Self {
-        self.add_boolean_advanced(object_id, |_| {});
+        self.booleans.push(BooleanBuilder::new(object_id).build());
         self
     }
 
@@ -2662,14 +2673,22 @@ impl BooleanShapeBuilder {
     ///
     /// - `object_id`: The ID of the operand object
     /// - `f`: A closure that configures the [`BooleanBuilder`]
-    pub fn add_boolean_advanced<F>(&mut self, object_id: ObjectId, f: F) -> &mut Self
+    ///
+    /// # Errors
+    ///
+    /// Returns the error returned by the closure.
+    pub fn add_boolean_advanced<F>(
+        &mut self,
+        object_id: ObjectId,
+        f: F,
+    ) -> Result<&mut Self, BooleanShapeError>
     where
-        F: FnOnce(&mut BooleanBuilder),
+        F: FnOnce(&mut BooleanBuilder) -> Result<(), BooleanShapeError>,
     {
         let mut builder = BooleanBuilder::new(object_id);
-        f(&mut builder);
+        f(&mut builder)?;
         self.booleans.push(builder.build());
-        self
+        Ok(self)
     }
 
     fn build_boolean_shape(self) -> Result<boolean::BooleanShape, BooleanShapeError> {
@@ -2726,14 +2745,13 @@ impl BooleanBuilder {
     /// # Parameters
     ///
     /// - `path`: Path to the model file containing the operand object
-    pub fn path(&mut self, path: &str) -> &mut Self {
-        match PathResource::try_from(path) {
-            Ok(path) => {
-                self.path = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BooleanShapeError::InvalidPath`] if `path` is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, BooleanShapeError> {
+        self.path = Some(PathResource::try_from(path)?);
+        Ok(self)
     }
 
     fn build(self) -> boolean::Boolean {
@@ -4229,6 +4247,7 @@ mod tests {
         builder
             .add_build_item_advanced(obj_id, |i| {
                 i.uuid("item-uuid");
+                Ok(())
             })
             .unwrap();
         let model = builder.build().unwrap();
@@ -4293,7 +4312,8 @@ mod tests {
         builder.add_build(None).unwrap();
         let obj_id = builder.add_mesh_object(|_obj| Ok(())).unwrap();
         let result = builder.add_build_item_advanced(obj_id, |i| {
-            i.path("some-path");
+            i.path("some-path")?;
+            Ok(())
         });
         assert!(matches!(
             result,
@@ -4319,8 +4339,9 @@ mod tests {
         if let Err(err) = builder.add_components_object(|obj| {
             obj.uuid("obj-uuid");
             obj.add_component_advanced(mesh_obj_id, |c| {
-                c.uuid("comp-uuid").path("comp-path");
-            });
+                c.uuid("comp-uuid").path("comp-path")?;
+                Ok(())
+            })?;
 
             Ok(())
         }) {
@@ -4331,7 +4352,8 @@ mod tests {
             .add_build(Some(UuidResource::from("build-uuid")))
             .unwrap();
         if let Err(err) = builder.add_build_item_advanced(mesh_obj_id, |i| {
-            i.uuid("some-uuid").path("some-path");
+            i.uuid("some-uuid").path("some-path")?;
+            Ok(())
         }) {
             panic!("{err:?}");
         }
@@ -4441,8 +4463,9 @@ mod tests {
             .add_build_item_advanced(obj_id, |i| {
                 i.transform(&transform)
                     .partnumber("part")
-                    .path("/path/path.model")
+                    .path("/path/path.model")?
                     .uuid("uuid");
+                Ok(())
             })
             .unwrap();
 
@@ -4565,8 +4588,9 @@ mod tests {
         // Path set without Production extension
         let result = builder.add_components_object(|obj| {
             obj.add_component_advanced(obj1_id, |c| {
-                c.path("some-path");
-            });
+                c.path("some-path")?;
+                Ok(())
+            })?;
 
             Ok(())
         });
@@ -4593,8 +4617,9 @@ mod tests {
         //Test missing Object Uuid
         let result = builder.add_components_object(|obj| {
             obj.add_component_advanced(obj1_id, |c| {
-                c.uuid("some-component-uuid").path("some-component-path");
-            });
+                c.uuid("some-component-uuid").path("some-component-path")?;
+                Ok(())
+            })?;
             Ok(())
         });
 
@@ -4607,8 +4632,9 @@ mod tests {
         let result = builder.add_components_object(|obj| {
             obj.uuid("some-obj-uuid");
             obj.add_component_advanced(obj1_id, |c| {
-                c.path("some-component-path");
-            });
+                c.path("some-component-path")?;
+                Ok(())
+            })?;
             Ok(())
         });
 

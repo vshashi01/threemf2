@@ -461,14 +461,16 @@ mod tests {
             .add_components_object(|obj| {
                 obj.uuid("components-uuid");
                 obj.add_component_advanced(obj_id, |comp| {
-                    comp.uuid("comp-uuid").path("/3D/sub/sub.model");
-                });
+                    comp.uuid("comp-uuid").path("/3D/sub/sub.model")?;
+                    Ok(())
+                })?;
                 Ok(())
             })
             .unwrap();
         root_builder
             .add_build_item_advanced(obj_id, |item| {
                 item.uuid("item-uuid");
+                Ok(())
             })
             .unwrap();
 
@@ -545,14 +547,16 @@ mod tests {
             .add_components_object(|obj| {
                 obj.uuid("components-uuid");
                 obj.add_component_advanced(obj_id, |comp| {
-                    comp.uuid("comp-uuid").path("/3D/missing.model");
-                });
+                    comp.uuid("comp-uuid").path("/3D/missing.model")?;
+                    Ok(())
+                })?;
                 Ok(())
             })
             .unwrap();
         root_builder
             .add_build_item_advanced(obj_id, |item| {
                 item.uuid("item-uuid");
+                Ok(())
             })
             .unwrap();
 

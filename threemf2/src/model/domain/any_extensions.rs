@@ -10,8 +10,25 @@
 //! build. The content is only kept, and the accessors are only available, with the `any` feature.
 //! Without it both types are empty and unknown XML content is ignored when reading.
 
+use thiserror::Error;
+
 #[cfg(feature = "any")]
-use crate::model::domain::any::{AnyAttributes, AnyElement, AnyError, is_foreign_namespace};
+use crate::model::domain::any::{AnyAttributes, AnyElement, is_foreign_namespace};
+
+/// Errors raised when constructing foreign XML content.
+///
+/// Always available, so that builder error types embedding it have the same shape with and
+/// without the `any` feature. Only produced with the `any` feature.
+#[derive(Debug, Error, Clone, PartialEq, Eq)]
+pub enum AnyError {
+    /// The namespace is not allowed for `##other` content (empty, the 3MF core namespace or `xmlns`).
+    #[error("namespace `{0}` is not allowed for foreign (##other) content")]
+    NotForeignNamespace(String),
+
+    /// The name is not a valid XML local name (NCName).
+    #[error("`{0}` is not a valid XML local name")]
+    InvalidName(String),
+}
 
 /// Foreign attributes and elements of an element with `xs:anyAttribute` and `xs:any` slots.
 ///
@@ -129,39 +146,46 @@ impl AnyAttributeExtensions {
     }
 }
 
-/// Generates the `any_*` builder methods for a builder with the private fields
-/// `any_extensions: AnyExtensions` and `any_extensions_error: Option<AnyError>`.
-///
-/// Builder closures return `()`, so the methods never fail directly: the first error is kept in
-/// `any_extensions_error` and the builder's `build` reports it.
+/// Generates the `any_*` builder methods for a builder with a private
+/// `any_extensions: AnyExtensions` field. `$error` must have an
+/// `InvalidAnyExtension(AnyError)` variant.
 #[cfg(feature = "any")]
 macro_rules! any_extensions_builder_methods {
-    ($builder:ty) => {
+    ($builder:ty, $error:ident) => {
         impl $builder {
             /// Adds a foreign attribute (`xs:anyAttribute`) `name` in namespace `ns`, replacing
-            /// an existing value.
+            /// an existing value. Requires the `any` feature.
             ///
-            /// An invalid name, or a namespace that is not foreign (empty or the 3MF core
-            /// namespace), makes building fail. Requires the `any` feature.
-            pub fn any_attribute(&mut self, ns: &str, name: &str, value: &str) -> &mut Self {
-                if let Err(err) = self.any_extensions.attributes_mut().set(ns, name, value) {
-                    self.any_extensions_error.get_or_insert(err);
-                }
-                self
+            /// # Errors
+            ///
+            /// Fails if `name` is not a valid XML name or `ns` is not a foreign namespace
+            /// (empty or the 3MF core namespace).
+            pub fn any_attribute(
+                &mut self,
+                ns: &str,
+                name: &str,
+                value: &str,
+            ) -> Result<&mut Self, $error> {
+                self.any_extensions
+                    .attributes_mut()
+                    .set(ns, name, value)
+                    .map_err($error::InvalidAnyExtension)?;
+                Ok(self)
             }
 
-            /// Appends a foreign child element (`xs:any`).
+            /// Appends a foreign child element (`xs:any`). Requires the `any` feature.
             ///
-            /// An element that is not in a foreign namespace makes building fail.
-            /// Requires the `any` feature.
+            /// # Errors
+            ///
+            /// Fails if the element is not in a foreign namespace.
             pub fn any_element(
                 &mut self,
                 element: $crate::model::domain::any::AnyElement,
-            ) -> &mut Self {
-                if let Err(err) = self.any_extensions.push_element(element) {
-                    self.any_extensions_error.get_or_insert(err);
-                }
-                self
+            ) -> Result<&mut Self, $error> {
+                self.any_extensions
+                    .push_element(element)
+                    .map_err($error::InvalidAnyExtension)?;
+                Ok(self)
             }
 
             /// Direct access to the foreign content of the element being built.

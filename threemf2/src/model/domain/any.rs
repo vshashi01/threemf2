@@ -12,27 +12,15 @@
 //!
 //! Everything in this module is only available with the `any` feature.
 
-use thiserror::Error;
-
 use crate::{model::StrResource, threemf_namespaces::CORE_NS};
+
+pub use crate::model::domain::any_extensions::AnyError;
 
 /// Namespace URI bound to the reserved `xml` prefix.
 pub const XML_NS: &str = "http://www.w3.org/XML/1998/namespace";
 
 /// Namespace URI bound to the reserved `xmlns` prefix.
 pub const XMLNS_NS: &str = "http://www.w3.org/2000/xmlns/";
-
-/// Errors raised when constructing foreign XML content.
-#[derive(Debug, Error, Clone, PartialEq, Eq)]
-pub enum AnyError {
-    /// The namespace is not allowed for `##other` content (empty, the 3MF core namespace or `xmlns`).
-    #[error("namespace `{0}` is not allowed for foreign (##other) content")]
-    NotForeignNamespace(String),
-
-    /// The name is not a valid XML local name (NCName).
-    #[error("`{0}` is not a valid XML local name")]
-    InvalidName(String),
-}
 
 /// Returns `true` if `ns` may be used for top-level content of an `##other` slot.
 ///
