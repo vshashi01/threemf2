@@ -676,36 +676,41 @@ pub(crate) mod write {
     }
 
     /// Declares, on the list element whose start tag is being written, the namespaces used by the
-    /// per-entry foreign attributes in `table`, so entries do not repeat the declarations.
+    /// per-entry foreign attributes and top-level child elements in `table`, so entries do not
+    /// repeat the declarations.
     ///
-    /// Fails if an attribute is not foreign to `own` or an index is not smaller than `len`, the
+    /// Fails if an attribute or element is not foreign to `own` or an index is not smaller than `len`, the
     /// length of the list whose entries are named `entry`.
     pub(crate) fn declare_item_namespaces<W: fmt::Write + ?Sized>(
         serializer: &mut Serializer<'_, W>,
         scope: &mut ForeignScope,
         own: &str,
-        table: &crate::model::domain::any_extensions::ItemAttributeExtensions,
+        table: &impl crate::model::domain::any_extensions::ItemTable,
         len: usize,
         entry: &str,
     ) -> Result<(), Error> {
-        if let Some((index, _)) = table.entries.last()
-            && *index >= len
+        if let Some(index) = table.last_index()
+            && index >= len
         {
             return Err(Error::UnexpectedValue(format!(
-                "foreign attributes are recorded for `{entry}` {index}, but there are only {len}"
+                "foreign content is recorded for `{entry}` {index}, but there are only {len}"
             )));
         }
 
-        let names = table
-            .entries
-            .iter()
-            .flat_map(|(_, attributes)| attributes.iter())
-            .map(|a| (a.ns(), a.prefix_hint()));
-        if let Some((ns, _)) = names.clone().find(|(ns, _)| !is_foreign_for(ns, own)) {
+        let names: Vec<(&str, Option<&str>)> = table
+            .entry_parts()
+            .flat_map(|(_, attributes, elements)| {
+                attributes
+                    .iter()
+                    .map(|a| (a.ns(), a.prefix_hint()))
+                    .chain(elements.iter().map(|e| (e.ns(), e.prefix_hint())))
+            })
+            .collect();
+        if let Some((ns, _)) = names.iter().find(|(ns, _)| !is_foreign_for(ns, own)) {
             return Err(not_foreign(ns));
         }
 
-        for (prefix, ns) in scope.declare_all(serializer, names) {
+        for (prefix, ns) in scope.declare_all(serializer, names.iter().copied()) {
             serializer.write_attr(&qualified("xmlns", &prefix), "", ns.as_str())?;
         }
         Ok(())

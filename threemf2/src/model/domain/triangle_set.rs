@@ -2,7 +2,7 @@
 use instant_xml::ToXml;
 
 use crate::model::domain::any_extensions::{
-    AnyAttributeExtensions, AnyExtensions, ItemAttributeExtensions,
+    AnyAttributeExtensions, AnyExtensions, ItemAnyExtensions,
 };
 #[cfg(any(feature = "read", feature = "write"))]
 use crate::model::domain::xml_item::xml_item;
@@ -62,16 +62,16 @@ pub struct TriangleSet {
     /// Only populated with the `any` feature.
     pub any_extensions: AnyExtensions,
 
-    /// Foreign attributes of the individual `ref` entries, by index in [`Self::triangle_ref`].
+    /// Foreign attributes and child elements of the individual `ref` entries, by index in [`Self::triangle_ref`].
     ///
     /// Only populated with the `any` feature.
-    pub triangle_ref_any_extensions: ItemAttributeExtensions,
+    pub triangle_ref_any_extensions: ItemAnyExtensions,
 
-    /// Foreign attributes of the individual `refrange` entries, by index in
+    /// Foreign attributes and child elements of the individual `refrange` entries, by index in
     /// [`Self::triangle_refrange`].
     ///
     /// Only populated with the `any` feature.
-    pub triangle_refrange_any_extensions: ItemAttributeExtensions,
+    pub triangle_refrange_any_extensions: ItemAnyExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]

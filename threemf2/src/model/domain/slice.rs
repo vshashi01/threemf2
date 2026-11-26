@@ -444,18 +444,18 @@ impl crate::model::domain::xml_item::XmlItem for Vertex {
     fn write_open<W: std::fmt::Write + ?Sized>(
         &self,
         serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
         let mut context = ::instant_xml::ser::Context::<0>::default();
         context.default_ns = SLICE_NS;
         context.force_prefix = true;
-        serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
+        let element = serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
         if ToXml::present(&self.x) {
             serializer.write_attr("x", "", &self.x)?;
         }
         if ToXml::present(&self.y) {
             serializer.write_attr("y", "", &self.y)?;
         }
-        Ok(())
+        Ok(element)
     }
 }
 
@@ -697,11 +697,11 @@ impl crate::model::domain::xml_item::XmlItem for Segment {
     fn write_open<W: std::fmt::Write + ?Sized>(
         &self,
         serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
         let mut context = ::instant_xml::ser::Context::<0>::default();
         context.default_ns = SLICE_NS;
         context.force_prefix = true;
-        serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
+        let element = serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
         if ToXml::present(&self.v2) {
             serializer.write_attr("v2", "", &self.v2)?;
         }
@@ -714,7 +714,7 @@ impl crate::model::domain::xml_item::XmlItem for Segment {
         if ToXml::present(&self.pid) {
             serializer.write_attr("pid", "", &self.pid)?;
         }
-        Ok(())
+        Ok(element)
     }
 }
 

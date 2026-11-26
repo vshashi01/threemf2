@@ -1736,8 +1736,8 @@ mod any_views {
     use crate::model::domain::{
         any::AnyElement,
         any_extensions::{
-            AnyAttributeExtensions, AnyElementExtensions, AnyExtensions, ItemAttributeExtensions,
-            any_extensions_view_methods,
+            AnyAttributeExtensions, AnyElementExtensions, AnyExtensions, ItemAnyExtensions,
+            ItemAttributeExtensions, any_extensions_view_methods,
         },
         object::ObjectKind,
     };
@@ -1862,15 +1862,15 @@ mod any_views {
     }
 
     impl<'a> LatticeView<'a> {
-        /// Foreign attributes of the individual `<b:beam>` entries, by entry index.
+        /// Foreign attributes and child elements of the individual `<b:beam>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn beam_any_extensions(&self) -> &'a ItemAttributeExtensions {
+        pub fn beam_any_extensions(&self) -> &'a ItemAnyExtensions {
             &self.lattice.beams.beam_any_extensions
         }
 
-        /// Foreign attributes of the individual `<b2:ball>` entries, by entry index, or `None` if the
+        /// Foreign attributes and child elements of the individual `<b2:ball>` entries, by entry index, or `None` if the
         /// list is absent. Requires the `any` feature.
-        pub fn ball_any_extensions(&self) -> Option<&'a ItemAttributeExtensions> {
+        pub fn ball_any_extensions(&self) -> Option<&'a ItemAnyExtensions> {
             self.lattice
                 .balls
                 .as_ref()
@@ -1879,29 +1879,29 @@ mod any_views {
     }
 
     impl<'a> BeamSetView<'a> {
-        /// Foreign attributes of the individual `<b:ref>` entries, by entry index.
+        /// Foreign attributes and child elements of the individual `<b:ref>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn ref_any_extensions(&self) -> &'a ItemAttributeExtensions {
+        pub fn ref_any_extensions(&self) -> &'a ItemAnyExtensions {
             &self.set.refs_any_extensions
         }
 
-        /// Foreign attributes of the individual `<b2:ballref>` entries, by entry index.
+        /// Foreign attributes and child elements of the individual `<b2:ballref>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn ballref_any_extensions(&self) -> &'a ItemAttributeExtensions {
+        pub fn ballref_any_extensions(&self) -> &'a ItemAnyExtensions {
             &self.set.ballref_any_extensions
         }
     }
 
     impl<'a> TriangleSetView<'a> {
-        /// Foreign attributes of the individual `<t:ref>` entries, by entry index.
+        /// Foreign attributes and child elements of the individual `<t:ref>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn ref_any_extensions(&self) -> &'a ItemAttributeExtensions {
+        pub fn ref_any_extensions(&self) -> &'a ItemAnyExtensions {
             &self.set.triangle_ref_any_extensions
         }
 
-        /// Foreign attributes of the individual `<t:refrange>` entries, by entry index.
+        /// Foreign attributes and child elements of the individual `<t:refrange>` entries, by entry index.
         /// Requires the `any` feature.
-        pub fn refrange_any_extensions(&self) -> &'a ItemAttributeExtensions {
+        pub fn refrange_any_extensions(&self) -> &'a ItemAnyExtensions {
             &self.set.triangle_refrange_any_extensions
         }
     }

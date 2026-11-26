@@ -1,5 +1,5 @@
 use crate::model::domain::any_extensions::{
-    AnyElementExtensions, AnyExtensions, ItemAttributeExtensions,
+    AnyElementExtensions, AnyExtensions, ItemAnyExtensions,
 };
 #[cfg(any(feature = "read", feature = "write"))]
 use crate::model::domain::xml_item::xml_item;
@@ -202,10 +202,10 @@ pub struct Beams {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyElementExtensions,
-    /// Foreign attributes of the individual `beam` entries, by index in [`Self::beam`].
+    /// Foreign attributes and child elements of the individual `beam` entries, by index in [`Self::beam`].
     ///
     /// Only populated with the `any` feature.
-    pub beam_any_extensions: ItemAttributeExtensions,
+    pub beam_any_extensions: ItemAnyExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]
@@ -302,10 +302,10 @@ pub struct Balls {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyElementExtensions,
-    /// Foreign attributes of the individual `ball` entries, by index in [`Self::ball`].
+    /// Foreign attributes and child elements of the individual `ball` entries, by index in [`Self::ball`].
     ///
     /// Only populated with the `any` feature.
-    pub ball_any_extensions: ItemAttributeExtensions,
+    pub ball_any_extensions: ItemAnyExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]
@@ -415,15 +415,15 @@ pub struct BeamSet {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyExtensions,
-    /// Foreign attributes of the individual `ref` entries, by index in [`Self::refs`].
+    /// Foreign attributes and child elements of the individual `ref` entries, by index in [`Self::refs`].
     ///
     /// Only populated with the `any` feature.
-    pub refs_any_extensions: ItemAttributeExtensions,
+    pub refs_any_extensions: ItemAnyExtensions,
 
-    /// Foreign attributes of the individual `ballref` entries, by index in [`Self::ballref`].
+    /// Foreign attributes and child elements of the individual `ballref` entries, by index in [`Self::ballref`].
     ///
     /// Only populated with the `any` feature.
-    pub ballref_any_extensions: ItemAttributeExtensions,
+    pub ballref_any_extensions: ItemAnyExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]

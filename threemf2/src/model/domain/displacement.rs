@@ -427,10 +427,10 @@ impl crate::model::domain::xml_item::XmlItem for NormVector {
     fn write_open<W: std::fmt::Write + ?Sized>(
         &self,
         serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
         let mut context = ::instant_xml::ser::Context::<0>::default();
         context.default_ns = DISPLACEMENT_NS;
-        serializer.write_start(Self::TAG, DISPLACEMENT_NS, Some(context))?;
+        let element = serializer.write_start(Self::TAG, DISPLACEMENT_NS, Some(context))?;
         if ToXml::present(&self.x) {
             serializer.write_attr("x", "", &self.x)?;
         }
@@ -440,7 +440,7 @@ impl crate::model::domain::xml_item::XmlItem for NormVector {
         if ToXml::present(&self.z) {
             serializer.write_attr("z", "", &self.z)?;
         }
-        Ok(())
+        Ok(element)
     }
 }
 
@@ -806,10 +806,10 @@ impl crate::model::domain::xml_item::XmlItem for Vertex {
     fn write_open<W: std::fmt::Write + ?Sized>(
         &self,
         serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
         let mut context = ::instant_xml::ser::Context::<0>::default();
         context.default_ns = DISPLACEMENT_NS;
-        serializer.write_start(Self::TAG, DISPLACEMENT_NS, Some(context))?;
+        let element = serializer.write_start(Self::TAG, DISPLACEMENT_NS, Some(context))?;
         if ToXml::present(&self.x) {
             serializer.write_attr("x", "", &self.x)?;
         }
@@ -819,7 +819,7 @@ impl crate::model::domain::xml_item::XmlItem for Vertex {
         if ToXml::present(&self.z) {
             serializer.write_attr("z", "", &self.z)?;
         }
-        Ok(())
+        Ok(element)
     }
 }
 
@@ -1119,10 +1119,10 @@ impl crate::model::domain::xml_item::XmlItem for Triangle {
     fn write_open<W: std::fmt::Write + ?Sized>(
         &self,
         serializer: &mut ::instant_xml::Serializer<'_, W>,
-    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+    ) -> ::std::result::Result<::instant_xml::ser::Element<'static, 0>, ::instant_xml::Error> {
         let mut context = ::instant_xml::ser::Context::<0>::default();
         context.default_ns = DISPLACEMENT_NS;
-        serializer.write_start(Self::TAG, DISPLACEMENT_NS, Some(context))?;
+        let element = serializer.write_start(Self::TAG, DISPLACEMENT_NS, Some(context))?;
         if ToXml::present(&self.v1) {
             serializer.write_attr("v1", "", &self.v1)?;
         }
@@ -1156,7 +1156,7 @@ impl crate::model::domain::xml_item::XmlItem for Triangle {
         if ToXml::present(&self.pid) {
             serializer.write_attr("pid", "", &self.pid)?;
         }
-        Ok(())
+        Ok(element)
     }
 }
 

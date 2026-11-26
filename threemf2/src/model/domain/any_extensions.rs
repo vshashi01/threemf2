@@ -6,8 +6,10 @@
 //! - [`AnyExtensions`] for elements with both `xs:anyAttribute` and an `xs:any` element slot.
 //! - [`AnyAttributeExtensions`] for elements that only allow `xs:anyAttribute`.
 //! - [`AnyElementExtensions`] for elements that only allow `xs:any` child elements.
-//! - [`ItemAttributeExtensions`] on list elements such as `<vertices>` or `<b:beams>`, for the
-//!   `xs:anyAttribute` slots of their entries, which are too numerous to carry a field each.
+//! - [`ItemAttributeExtensions`] and [`ItemAnyExtensions`] on list elements such as `<vertices>`
+//!   or `<b:beams>`, for the extension points of their entries, which are too numerous to carry
+//!   a field each. The first holds attributes only; the second also holds child elements, for
+//!   entries whose schema allows `xs:any` (beams, balls and references).
 //!
 //! The field exists regardless of features so that struct literals compile the same way in every
 //! build. The content is only kept, and the accessors are only available, with the `any` feature.
@@ -267,117 +269,207 @@ impl AnySlot for AnyElementExtensions {
     }
 }
 
-/// Foreign attributes of the individual entries of a list element, such as each `<vertex>` of
-/// `<vertices>` or each `<beam>` of `<b:beams>`.
-///
-/// These entries are numerous, so their foreign attributes are not stored on every entry. The
-/// list element keeps one table that maps an entry's index in its list to the attributes of that
-/// entry, and only entries that have foreign attributes appear in it. Indices are kept sorted.
-///
-/// The table is not updated when entries are inserted into or removed from the list; adjust it
-/// yourself. Writing fails if an index is not smaller than the length of the list.
-///
-/// Only populated with the `any` feature; empty and zero-sized otherwise.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ItemAttributeExtensions {
+/// Crate-internal access to the per-entry tables ([`ItemAttributeExtensions`],
+/// [`ItemAnyExtensions`]) for the generated read/write code.
+#[cfg_attr(
+    not(all(feature = "any", feature = "read", feature = "write")),
+    allow(dead_code)
+)]
+pub(crate) trait ItemTable: Default {
+    /// Entries as `(index, attributes, elements)`, in index order.
     #[cfg(feature = "any")]
-    pub(crate) entries: Vec<(usize, AnyAttributes)>,
+    fn entry_parts(&self) -> impl Iterator<Item = (usize, &AnyAttributes, &[AnyElement])>;
+
+    /// The largest index in the table.
+    #[cfg(feature = "any")]
+    fn last_index(&self) -> Option<usize>;
+
+    /// Appends content read for the entry at `index`. Reading visits entries in order, so the
+    /// table stays sorted. Tables without element storage drop `elements`.
+    #[cfg(all(feature = "any", feature = "read"))]
+    fn push_read(&mut self, index: usize, attributes: AnyAttributes, elements: Vec<AnyElement>);
 }
 
-impl ItemAttributeExtensions {
-    /// Creates an empty table.
-    pub fn new() -> Self {
-        Self::default()
+/// Generates a per-entry table type and its sorted-map API for the entry type `$entry`.
+macro_rules! item_table {
+    (
+        $(#[$meta:meta])*
+        $name:ident, $entry:ident, $what:literal
+    ) => {
+        $(#[$meta])*
+        #[derive(Debug, Clone, Default, PartialEq, Eq)]
+        pub struct $name {
+            #[cfg(feature = "any")]
+            pub(crate) entries: Vec<(usize, $entry)>,
+        }
+
+        impl $name {
+            /// Creates an empty table.
+            pub fn new() -> Self {
+                Self::default()
+            }
+        }
+
+        #[cfg(feature = "any")]
+        impl $name {
+            fn position(&self, index: usize) -> Result<usize, usize> {
+                self.entries.binary_search_by_key(&index, |(i, _)| *i)
+            }
+
+            #[doc = concat!("Foreign ", $what, " of the entry at `index`, if it has any.")]
+            pub fn get(&self, index: usize) -> Option<&$entry> {
+                self.position(index).ok().map(|pos| &self.entries[pos].1)
+            }
+
+            #[doc = concat!("Mutable access to the foreign ", $what, " of the entry at `index`, if it has any.")]
+            pub fn get_mut(&mut self, index: usize) -> Option<&mut $entry> {
+                self.position(index)
+                    .ok()
+                    .map(|pos| &mut self.entries[pos].1)
+            }
+
+            #[doc = concat!("Mutable access to the foreign ", $what, " of the entry at `index`, adding an empty")]
+            /// value first if it has none.
+            pub fn entry(&mut self, index: usize) -> &mut $entry {
+                let pos = match self.position(index) {
+                    Ok(pos) => pos,
+                    Err(pos) => {
+                        self.entries.insert(pos, (index, $entry::default()));
+                        pos
+                    }
+                };
+                &mut self.entries[pos].1
+            }
+
+            #[doc = concat!("Sets the foreign ", $what, " of the entry at `index` and returns the previous value.")]
+            pub fn insert(&mut self, index: usize, value: $entry) -> Option<$entry> {
+                match self.position(index) {
+                    Ok(pos) => Some(std::mem::replace(&mut self.entries[pos].1, value)),
+                    Err(pos) => {
+                        self.entries.insert(pos, (index, value));
+                        None
+                    }
+                }
+            }
+
+            #[doc = concat!("Removes and returns the foreign ", $what, " of the entry at `index`.")]
+            pub fn remove(&mut self, index: usize) -> Option<$entry> {
+                self.position(index)
+                    .ok()
+                    .map(|pos| self.entries.remove(pos).1)
+            }
+
+            #[doc = concat!("Entries with foreign ", $what, " as `(index, value)`, in index order.")]
+            pub fn iter(&self) -> impl Iterator<Item = (usize, &$entry)> {
+                self.entries.iter().map(|(index, value)| (*index, value))
+            }
+
+            /// Number of entries in the table.
+            pub fn len(&self) -> usize {
+                self.entries.len()
+            }
+
+            /// Returns `true` if the table has no entries.
+            pub fn is_empty(&self) -> bool {
+                self.entries.is_empty()
+            }
+
+            /// Removes all entries.
+            pub fn clear(&mut self) {
+                self.entries.clear();
+            }
+        }
+    };
+}
+
+item_table! {
+    /// Foreign attributes of the individual entries of a list element whose entries only allow
+    /// `xs:anyAttribute`, such as each `<vertex>` of `<vertices>`.
+    ///
+    /// These entries are numerous, so their foreign content is not stored on every entry. The
+    /// list element keeps one table that maps an entry's index in its list to the attributes of
+    /// that entry, and only entries that have foreign attributes appear in it. Indices are kept
+    /// sorted.
+    ///
+    /// The table is not updated when entries are inserted into or removed from the list; adjust
+    /// it yourself. Writing fails if an index is not smaller than the length of the list.
+    ///
+    /// Only populated with the `any` feature; empty and zero-sized otherwise.
+    ItemAttributeExtensions, AnyAttributes, "attributes"
+}
+
+item_table! {
+    /// Foreign attributes and child elements of the individual entries of a list element whose
+    /// entries allow both `xs:anyAttribute` and `xs:any`, such as each `<b:beam>` of `<b:beams>`.
+    ///
+    /// Works like [`ItemAttributeExtensions`], with an [`AnyExtensions`] per entry. Child elements
+    /// of an entry must be in a foreign namespace; this is checked when writing.
+    ///
+    /// Only populated with the `any` feature; empty and zero-sized otherwise.
+    ItemAnyExtensions, AnyExtensions, "content"
+}
+
+#[cfg(feature = "any")]
+impl ItemTable for ItemAttributeExtensions {
+    fn entry_parts(&self) -> impl Iterator<Item = (usize, &AnyAttributes, &[AnyElement])> {
+        self.entries
+            .iter()
+            .map(|(index, attributes)| (*index, attributes, &[][..]))
+    }
+
+    fn last_index(&self) -> Option<usize> {
+        self.entries.last().map(|(index, _)| *index)
+    }
+
+    #[cfg(feature = "read")]
+    fn push_read(&mut self, index: usize, attributes: AnyAttributes, _elements: Vec<AnyElement>) {
+        debug_assert!(self.entries.last().is_none_or(|(last, _)| *last < index));
+        if !attributes.is_empty() {
+            self.entries.push((index, attributes));
+        }
     }
 }
 
 #[cfg(feature = "any")]
-impl ItemAttributeExtensions {
-    fn position(&self, index: usize) -> Result<usize, usize> {
-        self.entries.binary_search_by_key(&index, |(i, _)| *i)
-    }
-
-    /// Foreign attributes of the entry at `index`, if it has any.
-    pub fn get(&self, index: usize) -> Option<&AnyAttributes> {
-        self.position(index).ok().map(|pos| &self.entries[pos].1)
-    }
-
-    /// Mutable access to the foreign attributes of the entry at `index`, if it has any.
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut AnyAttributes> {
-        self.position(index)
-            .ok()
-            .map(|pos| &mut self.entries[pos].1)
-    }
-
-    /// Mutable access to the foreign attributes of the entry at `index`, adding an empty set
-    /// first if it has none.
-    pub fn entry(&mut self, index: usize) -> &mut AnyAttributes {
-        let pos = match self.position(index) {
-            Ok(pos) => pos,
-            Err(pos) => {
-                self.entries.insert(pos, (index, AnyAttributes::default()));
-                pos
-            }
-        };
-        &mut self.entries[pos].1
-    }
-
-    /// Sets the foreign attributes of the entry at `index` and returns the previous ones.
-    pub fn insert(&mut self, index: usize, attributes: AnyAttributes) -> Option<AnyAttributes> {
-        match self.position(index) {
-            Ok(pos) => Some(std::mem::replace(&mut self.entries[pos].1, attributes)),
-            Err(pos) => {
-                self.entries.insert(pos, (index, attributes));
-                None
-            }
-        }
-    }
-
-    /// Removes and returns the foreign attributes of the entry at `index`.
-    pub fn remove(&mut self, index: usize) -> Option<AnyAttributes> {
-        self.position(index)
-            .ok()
-            .map(|pos| self.entries.remove(pos).1)
-    }
-
-    /// Entries with foreign attributes as `(index, attributes)`, in index order.
-    pub fn iter(&self) -> impl Iterator<Item = (usize, &AnyAttributes)> {
+impl ItemTable for ItemAnyExtensions {
+    fn entry_parts(&self) -> impl Iterator<Item = (usize, &AnyAttributes, &[AnyElement])> {
         self.entries
             .iter()
-            .map(|(index, attributes)| (*index, attributes))
+            .map(|(index, content)| (*index, &content.attributes, content.elements.as_slice()))
     }
 
-    /// Number of entries with foreign attributes.
-    pub fn len(&self) -> usize {
-        self.entries.len()
+    fn last_index(&self) -> Option<usize> {
+        self.entries.last().map(|(index, _)| *index)
     }
 
-    /// Returns `true` if no entry has foreign attributes.
-    pub fn is_empty(&self) -> bool {
-        self.entries.is_empty()
-    }
-
-    /// Removes all entries.
-    pub fn clear(&mut self) {
-        self.entries.clear();
-    }
-
-    /// Appends attributes read for the entry at `index`. Reading visits entries in order, so the
-    /// table stays sorted.
     #[cfg(feature = "read")]
-    pub(crate) fn push_read(&mut self, index: usize, attributes: AnyAttributes) {
+    fn push_read(&mut self, index: usize, attributes: AnyAttributes, elements: Vec<AnyElement>) {
         debug_assert!(self.entries.last().is_none_or(|(last, _)| *last < index));
-        self.entries.push((index, attributes));
+        self.entries.push((
+            index,
+            AnyExtensions {
+                attributes,
+                elements,
+            },
+        ));
     }
 }
 
-/// Collects the foreign attributes of one list entry while it is read. Empty and free without
-/// the `any` feature.
+#[cfg(not(feature = "any"))]
+impl ItemTable for ItemAttributeExtensions {}
+
+#[cfg(not(feature = "any"))]
+impl ItemTable for ItemAnyExtensions {}
+
+/// Collects the foreign content of one list entry while it is read. Empty and free without the
+/// `any` feature.
 #[cfg(feature = "read")]
 #[derive(Default)]
 pub(crate) struct ItemCapture {
     #[cfg(feature = "any")]
     attributes: AnyAttributes,
+    #[cfg(feature = "any")]
+    elements: Vec<AnyElement>,
 }
 
 #[cfg(feature = "read")]
@@ -403,12 +495,32 @@ impl ItemCapture {
         let _ = (id, own, prefix, value);
     }
 
-    /// Records the captured attributes, if any, for the entry at `index` of `table`.
+    /// Reads the child element `id` whose start tag was just consumed into `nested`, keeping it
+    /// if it is in a namespace foreign to `own` and skipping it otherwise.
     #[inline]
-    pub(crate) fn store(self, table: &mut ItemAttributeExtensions, index: usize) {
+    pub(crate) fn element<'xml>(
+        &mut self,
+        nested: &mut instant_xml::Deserializer<'_, 'xml>,
+        id: instant_xml::Id<'xml>,
+        own: &str,
+    ) -> Result<(), instant_xml::Error> {
         #[cfg(feature = "any")]
-        if !self.attributes.is_empty() {
-            table.push_read(index, self.attributes);
+        if crate::model::domain::any::is_foreign_for(id.ns, own) {
+            let element = crate::model::domain::any::read::read_element(nested, id)?;
+            self.elements.push(element);
+            return Ok(());
+        }
+        #[cfg(not(feature = "any"))]
+        let _ = (id, own);
+        nested.ignore()
+    }
+
+    /// Records the captured content, if any, for the entry at `index` of `table`.
+    #[inline]
+    pub(crate) fn store<T: ItemTable>(self, table: &mut T, index: usize) {
+        #[cfg(feature = "any")]
+        if !self.attributes.is_empty() || !self.elements.is_empty() {
+            table.push_read(index, self.attributes, self.elements);
         }
         #[cfg(not(feature = "any"))]
         let _ = (table, index);
@@ -513,7 +625,9 @@ pub(crate) use any_extensions_view_methods;
 
 #[cfg(test)]
 mod tests {
-    use super::{AnyAttributeExtensions, AnyExtensions, ItemAttributeExtensions};
+    use super::{
+        AnyAttributeExtensions, AnyExtensions, ItemAnyExtensions, ItemAttributeExtensions,
+    };
 
     #[cfg(not(feature = "any"))]
     #[test]
@@ -521,6 +635,7 @@ mod tests {
         assert_eq!(std::mem::size_of::<AnyExtensions>(), 0);
         assert_eq!(std::mem::size_of::<AnyAttributeExtensions>(), 0);
         assert_eq!(std::mem::size_of::<ItemAttributeExtensions>(), 0);
+        assert_eq!(std::mem::size_of::<ItemAnyExtensions>(), 0);
     }
 
     #[cfg(feature = "any")]
@@ -544,5 +659,6 @@ mod tests {
     fn any_extensions_start_empty() {
         assert!(AnyExtensions::new().is_empty());
         assert!(AnyAttributeExtensions::new().is_empty());
+        assert!(ItemAnyExtensions::new().is_empty());
     }
 }

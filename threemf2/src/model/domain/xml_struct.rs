@@ -81,8 +81,7 @@ macro_rules! xml_struct {
                 $(let mut $efield = <$ety as FromXml<'xml>>::Accumulator::default();)*
                 $($(
                     let mut $ifield: ::std::vec::Vec<$ity> = ::std::vec::Vec::new();
-                    let mut $itable =
-                        $crate::model::domain::any_extensions::ItemAttributeExtensions::default();
+                    let mut $itable = ::std::default::Default::default();
                 )*)?
                 #[allow(unused_mut)]
                 let mut $any = <$anyty>::default();

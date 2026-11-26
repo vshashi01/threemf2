@@ -84,7 +84,8 @@ use crate::model::{
 use crate::model::domain::any_extensions::AnyError;
 #[cfg(feature = "any")]
 use crate::model::domain::any_extensions::{
-    AnyAttributeExtensions, AnyExtensions, ItemAttributeExtensions, any_extensions_builder_methods,
+    AnyAttributeExtensions, AnyExtensions, ItemAnyExtensions, ItemAttributeExtensions,
+    any_extensions_builder_methods,
 };
 
 use std::ops::{Deref, DerefMut};
@@ -3125,9 +3126,9 @@ impl TriangleSetsBuilder {
 /// The Beam Lattice extension namespace is automatically added when beams are present.
 pub struct BeamLatticeBuilder {
     #[cfg(feature = "any")]
-    ball_any_extensions: ItemAttributeExtensions,
+    ball_any_extensions: ItemAnyExtensions,
     #[cfg(feature = "any")]
-    beam_any_extensions: ItemAttributeExtensions,
+    beam_any_extensions: ItemAnyExtensions,
     #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     minlength: Option<f64>,
@@ -3410,23 +3411,23 @@ impl BeamLatticeBuilder {
         &mut self.any_extensions
     }
 
-    /// Foreign attributes of the individual `<b:beam>` entries, by index in the order the entries
+    /// Foreign attributes and child elements of the individual `<b:beam>` entries, by index in the order the entries
     /// were added.
     ///
     /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
     /// feature.
     #[cfg(feature = "any")]
-    pub fn beam_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+    pub fn beam_any_extensions_mut(&mut self) -> &mut ItemAnyExtensions {
         &mut self.beam_any_extensions
     }
 
-    /// Foreign attributes of the individual `<b2:ball>` entries, by index in the order the entries
+    /// Foreign attributes and child elements of the individual `<b2:ball>` entries, by index in the order the entries
     /// were added.
     ///
     /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
     /// feature.
     #[cfg(feature = "any")]
-    pub fn ball_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+    pub fn ball_any_extensions_mut(&mut self) -> &mut ItemAnyExtensions {
         &mut self.ball_any_extensions
     }
 }
@@ -3567,9 +3568,9 @@ impl BallBuilder {
 /// Builder for beam sets in a beam lattice
 pub struct BeamSetBuilder {
     #[cfg(feature = "any")]
-    ballref_any_extensions: ItemAttributeExtensions,
+    ballref_any_extensions: ItemAnyExtensions,
     #[cfg(feature = "any")]
-    refs_any_extensions: ItemAttributeExtensions,
+    refs_any_extensions: ItemAnyExtensions,
     #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     name: Option<String>,
@@ -3667,23 +3668,23 @@ impl BeamSetBuilder {
         &mut self.any_extensions
     }
 
-    /// Foreign attributes of the individual `<b:ref>` entries, by index in the order the entries
+    /// Foreign attributes and child elements of the individual `<b:ref>` entries, by index in the order the entries
     /// were added.
     ///
     /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
     /// feature.
     #[cfg(feature = "any")]
-    pub fn refs_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+    pub fn refs_any_extensions_mut(&mut self) -> &mut ItemAnyExtensions {
         &mut self.refs_any_extensions
     }
 
-    /// Foreign attributes of the individual `<b2:ballref>` entries, by index in the order the entries
+    /// Foreign attributes and child elements of the individual `<b2:ballref>` entries, by index in the order the entries
     /// were added.
     ///
     /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
     /// feature.
     #[cfg(feature = "any")]
-    pub fn ballref_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+    pub fn ballref_any_extensions_mut(&mut self) -> &mut ItemAnyExtensions {
         &mut self.ballref_any_extensions
     }
 }
