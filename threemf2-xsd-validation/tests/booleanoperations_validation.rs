@@ -62,6 +62,7 @@ fn create_cube_mesh() -> Mesh {
             Vertex::new(10.0, 10.0, 10.0), // 6
             Vertex::new(0.0, 10.0, 10.0),  // 7
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -181,6 +182,7 @@ fn create_cube_mesh() -> Mesh {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     Mesh {
@@ -188,6 +190,7 @@ fn create_cube_mesh() -> Mesh {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     }
 }
 
@@ -209,6 +212,7 @@ fn create_sphere_mesh() -> Mesh {
             Vertex::new(cx + r, cy + r, cz + r), // 6
             Vertex::new(cx - r, cy + r, cz + r), // 7
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -323,6 +327,7 @@ fn create_sphere_mesh() -> Mesh {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     Mesh {
@@ -330,6 +335,7 @@ fn create_sphere_mesh() -> Mesh {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     }
 }
 
@@ -341,8 +347,14 @@ fn create_cylinder_mesh() -> Mesh {
     let cy = 5.0_f64;
     let cz = 1.0_f64;
 
-    let mut vertices = Vertices { vertex: vec![] };
-    let mut triangles = Triangles { triangle: vec![] };
+    let mut vertices = Vertices {
+        vertex: vec![],
+        any_extensions: Default::default(),
+    };
+    let mut triangles = Triangles {
+        triangle: vec![],
+        any_extensions: Default::default(),
+    };
 
     // Top and bottom center vertices
     vertices.vertex.push(Vertex::new(cx, cy, cz)); // 0 - bottom center
@@ -413,6 +425,7 @@ fn create_cylinder_mesh() -> Mesh {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     }
 }
 
@@ -454,6 +467,7 @@ fn validate_simple_boolean_difference() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -468,6 +482,7 @@ fn validate_simple_boolean_difference() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -482,6 +497,7 @@ fn validate_simple_boolean_difference() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -494,6 +510,7 @@ fn validate_simple_boolean_difference() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -505,7 +522,9 @@ fn validate_simple_boolean_difference() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     });
 
     let mut buf = Cursor::new(Vec::new());
@@ -559,6 +578,7 @@ fn validate_simple_boolean_intersection() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -573,6 +593,7 @@ fn validate_simple_boolean_intersection() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -587,6 +608,7 @@ fn validate_simple_boolean_intersection() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -599,6 +621,7 @@ fn validate_simple_boolean_intersection() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -610,7 +633,9 @@ fn validate_simple_boolean_intersection() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     });
 
     let mut buf = Cursor::new(Vec::new());
@@ -680,6 +705,7 @@ fn validate_boolean_with_multiple_operands() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -694,6 +720,7 @@ fn validate_boolean_with_multiple_operands() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -708,6 +735,7 @@ fn validate_boolean_with_multiple_operands() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -720,6 +748,7 @@ fn validate_boolean_with_multiple_operands() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -731,7 +760,9 @@ fn validate_boolean_with_multiple_operands() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     });
 
     let mut buf = Cursor::new(Vec::new());
@@ -801,6 +832,7 @@ fn validate_nested_boolean_shapes() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -815,6 +847,7 @@ fn validate_nested_boolean_shapes() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -829,6 +862,7 @@ fn validate_nested_boolean_shapes() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 4,
@@ -843,6 +877,7 @@ fn validate_nested_boolean_shapes() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 5,
@@ -857,6 +892,7 @@ fn validate_nested_boolean_shapes() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -869,6 +905,7 @@ fn validate_nested_boolean_shapes() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -880,7 +917,9 @@ fn validate_nested_boolean_shapes() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     });
 
     let mut buf = Cursor::new(Vec::new());
@@ -935,6 +974,7 @@ fn validate_boolean_with_production_extension() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -951,6 +991,7 @@ fn validate_boolean_with_production_extension() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -967,6 +1008,7 @@ fn validate_boolean_with_production_extension() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -979,6 +1021,7 @@ fn validate_boolean_with_production_extension() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: Some(UuidResource::NotUuid(
@@ -994,7 +1037,9 @@ fn validate_boolean_with_production_extension() {
                 )),
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     });
 
     let mut buf = Cursor::new(Vec::new());

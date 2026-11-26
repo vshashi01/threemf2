@@ -73,6 +73,7 @@ fn validate_simple_colorgroup() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     // Create at least 4 triangles that reference the color group via pid and use vertex colors via p1, p2, p3
@@ -115,6 +116,7 @@ fn validate_simple_colorgroup() {
                 pid: OptionalResourceId::new(1),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -122,6 +124,7 @@ fn validate_simple_colorgroup() {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -143,6 +146,7 @@ fn validate_simple_colorgroup() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -154,6 +158,7 @@ fn validate_simple_colorgroup() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -165,7 +170,9 @@ fn validate_simple_colorgroup() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();
@@ -223,6 +230,7 @@ fn validate_texture2d_with_uv_mapping() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     // Create at least 4 triangles (XSD requirement)
@@ -265,6 +273,7 @@ fn validate_texture2d_with_uv_mapping() {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -272,6 +281,7 @@ fn validate_texture2d_with_uv_mapping() {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -293,6 +303,7 @@ fn validate_texture2d_with_uv_mapping() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -304,6 +315,7 @@ fn validate_texture2d_with_uv_mapping() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -315,7 +327,9 @@ fn validate_texture2d_with_uv_mapping() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();
@@ -406,6 +420,7 @@ fn validate_multi_properties() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     // Create at least 4 triangles (XSD requirement)
@@ -448,6 +463,7 @@ fn validate_multi_properties() {
                 pid: OptionalResourceId::new(4),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -455,6 +471,7 @@ fn validate_multi_properties() {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -476,6 +493,7 @@ fn validate_multi_properties() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -487,6 +505,7 @@ fn validate_multi_properties() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -498,7 +517,9 @@ fn validate_multi_properties() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();
@@ -548,6 +569,7 @@ fn validate_vertex_color_application() {
             Vertex::new(1.0, 1.0, 0.0), // 2: top-right
             Vertex::new(0.0, 1.0, 0.0), // 3: top-left
         ],
+        any_extensions: Default::default(),
     };
 
     // Create triangles with vertex color indices (at least 4 triangles for XSD)
@@ -596,6 +618,7 @@ fn validate_vertex_color_application() {
                 pid: OptionalResourceId::new(1),   // Reference color group 1
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -603,6 +626,7 @@ fn validate_vertex_color_application() {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -624,6 +648,7 @@ fn validate_vertex_color_application() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -635,6 +660,7 @@ fn validate_vertex_color_application() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -646,7 +672,9 @@ fn validate_vertex_color_application() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();

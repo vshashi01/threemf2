@@ -1,60 +1,88 @@
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
 #[cfg(feature = "write")]
-use instant_xml::ToXml;
-
-#[cfg(feature = "read")]
-use instant_xml::FromXml;
-
+use crate::threemf_namespaces::PROD_PREFIX;
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::threemf_namespaces::{CORE_NS, PROD_NS};
 use crate::{
-    model::domain::transform::Transform,
+    model::domain::{
+        any_extensions::{AnyAttributeExtensions, AnyExtensions},
+        transform::Transform,
+    },
     model::{
         PathResource, {ResourceId, UuidResource},
     },
-    threemf_namespaces::{CORE_NS, PROD_NS},
 };
 
 /// Container for component references that make up a components object.
 ///
 /// Components allow building complex objects by referencing other objects
 /// with transforms, enabling hierarchical model construction.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Debug, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(CORE_NS, p=PROD_NS), rename = "components")
-)]
 pub struct Components {
     /// Component references within this components object.
     pub component: Vec<Component>,
+
+    /// Foreign attributes of the components element (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Components {
+        tag: "components",
+        ns: CORE_NS,
+        prefixes: [(PROD_PREFIX, PROD_NS)],
+        force_prefix: false,
+        attributes: {},
+        elements: { component: Vec<Component> => (CORE_NS, "component") },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// Reference to an object with an applied transform.
 ///
 /// Components enable reusing objects in different positions, orientations,
 /// and scales within a components object.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Debug, Clone)]
-#[cfg_attr(any(feature = "write", feature = "read"), xml(ns(CORE_NS, p=PROD_NS), rename = "component"))]
 pub struct Component {
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     /// Unique identifier of the referenced object.
     pub objectid: ResourceId,
 
     /// Optional transform applied to the referenced object.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub transform: Option<Transform>,
 
     /// Optional path to the referenced object (Production extension).
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute, ns(PROD_NS)))]
     pub path: Option<PathResource>,
 
     /// Optional UUID for the referenced object (Production extension).
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(attribute, ns(PROD_NS), rename = "UUID")
-    )]
     pub uuid: Option<UuidResource>,
+
+    /// Foreign attributes and trailing child elements of the component
+    /// (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Component {
+        tag: "component",
+        ns: CORE_NS,
+        prefixes: [(PROD_PREFIX, PROD_NS)],
+        force_prefix: false,
+        attributes: {
+            objectid: ResourceId => ("", "objectid"),
+            transform: Option<Transform> => ("", "transform"),
+            path: Option<PathResource> => (PROD_NS, "path"),
+            uuid: Option<UuidResource> => (PROD_NS, "UUID"),
+        },
+        elements: {},
+        any: any_extensions: AnyExtensions,
+    }
 }
 
 #[cfg(feature = "write")]
@@ -84,6 +112,7 @@ mod write_tests {
             ])),
             path: None,
             uuid: None,
+            any_extensions: Default::default(),
         };
         let component_string = to_string(&component).unwrap();
 
@@ -103,6 +132,7 @@ mod write_tests {
             ])),
             path: Some(PathResource::try_from("//somePath//Component").unwrap()),
             uuid: Some(UuidResource::from("someComponentUUID")),
+            any_extensions: Default::default(),
         };
         let component_string = to_string(&component).unwrap();
 
@@ -124,14 +154,17 @@ mod write_tests {
                     ])),
                     path: None,
                     uuid: None,
+                    any_extensions: Default::default(),
                 },
                 Component {
                     objectid: 5,
                     transform: None,
                     path: None,
                     uuid: None,
+                    any_extensions: Default::default(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let components_string = to_string(&components).unwrap();
 
@@ -170,6 +203,7 @@ mod memory_optimized_read_tests {
                 ])),
                 path: None,
                 uuid: None,
+                any_extensions: Default::default(),
             }
         )
     }
@@ -192,6 +226,7 @@ mod memory_optimized_read_tests {
                 ])),
                 path: Some(PathResource::try_from("//somePath//Component").unwrap()),
                 uuid: Some(UuidResource::from("someComponentUUID")),
+                any_extensions: Default::default(),
             }
         )
     }
@@ -215,14 +250,17 @@ mod memory_optimized_read_tests {
                         ])),
                         path: None,
                         uuid: None,
+                        any_extensions: Default::default(),
                     },
                     Component {
                         objectid: 5,
                         transform: None,
                         path: None,
                         uuid: None,
+                        any_extensions: Default::default(),
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }

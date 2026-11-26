@@ -384,6 +384,43 @@ impl PartialEq for AnyElement {
 
 impl Eq for AnyElement {}
 
+/// Deserializes a foreign element with its subtree. `matches` is always `false`: slots decide
+/// themselves which elements are foreign, so derived types never pick an `AnyElement` up.
+#[cfg(feature = "read")]
+impl<'xml> instant_xml::FromXml<'xml> for AnyElement {
+    fn matches(_id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        false
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        if into.is_some() {
+            return Err(instant_xml::Error::DuplicateValue(field));
+        }
+        let id = deserializer.parent();
+        *into = Some(read::read_element(deserializer, id)?);
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: instant_xml::Kind = instant_xml::Kind::Element;
+}
+
+/// Serializes a foreign element with its subtree, declaring its namespaces on itself.
+#[cfg(feature = "write")]
+impl instant_xml::ToXml for AnyElement {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        write::write_standalone_element(serializer, self)
+    }
+}
+
 #[cfg(feature = "read")]
 pub(crate) mod read {
     use std::borrow::Cow;
@@ -572,12 +609,17 @@ pub(crate) mod write {
     /// the namespaces needed by them and by the top-level foreign elements of that element.
     ///
     /// Must be called while the serializer is in the attribute state of that element.
+    ///
+    /// `declared` lists `(prefix, namespace)` pairs already declared on this start tag, so they
+    /// are reused instead of declared twice.
     pub(crate) fn write_foreign_attributes<W: fmt::Write + ?Sized>(
         serializer: &mut Serializer<'_, W>,
+        declared: &[(String, String)],
         attributes: &AnyAttributes,
         elements: &[AnyElement],
     ) -> Result<ForeignScope, Error> {
         let mut scope = ForeignScope::new(serializer);
+        scope.prefixes.extend(declared.iter().cloned());
 
         let names = attributes
             .iter()
@@ -612,6 +654,19 @@ pub(crate) mod write {
             serializer.write_attr(&qualified("xmlns", &prefix), "", attribute.ns())?;
         }
         serializer.write_attr(&qualified(&prefix, attribute.name()), "", attribute.value())
+    }
+
+    /// Writes a foreign element outside of any slot (for example as an object shape), declaring
+    /// its namespaces on the element itself.
+    pub(crate) fn write_standalone_element<W: fmt::Write + ?Sized>(
+        serializer: &mut Serializer<'_, W>,
+        element: &AnyElement,
+    ) -> Result<(), Error> {
+        if !is_foreign_namespace(element.ns()) {
+            return Err(not_foreign(element.ns()));
+        }
+        let scope = ForeignScope::new(serializer);
+        write_element(serializer, scope, element)
     }
 
     /// Writes the foreign elements of an `xs:any` slot. Must be called in element content state.

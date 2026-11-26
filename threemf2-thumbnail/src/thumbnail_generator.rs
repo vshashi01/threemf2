@@ -721,13 +721,16 @@ mod tests {
                 disp2dgroup: vec![],
                 normvectorgroup: vec![],
                 displacement2d: vec![],
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
                 item: vec![],
+                any_extensions: Default::default(),
             },
             requiredextensions: ThreemfExtensions::default(),
             recommendedextensions: ThreemfExtensions::default(),
+            any_extensions: Default::default(),
         };
 
         let generator = ThumbnailGenerator::default();

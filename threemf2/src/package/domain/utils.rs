@@ -29,7 +29,7 @@ pub fn parse_xmlns_attributes(tag_content: &str) -> Vec<XmlNamespace> {
                     // Read namespace prefix
                     let mut prefix_str = String::new();
                     while let Some(&ch) = chars.peek() {
-                        if ch.is_alphabetic() || ch == '_' || ch == '-' {
+                        if ch.is_alphanumeric() || matches!(ch, '_' | '-' | '.') {
                             prefix_str.push(chars.next().unwrap());
                         } else {
                             break;
@@ -104,6 +104,25 @@ mod tests {
         let xml = r#"<model unit="millimeter">"#;
         let attrs = parse_xmlns_attributes(xml);
         assert_eq!(attrs, Vec::<XmlNamespace>::new());
+    }
+
+    #[test]
+    fn test_parse_xmlns_attributes_prefix_with_digits() {
+        let xml = r#"<model xmlns:b2="http://balls" xmlns:ns0="http://foreign" ns0:a="1">"#;
+        let attrs = parse_xmlns_attributes(xml);
+        assert_eq!(
+            attrs,
+            vec![
+                XmlNamespace {
+                    prefix: Some("b2".to_string()),
+                    uri: "http://balls".to_string()
+                },
+                XmlNamespace {
+                    prefix: Some("ns0".to_string()),
+                    uri: "http://foreign".to_string()
+                },
+            ]
+        );
     }
 
     #[test]

@@ -49,6 +49,7 @@ fn validate_simple_trianglesets() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -90,6 +91,7 @@ fn validate_simple_trianglesets() {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let triangle_sets = TriangleSets {
@@ -114,6 +116,7 @@ fn validate_simple_trianglesets() {
         vertices,
         trianglesets: Some(triangle_sets),
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -135,6 +138,7 @@ fn validate_simple_trianglesets() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -146,6 +150,7 @@ fn validate_simple_trianglesets() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -157,7 +162,9 @@ fn validate_simple_trianglesets() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();
@@ -204,9 +211,13 @@ fn validate_trianglesets_with_ref_ranges() {
         });
     }
 
-    let vertices = Vertices { vertex: vertices };
+    let vertices = Vertices {
+        vertex: vertices,
+        any_extensions: Default::default(),
+    };
     let triangles = Triangles {
         triangle: triangles,
+        any_extensions: Default::default(),
     };
 
     let triangle_sets = TriangleSets {
@@ -237,6 +248,7 @@ fn validate_trianglesets_with_ref_ranges() {
         vertices,
         trianglesets: Some(triangle_sets),
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -258,6 +270,7 @@ fn validate_trianglesets_with_ref_ranges() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -269,6 +282,7 @@ fn validate_trianglesets_with_ref_ranges() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -280,7 +294,9 @@ fn validate_trianglesets_with_ref_ranges() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();

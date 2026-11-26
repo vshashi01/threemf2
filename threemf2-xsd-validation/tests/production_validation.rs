@@ -51,6 +51,7 @@ fn validate_simple_production_model_with_uuids() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -92,6 +93,7 @@ fn validate_simple_production_model_with_uuids() {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -99,6 +101,7 @@ fn validate_simple_production_model_with_uuids() {
         vertices,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -120,6 +123,7 @@ fn validate_simple_production_model_with_uuids() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -131,6 +135,7 @@ fn validate_simple_production_model_with_uuids() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: Some(UuidResource::from("96681a5d-5b0f-e592-8c51-da7ed587cb5f")),
@@ -142,7 +147,9 @@ fn validate_simple_production_model_with_uuids() {
                 uuid: Some(UuidResource::from("b3de5826-ccb6-3dbc-d6c4-29a2d730766c")),
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();
@@ -170,6 +177,7 @@ fn validate_production_model_with_components() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles1 = Triangles {
@@ -185,6 +193,7 @@ fn validate_production_model_with_components() {
             };
             4
         ],
+        any_extensions: Default::default(),
     };
 
     let vertices2 = Vertices {
@@ -194,6 +203,7 @@ fn validate_production_model_with_components() {
             Vertex::new(2.5, 1.0, 0.0),
             Vertex::new(2.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles2 = Triangles {
@@ -209,6 +219,7 @@ fn validate_production_model_with_components() {
             };
             4
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh1 = Mesh {
@@ -216,6 +227,7 @@ fn validate_production_model_with_components() {
         vertices: vertices1,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let mesh2 = Mesh {
@@ -223,6 +235,7 @@ fn validate_production_model_with_components() {
         vertices: vertices2,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let component = Component {
@@ -230,6 +243,7 @@ fn validate_production_model_with_components() {
         transform: None,
         path: None,
         uuid: Some(UuidResource::from("comp-uuid-1234-5678-90ab-cdef12345678")),
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -252,6 +266,7 @@ fn validate_production_model_with_components() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -266,6 +281,7 @@ fn validate_production_model_with_components() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -280,10 +296,12 @@ fn validate_production_model_with_components() {
                     )),
                     kind: Some(ObjectKind::Components(component::Components {
                         component: vec![component],
+                        any_extensions: Default::default(),
                     })),
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -296,6 +314,7 @@ fn validate_production_model_with_components() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: Some(UuidResource::from("build-uuid-1234-5678-90ab-cdef12345678")),
@@ -307,7 +326,9 @@ fn validate_production_model_with_components() {
                 uuid: Some(UuidResource::from("item-uuid-1234-5678-90ab-cdef12345678")),
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();

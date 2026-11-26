@@ -110,6 +110,7 @@ mod write_tests {
                     Vertex::new(1.0, 1.0, 0.0),
                     Vertex::new(-1.0, 1.0, 0.0),
                 ],
+                any_extensions: Default::default(),
             },
             triangles: Triangles {
                 triangle: vec![
@@ -132,6 +133,7 @@ mod write_tests {
                         pid: OptionalResourceId::none(),
                     },
                 ],
+                any_extensions: Default::default(),
             },
             trianglesets: Some(TriangleSets {
                 trianglesets: vec![
@@ -162,6 +164,7 @@ mod write_tests {
                 ],
             }),
             beamlattice: None,
+            any_extensions: Default::default(),
         };
         let mesh_string = to_string(&mesh).unwrap();
 
@@ -243,7 +246,8 @@ mod memory_optimized_read_tests {
                         Vertex::new(1.0, -1.0, 0.0),
                         Vertex::new(1.0, 1.0, 0.0),
                         Vertex::new(-1.0, 1.0, 0.0),
-                    ]
+                    ],
+                    any_extensions: Default::default(),
                 },
                 triangles: Triangles {
                     triangle: vec![
@@ -265,7 +269,8 @@ mod memory_optimized_read_tests {
                             p3: OptionalResourceIndex::none(),
                             pid: OptionalResourceId::none(),
                         }
-                    ]
+                    ],
+                    any_extensions: Default::default(),
                 },
                 trianglesets: Some(TriangleSets {
                     trianglesets: vec![
@@ -296,6 +301,7 @@ mod memory_optimized_read_tests {
                     ],
                 }),
                 beamlattice: None,
+                any_extensions: Default::default(),
             }
         )
     }

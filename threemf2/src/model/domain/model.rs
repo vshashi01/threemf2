@@ -7,32 +7,36 @@ use instant_xml::ToXml;
 use instant_xml::FromXml;
 
 use crate::{
-    model::domain::{build::Build, metadata::Metadata, object::ObjectKind, resources::Resources},
-    threemf_namespaces::{
-        BEAM_LATTICE_NS, BOOLEAN_NS, CORE_NS, CORE_TRIANGLESET_NS, DISPLACEMENT_NS, MATERIAL_NS,
-        PROD_NS, SLICE_NS, ThreemfNamespace,
+    model::domain::{
+        any_extensions::AnyExtensions, build::Build, metadata::Metadata, object::ObjectKind,
+        resources::Resources,
     },
+    threemf_namespaces::ThreemfNamespace,
+};
+
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::threemf_namespaces::CORE_NS;
+#[cfg(feature = "write")]
+use crate::threemf_namespaces::{
+    BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_TRIANGLESET_NS,
+    CORE_TRIANGLESET_PREFIX, DISPLACEMENT_NS, DISPLACEMENT_PREFIX, MATERIAL_NS, MATERIAL_PREFIX,
+    PROD_NS, PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
 };
 
 /// Represents a 3MF model, the root element containing resources and build configuration.
 ///
 /// A model defines the 3D objects, materials, and build instructions for a 3MF package.
 /// It serves as the primary container for all 3MF data structures.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(any(feature="write", feature="read"), 
-xml(ns(CORE_NS, p = PROD_NS, t = CORE_TRIANGLESET_NS, b = BEAM_LATTICE_NS, bo = BOOLEAN_NS, s = SLICE_NS, m = MATERIAL_NS, d = DISPLACEMENT_NS), rename = "model"))]
 pub struct Model {
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     /// Measurement unit for the model.
     pub unit: Option<Unit>,
 
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     /// Required extension namespaces for this model.
     pub requiredextensions: ThreemfExtensions,
 
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     /// Recommended extension namespaces for this model.
     pub recommendedextensions: ThreemfExtensions,
 
@@ -44,6 +48,67 @@ pub struct Model {
 
     /// Build configuration specifying which objects to print.
     pub build: Build,
+
+    /// Foreign attributes and trailing child elements of the model (`xs:anyAttribute` /
+    /// `xs:any`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Model {
+        tag: "model",
+        ns: CORE_NS,
+        prefixes: [
+            (BEAM_LATTICE_PREFIX, BEAM_LATTICE_NS),
+            (BOOLEAN_PREFIX, BOOLEAN_NS),
+            (DISPLACEMENT_PREFIX, DISPLACEMENT_NS),
+            (MATERIAL_PREFIX, MATERIAL_NS),
+            (PROD_PREFIX, PROD_NS),
+            (SLICE_PREFIX, SLICE_NS),
+            (CORE_TRIANGLESET_PREFIX, CORE_TRIANGLESET_NS),
+        ],
+        force_prefix: false,
+        attributes: {
+            unit: Option<Unit> => ("", "unit"),
+            requiredextensions: ThreemfExtensions => ("", "requiredextensions"),
+            recommendedextensions: ThreemfExtensions => ("", "recommendedextensions"),
+        },
+        elements: {
+            metadata: Vec<Metadata> => (CORE_NS, "metadata"),
+            resources: Resources => (CORE_NS, "resources"),
+            build: Build => (CORE_NS, "build"),
+        },
+        any: any_extensions: AnyExtensions,
+        start_hook: declare_unknown_namespaces,
+    }
+}
+
+/// Declares the namespaces of unknown extensions listed in `requiredextensions` and
+/// `recommendedextensions`, which the static namespace context of [`Model`] cannot know.
+#[cfg(feature = "write")]
+fn declare_unknown_namespaces<W: std::fmt::Write + ?Sized>(
+    model: &Model,
+    serializer: &mut instant_xml::Serializer<W>,
+) -> Result<Vec<(String, String)>, instant_xml::Error> {
+    let mut declared: Vec<(String, String)> = Vec::new();
+    let extensions = model
+        .requiredextensions
+        .get()
+        .iter()
+        .chain(model.recommendedextensions.get());
+    for extension in extensions {
+        if let ThreemfNamespace::Unknown { prefix, uri } = extension
+            && !uri.is_empty()
+            && !declared.iter().any(|(p, _)| p == &**prefix)
+        {
+            serializer.write_attr(&format!("xmlns:{prefix}"), "", &**uri)?;
+            declared.push((prefix.to_string(), uri.to_string()));
+        }
+    }
+    Ok(declared)
 }
 
 /// Model measurement unit, default is millimeter
@@ -489,6 +554,7 @@ mod write_tests {
                 name: "Trial Metadata".into(),
                 preserve: None,
                 value: None,
+                any_extensions: Default::default(),
             }],
             resources: Resources {
                 basematerials: vec![],
@@ -506,6 +572,7 @@ mod write_tests {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 colorgroup: Vec::new(),
                 texture2dgroup: Vec::new(),
@@ -515,6 +582,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -526,7 +594,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
         let model_string = to_string(&model).unwrap();
 
@@ -574,14 +644,22 @@ mod write_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: Some(ObjectKind::Mesh(Mesh {
-                        vertices: Vertices { vertex: vec![] },
-                        triangles: Triangles { triangle: vec![] },
+                        vertices: Vertices {
+                            vertex: vec![],
+                            any_extensions: Default::default(),
+                        },
+                        triangles: Triangles {
+                            triangle: vec![],
+                            any_extensions: Default::default(),
+                        },
                         trianglesets: None,
                         beamlattice: None,
+                        any_extensions: Default::default(),
                     })),
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
@@ -593,6 +671,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -604,7 +683,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -631,14 +712,22 @@ mod write_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: Some(UuidResource::from("test-uuid")),
                     kind: Some(ObjectKind::Mesh(Mesh {
-                        vertices: Vertices { vertex: vec![] },
-                        triangles: Triangles { triangle: vec![] },
+                        vertices: Vertices {
+                            vertex: vec![],
+                            any_extensions: Default::default(),
+                        },
+                        triangles: Triangles {
+                            triangle: vec![],
+                            any_extensions: Default::default(),
+                        },
                         trianglesets: None,
                         beamlattice: None,
+                        any_extensions: Default::default(),
                     })),
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 colorgroup: Vec::new(),
                 texture2dgroup: Vec::new(),
@@ -648,6 +737,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -659,7 +749,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -689,8 +781,14 @@ mod write_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: Some(ObjectKind::Mesh(Mesh {
-                        vertices: Vertices { vertex: vec![] },
-                        triangles: Triangles { triangle: vec![] },
+                        vertices: Vertices {
+                            vertex: vec![],
+                            any_extensions: Default::default(),
+                        },
+                        triangles: Triangles {
+                            triangle: vec![],
+                            any_extensions: Default::default(),
+                        },
                         trianglesets: None,
                         beamlattice: Some(beamlattice::BeamLattice {
                             minlength: 0.1,
@@ -707,10 +805,12 @@ mod write_tests {
                             balls: None,
                             beamsets: None,
                         }),
+                        any_extensions: Default::default(),
                     })),
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 colorgroup: Vec::new(),
                 texture2dgroup: Vec::new(),
@@ -720,6 +820,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -731,7 +832,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -761,8 +864,14 @@ mod write_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: Some(ObjectKind::Mesh(Mesh {
-                        vertices: Vertices { vertex: vec![] },
-                        triangles: Triangles { triangle: vec![] },
+                        vertices: Vertices {
+                            vertex: vec![],
+                            any_extensions: Default::default(),
+                        },
+                        triangles: Triangles {
+                            triangle: vec![],
+                            any_extensions: Default::default(),
+                        },
                         trianglesets: None,
                         beamlattice: Some(beamlattice::BeamLattice {
                             minlength: 0.1,
@@ -779,10 +888,12 @@ mod write_tests {
                             balls: Some(beamlattice::Balls { ball: vec![] }),
                             beamsets: None,
                         }),
+                        any_extensions: Default::default(),
                     })),
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 colorgroup: Vec::new(),
                 texture2dgroup: Vec::new(),
@@ -792,6 +903,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -803,7 +915,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -837,16 +951,24 @@ mod write_tests {
                     pindex: OptionalResourceIndex::none(),
                     uuid: None,
                     kind: Some(ObjectKind::Mesh(Mesh {
-                        vertices: Vertices { vertex: vec![] },
-                        triangles: Triangles { triangle: vec![] },
+                        vertices: Vertices {
+                            vertex: vec![],
+                            any_extensions: Default::default(),
+                        },
+                        triangles: Triangles {
+                            triangle: vec![],
+                            any_extensions: Default::default(),
+                        },
                         trianglesets: Some(triangle_set::TriangleSets {
                             trianglesets: vec![],
                         }),
                         beamlattice: None,
+                        any_extensions: Default::default(),
                     })),
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 colorgroup: Vec::new(),
                 texture2dgroup: Vec::new(),
@@ -856,6 +978,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -867,7 +990,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -904,6 +1029,7 @@ mod write_tests {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
@@ -915,6 +1041,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -926,7 +1053,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -972,11 +1101,14 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
                 item: vec![],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -1007,8 +1139,14 @@ mod write_tests {
                         pindex: OptionalResourceIndex::none(),
                         uuid: Some(UuidResource::from("test-uuid")),
                         kind: Some(ObjectKind::Mesh(Mesh {
-                            vertices: Vertices { vertex: vec![] },
-                            triangles: Triangles { triangle: vec![] },
+                            vertices: Vertices {
+                                vertex: vec![],
+                                any_extensions: Default::default(),
+                            },
+                            triangles: Triangles {
+                                triangle: vec![],
+                                any_extensions: Default::default(),
+                            },
                             trianglesets: Some(triangle_set::TriangleSets {
                                 trianglesets: vec![],
                             }),
@@ -1027,10 +1165,12 @@ mod write_tests {
                                 balls: None,
                                 beamsets: None,
                             }),
+                            any_extensions: Default::default(),
                         })),
                         slicestackid: OptionalResourceId::new(236),
                         slicepath: Some(PathResource::try_from("/2D/stack_model.model").unwrap()),
                         meshresolution: Some(slice::MeshResolution::LowRes),
+                        any_extensions: Default::default(),
                     },
                     Object {
                         id: 2,
@@ -1051,6 +1191,7 @@ mod write_tests {
                             path: None,
                             booleans: vec![],
                         })),
+                        any_extensions: Default::default(),
                     },
                 ],
                 colorgroup: Vec::new(),
@@ -1061,6 +1202,7 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -1072,7 +1214,9 @@ mod write_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -1142,11 +1286,14 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
                 item: vec![],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -1182,11 +1329,14 @@ mod write_tests {
                 }],
                 normvectorgroup: vec![],
                 disp2dgroup: vec![],
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
                 item: vec![],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let namespaces = model.used_namespaces();
@@ -1251,11 +1401,14 @@ mod write_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
                 item: vec![],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
         let model_string = to_string(&model).unwrap();
 
@@ -1305,6 +1458,7 @@ mod memory_optimized_read_tests {
                     name: "Trial Metadata".into(),
                     preserve: None,
                     value: None,
+                    any_extensions: Default::default(),
                 }],
                 resources: Resources {
                     basematerials: vec![],
@@ -1322,6 +1476,7 @@ mod memory_optimized_read_tests {
                         slicepath: None,
                         meshresolution: None,
                         kind: None,
+                        any_extensions: Default::default(),
                     }],
                     colorgroup: Vec::new(),
                     texture2dgroup: Vec::new(),
@@ -1331,6 +1486,7 @@ mod memory_optimized_read_tests {
                     displacement2d: Vec::new(),
                     normvectorgroup: Vec::new(),
                     disp2dgroup: Vec::new(),
+                    any_extensions: Default::default(),
                 },
                 build: Build {
                     uuid: None,
@@ -1342,7 +1498,9 @@ mod memory_optimized_read_tests {
                         uuid: None,
                         ..Default::default()
                     }],
+                    any_extensions: Default::default(),
                 },
+                any_extensions: Default::default(),
             }
         );
     }
@@ -1374,6 +1532,7 @@ mod memory_optimized_read_tests {
                     name: "Trial Metadata".into(),
                     preserve: None,
                     value: None,
+                    any_extensions: Default::default(),
                 }],
                 resources: Resources {
                     basematerials: vec![],
@@ -1395,11 +1554,14 @@ mod memory_optimized_read_tests {
                                     PathResource::try_from("//somePath//Component").unwrap()
                                 ),
                                 uuid: Some(UuidResource::from("someComponentUUID")),
-                            }]
+                                any_extensions: Default::default(),
+                            }],
+                            any_extensions: Default::default(),
                         })),
                         slicestackid: OptionalResourceId::none(),
                         slicepath: None,
                         meshresolution: None,
+                        any_extensions: Default::default(),
                     }],
                     colorgroup: Vec::new(),
                     texture2dgroup: Vec::new(),
@@ -1409,6 +1571,7 @@ mod memory_optimized_read_tests {
                     displacement2d: Vec::new(),
                     normvectorgroup: Vec::new(),
                     disp2dgroup: Vec::new(),
+                    any_extensions: Default::default(),
                 },
                 build: Build {
                     uuid: Some(UuidResource::from("someBuildUUID")),
@@ -1420,9 +1583,23 @@ mod memory_optimized_read_tests {
                         uuid: Some(UuidResource::from("someItemUUID")),
                         ..Default::default()
                     }],
+                    any_extensions: Default::default(),
                 },
+                any_extensions: xml_lang_extensions(),
             }
         );
+    }
+
+    /// `xml:lang` is foreign (`##other`) content of `<model>`: kept with the `any` feature.
+    fn xml_lang_extensions() -> crate::model::domain::any_extensions::AnyExtensions {
+        #[allow(unused_mut)]
+        let mut extensions = crate::model::domain::any_extensions::AnyExtensions::default();
+        #[cfg(feature = "any")]
+        extensions
+            .attributes_mut()
+            .set(crate::model::domain::any::XML_NS, "lang", "en-us")
+            .unwrap();
+        extensions
     }
 
     #[derive(FromXml, Debug, PartialEq, Eq)]
@@ -1498,11 +1675,14 @@ mod memory_optimized_read_tests {
                     displacement2d: Vec::new(),
                     normvectorgroup: Vec::new(),
                     disp2dgroup: Vec::new(),
+                    any_extensions: Default::default(),
                 },
                 build: Build {
                     uuid: None,
                     item: vec![],
+                    any_extensions: Default::default(),
                 },
+                any_extensions: Default::default(),
             }
         );
     }

@@ -1,28 +1,20 @@
-#[cfg(feature = "write")]
-use instant_xml::ToXml;
-
-#[cfg(feature = "read")]
-use instant_xml::FromXml;
-
-use crate::{
-    model::domain::{
-        displacement::{Disp2DGroup, Displacement2D, NormVectorGroup},
-        material::{ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup},
-        object::Object,
-        slice::SliceStack,
-        types::{ResourceId, StrResource},
-    },
-    threemf_namespaces::{CORE_NS, DISPLACEMENT_NS, MATERIAL_NS, SLICE_NS},
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
+use crate::model::domain::{
+    any_extensions::{AnyAttributeExtensions, AnyExtensions},
+    displacement::{Disp2DGroup, Displacement2D, NormVectorGroup},
+    material::{ColorGroup, CompositeMaterials, MultiProperties, Texture2D, Texture2DGroup},
+    object::Object,
+    slice::SliceStack,
+    types::{ResourceId, StrResource},
 };
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::threemf_namespaces::{CORE_NS, DISPLACEMENT_NS, MATERIAL_NS, SLICE_NS};
+#[cfg(feature = "write")]
+use crate::threemf_namespaces::{MATERIAL_PREFIX, SLICE_PREFIX};
 
 /// A collection of Objects and other properties that are referenced by other elements.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Default, PartialEq, Debug, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(CORE_NS, s = SLICE_NS, m = MATERIAL_NS), rename = "resources")
-)]
 pub struct Resources {
     /// Collection of 3D objects. See [`Object`]
     pub object: Vec<Object>,
@@ -31,75 +23,121 @@ pub struct Resources {
     pub basematerials: Vec<BaseMaterials>,
 
     /// Collection of slice stacks. See [`SliceStack`]
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(SLICE_NS)))]
     pub slicestack: Vec<SliceStack>,
 
     /// Collection of color groups. See [`ColorGroup`]
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(MATERIAL_NS)))]
     pub colorgroup: Vec<ColorGroup>,
 
     /// Collection of texture coordinate groups. See [`Texture2DGroup`]
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(MATERIAL_NS)))]
     pub texture2dgroup: Vec<Texture2DGroup>,
 
     /// Collection of composite materials. See [`CompositeMaterials`]
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(MATERIAL_NS)))]
     pub compositematerials: Vec<CompositeMaterials>,
 
     /// Collection of multi-property definitions. See [`MultiProperties`]
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(MATERIAL_NS)))]
     pub multiproperties: Vec<MultiProperties>,
 
     /// Collection of 2D texture references. See [`Texture2D`]
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(MATERIAL_NS)))]
     pub texture2d: Vec<Texture2D>,
 
     /// Collection of displacement texture resources.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(DISPLACEMENT_NS)))]
     pub displacement2d: Vec<Displacement2D>,
 
     /// Collection of normalized vector groups for displacement.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(DISPLACEMENT_NS)))]
     pub normvectorgroup: Vec<NormVectorGroup>,
 
     /// Collection of displacement coordinate groups.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(ns(DISPLACEMENT_NS)))]
     pub disp2dgroup: Vec<Disp2DGroup>,
+
+    /// Foreign attributes and foreign resources (`xs:anyAttribute` / `xs:any`).
+    ///
+    /// Foreign resources are written after all known resources. Only populated with the `any`
+    /// feature.
+    pub any_extensions: AnyExtensions,
 }
 
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[derive(Default, PartialEq, Eq, Debug, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(CORE_NS), rename = "base")
-)]
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Resources {
+        tag: "resources",
+        ns: CORE_NS,
+        prefixes: [(MATERIAL_PREFIX, MATERIAL_NS), (SLICE_PREFIX, SLICE_NS)],
+        force_prefix: false,
+        attributes: {},
+        elements: {
+            object: Vec<Object> => (CORE_NS, "object"),
+            basematerials: Vec<BaseMaterials> => (CORE_NS, "basematerials"),
+            slicestack: Vec<SliceStack> => (SLICE_NS, "slicestack"),
+            colorgroup: Vec<ColorGroup> => (MATERIAL_NS, "colorgroup"),
+            texture2dgroup: Vec<Texture2DGroup> => (MATERIAL_NS, "texture2dgroup"),
+            compositematerials: Vec<CompositeMaterials> => (MATERIAL_NS, "compositematerials"),
+            multiproperties: Vec<MultiProperties> => (MATERIAL_NS, "multiproperties"),
+            texture2d: Vec<Texture2D> => (MATERIAL_NS, "texture2d"),
+            displacement2d: Vec<Displacement2D> => (DISPLACEMENT_NS, "displacement2d"),
+            normvectorgroup: Vec<NormVectorGroup> => (DISPLACEMENT_NS, "normvectorgroup"),
+            disp2dgroup: Vec<Disp2DGroup> => (DISPLACEMENT_NS, "disp2dgroup"),
+        },
+        any: any_extensions: AnyExtensions,
+    }
+}
+
 /// A single base material entry with name and color.
+#[derive(Default, PartialEq, Eq, Debug, Clone)]
 pub struct Base {
     /// Name of the base material.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub name: StrResource,
 
     /// Display color of the base material in hex format.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub displaycolor: StrResource, //ToDo: Make this a specific color struct for flexibility
+
+    /// Foreign attributes of the base material (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
 }
 
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(CORE_NS), rename = "basematerials")
-)]
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Base {
+        tag: "base",
+        ns: CORE_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: {
+            name: StrResource => ("", "name"),
+            displaycolor: StrResource => ("", "displaycolor"),
+        },
+        elements: {},
+        any: any_extensions: AnyAttributeExtensions,
+    }
+}
+
 /// A group of base materials referenced by objects.
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct BaseMaterials {
     /// Unique identifier for this base materials group.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Base material entries in this group.
     pub base: Vec<Base>,
+
+    /// Foreign attributes of the base materials group (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    BaseMaterials {
+        tag: "basematerials",
+        ns: CORE_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: { id: ResourceId => ("", "id") },
+        elements: { base: Vec<Base> => (CORE_NS, "base") },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 #[cfg(feature = "write")]
@@ -156,6 +194,7 @@ mod write_tests {
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -167,6 +206,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -186,7 +226,9 @@ mod write_tests {
                 base: vec![Base {
                     name: "Base".into(),
                     displaycolor: "#FEFEFE00".into(),
+                    any_extensions: Default::default(),
                 }],
+                any_extensions: Default::default(),
             }],
             slicestack: vec![],
             colorgroup: Vec::new(),
@@ -197,6 +239,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -236,6 +279,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -251,6 +295,7 @@ mod write_tests {
         let base = Base {
             name: "Base".into(),
             displaycolor: "#FEF100".into(),
+            any_extensions: Default::default(),
         };
         let base_string = to_string(&base).unwrap();
 
@@ -269,12 +314,15 @@ mod write_tests {
                 Base {
                     name: "Base 1".into(),
                     displaycolor: "#FEF100".into(),
+                    any_extensions: Default::default(),
                 },
                 Base {
                     name: "Base 2".into(),
                     displaycolor: "#FEF369".into(),
+                    any_extensions: Default::default(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let base_string = to_string(&basematerials).unwrap();
 
@@ -317,6 +365,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -362,6 +411,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -406,6 +456,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -450,6 +501,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -481,6 +533,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -525,6 +578,7 @@ mod write_tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let resources_string = to_string(&resources).unwrap();
 
@@ -578,6 +632,7 @@ mod memory_optimized_read_tests {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
@@ -589,6 +644,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -610,7 +666,9 @@ mod memory_optimized_read_tests {
                     base: vec![Base {
                         name: "Base".into(),
                         displaycolor: "#FEFEFE00".into(),
+                        any_extensions: Default::default(),
                     }],
+                    any_extensions: Default::default(),
                 }],
                 slicestack: vec![],
                 colorgroup: Vec::new(),
@@ -621,6 +679,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -655,6 +714,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -672,6 +732,7 @@ mod memory_optimized_read_tests {
             Base {
                 name: "Base".into(),
                 displaycolor: "#FEF100".into(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -692,12 +753,15 @@ mod memory_optimized_read_tests {
                     Base {
                         name: "Base 1".into(),
                         displaycolor: "#FEF100".into(),
+                        any_extensions: Default::default(),
                     },
                     Base {
                         name: "Base 2".into(),
                         displaycolor: "#FEF369".into(),
+                        any_extensions: Default::default(),
                     },
                 ],
+                any_extensions: Default::default(),
             }
         );
     }
@@ -740,6 +804,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -785,6 +850,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -829,6 +895,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -873,6 +940,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -906,6 +974,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -950,6 +1019,7 @@ mod memory_optimized_read_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             }
         );
     }

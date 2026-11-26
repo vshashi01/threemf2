@@ -47,6 +47,7 @@ fn validate_simple_slice() {
             mesh::Vertex::new(10.0, 10.0, 0.0),
             mesh::Vertex::new(0.0, 10.0, 0.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -88,6 +89,7 @@ fn validate_simple_slice() {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     // Create slice data
@@ -154,7 +156,9 @@ fn validate_simple_slice() {
             triangles,
             trianglesets: None,
             beamlattice: None,
+            any_extensions: Default::default(),
         })),
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -174,6 +178,7 @@ fn validate_simple_slice() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -185,7 +190,9 @@ fn validate_simple_slice() {
                 path: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     // Write to buffer
@@ -322,6 +329,7 @@ fn validate_slice_multiple_polygons() {
                     Vertex::new(10.0, 10.0, 0.0),
                     Vertex::new(0.0, 10.0, 0.0),
                 ],
+                any_extensions: Default::default(),
             },
             triangles: Triangles {
                 triangle: vec![
@@ -362,10 +370,13 @@ fn validate_slice_multiple_polygons() {
                         pid: OptionalResourceId::none(),
                     },
                 ],
+                any_extensions: Default::default(),
             },
             trianglesets: None,
             beamlattice: None,
+            any_extensions: Default::default(),
         })),
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -385,6 +396,7 @@ fn validate_slice_multiple_polygons() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -396,7 +408,9 @@ fn validate_slice_multiple_polygons() {
                 path: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     // Write and validate

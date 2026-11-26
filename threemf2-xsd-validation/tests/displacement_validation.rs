@@ -131,6 +131,7 @@ fn validate_displacement_model_schema() {
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 meshresolution: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -194,6 +195,7 @@ fn validate_displacement_model_schema() {
                     },
                 ],
             }],
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -205,7 +207,9 @@ fn validate_displacement_model_schema() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();

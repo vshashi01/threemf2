@@ -37,6 +37,8 @@ pub enum ObjectKindView {
     BooleanShape,
     /// Object contains a displacement mesh.
     DisplacementMesh,
+    /// Object shape is a foreign element (`xs:any`). Only produced with the `any` feature.
+    Any,
 }
 
 /// Stable view over a model.
@@ -237,6 +239,8 @@ impl<'a> ObjectView<'a> {
             Some(object::ObjectKind::Components(_)) => ObjectKindView::Components,
             Some(object::ObjectKind::BooleanShape(_)) => ObjectKindView::BooleanShape,
             Some(object::ObjectKind::DisplacementMesh(_)) => ObjectKindView::DisplacementMesh,
+            #[cfg(feature = "any")]
+            Some(object::ObjectKind::Any(_)) => ObjectKindView::Any,
             None => panic!("Invalid object found"),
         }
     }
@@ -715,6 +719,8 @@ pub struct ComponentView<'a> {
     transform: Option<[f64; 16]>,
     path: Option<&'a str>,
     uuid: Option<Cow<'a, str>>,
+    #[cfg(feature = "any")]
+    any_extensions: &'a AnyExtensions,
 }
 
 impl<'a> ComponentView<'a> {
@@ -771,6 +777,8 @@ impl<'a> ComponentsObjectView<'a> {
     pub fn components(&self) -> impl Iterator<Item = ComponentView<'a>> + '_ {
         self.components.component.iter().map(|c| ComponentView {
             objectid: c.objectid,
+            #[cfg(feature = "any")]
+            any_extensions: &c.any_extensions,
             transform: c.transform.as_ref().map(Transform::to_column_major_matrix),
             path: c.path.as_ref().map(|path| path.as_str()),
             uuid: c
@@ -1710,4 +1718,108 @@ pub fn get_texture_for_group<'a>(
     model: &'a Model,
 ) -> Option<Texture2DView<'a>> {
     get_texture2d_by_id(texture2dgroup.texid, model)
+}
+
+#[cfg(feature = "any")]
+mod any_views {
+    use super::{
+        BooleanShapeView, ComponentView, ComponentsObjectView, DisplacementMeshObjectView,
+        MeshObjectView, ModelView, ObjectView,
+    };
+    use crate::model::domain::{
+        any::AnyElement,
+        any_extensions::{AnyAttributeExtensions, AnyExtensions, any_extensions_view_methods},
+        object::ObjectKind,
+    };
+
+    impl<'a> ModelView<'a> {
+        /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the `<model>` element.
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.model.any_extensions
+        }
+
+        /// Foreign attributes of the `<build>` element. Requires the `any` feature.
+        pub fn build_any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.model.build.any_extensions
+        }
+
+        /// Foreign attributes and foreign resources of the `<resources>` element.
+        /// Requires the `any` feature.
+        pub fn resources_any_extensions(&self) -> &'a AnyExtensions {
+            &self.model.resources.any_extensions
+        }
+    }
+
+    impl<'a> ObjectView<'a> {
+        /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the object.
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.object.any_extensions
+        }
+
+        /// The object shape, if it is a foreign element instead of a mesh, components, boolean
+        /// shape or displacement mesh. Requires the `any` feature.
+        pub fn any_shape(&self) -> Option<&'a AnyElement> {
+            match &self.object.kind {
+                Some(ObjectKind::Any(element)) => Some(element),
+                _ => None,
+            }
+        }
+    }
+
+    impl<'a> MeshObjectView<'a> {
+        /// Foreign content of the object. Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.object.any_extensions
+        }
+
+        /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the `<mesh>` element.
+        /// Requires the `any` feature.
+        pub fn mesh_any_extensions(&self) -> &'a AnyExtensions {
+            &self.mesh.any_extensions
+        }
+    }
+
+    impl<'a> DisplacementMeshObjectView<'a> {
+        /// Foreign content of the object. Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.object.any_extensions
+        }
+    }
+
+    impl<'a> ComponentsObjectView<'a> {
+        /// Foreign content of the object. Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.object.any_extensions
+        }
+
+        /// Foreign attributes of the `<components>` element. Requires the `any` feature.
+        pub fn components_any_extensions(&self) -> &'a AnyAttributeExtensions {
+            &self.components.any_extensions
+        }
+    }
+
+    impl<'a> BooleanShapeView<'a> {
+        /// Foreign content of the object. Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            &self.object.any_extensions
+        }
+    }
+
+    impl<'a> ComponentView<'a> {
+        /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the component.
+        /// Requires the `any` feature.
+        pub fn any_extensions(&self) -> &'a AnyExtensions {
+            self.any_extensions
+        }
+    }
+
+    any_extensions_view_methods!(ModelView);
+    any_extensions_view_methods!(ObjectView);
+    any_extensions_view_methods!(MeshObjectView);
+    any_extensions_view_methods!(DisplacementMeshObjectView);
+    any_extensions_view_methods!(ComponentsObjectView);
+    any_extensions_view_methods!(BooleanShapeView);
+    any_extensions_view_methods!(ComponentView);
 }

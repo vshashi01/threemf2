@@ -64,6 +64,7 @@ fn validate_beamlattice_with_trianglesets() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -105,6 +106,7 @@ fn validate_beamlattice_with_trianglesets() {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let beamlattice = BeamLattice {
@@ -164,6 +166,7 @@ fn validate_beamlattice_with_trianglesets() {
         vertices,
         trianglesets: Some(triangle_sets),
         beamlattice: Some(beamlattice),
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -188,6 +191,7 @@ fn validate_beamlattice_with_trianglesets() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -199,6 +203,7 @@ fn validate_beamlattice_with_trianglesets() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -210,7 +215,9 @@ fn validate_beamlattice_with_trianglesets() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();

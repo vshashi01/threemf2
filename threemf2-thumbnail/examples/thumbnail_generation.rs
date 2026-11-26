@@ -58,6 +58,7 @@ fn create_cube_model() -> Model {
             Vertex::new(1.0, 1.0, 1.0),    // 6
             Vertex::new(-1.0, 1.0, 1.0),   // 7
         ],
+        any_extensions: Default::default(),
     };
 
     // Define triangles for the cube (6 faces * 2 triangles each = 12 triangles)
@@ -178,6 +179,7 @@ fn create_cube_model() -> Model {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -185,6 +187,7 @@ fn create_cube_model() -> Model {
         triangles,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let object = Object {
@@ -200,6 +203,7 @@ fn create_cube_model() -> Model {
         meshresolution: None,
         slicestackid: OptionalResourceId::none(),
         slicepath: None,
+        any_extensions: Default::default(),
     };
 
     let resources = Resources {
@@ -214,6 +218,7 @@ fn create_cube_model() -> Model {
         disp2dgroup: vec![],
         normvectorgroup: vec![],
         displacement2d: vec![],
+        any_extensions: Default::default(),
     };
 
     let build = Build {
@@ -226,6 +231,7 @@ fn create_cube_model() -> Model {
             path: None,
             ..Default::default()
         }],
+        any_extensions: Default::default(),
     };
 
     Model {
@@ -235,5 +241,6 @@ fn create_cube_model() -> Model {
         build,
         recommendedextensions: ThreemfExtensions::default(),
         requiredextensions: ThreemfExtensions::default(),
+        any_extensions: Default::default(),
     }
 }

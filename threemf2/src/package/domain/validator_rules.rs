@@ -406,6 +406,7 @@ mod tests {
             metadata: Vec::new(),
             resources,
             build,
+            any_extensions: Default::default(),
         }
     }
 
@@ -423,6 +424,7 @@ mod tests {
             slicepath: None,
             meshresolution: None,
             kind: None,
+            any_extensions: Default::default(),
         }
     }
 
@@ -440,6 +442,7 @@ mod tests {
             slicepath: None,
             meshresolution: None,
             kind: None,
+            any_extensions: Default::default(),
         }
     }
 
@@ -447,6 +450,7 @@ mod tests {
         Build {
             uuid: None,
             item: Vec::new(),
+            any_extensions: Default::default(),
         }
     }
 
@@ -468,6 +472,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -489,6 +494,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -512,6 +518,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -535,6 +542,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -563,6 +571,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -576,6 +585,7 @@ mod tests {
         let basematerials = vec![BaseMaterials {
             id: 10,
             base: vec![],
+            any_extensions: Default::default(),
         }];
         let resources = Resources {
             object: vec![create_test_object_with_pid(1, 10)],
@@ -589,6 +599,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -610,6 +621,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -638,6 +650,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -660,6 +673,7 @@ mod tests {
             slicepath: None,
             meshresolution: None,
             kind: None,
+            any_extensions: Default::default(),
         };
         let resources = Resources {
             object: vec![object],
@@ -673,6 +687,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -687,6 +702,7 @@ mod tests {
         let basematerials = vec![BaseMaterials {
             id: 5,
             base: vec![],
+            any_extensions: Default::default(),
         }];
         let resources = Resources {
             object: vec![
@@ -705,6 +721,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -731,6 +748,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -746,6 +764,7 @@ mod tests {
         Build {
             uuid: None,
             item: items,
+            any_extensions: Default::default(),
         }
     }
 
@@ -766,6 +785,7 @@ mod tests {
             transform: None,
             path: None,
             uuid: None,
+            any_extensions: Default::default(),
         }
     }
 
@@ -787,7 +807,9 @@ mod tests {
             meshresolution: None,
             kind: Some(ObjectKind::Components(component::Components {
                 component: components,
+                any_extensions: Default::default(),
             })),
+            any_extensions: Default::default(),
         }
     }
 
@@ -805,11 +827,19 @@ mod tests {
             slicepath: None,
             meshresolution: None,
             kind: Some(ObjectKind::Mesh(mesh::Mesh {
-                vertices: mesh::Vertices { vertex: vec![] },
-                triangles: mesh::Triangles { triangle: vec![] },
+                vertices: mesh::Vertices {
+                    vertex: vec![],
+                    any_extensions: Default::default(),
+                },
+                triangles: mesh::Triangles {
+                    triangle: vec![],
+                    any_extensions: Default::default(),
+                },
                 trianglesets: None,
                 beamlattice: None,
+                any_extensions: Default::default(),
             })),
+            any_extensions: Default::default(),
         }
     }
 
@@ -829,6 +859,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -855,6 +886,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(2)]); // References object 2 which doesn't exist
         let model = create_test_model(resources, build);
@@ -884,6 +916,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1), // Valid
@@ -918,6 +951,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let build = create_test_build_with_items(vec![]);
         let model = create_test_model(resources, build);
@@ -948,6 +982,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -976,6 +1011,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -1016,6 +1052,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -1043,6 +1080,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -1070,6 +1108,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -1100,6 +1139,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -1125,6 +1165,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let build = create_test_build_with_items(vec![create_test_build_item(1)]);
         let model = create_test_model(resources, build);
@@ -1150,6 +1191,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let model = create_test_model(resources, create_empty_build());
 
@@ -1175,6 +1217,7 @@ mod tests {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         };
         let build = create_test_build_with_items(vec![
             create_test_build_item(1),   // Valid

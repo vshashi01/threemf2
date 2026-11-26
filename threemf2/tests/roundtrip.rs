@@ -28,6 +28,7 @@ mod tests {
                 Vertex::new(0.0, 2.0, 0.0),
                 Vertex::new(0.0, 1.0, 1.0),
             ],
+            any_extensions: Default::default(),
         };
 
         let triangles = Triangles {
@@ -40,6 +41,7 @@ mod tests {
                 p3: OptionalResourceIndex::none(),
                 pid: OptionalResourceId::none(),
             }],
+            any_extensions: Default::default(),
         };
 
         let mesh = Mesh {
@@ -47,6 +49,7 @@ mod tests {
             vertices,
             trianglesets: None,
             beamlattice: None,
+            any_extensions: Default::default(),
         };
 
         let model = Model {
@@ -68,6 +71,7 @@ mod tests {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
@@ -79,6 +83,7 @@ mod tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -90,7 +95,9 @@ mod tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let mut builder = ThreemfPackageBuilder::new();

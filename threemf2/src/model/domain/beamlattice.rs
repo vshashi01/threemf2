@@ -731,9 +731,13 @@ mod memory_optimized_read_tests {
                         Vertex::new(1.0, -1.0, 0.0),
                         Vertex::new(1.0, 1.0, 0.0),
                         Vertex::new(-1.0, 1.0, 0.0),
-                    ]
+                    ],
+                    any_extensions: Default::default(),
                 },
-                triangles: Triangles { triangle: vec![] },
+                triangles: Triangles {
+                    triangle: vec![],
+                    any_extensions: Default::default()
+                },
                 trianglesets: None,
                 beamlattice: Some(BeamLattice {
                     minlength: 0.0001,
@@ -786,6 +790,7 @@ mod memory_optimized_read_tests {
                     balls: None,
                     beamsets: None,
                 }),
+                any_extensions: Default::default(),
             }
         )
     }
@@ -833,9 +838,13 @@ mod memory_optimized_read_tests {
                                     Vertex::new(1.0, -1.0, 0.0),
                                     Vertex::new(1.0, 1.0, 0.0),
                                     Vertex::new(-1.0, 1.0, 0.0),
-                                ]
+                                ],
+                                any_extensions: Default::default(),
                             },
-                            triangles: Triangles { triangle: vec![] },
+                            triangles: Triangles {
+                                triangle: vec![],
+                                any_extensions: Default::default()
+                            },
                             trianglesets: None,
                             beamlattice: Some(BeamLattice {
                                 minlength: 0.0001,
@@ -895,7 +904,9 @@ mod memory_optimized_read_tests {
                                 }),
                                 beamsets: None,
                             }),
+                            any_extensions: Default::default(),
                         })),
+                        any_extensions: Default::default(),
                     }],
                     basematerials: vec![],
                     slicestack: vec![],
@@ -907,11 +918,14 @@ mod memory_optimized_read_tests {
                     displacement2d: Vec::new(),
                     normvectorgroup: Vec::new(),
                     disp2dgroup: Vec::new(),
+                    any_extensions: Default::default(),
                 },
                 build: Build {
                     uuid: None,
-                    item: vec![]
-                }
+                    item: vec![],
+                    any_extensions: Default::default(),
+                },
+                any_extensions: Default::default(),
             }
         )
     }

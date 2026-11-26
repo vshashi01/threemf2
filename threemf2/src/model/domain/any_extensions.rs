@@ -146,13 +146,60 @@ impl AnyAttributeExtensions {
     }
 }
 
+/// Common access to [`AnyExtensions`] and [`AnyAttributeExtensions`] for the generated
+/// read/write code. Attribute-only slots have no element storage.
+#[cfg(feature = "any")]
+#[cfg_attr(not(all(feature = "read", feature = "write")), allow(dead_code))]
+pub(crate) trait AnySlot {
+    fn slot_attributes(&self) -> &AnyAttributes;
+    fn slot_attributes_mut(&mut self) -> &mut AnyAttributes;
+    fn slot_elements(&self) -> &[AnyElement];
+    /// `None` if the slot cannot hold elements.
+    fn slot_elements_mut(&mut self) -> Option<&mut Vec<AnyElement>>;
+}
+
+#[cfg(feature = "any")]
+impl AnySlot for AnyExtensions {
+    fn slot_attributes(&self) -> &AnyAttributes {
+        &self.attributes
+    }
+    fn slot_attributes_mut(&mut self) -> &mut AnyAttributes {
+        &mut self.attributes
+    }
+    fn slot_elements(&self) -> &[AnyElement] {
+        &self.elements
+    }
+    fn slot_elements_mut(&mut self) -> Option<&mut Vec<AnyElement>> {
+        Some(&mut self.elements)
+    }
+}
+
+#[cfg(feature = "any")]
+impl AnySlot for AnyAttributeExtensions {
+    fn slot_attributes(&self) -> &AnyAttributes {
+        &self.attributes
+    }
+    fn slot_attributes_mut(&mut self) -> &mut AnyAttributes {
+        &mut self.attributes
+    }
+    fn slot_elements(&self) -> &[AnyElement] {
+        &[]
+    }
+    fn slot_elements_mut(&mut self) -> Option<&mut Vec<AnyElement>> {
+        None
+    }
+}
+
 /// Generates the `any_*` builder methods for a builder with a private
-/// `any_extensions: AnyExtensions` field. `$error` must have an
-/// `InvalidAnyExtension(AnyError)` variant.
+/// `any_extensions: AnyExtensions` field. Pass the generic parameter for generic builders, as in
+/// `any_extensions_builder_methods!(ObjectBuilder<T>, T)`.
+///
+/// The methods return [`AnyError`]; every error type returned from a builder closure converts it
+/// with `?`.
 #[cfg(feature = "any")]
 macro_rules! any_extensions_builder_methods {
-    ($builder:ty, $error:ident) => {
-        impl $builder {
+    ($builder:ty $(, $generic:ident)?) => {
+        impl$(<$generic>)? $builder {
             /// Adds a foreign attribute (`xs:anyAttribute`) `name` in namespace `ns`, replacing
             /// an existing value. Requires the `any` feature.
             ///
@@ -165,11 +212,8 @@ macro_rules! any_extensions_builder_methods {
                 ns: &str,
                 name: &str,
                 value: &str,
-            ) -> Result<&mut Self, $error> {
-                self.any_extensions
-                    .attributes_mut()
-                    .set(ns, name, value)
-                    .map_err($error::InvalidAnyExtension)?;
+            ) -> Result<&mut Self, $crate::model::domain::any_extensions::AnyError> {
+                self.any_extensions.attributes_mut().set(ns, name, value)?;
                 Ok(self)
             }
 
@@ -181,10 +225,8 @@ macro_rules! any_extensions_builder_methods {
             pub fn any_element(
                 &mut self,
                 element: $crate::model::domain::any::AnyElement,
-            ) -> Result<&mut Self, $error> {
-                self.any_extensions
-                    .push_element(element)
-                    .map_err($error::InvalidAnyExtension)?;
+            ) -> Result<&mut Self, $crate::model::domain::any_extensions::AnyError> {
+                self.any_extensions.push_element(element)?;
                 Ok(self)
             }
 

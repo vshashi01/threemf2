@@ -221,7 +221,13 @@ impl ThreemfPackage {
 
             // Add kept xmlns attributes
             for ns in &xmlns_attrs {
-                if keep_uris.contains(ns.uri.as_str()) {
+                // Only drop declarations of 3MF namespaces known to this library that the model does
+                // not use. Any other namespace (an unknown extension or foreign content) is kept.
+                let is_known_3mf_namespace = !matches!(
+                    ThreemfNamespace::try_from_uri(&ns.uri, None),
+                    None | Some(ThreemfNamespace::Unknown { .. })
+                );
+                if keep_uris.contains(ns.uri.as_str()) || !is_known_3mf_namespace {
                     new_tag.push(' ');
                     let attr_name = if let Some(prefix) = &ns.prefix {
                         format!("xmlns:{}", prefix)
@@ -596,6 +602,7 @@ mod tests {
                             slicepath: None,
                             meshresolution: None,
                             kind: None,
+                            any_extensions: Default::default(),
                         }],
                         basematerials: vec![],
                         slicestack: vec![],
@@ -607,11 +614,14 @@ mod tests {
                         displacement2d: Vec::new(),
                         normvectorgroup: Vec::new(),
                         disp2dgroup: Vec::new(),
+                        any_extensions: Default::default(),
                     },
                     build: Build {
                         uuid: None,
                         item: vec![],
+                        any_extensions: Default::default(),
                     },
+                    any_extensions: Default::default(),
                 },
                 HashMap::new(),
                 HashMap::new(),
@@ -675,11 +685,14 @@ mod tests {
                     displacement2d: Vec::new(),
                     normvectorgroup: Vec::new(),
                     disp2dgroup: Vec::new(),
+                    any_extensions: Default::default(),
                 },
                 build: Build {
                     uuid: None,
                     item: vec![],
+                    any_extensions: Default::default(),
                 },
+                any_extensions: Default::default(),
             },
             HashMap::new(),
             HashMap::new(),
@@ -771,11 +784,14 @@ mod tests {
                     displacement2d: Vec::new(),
                     normvectorgroup: Vec::new(),
                     disp2dgroup: Vec::new(),
+                    any_extensions: Default::default(),
                 },
                 build: Build {
                     uuid: None,
                     item: vec![],
+                    any_extensions: Default::default(),
                 },
+                any_extensions: Default::default(),
             },
             HashMap::new(),
             HashMap::from([(thumbnail_target.to_owned(), thumbnail_rep)]),

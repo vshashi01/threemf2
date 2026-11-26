@@ -52,4 +52,7 @@ pub mod any_extensions;
 #[cfg(feature = "read")]
 pub(crate) mod xml_helpers;
 
+#[cfg(any(feature = "read", feature = "write"))]
+pub(crate) mod xml_struct;
+
 mod constants;

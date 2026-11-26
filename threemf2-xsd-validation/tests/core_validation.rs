@@ -33,6 +33,7 @@ fn validate_simple_mesh_against_core_xsd() {
             Vertex::new(0.0, 1.0, 1.0),
             Vertex::new(1.0, 0.0, 0.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -74,6 +75,7 @@ fn validate_simple_mesh_against_core_xsd() {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -81,6 +83,7 @@ fn validate_simple_mesh_against_core_xsd() {
         vertices,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -102,6 +105,7 @@ fn validate_simple_mesh_against_core_xsd() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -113,6 +117,7 @@ fn validate_simple_mesh_against_core_xsd() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -124,7 +129,9 @@ fn validate_simple_mesh_against_core_xsd() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();
@@ -155,6 +162,7 @@ fn validate_model_with_metadata_against_core_xsd() {
             Vertex::new(0.5, 1.0, 0.0),
             Vertex::new(0.5, 0.5, 1.0),
         ],
+        any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -196,6 +204,7 @@ fn validate_model_with_metadata_against_core_xsd() {
                 pid: OptionalResourceId::none(),
             },
         ],
+        any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -203,6 +212,7 @@ fn validate_model_with_metadata_against_core_xsd() {
         vertices,
         trianglesets: None,
         beamlattice: None,
+        any_extensions: Default::default(),
     };
 
     let model = Model {
@@ -214,11 +224,13 @@ fn validate_model_with_metadata_against_core_xsd() {
                 name: "Title".into(),
                 value: Some("Test Model".into()),
                 preserve: Some(Preserve(false)),
+                any_extensions: Default::default(),
             },
             Metadata {
                 name: "Description".into(),
                 value: Some("A test model for XSD validation".into()),
                 preserve: Some(Preserve(false)),
+                any_extensions: Default::default(),
             },
         ],
         resources: Resources {
@@ -235,6 +247,7 @@ fn validate_model_with_metadata_against_core_xsd() {
                 meshresolution: None,
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
+                any_extensions: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -246,6 +259,7 @@ fn validate_model_with_metadata_against_core_xsd() {
             displacement2d: Vec::new(),
             normvectorgroup: Vec::new(),
             disp2dgroup: Vec::new(),
+            any_extensions: Default::default(),
         },
         build: Build {
             uuid: None,
@@ -257,7 +271,9 @@ fn validate_model_with_metadata_against_core_xsd() {
                 uuid: None,
                 ..Default::default()
             }],
+            any_extensions: Default::default(),
         },
+        any_extensions: Default::default(),
     };
 
     let mut builder = ThreemfPackageBuilder::new();
@@ -296,6 +312,7 @@ fn validate_model_with_different_units() {
                 Vertex::new(0.5, 1.0, 0.0),
                 Vertex::new(0.5, 0.5, 1.0),
             ],
+            any_extensions: Default::default(),
         };
 
         let triangles = Triangles {
@@ -337,6 +354,7 @@ fn validate_model_with_different_units() {
                     pid: OptionalResourceId::none(),
                 },
             ],
+            any_extensions: Default::default(),
         };
 
         let mesh = Mesh {
@@ -344,6 +362,7 @@ fn validate_model_with_different_units() {
             vertices,
             trianglesets: None,
             beamlattice: None,
+            any_extensions: Default::default(),
         };
 
         let model = Model {
@@ -365,6 +384,7 @@ fn validate_model_with_different_units() {
                     meshresolution: None,
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
+                    any_extensions: Default::default(),
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
@@ -376,6 +396,7 @@ fn validate_model_with_different_units() {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -387,7 +408,9 @@ fn validate_model_with_different_units() {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let mut builder = ThreemfPackageBuilder::new();

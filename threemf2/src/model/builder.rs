@@ -209,7 +209,12 @@ pub struct ModelBuilder {
     // tracks if the model requires production ext
     // ensures UUID is set at the minimum
     is_production_ext_required: bool,
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
 }
+
+#[cfg(feature = "any")]
+any_extensions_builder_methods!(ModelBuilder);
 
 impl ModelBuilder {
     /// Create a new `ModelBuilder` with default values.
@@ -241,6 +246,8 @@ impl ModelBuilder {
             next_normvectorgroup_id: 1,
             next_disp2dgroup_id: 1,
             is_production_ext_required: false,
+            #[cfg(feature = "any")]
+            any_extensions: AnyExtensions::default(),
         }
     }
 
@@ -351,6 +358,7 @@ impl ModelBuilder {
             name: name.into(),
             preserve: None,
             value: value.map(Into::into),
+            any_extensions: Default::default(),
         });
         self
     }
@@ -821,6 +829,7 @@ impl ModelBuilder {
             Build {
                 uuid: None,
                 item: vec![],
+                any_extensions: Default::default(),
             }
         };
 
@@ -831,6 +840,10 @@ impl ModelBuilder {
             metadata: self.metadata,
             resources: self.resources.build(),
             build,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
     }
 
@@ -1095,6 +1108,7 @@ impl ResourcesBuilder {
             displacement2d: self.displacement2d,
             normvectorgroup: self.normvectorgroup,
             disp2dgroup: self.disp2dgroup,
+            any_extensions: Default::default(),
         }
     }
 }
@@ -1164,6 +1178,7 @@ impl BuildBuilder {
         Ok(Build {
             uuid: self.uuid,
             item: self.items,
+            any_extensions: Default::default(),
         })
     }
 }
@@ -1281,7 +1296,7 @@ pub struct ItemBuilder {
 }
 
 #[cfg(feature = "any")]
-any_extensions_builder_methods!(ItemBuilder, ItemError);
+any_extensions_builder_methods!(ItemBuilder);
 
 impl ItemBuilder {
     fn new(objectid: ObjectId) -> Self {
@@ -1401,6 +1416,8 @@ pub struct ObjectBuilder<T> {
     slicestackid: OptionalResourceId,
     slicepath: Option<PathResource>,
     meshresolution: Option<slice::MeshResolution>,
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
 
     // sets if the production ext is required.
     // if yes will ensure UUID is set before building the object
@@ -1498,6 +1515,9 @@ impl<T> ObjectBuilder<T> {
     }
 }
 
+#[cfg(feature = "any")]
+any_extensions_builder_methods!(ObjectBuilder<T>, T);
+
 impl<T> Deref for ObjectBuilder<T> {
     type Target = T;
 
@@ -1524,6 +1544,10 @@ pub enum MeshObjectError {
     /// A path passed to a builder method is not a valid package path.
     #[error("Invalid path: {0}")]
     InvalidPath(#[from] PathResourceError),
+
+    /// Foreign content passed to an `any_attribute` / `any_element` builder method is invalid.
+    #[error("Invalid foreign (xs:any) content: {0}")]
+    InvalidAnyExtension(#[from] AnyError),
 }
 
 /// Errors that can occur when building a displacement mesh object.
@@ -1538,6 +1562,10 @@ pub enum DisplacementMeshObjectError {
     /// A path passed to a builder method is not a valid package path.
     #[error("Invalid path: {0}")]
     InvalidPath(#[from] PathResourceError),
+
+    /// Foreign content passed to an `any_attribute` / `any_element` builder method is invalid.
+    #[error("Invalid foreign (xs:any) content: {0}")]
+    InvalidAnyExtension(#[from] AnyError),
 }
 
 /// Builder for creating mesh objects with triangle geometry.
@@ -1561,6 +1589,8 @@ impl MeshObjectBuilder {
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
+            #[cfg(feature = "any")]
+            any_extensions: AnyExtensions::default(),
             is_production_ext_required,
         }
     }
@@ -1586,6 +1616,10 @@ impl MeshObjectBuilder {
             meshresolution: self.meshresolution,
             kind: Some(object::ObjectKind::Mesh(mesh)),
             // mesh: Some(mesh),
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
     }
 }
@@ -1608,6 +1642,8 @@ impl DisplacementMeshObjectBuilder {
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
+            #[cfg(feature = "any")]
+            any_extensions: AnyExtensions::default(),
             is_production_ext_required,
         }
     }
@@ -1632,6 +1668,10 @@ impl DisplacementMeshObjectBuilder {
             slicepath: self.slicepath,
             meshresolution: self.meshresolution,
             kind: Some(object::ObjectKind::DisplacementMesh(mesh)),
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
     }
 }
@@ -1835,12 +1875,15 @@ impl MeshBuilder {
         Ok(mesh::Mesh {
             vertices: mesh::Vertices {
                 vertex: self.vertices,
+                any_extensions: Default::default(),
             },
             triangles: mesh::Triangles {
                 triangle: self.triangles,
+                any_extensions: Default::default(),
             },
             trianglesets,
             beamlattice,
+            any_extensions: Default::default(),
         })
     }
 }
@@ -2227,6 +2270,10 @@ pub enum ComponentsObjectError {
     /// The path passed to [`ComponentBuilder::path()`] is not a valid package path.
     #[error("Invalid component path: {0}")]
     InvalidPath(#[from] PathResourceError),
+
+    /// Foreign content passed to an `any_attribute` / `any_element` builder method is invalid.
+    #[error("Invalid foreign (xs:any) content: {0}")]
+    InvalidAnyExtension(#[from] AnyError),
 }
 
 /// Builder for creating assembly objects that reference other objects.
@@ -2292,6 +2339,8 @@ impl ComponentsObjectBuilder {
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
+            #[cfg(feature = "any")]
+            any_extensions: AnyExtensions::default(),
             is_production_ext_required,
         }
     }
@@ -2319,6 +2368,10 @@ impl ComponentsObjectBuilder {
             meshresolution: self.meshresolution,
             kind: Some(object::ObjectKind::Components(components)),
             // components: Some(components),
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
     }
 }
@@ -2429,6 +2482,7 @@ impl ComponentsBuilder {
 
         Ok(Components {
             component: self.components,
+            any_extensions: Default::default(),
         })
     }
 }
@@ -2442,7 +2496,12 @@ pub struct ComponentBuilder {
     transform: Option<Transform>,
     path: Option<PathResource>,
     uuid: Option<UuidResource>,
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
 }
+
+#[cfg(feature = "any")]
+any_extensions_builder_methods!(ComponentBuilder);
 
 impl ComponentBuilder {
     /// Creates a new ComponentBuilder for the given object ID.
@@ -2452,6 +2511,8 @@ impl ComponentBuilder {
             transform: None,
             path: None,
             uuid: None,
+            #[cfg(feature = "any")]
+            any_extensions: AnyExtensions::default(),
         }
     }
 
@@ -2488,6 +2549,10 @@ impl ComponentBuilder {
             transform: self.transform,
             path: self.path,
             uuid: self.uuid,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         }
     }
 }
@@ -2516,6 +2581,10 @@ pub enum BooleanShapeError {
     /// The path passed to [`BooleanBuilder::path()`] is not a valid package path.
     #[error("Invalid boolean operand path: {0}")]
     InvalidPath(#[from] PathResourceError),
+
+    /// Foreign content passed to an `any_attribute` / `any_element` builder method is invalid.
+    #[error("Invalid foreign (xs:any) content: {0}")]
+    InvalidAnyExtension(#[from] AnyError),
 }
 
 /// Builder for creating boolean shape objects for CSG operations.
@@ -2567,6 +2636,8 @@ impl BooleanObjectBuilder {
             slicestackid: OptionalResourceId::none(),
             slicepath: None,
             meshresolution: None,
+            #[cfg(feature = "any")]
+            any_extensions: AnyExtensions::default(),
             is_production_ext_required,
         }
     }
@@ -2591,6 +2662,10 @@ impl BooleanObjectBuilder {
             slicepath: self.slicepath,
             meshresolution: self.meshresolution,
             kind: Some(object::ObjectKind::BooleanShape(boolean_shape)),
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
+            any_extensions: Default::default(),
         })
     }
 }
@@ -3615,6 +3690,7 @@ impl BaseMaterialsBuilder {
         self.bases.push(Base {
             name: StrResource::new(name),
             displaycolor: StrResource::new(displaycolor),
+            any_extensions: Default::default(),
         });
         self
     }
@@ -3624,6 +3700,7 @@ impl BaseMaterialsBuilder {
         self.bases.push(Base {
             name: StrResource::new(name),
             displaycolor: StrResource::new(displaycolor.to_hex_compact()),
+            any_extensions: Default::default(),
         });
         self
     }
@@ -3632,6 +3709,7 @@ impl BaseMaterialsBuilder {
         BaseMaterials {
             id: self.id,
             base: self.bases,
+            any_extensions: Default::default(),
         }
     }
 }

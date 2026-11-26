@@ -16,6 +16,14 @@ use crate::{
     threemf_namespaces::{BOOLEAN_NS, CORE_NS, PROD_NS, SLICE_NS},
 };
 
+#[cfg(feature = "any")]
+use crate::model::domain::any::AnyElement;
+use crate::model::domain::any_extensions::AnyExtensions;
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_struct::xml_struct;
+#[cfg(feature = "write")]
+use crate::threemf_namespaces::{BOOLEAN_PREFIX, PROD_PREFIX, SLICE_PREFIX};
+
 /// Represents a 3D object in a 3MF model, either a mesh, component assembly, or boolean shape.
 ///
 /// Objects are the primary building blocks of 3MF models. They can contain:
@@ -24,72 +32,52 @@ use crate::{
 /// - Boolean operations defining a shape ([`ObjectKind::BooleanShape`])
 ///
 /// These three options are mutually exclusive - an object can only have one of them set.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(PartialEq, Debug, Clone)]
-#[cfg_attr(any(feature="write", feature="read"), xml(ns(CORE_NS, p=PROD_NS, bo=BOOLEAN_NS, s=SLICE_NS), rename="object", force_prefix))]
 pub struct Object {
     /// A unique identifier for this object
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub id: ResourceId,
 
     /// Optionally defines the intend of this object. If not defined, the
     /// consumer of the file is safe to assume the object is meant to be a [`ObjectType::Model`]
     ///
     /// See [`ObjectType`] for more details.
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(attribute, rename = "type")
-    )]
     pub objecttype: Option<ObjectType>,
 
     /// Optional path to the thumbnail in the 3MF Package for this object.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub thumbnail: Option<PathResource>,
 
     /// Optional string defining the part number for this object.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub partnumber: Option<StrResource>,
 
     /// Optional string defining the name for this object.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub name: Option<StrResource>,
 
     /// Reference to the property group element with the
     /// matching id attribute value (e.g. Basematerials).
     /// It is REQUIRED if pindex is specified.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub pid: OptionalResourceId,
 
     /// References a zero-based index into the properties
     /// group specified by pid. This property is used to build the object.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
     pub pindex: OptionalResourceIndex,
 
     /// Optional UUID as a string.
     ///
     /// The UUID is required when using the Production extension.
-    #[cfg_attr(
-        any(feature = "write", feature = "read"),
-        xml(attribute, ns(PROD_NS), rename = "UUID")
-    )]
     pub uuid: Option<UuidResource>,
 
     /// Identifies the SliceStack that contains the slice data for this object.
     /// If used alone, the slice data exists in the same file as the object.
     /// If used with slicepath, the slice data is in the specified file.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute, ns(SLICE_NS)))]
     pub slicestackid: OptionalResourceId,
 
     /// Absolute path to a non-root model file containing slice data.
     /// Used in combination with slicestackid when slices are in separate files.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute, ns(SLICE_NS)))]
     pub slicepath: Option<PathResource>,
 
     /// Indicates the intended resolution of mesh models when slice data is present.
     /// "fullres" means the mesh can regenerate the slices; "lowres" means it cannot.
     /// Packages with "lowres" MUST list the slice extension in requiredextensions.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute, ns(SLICE_NS)))]
     pub meshresolution: Option<MeshResolution>,
 
     /// The actual geometry that is contained in this [`Object`].
@@ -98,6 +86,43 @@ pub struct Object {
     /// This is optional only for developemnt. In Practice an empty
     /// object is not a valid 3MF Model. This may be changed in the future.
     pub kind: Option<ObjectKind>,
+
+    /// Foreign attributes and trailing child elements of the object (`xs:anyAttribute` /
+    /// `xs:any`). A foreign element used as the object shape is stored in
+    /// [`Object::kind`] as `ObjectKind::Any` instead.
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyExtensions,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_struct! {
+    Object {
+        tag: "object",
+        ns: CORE_NS,
+        prefixes: [
+            (BOOLEAN_PREFIX, BOOLEAN_NS),
+            (PROD_PREFIX, PROD_NS),
+            (SLICE_PREFIX, SLICE_NS),
+        ],
+        force_prefix: true,
+        attributes: {
+            id: ResourceId => ("", "id"),
+            objecttype: Option<ObjectType> => ("", "type"),
+            thumbnail: Option<PathResource> => ("", "thumbnail"),
+            partnumber: Option<StrResource> => ("", "partnumber"),
+            name: Option<StrResource> => ("", "name"),
+            pid: OptionalResourceId => ("", "pid"),
+            pindex: OptionalResourceIndex => ("", "pindex"),
+            uuid: Option<UuidResource> => (PROD_NS, "UUID"),
+            slicestackid: OptionalResourceId => (SLICE_NS, "slicestackid"),
+            slicepath: Option<PathResource> => (SLICE_NS, "slicepath"),
+            meshresolution: Option<MeshResolution> => (SLICE_NS, "meshresolution"),
+        },
+        elements: { kind: Option<ObjectKind> => (CORE_NS, "kind") },
+        any: any_extensions: AnyExtensions,
+        shape: kind => ObjectKind::Any,
+    }
 }
 
 impl Object {
@@ -206,6 +231,10 @@ pub enum ObjectKind {
     BooleanShape(BooleanShape),
     /// Object contains displacement mesh geometry.
     DisplacementMesh(DisplacementMesh),
+    /// Object shape defined by a foreign (non 3MF core) element, for example from an extension
+    /// this library does not model. Only produced with the `any` feature.
+    #[cfg(feature = "any")]
+    Any(AnyElement),
 }
 
 #[cfg(feature = "write")]
@@ -253,6 +282,7 @@ mod write_tests {
             slicepath: None,
             meshresolution: None,
             kind: None,
+            any_extensions: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -285,6 +315,7 @@ mod write_tests {
             slicepath: None,
             meshresolution: None,
             kind: None,
+            any_extensions: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -310,6 +341,7 @@ mod write_tests {
             slicepath: None,
             meshresolution: None,
             kind: None,
+            any_extensions: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
         println!("{}", object_string);
@@ -335,11 +367,19 @@ mod write_tests {
             slicepath: None,
             meshresolution: None,
             kind: Some(ObjectKind::Mesh(Mesh {
-                vertices: Vertices { vertex: vec![] },
-                triangles: Triangles { triangle: vec![] },
+                vertices: Vertices {
+                    vertex: vec![],
+                    any_extensions: Default::default(),
+                },
+                triangles: Triangles {
+                    triangle: vec![],
+                    any_extensions: Default::default(),
+                },
                 trianglesets: None,
                 beamlattice: None,
+                any_extensions: Default::default(),
             })),
+            any_extensions: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -379,8 +419,11 @@ mod write_tests {
                     transform: None,
                     path: None,
                     uuid: None,
+                    any_extensions: Default::default(),
                 }],
+                any_extensions: Default::default(),
             })),
+            any_extensions: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -463,6 +506,7 @@ mod memory_optimized_read_tests {
                 slicepath: None,
                 meshresolution: None,
                 kind: None,
+                any_extensions: Default::default(),
             }
         );
     }
@@ -491,6 +535,7 @@ mod memory_optimized_read_tests {
                 slicepath: None,
                 meshresolution: None,
                 kind: None,
+                any_extensions: Default::default(),
             }
         );
     }
@@ -518,6 +563,7 @@ mod memory_optimized_read_tests {
                 slicepath: None,
                 meshresolution: None,
                 kind: None,
+                any_extensions: Default::default(),
             }
         );
     }
@@ -545,6 +591,7 @@ mod memory_optimized_read_tests {
                 slicepath: None,
                 meshresolution: None,
                 kind: None,
+                any_extensions: Default::default(),
             }
         );
     }
@@ -580,11 +627,19 @@ mod memory_optimized_read_tests {
                 slicepath: None,
                 meshresolution: Some(slice::MeshResolution::LowRes),
                 kind: Some(ObjectKind::Mesh(Mesh {
-                    vertices: Vertices { vertex: vec![] },
-                    triangles: Triangles { triangle: vec![] },
+                    vertices: Vertices {
+                        vertex: vec![],
+                        any_extensions: Default::default()
+                    },
+                    triangles: Triangles {
+                        triangle: vec![],
+                        any_extensions: Default::default()
+                    },
                     trianglesets: None,
-                    beamlattice: None
-                }))
+                    beamlattice: None,
+                    any_extensions: Default::default(),
+                })),
+                any_extensions: Default::default(),
             }
         );
     }
@@ -617,8 +672,11 @@ mod memory_optimized_read_tests {
                         transform: None,
                         path: None,
                         uuid: None,
-                    }]
-                }))
+                        any_extensions: Default::default(),
+                    }],
+                    any_extensions: Default::default(),
+                })),
+                any_extensions: Default::default(),
             }
         );
     }

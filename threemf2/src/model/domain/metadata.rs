@@ -7,28 +7,107 @@ use instant_xml::ToXml;
 #[cfg(feature = "read")]
 use instant_xml::{FromXml, Kind};
 
-use crate::{model::StrResource, threemf_namespaces::CORE_NS};
+use crate::{
+    model::{StrResource, domain::any_extensions::AnyAttributeExtensions},
+    threemf_namespaces::CORE_NS,
+};
+
+#[cfg(feature = "read")]
+use crate::model::domain::xml_helpers::read_attribute;
 
 /// Key-value metadata associated with a 3MF model or object.
 ///
 /// Metadata provides additional information about the model, such as author,
 /// description, or custom properties.
-#[cfg_attr(feature = "read", derive(FromXml))]
-// #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone, Eq)]
-#[cfg_attr(any(feature = "read"), xml(ns(CORE_NS), rename = "metadata"))]
 pub struct Metadata {
     /// Name of the metadata entry.
-    #[cfg_attr(any(feature = "read"), xml(attribute))]
     pub name: StrResource,
 
     /// Whether this metadata must be preserved by consumers.
-    #[cfg_attr(any(feature = "read"), xml(attribute))]
     pub preserve: Option<Preserve>,
 
     /// Value of the metadata entry.
-    #[cfg_attr(any(feature = "read"), xml(direct))]
     pub value: Option<StrResource>,
+
+    /// Foreign attributes of the metadata entry (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+#[cfg(feature = "read")]
+impl<'xml> FromXml<'xml> for Metadata {
+    #[inline]
+    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        id == instant_xml::Id {
+            ns: CORE_NS,
+            name: "metadata",
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        use instant_xml::{Accumulate, de::Node};
+
+        if into.is_some() {
+            return Err(Error::DuplicateValue(field));
+        }
+
+        let mut name = <StrResource as FromXml>::Accumulator::default();
+        let mut preserve = <Option<Preserve> as FromXml>::Accumulator::default();
+        let mut value: Option<String> = None;
+        #[allow(unused_mut)]
+        let mut any_extensions = AnyAttributeExtensions::default();
+
+        while let Some(node) = deserializer.next() {
+            match node? {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+                    match (id.ns, id.name) {
+                        ("", "name") => read_attribute::<StrResource>(
+                            &mut name,
+                            "name",
+                            deserializer,
+                            attr.value,
+                        )?,
+                        ("", "preserve") => read_attribute::<Option<Preserve>>(
+                            &mut preserve,
+                            "preserve",
+                            deserializer,
+                            attr.value,
+                        )?,
+                        #[cfg(feature = "any")]
+                        _ => crate::model::domain::any::read::capture_attribute(
+                            any_extensions.attributes_mut(),
+                            id,
+                            attr.prefix,
+                            &attr.value,
+                        ),
+                        #[cfg(not(feature = "any"))]
+                        _ => {}
+                    }
+                }
+                Node::Text(text) => value.get_or_insert_with(String::new).push_str(&text),
+                Node::Open(element) => deserializer.nested(element).ignore()?,
+                _ => {}
+            }
+        }
+
+        *into = Some(Metadata {
+            name: name.try_done("name")?,
+            preserve: preserve.try_done("preserve")?,
+            value: value.map(StrResource::from),
+            any_extensions,
+        });
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: Kind = Kind::Element;
 }
 
 #[cfg(feature = "write")]
@@ -52,6 +131,13 @@ impl ToXml for Metadata {
         if let Some(preserve) = &self.preserve {
             serializer.write_attr("preserve", CORE_NS, &preserve.0)?;
         }
+        #[cfg(feature = "any")]
+        crate::model::domain::any::write::write_foreign_attributes(
+            serializer,
+            &[],
+            self.any_extensions.attributes(),
+            &[],
+        )?;
 
         if let Some(value) = &self.value {
             serializer.end_start()?;
@@ -140,6 +226,7 @@ mod write_tests {
             name: "Copyright".into(),
             preserve: None,
             value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".into()),
+            any_extensions: Default::default(),
         };
         let metadata_string = to_string(&metadata).unwrap();
 
@@ -153,6 +240,7 @@ mod write_tests {
             name: "From Test".into(),
             preserve: None,
             value: None,
+            any_extensions: Default::default(),
         };
         let metadata_string = to_string(&metadata).unwrap();
 
@@ -169,6 +257,7 @@ mod write_tests {
             name: "From Test".into(),
             preserve: Some(Preserve(true)),
             value: Some("This is a metadata".into()),
+            any_extensions: Default::default(),
         };
         let metadata_string = to_string(&metadata).unwrap();
 
@@ -187,11 +276,13 @@ mod write_tests {
                     name: "From Test".into(),
                     preserve: None,
                     value: Some("".into()),
+                    any_extensions: Default::default(),
                 },
                 Metadata {
                     name: "From Test 2".into(),
                     preserve: None,
                     value: Some("".into()),
+                    any_extensions: Default::default(),
                 },
             ],
         };
@@ -224,7 +315,8 @@ mod memory_optimized_read_tests {
             Metadata {
                 name: "Copyright".into(),
                 preserve: None,
-                value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".into())
+                value: Some("Copyright (c) 2018 3MF Consortium. All rights reserved.".into()),
+                any_extensions: Default::default(),
             }
         )
     }
@@ -240,6 +332,7 @@ mod memory_optimized_read_tests {
                 name: "From Test".into(),
                 preserve: None,
                 value: None,
+                any_extensions: Default::default(),
             }
         )
     }
@@ -260,11 +353,13 @@ mod memory_optimized_read_tests {
                         name: "From Test".into(),
                         preserve: None,
                         value: None,
+                        any_extensions: Default::default(),
                     },
                     Metadata {
                         name: "From Test 2".into(),
                         preserve: None,
                         value: None,
+                        any_extensions: Default::default(),
                     }
                 ]
             }

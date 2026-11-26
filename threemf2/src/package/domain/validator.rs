@@ -302,14 +302,20 @@ mod validator_tests {
                                 Vertex::new(1.0, 0.0, 0.0),
                                 Vertex::new(0.0, 1.0, 0.0),
                             ],
+                            any_extensions: Default::default(),
                         },
-                        triangles: Triangles { triangle: vec![] },
+                        triangles: Triangles {
+                            triangle: vec![],
+                            any_extensions: Default::default(),
+                        },
                         trianglesets: None,
                         beamlattice: None,
+                        any_extensions: Default::default(),
                     })),
                     slicestackid: Default::default(),
                     slicepath: None,
                     meshresolution: None,
+                    any_extensions: Default::default(),
                 }],
                 basematerials: vec![],
                 slicestack: vec![],
@@ -321,6 +327,7 @@ mod validator_tests {
                 displacement2d: Vec::new(),
                 normvectorgroup: Vec::new(),
                 disp2dgroup: Vec::new(),
+                any_extensions: Default::default(),
             },
             build: Build {
                 uuid: None,
@@ -332,7 +339,9 @@ mod validator_tests {
                     uuid: None,
                     ..Default::default()
                 }],
+                any_extensions: Default::default(),
             },
+            any_extensions: Default::default(),
         };
 
         let validator = Validator::new();
