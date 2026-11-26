@@ -68,6 +68,7 @@ fn validate_displacement_model_schema() {
                             },
                         ],
                         any_extensions: Default::default(),
+                        vertex_any_extensions: Default::default(),
                     },
                     triangles: Triangles {
                         did: OptionalResourceId::new(7),
@@ -126,6 +127,7 @@ fn validate_displacement_model_schema() {
                             },
                         ],
                         any_extensions: Default::default(),
+                        triangle_any_extensions: Default::default(),
                     },
                     trianglesets: None,
                     beamlattice: None,
@@ -173,6 +175,7 @@ fn validate_displacement_model_schema() {
                     },
                 ],
                 any_extensions: Default::default(),
+                normvector_any_extensions: Default::default(),
             }],
             disp2dgroup: vec![Disp2DGroup {
                 id: 7,
@@ -201,6 +204,7 @@ fn validate_displacement_model_schema() {
                     },
                 ],
                 any_extensions: Default::default(),
+                disp2dcoord_any_extensions: Default::default(),
             }],
             any_extensions: Default::default(),
         },

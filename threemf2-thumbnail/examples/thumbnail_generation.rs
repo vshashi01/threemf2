@@ -59,6 +59,7 @@ fn create_cube_model() -> Model {
             Vertex::new(-1.0, 1.0, 1.0),   // 7
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     // Define triangles for the cube (6 faces * 2 triangles each = 12 triangles)
@@ -180,6 +181,7 @@ fn create_cube_model() -> Model {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {

@@ -55,4 +55,7 @@ pub(crate) mod xml_helpers;
 #[cfg(any(feature = "read", feature = "write"))]
 pub(crate) mod xml_struct;
 
+#[cfg(any(feature = "read", feature = "write"))]
+pub(crate) mod xml_item;
+
 mod constants;

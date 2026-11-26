@@ -26,6 +26,7 @@ default = []
 uuid = ["threemf2/uuid"]
 enable-alloc-check = []
 benchmark-all = []
+any = ["threemf2/any"]
 
 [[bench]]
 name = "reader"

@@ -22,6 +22,10 @@
 //!
 //! - `attributes`: `field: Type => (namespace, name)`; use `""` for attributes without namespace.
 //! - `elements`: child element fields, written in the listed order.
+//! - `items` (optional): list entry fields as `field: Type => table`, where `Type` implements
+//!   [`XmlItem`](crate::model::domain::xml_item::XmlItem) and `table` is the
+//!   `ItemAttributeExtensions` field holding the foreign attributes of the entries. Written after
+//!   `elements`.
 //! - `any`: the field holding the foreign content.
 //! - `shape: field => Variant` (optional): an `Option<Enum>` element field whose foreign
 //!   alternative (`Variant(AnyElement)`) takes the first foreign element when no other value was
@@ -47,6 +51,7 @@ macro_rules! xml_struct {
             force_prefix: $force:literal,
             attributes: { $($afield:ident: $aty:ty => ($ans:expr, $aname:literal)),* $(,)? },
             elements: { $($efield:ident: $ety:ty => ($ens:expr, $ename:literal)),* $(,)? },
+            $(items: { $($ifield:ident: $ity:ty => $itable:ident),* $(,)? },)?
             any: $any:ident: $anyty:ty,
             $(shape: $shape:ident => $variant:path,)?
             $(start_hook: $hook:path,)?
@@ -74,6 +79,11 @@ macro_rules! xml_struct {
 
                 $(let mut $afield = <$aty as FromXml<'xml>>::Accumulator::default();)*
                 $(let mut $efield = <$ety as FromXml<'xml>>::Accumulator::default();)*
+                $($(
+                    let mut $ifield: ::std::vec::Vec<$ity> = ::std::vec::Vec::new();
+                    let mut $itable =
+                        $crate::model::domain::any_extensions::ItemAttributeExtensions::default();
+                )*)?
                 #[allow(unused_mut)]
                 let mut $any = <$anyty>::default();
 
@@ -116,6 +126,19 @@ macro_rules! xml_struct {
                         Node::Open(element) => {
                             #[allow(unused_variables)]
                             let id = deserializer.element_id(&element)?;
+                            $($(
+                                if id.ns == <$ity as $crate::model::domain::xml_item::XmlItem>::NS
+                                    && id.name == <$ity as $crate::model::domain::xml_item::XmlItem>::TAG
+                                {
+                                    let mut nested = deserializer.nested(element);
+                                    $crate::model::domain::xml_item::read_item_into(
+                                        &mut nested,
+                                        &mut $ifield,
+                                        &mut $itable,
+                                    )?;
+                                    continue;
+                                }
+                            )*)?
                             $(
                                 if <$ety as FromXml<'xml>>::matches(
                                     id,
@@ -161,6 +184,7 @@ macro_rules! xml_struct {
                 *into = Some(Self {
                     $($afield: $afield.try_done(stringify!($afield))?,)*
                     $($efield: $efield.try_done(stringify!($efield))?,)*
+                    $($($ifield, $itable,)*)?
                     $any,
                 });
                 Ok(())
@@ -206,13 +230,25 @@ macro_rules! xml_struct {
                 let foreign_elements =
                     $crate::model::domain::any_extensions::AnySlot::slot_elements(&self.$any);
                 #[cfg(feature = "any")]
-                let scope = $crate::model::domain::any::write::write_foreign_attributes(
+                #[allow(unused_mut)]
+                let mut scope = $crate::model::domain::any::write::write_foreign_attributes(
                     serializer,
                     &declared,
                     $ns,
                     $crate::model::domain::any_extensions::AnySlot::slot_attributes(&self.$any),
                     foreign_elements,
                 )?;
+                $($(
+                    #[cfg(feature = "any")]
+                    $crate::model::domain::any::write::declare_item_namespaces(
+                        serializer,
+                        &mut scope,
+                        <$ity as $crate::model::domain::xml_item::XmlItem>::NS,
+                        &self.$itable,
+                        self.$ifield.len(),
+                        <$ity as $crate::model::domain::xml_item::XmlItem>::TAG,
+                    )?;
+                )*)?
                 #[cfg(feature = "any")]
                 let has_foreign_elements = !foreign_elements.is_empty();
                 #[cfg(not(feature = "any"))]
@@ -222,8 +258,8 @@ macro_rules! xml_struct {
                 // With `self_closing: true`, absent optional children (`None`) do not count.
                 let self_closing = $crate::model::domain::xml_struct::xml_struct!(@self_closing $($self_closing)?);
                 let has_elements = match self_closing {
-                    true => false $(|| ToXml::present(&self.$efield))*,
-                    false => <[&str]>::len(&[$(stringify!($efield)),*]) > 0,
+                    true => false $(|| ToXml::present(&self.$efield))* $($(|| !self.$ifield.is_empty())*)?,
+                    false => <[&str]>::len(&[$(stringify!($efield),)* $($(stringify!($ifield),)*)?]) > 0,
                 };
                 if !has_elements && !has_foreign_elements {
                     return serializer.end_empty();
@@ -237,6 +273,21 @@ macro_rules! xml_struct {
                         serializer,
                     )?;
                 )*
+                $($(
+                    #[cfg(feature = "any")]
+                    $crate::model::domain::xml_item::write_items(
+                        serializer,
+                        &self.$ifield,
+                        &self.$itable,
+                        &scope,
+                    )?;
+                    #[cfg(not(feature = "any"))]
+                    $crate::model::domain::xml_item::write_items(
+                        serializer,
+                        &self.$ifield,
+                        &self.$itable,
+                    )?;
+                )*)?
                 #[cfg(feature = "any")]
                 $crate::model::domain::any::write::write_foreign_elements(
                     serializer,

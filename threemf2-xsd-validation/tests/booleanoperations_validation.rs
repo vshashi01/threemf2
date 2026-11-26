@@ -63,6 +63,7 @@ fn create_cube_mesh() -> Mesh {
             Vertex::new(0.0, 10.0, 10.0),  // 7
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -183,6 +184,7 @@ fn create_cube_mesh() -> Mesh {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     Mesh {
@@ -213,6 +215,7 @@ fn create_sphere_mesh() -> Mesh {
             Vertex::new(cx - r, cy + r, cz + r), // 7
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -328,6 +331,7 @@ fn create_sphere_mesh() -> Mesh {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     Mesh {
@@ -350,10 +354,12 @@ fn create_cylinder_mesh() -> Mesh {
     let mut vertices = Vertices {
         vertex: vec![],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
     let mut triangles = Triangles {
         triangle: vec![],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     // Top and bottom center vertices

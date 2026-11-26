@@ -75,6 +75,7 @@ fn validate_simple_colorgroup() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     // Create at least 4 triangles that reference the color group via pid and use vertex colors via p1, p2, p3
@@ -118,6 +119,7 @@ fn validate_simple_colorgroup() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -224,6 +226,7 @@ fn validate_texture2d_with_uv_mapping() {
             },
         ],
         any_extensions: Default::default(),
+        tex2coord_any_extensions: Default::default(),
     };
 
     // Create a mesh with at least 4 vertices (XSD requirement)
@@ -235,6 +238,7 @@ fn validate_texture2d_with_uv_mapping() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     // Create at least 4 triangles (XSD requirement)
@@ -278,6 +282,7 @@ fn validate_texture2d_with_uv_mapping() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -403,6 +408,7 @@ fn validate_multi_properties() {
             },
         ],
         any_extensions: Default::default(),
+        tex2coord_any_extensions: Default::default(),
     };
 
     // Create multi properties using new ResourceIdCollection
@@ -419,6 +425,7 @@ fn validate_multi_properties() {
             },
         ],
         any_extensions: Default::default(),
+        multi_any_extensions: Default::default(),
     };
 
     // Create a simple mesh with at least 4 vertices (XSD requirement)
@@ -430,6 +437,7 @@ fn validate_multi_properties() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     // Create at least 4 triangles (XSD requirement)
@@ -473,6 +481,7 @@ fn validate_multi_properties() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -581,6 +590,7 @@ fn validate_vertex_color_application() {
             Vertex::new(0.0, 1.0, 0.0), // 3: top-left
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     // Create triangles with vertex color indices (at least 4 triangles for XSD)
@@ -630,6 +640,7 @@ fn validate_vertex_color_application() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {

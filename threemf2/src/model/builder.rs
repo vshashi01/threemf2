@@ -84,7 +84,7 @@ use crate::model::{
 use crate::model::domain::any_extensions::AnyError;
 #[cfg(feature = "any")]
 use crate::model::domain::any_extensions::{
-    AnyAttributeExtensions, AnyExtensions, any_extensions_builder_methods,
+    AnyAttributeExtensions, AnyExtensions, ItemAttributeExtensions, any_extensions_builder_methods,
 };
 
 use std::ops::{Deref, DerefMut};
@@ -1717,6 +1717,10 @@ impl DisplacementMeshObjectBuilder {
 /// Triangles reference vertices by index.
 pub struct MeshBuilder {
     #[cfg(feature = "any")]
+    triangle_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
+    vertex_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     vertices: Vec<mesh::Vertex>,
     triangles: Vec<mesh::Triangle>,
@@ -1727,6 +1731,10 @@ pub struct MeshBuilder {
 impl MeshBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            triangle_any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            vertex_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             vertices: Vec::new(),
@@ -1912,10 +1920,18 @@ impl MeshBuilder {
             vertices: mesh::Vertices {
                 vertex: self.vertices,
                 any_extensions: Default::default(),
+                #[cfg(feature = "any")]
+                vertex_any_extensions: self.vertex_any_extensions,
+                #[cfg(not(feature = "any"))]
+                vertex_any_extensions: Default::default(),
             },
             triangles: mesh::Triangles {
                 triangle: self.triangles,
                 any_extensions: Default::default(),
+                #[cfg(feature = "any")]
+                triangle_any_extensions: self.triangle_any_extensions,
+                #[cfg(not(feature = "any"))]
+                triangle_any_extensions: Default::default(),
             },
             trianglesets,
             beamlattice,
@@ -1932,6 +1948,26 @@ impl MeshBuilder {
     #[cfg(feature = "any")]
     pub fn mesh_any_extensions_mut(&mut self) -> &mut AnyExtensions {
         &mut self.any_extensions
+    }
+
+    /// Foreign attributes of the individual `<vertex>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn vertex_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.vertex_any_extensions
+    }
+
+    /// Foreign attributes of the individual `<triangle>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn triangle_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.triangle_any_extensions
     }
 }
 
@@ -1999,6 +2035,10 @@ impl TriangleBuilder {
 /// Builder for constructing displacement mesh geometry.
 pub struct DisplacementMeshBuilder {
     #[cfg(feature = "any")]
+    triangle_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
+    vertex_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     vertices: Vec<displacement::Vertex>,
     triangles: Vec<displacement::Triangle>,
@@ -2010,6 +2050,10 @@ pub struct DisplacementMeshBuilder {
 impl DisplacementMeshBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            triangle_any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            vertex_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             vertices: Vec::new(),
@@ -2183,11 +2227,19 @@ impl DisplacementMeshBuilder {
             vertices: crate::model::domain::displacement::Vertices {
                 vertex: self.vertices,
                 any_extensions: Default::default(),
+                #[cfg(feature = "any")]
+                vertex_any_extensions: self.vertex_any_extensions,
+                #[cfg(not(feature = "any"))]
+                vertex_any_extensions: Default::default(),
             },
             triangles: crate::model::domain::displacement::Triangles {
                 did: self.triangles_did,
                 triangle: self.triangles,
                 any_extensions: Default::default(),
+                #[cfg(feature = "any")]
+                triangle_any_extensions: self.triangle_any_extensions,
+                #[cfg(not(feature = "any"))]
+                triangle_any_extensions: Default::default(),
             },
             trianglesets,
             beamlattice,
@@ -2204,6 +2256,26 @@ impl DisplacementMeshBuilder {
     #[cfg(feature = "any")]
     pub fn mesh_any_extensions_mut(&mut self) -> &mut AnyExtensions {
         &mut self.any_extensions
+    }
+
+    /// Foreign attributes of the individual `<d:vertex>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn vertex_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.vertex_any_extensions
+    }
+
+    /// Foreign attributes of the individual `<d:triangle>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn triangle_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.triangle_any_extensions
     }
 }
 
@@ -3013,6 +3085,8 @@ impl TriangleSetsBuilder {
             triangle_ref,
             triangle_refrange,
             any_extensions: Default::default(),
+            triangle_ref_any_extensions: Default::default(),
+            triangle_refrange_any_extensions: Default::default(),
         });
         self
     }
@@ -3051,6 +3125,10 @@ impl TriangleSetsBuilder {
 /// The Beam Lattice extension namespace is automatically added when beams are present.
 pub struct BeamLatticeBuilder {
     #[cfg(feature = "any")]
+    ball_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
+    beam_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     minlength: Option<f64>,
     radius: Option<f64>,
@@ -3070,6 +3148,10 @@ pub struct BeamLatticeBuilder {
 impl BeamLatticeBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            ball_any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            beam_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             minlength: None,
@@ -3271,6 +3353,10 @@ impl BeamLatticeBuilder {
         let beams = beamlattice::Beams {
             beam: self.beams,
             any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            beam_any_extensions: self.beam_any_extensions,
+            #[cfg(not(feature = "any"))]
+            beam_any_extensions: Default::default(),
         };
 
         let balls = if self.balls.is_empty() {
@@ -3279,6 +3365,10 @@ impl BeamLatticeBuilder {
             Some(beamlattice::Balls {
                 ball: self.balls,
                 any_extensions: Default::default(),
+                #[cfg(feature = "any")]
+                ball_any_extensions: self.ball_any_extensions,
+                #[cfg(not(feature = "any"))]
+                ball_any_extensions: Default::default(),
             })
         };
 
@@ -3318,6 +3408,26 @@ impl BeamLatticeBuilder {
     #[cfg(feature = "any")]
     pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
         &mut self.any_extensions
+    }
+
+    /// Foreign attributes of the individual `<b:beam>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn beam_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.beam_any_extensions
+    }
+
+    /// Foreign attributes of the individual `<b2:ball>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn ball_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.ball_any_extensions
     }
 }
 
@@ -3457,6 +3567,10 @@ impl BallBuilder {
 /// Builder for beam sets in a beam lattice
 pub struct BeamSetBuilder {
     #[cfg(feature = "any")]
+    ballref_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
+    refs_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     name: Option<String>,
     identifier: Option<String>,
@@ -3467,6 +3581,10 @@ pub struct BeamSetBuilder {
 impl BeamSetBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            ballref_any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            refs_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             name: None,
@@ -3530,6 +3648,14 @@ impl BeamSetBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            refs_any_extensions: self.refs_any_extensions,
+            #[cfg(not(feature = "any"))]
+            refs_any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            ballref_any_extensions: self.ballref_any_extensions,
+            #[cfg(not(feature = "any"))]
+            ballref_any_extensions: Default::default(),
         }
     }
 
@@ -3539,6 +3665,26 @@ impl BeamSetBuilder {
     #[cfg(feature = "any")]
     pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
         &mut self.any_extensions
+    }
+
+    /// Foreign attributes of the individual `<b:ref>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn refs_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.refs_any_extensions
+    }
+
+    /// Foreign attributes of the individual `<b2:ballref>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn ballref_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.ballref_any_extensions
     }
 }
 
@@ -3681,6 +3827,8 @@ impl Texture2DBuilder {
 /// Builder for a texture2d group resource.
 pub struct Texture2DGroupBuilder {
     #[cfg(feature = "any")]
+    tex2coord_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     texid: Option<ResourceId>,
@@ -3690,6 +3838,8 @@ pub struct Texture2DGroupBuilder {
 impl Texture2DGroupBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            tex2coord_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             id,
@@ -3730,6 +3880,10 @@ impl Texture2DGroupBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            tex2coord_any_extensions: self.tex2coord_any_extensions,
+            #[cfg(not(feature = "any"))]
+            tex2coord_any_extensions: Default::default(),
         })
     }
 
@@ -3739,6 +3893,16 @@ impl Texture2DGroupBuilder {
     #[cfg(feature = "any")]
     pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
         &mut self.any_extensions
+    }
+
+    /// Foreign attributes of the individual `<m:tex2coord>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn tex2coord_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.tex2coord_any_extensions
     }
 }
 
@@ -3826,6 +3990,8 @@ impl CompositeMaterialsBuilder {
 /// Builder for multi-properties.
 pub struct MultiPropertiesBuilder {
     #[cfg(feature = "any")]
+    multi_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyAttributeExtensions,
     id: ResourceId,
     pids: Vec<ResourceId>,
@@ -3836,6 +4002,8 @@ pub struct MultiPropertiesBuilder {
 impl MultiPropertiesBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            multi_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             id,
@@ -3898,6 +4066,10 @@ impl MultiPropertiesBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            multi_any_extensions: self.multi_any_extensions,
+            #[cfg(not(feature = "any"))]
+            multi_any_extensions: Default::default(),
         })
     }
 
@@ -3907,6 +4079,16 @@ impl MultiPropertiesBuilder {
     #[cfg(feature = "any")]
     pub fn any_extensions_mut(&mut self) -> &mut AnyAttributeExtensions {
         &mut self.any_extensions
+    }
+
+    /// Foreign attributes of the individual `<m:multi>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn multi_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.multi_any_extensions
     }
 }
 
@@ -4040,6 +4222,8 @@ impl Displacement2DBuilder {
 /// Builder for norm vector groups.
 pub struct NormVectorGroupBuilder {
     #[cfg(feature = "any")]
+    normvector_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     id: ResourceId,
     vectors: Vec<displacement::NormVector>,
@@ -4048,6 +4232,8 @@ pub struct NormVectorGroupBuilder {
 impl NormVectorGroupBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            normvector_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             id,
@@ -4081,6 +4267,10 @@ impl NormVectorGroupBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            normvector_any_extensions: self.normvector_any_extensions,
+            #[cfg(not(feature = "any"))]
+            normvector_any_extensions: Default::default(),
         }
     }
 
@@ -4091,10 +4281,22 @@ impl NormVectorGroupBuilder {
     pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
         &mut self.any_extensions
     }
+
+    /// Foreign attributes of the individual `<d:normvector>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn normvector_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.normvector_any_extensions
+    }
 }
 
 /// Builder for displacement 2d groups.
 pub struct Disp2DGroupBuilder {
+    #[cfg(feature = "any")]
+    disp2dcoord_any_extensions: ItemAttributeExtensions,
     #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     id: ResourceId,
@@ -4108,6 +4310,8 @@ pub struct Disp2DGroupBuilder {
 impl Disp2DGroupBuilder {
     fn new(id: ResourceId) -> Self {
         Self {
+            #[cfg(feature = "any")]
+            disp2dcoord_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             id,
@@ -4174,6 +4378,10 @@ impl Disp2DGroupBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            #[cfg(feature = "any")]
+            disp2dcoord_any_extensions: self.disp2dcoord_any_extensions,
+            #[cfg(not(feature = "any"))]
+            disp2dcoord_any_extensions: Default::default(),
         })
     }
 
@@ -4183,6 +4391,16 @@ impl Disp2DGroupBuilder {
     #[cfg(feature = "any")]
     pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
         &mut self.any_extensions
+    }
+
+    /// Foreign attributes of the individual `<d:disp2dcoord>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn disp2dcoord_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.disp2dcoord_any_extensions
     }
 }
 
@@ -4349,6 +4567,8 @@ impl SliceStackBuilder {
 /// Each slice represents a horizontal cross-section at a specific z-height.
 pub struct SliceBuilder {
     #[cfg(feature = "any")]
+    vertex_any_extensions: ItemAttributeExtensions,
+    #[cfg(feature = "any")]
     any_extensions: AnyExtensions,
     ztop: Option<f64>,
     vertices: Vec<slice::Vertex>,
@@ -4358,6 +4578,8 @@ pub struct SliceBuilder {
 impl SliceBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            vertex_any_extensions: Default::default(),
             #[cfg(feature = "any")]
             any_extensions: Default::default(),
             ztop: None,
@@ -4428,6 +4650,10 @@ impl SliceBuilder {
         } else {
             Some(slice::Vertices {
                 vertex: self.vertices,
+                #[cfg(feature = "any")]
+                vertex_any_extensions: self.vertex_any_extensions,
+                #[cfg(not(feature = "any"))]
+                vertex_any_extensions: Default::default(),
             })
         };
 
@@ -4449,12 +4675,24 @@ impl SliceBuilder {
     pub fn any_extensions_mut(&mut self) -> &mut AnyExtensions {
         &mut self.any_extensions
     }
+
+    /// Foreign attributes of the individual `<s:vertex>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn vertex_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.vertex_any_extensions
+    }
 }
 
 /// Builder for constructing polygons within a slice.
 ///
 /// Polygons define closed or open contours made of line segments.
 pub struct PolygonBuilder {
+    #[cfg(feature = "any")]
+    segment_any_extensions: ItemAttributeExtensions,
     startv: Option<ResourceIndex>,
     segments: Vec<slice::Segment>,
 }
@@ -4462,6 +4700,8 @@ pub struct PolygonBuilder {
 impl PolygonBuilder {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "any")]
+            segment_any_extensions: Default::default(),
             startv: None,
             segments: Vec::new(),
         }
@@ -4535,7 +4775,21 @@ impl PolygonBuilder {
         slice::Polygon {
             startv: self.startv.unwrap_or(0),
             segment: self.segments,
+            #[cfg(feature = "any")]
+            segment_any_extensions: self.segment_any_extensions,
+            #[cfg(not(feature = "any"))]
+            segment_any_extensions: Default::default(),
         }
+    }
+
+    /// Foreign attributes of the individual `<s:segment>` entries, by index in the order the entries
+    /// were added.
+    ///
+    /// Writing fails if an index is not smaller than the number of entries. Requires the `any`
+    /// feature.
+    #[cfg(feature = "any")]
+    pub fn segment_any_extensions_mut(&mut self) -> &mut ItemAttributeExtensions {
+        &mut self.segment_any_extensions
     }
 }
 

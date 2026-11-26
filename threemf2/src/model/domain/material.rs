@@ -35,7 +35,9 @@
 //! </m:texture2dgroup>
 //! ```
 
-use crate::model::domain::any_extensions::AnyAttributeExtensions;
+use crate::model::domain::any_extensions::{AnyAttributeExtensions, ItemAttributeExtensions};
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_item::xml_item;
 #[cfg(any(feature = "read", feature = "write"))]
 use crate::model::domain::xml_struct::xml_struct;
 use crate::{
@@ -210,6 +212,11 @@ pub struct Texture2DGroup {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyAttributeExtensions,
+
+    /// Foreign attributes of the individual `tex2coord` entries, by index in [`Self::tex2coord`].
+    ///
+    /// Only populated with the `any` feature.
+    pub tex2coord_any_extensions: ItemAttributeExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]
@@ -224,7 +231,9 @@ xml_struct! {
             texid: ResourceId => ("", "texid"),
         },
         elements: {
-            tex2coord: Vec<Tex2Coord> => (MATERIAL_NS, "tex2coord"),
+        },
+        items: {
+            tex2coord: Tex2Coord => tex2coord_any_extensions,
         },
         any: any_extensions: AnyAttributeExtensions,
     }
@@ -264,6 +273,29 @@ impl<'xml> FromXml<'xml> for Tex2Coord {
         _: &'static str,
         deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
     ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        *into = Some(
+            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
+                deserializer,
+                &mut crate::model::domain::any_extensions::ItemCapture::default(),
+            )?,
+        );
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+impl crate::model::domain::xml_item::XmlItem for Tex2Coord {
+    const TAG: &'static str = "tex2coord";
+    const NS: &'static str = MATERIAL_NS;
+
+    #[cfg(feature = "read")]
+    fn read_item(
+        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
+        capture: &mut crate::model::domain::any_extensions::ItemCapture,
+    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
         use ::instant_xml::Error;
         use ::instant_xml::de::Node;
         let mut u: f64 = 0.0;
@@ -276,16 +308,13 @@ impl<'xml> FromXml<'xml> for Tex2Coord {
                     let id = deserializer.attribute_id(&attr)?;
                     // Schema attributes are unqualified; prefixed ones belong to other namespaces.
                     if !id.ns.is_empty() {
+                        capture.attribute(id, MATERIAL_NS, attr.prefix, &attr.value);
                         continue;
                     }
 
                     match id.name {
-                        "u" => {
-                            u = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
-                        }
-                        "v" => {
-                            v = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
-                        }
+                        "u" => u = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "v" => v = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
                         _ => {}
                     };
                 }
@@ -300,15 +329,29 @@ impl<'xml> FromXml<'xml> for Tex2Coord {
             }
         }
 
-        *into = Some(Self {
+        Ok(Self {
             u: Double::new(u),
             v: Double::new(v),
-        });
-        Ok(())
+        })
     }
 
-    type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+    #[cfg(feature = "write")]
+    fn write_open<W: std::fmt::Write + ?Sized>(
+        &self,
+        serializer: &mut ::instant_xml::Serializer<'_, W>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        let mut context = ::instant_xml::ser::Context::<0>::default();
+        context.default_ns = MATERIAL_NS;
+        context.force_prefix = true;
+        serializer.write_start(Self::TAG, MATERIAL_NS, Some(context))?;
+        if ToXml::present(&self.u) {
+            serializer.write_attr("u", "", &self.u)?;
+        }
+        if ToXml::present(&self.v) {
+            serializer.write_attr("v", "", &self.v)?;
+        }
+        Ok(())
+    }
 }
 
 /// Container for composite material definitions.
@@ -485,6 +528,11 @@ pub struct MultiProperties {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyAttributeExtensions,
+
+    /// Foreign attributes of the individual `multi` entries, by index in [`Self::multi`].
+    ///
+    /// Only populated with the `any` feature.
+    pub multi_any_extensions: ItemAttributeExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]
@@ -500,7 +548,9 @@ xml_struct! {
             blendmethods: Option<StrResource> => ("", "blendmethods"),
         },
         elements: {
-            multi: Vec<Multi> => (MATERIAL_NS, "multi"),
+        },
+        items: {
+            multi: Multi => multi_any_extensions,
         },
         any: any_extensions: AnyAttributeExtensions,
     }
@@ -510,18 +560,29 @@ xml_struct! {
 ///
 /// The `pindices` attribute is a space-delimited list of property indices, one for each
 /// property group specified in the parent `MultiProperties.pids` attribute.
-#[cfg_attr(feature = "read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(
-    any(feature = "write", feature = "read"),
+    feature = "write",
     xml(ns(MATERIAL_NS), rename = "multi", force_prefix)
 )]
 pub struct Multi {
     /// Space-delimited list of property indices.
     /// Indices correspond to the property groups listed in `MultiProperties.pids`.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub pindices: ResourceIndexCollection,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_item! {
+    Multi {
+        tag: "multi",
+        ns: MATERIAL_NS,
+        force_prefix: true,
+        attributes: {
+            pindices: ResourceIndexCollection => "pindices",
+        },
+    }
 }
 
 /// Type of the Texture image
@@ -745,6 +806,7 @@ mod write_tests {
                 },
             ],
             any_extensions: Default::default(),
+            tex2coord_any_extensions: Default::default(),
         };
         let texture2dgroup_string = to_string(&texture2dgroup).unwrap();
 
@@ -828,6 +890,7 @@ mod write_tests {
                 },
             ],
             any_extensions: Default::default(),
+            multi_any_extensions: Default::default(),
         };
         let multiproperties_string = to_string(&multiproperties).unwrap();
 
@@ -995,6 +1058,7 @@ mod memory_optimized_read_tests {
                     },
                 ],
                 any_extensions: Default::default(),
+                tex2coord_any_extensions: Default::default(),
             }
         );
     }
@@ -1075,6 +1139,7 @@ mod memory_optimized_read_tests {
                     },
                 ],
                 any_extensions: Default::default(),
+                multi_any_extensions: Default::default(),
             }
         );
     }

@@ -65,6 +65,7 @@ fn validate_beamlattice_with_trianglesets() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -107,6 +108,7 @@ fn validate_beamlattice_with_trianglesets() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let beamlattice = BeamLattice {
@@ -126,6 +128,7 @@ fn validate_beamlattice_with_trianglesets() {
                 pid: OptionalResourceId::none(),
             }],
             any_extensions: Default::default(),
+            beam_any_extensions: Default::default(),
         },
         ballmode: Some(BallMode::Mixed),
         ballradius: Some(0.3),
@@ -137,6 +140,7 @@ fn validate_beamlattice_with_trianglesets() {
                 pid: OptionalResourceId::none(),
             }],
             any_extensions: Default::default(),
+            ball_any_extensions: Default::default(),
         }),
         beamsets: None,
         clippingmode: None,
@@ -155,6 +159,8 @@ fn validate_beamlattice_with_trianglesets() {
                 triangle_ref: vec![TriangleRef { index: 0 }],
                 triangle_refrange: vec![],
                 any_extensions: Default::default(),
+                triangle_refrange_any_extensions: Default::default(),
+                triangle_ref_any_extensions: Default::default(),
             },
             TriangleSet {
                 name: "Mesh Surface".into(),
@@ -162,6 +168,8 @@ fn validate_beamlattice_with_trianglesets() {
                 triangle_ref: vec![TriangleRef { index: 1 }],
                 triangle_refrange: vec![],
                 any_extensions: Default::default(),
+                triangle_refrange_any_extensions: Default::default(),
+                triangle_ref_any_extensions: Default::default(),
             },
         ],
         any_extensions: Default::default(),

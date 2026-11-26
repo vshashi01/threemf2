@@ -380,10 +380,12 @@ mod write_tests {
                 vertices: Vertices {
                     vertex: vec![],
                     any_extensions: Default::default(),
+                    vertex_any_extensions: Default::default(),
                 },
                 triangles: Triangles {
                     triangle: vec![],
                     any_extensions: Default::default(),
+                    triangle_any_extensions: Default::default(),
                 },
                 trianglesets: None,
                 beamlattice: None,
@@ -645,11 +647,13 @@ mod memory_optimized_read_tests {
                 kind: Some(ObjectKind::Mesh(Mesh {
                     vertices: Vertices {
                         vertex: vec![],
-                        any_extensions: Default::default()
+                        any_extensions: Default::default(),
+                        vertex_any_extensions: Default::default(),
                     },
                     triangles: Triangles {
                         triangle: vec![],
-                        any_extensions: Default::default()
+                        any_extensions: Default::default(),
+                        triangle_any_extensions: Default::default(),
                     },
                     trianglesets: None,
                     beamlattice: None,

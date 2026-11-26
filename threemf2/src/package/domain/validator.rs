@@ -303,10 +303,12 @@ mod validator_tests {
                                 Vertex::new(0.0, 1.0, 0.0),
                             ],
                             any_extensions: Default::default(),
+                            vertex_any_extensions: Default::default(),
                         },
                         triangles: Triangles {
                             triangle: vec![],
                             any_extensions: Default::default(),
+                            triangle_any_extensions: Default::default(),
                         },
                         trianglesets: None,
                         beamlattice: None,

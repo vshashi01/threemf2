@@ -1730,13 +1730,13 @@ mod any_views {
         BeamSetView, BooleanShapeView, ColorGroupView, ComponentView, ComponentsObjectView,
         CompositeMaterialsView, Disp2DGroupView, Displacement2DView, DisplacementMeshObjectView,
         LatticeView, MeshObjectView, ModelView, MultiPropertiesView, NormVectorGroupView,
-        ObjectView, SliceRefView, SliceStackView, SliceView, Texture2DGroupView, Texture2DView,
-        TriangleSetView,
+        ObjectView, PolygonView, SliceRefView, SliceStackView, SliceView, Texture2DGroupView,
+        Texture2DView, TriangleSetView,
     };
     use crate::model::domain::{
         any::AnyElement,
         any_extensions::{
-            AnyAttributeExtensions, AnyElementExtensions, AnyExtensions,
+            AnyAttributeExtensions, AnyElementExtensions, AnyExtensions, ItemAttributeExtensions,
             any_extensions_view_methods,
         },
         object::ObjectKind,
@@ -1832,6 +1832,130 @@ mod any_views {
     any_extensions_view_methods!(ComponentsObjectView);
     any_extensions_view_methods!(BooleanShapeView);
     any_extensions_view_methods!(ComponentView);
+
+    impl<'a> MeshObjectView<'a> {
+        /// Foreign attributes of the individual `<vertex>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn vertex_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.mesh.vertices.vertex_any_extensions
+        }
+
+        /// Foreign attributes of the individual `<triangle>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn triangle_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.mesh.triangles.triangle_any_extensions
+        }
+    }
+
+    impl<'a> DisplacementMeshObjectView<'a> {
+        /// Foreign attributes of the individual `<d:vertex>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn vertex_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.mesh.vertices.vertex_any_extensions
+        }
+
+        /// Foreign attributes of the individual `<d:triangle>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn triangle_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.mesh.triangles.triangle_any_extensions
+        }
+    }
+
+    impl<'a> LatticeView<'a> {
+        /// Foreign attributes of the individual `<b:beam>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn beam_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.lattice.beams.beam_any_extensions
+        }
+
+        /// Foreign attributes of the individual `<b2:ball>` entries, by entry index, or `None` if the
+        /// list is absent. Requires the `any` feature.
+        pub fn ball_any_extensions(&self) -> Option<&'a ItemAttributeExtensions> {
+            self.lattice
+                .balls
+                .as_ref()
+                .map(|balls| &balls.ball_any_extensions)
+        }
+    }
+
+    impl<'a> BeamSetView<'a> {
+        /// Foreign attributes of the individual `<b:ref>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn ref_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.set.refs_any_extensions
+        }
+
+        /// Foreign attributes of the individual `<b2:ballref>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn ballref_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.set.ballref_any_extensions
+        }
+    }
+
+    impl<'a> TriangleSetView<'a> {
+        /// Foreign attributes of the individual `<t:ref>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn ref_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.set.triangle_ref_any_extensions
+        }
+
+        /// Foreign attributes of the individual `<t:refrange>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn refrange_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.set.triangle_refrange_any_extensions
+        }
+    }
+
+    impl<'a> Texture2DGroupView<'a> {
+        /// Foreign attributes of the individual `<m:tex2coord>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn tex2coord_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.group.tex2coord_any_extensions
+        }
+    }
+
+    impl<'a> MultiPropertiesView<'a> {
+        /// Foreign attributes of the individual `<m:multi>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn multi_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.props.multi_any_extensions
+        }
+    }
+
+    impl<'a> NormVectorGroupView<'a> {
+        /// Foreign attributes of the individual `<d:normvector>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn normvector_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.group.normvector_any_extensions
+        }
+    }
+
+    impl<'a> Disp2DGroupView<'a> {
+        /// Foreign attributes of the individual `<d:disp2dcoord>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn disp2dcoord_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.group.disp2dcoord_any_extensions
+        }
+    }
+
+    impl<'a> SliceView<'a> {
+        /// Foreign attributes of the individual `<s:vertex>` entries, by entry index, or `None` if the
+        /// list is absent. Requires the `any` feature.
+        pub fn vertex_any_extensions(&self) -> Option<&'a ItemAttributeExtensions> {
+            self.slice
+                .vertices
+                .as_ref()
+                .map(|vertices| &vertices.vertex_any_extensions)
+        }
+    }
+
+    impl<'a> PolygonView<'a> {
+        /// Foreign attributes of the individual `<s:segment>` entries, by entry index.
+        /// Requires the `any` feature.
+        pub fn segment_any_extensions(&self) -> &'a ItemAttributeExtensions {
+            &self.polygon.segment_any_extensions
+        }
+    }
 
     impl<'a> TriangleSetView<'a> {
         /// Foreign attributes and child elements of the triangle set (`<t:triangleset>`).

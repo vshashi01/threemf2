@@ -675,6 +675,70 @@ pub(crate) mod write {
         serializer.write_attr(&qualified(&prefix, attribute.name()), "", attribute.value())
     }
 
+    /// Declares, on the list element whose start tag is being written, the namespaces used by the
+    /// per-entry foreign attributes in `table`, so entries do not repeat the declarations.
+    ///
+    /// Fails if an attribute is not foreign to `own` or an index is not smaller than `len`, the
+    /// length of the list whose entries are named `entry`.
+    pub(crate) fn declare_item_namespaces<W: fmt::Write + ?Sized>(
+        serializer: &mut Serializer<'_, W>,
+        scope: &mut ForeignScope,
+        own: &str,
+        table: &crate::model::domain::any_extensions::ItemAttributeExtensions,
+        len: usize,
+        entry: &str,
+    ) -> Result<(), Error> {
+        if let Some((index, _)) = table.entries.last()
+            && *index >= len
+        {
+            return Err(Error::UnexpectedValue(format!(
+                "foreign attributes are recorded for `{entry}` {index}, but there are only {len}"
+            )));
+        }
+
+        let names = table
+            .entries
+            .iter()
+            .flat_map(|(_, attributes)| attributes.iter())
+            .map(|a| (a.ns(), a.prefix_hint()));
+        if let Some((ns, _)) = names.clone().find(|(ns, _)| !is_foreign_for(ns, own)) {
+            return Err(not_foreign(ns));
+        }
+
+        for (prefix, ns) in scope.declare_all(serializer, names) {
+            serializer.write_attr(&qualified("xmlns", &prefix), "", ns.as_str())?;
+        }
+        Ok(())
+    }
+
+    /// Writes the foreign attributes of a list entry whose namespaces were declared on the list
+    /// element with [`declare_item_namespaces`].
+    pub(crate) fn write_item_attributes<W: fmt::Write + ?Sized>(
+        serializer: &mut Serializer<'_, W>,
+        scope: &ForeignScope,
+        attributes: &AnyAttributes,
+    ) -> Result<(), Error> {
+        for attribute in attributes.iter() {
+            let ns = attribute.ns();
+            let name = match ns {
+                XML_NS => qualified("xml", attribute.name()),
+                _ => {
+                    let prefix = scope
+                        .prefixes
+                        .iter()
+                        .rev()
+                        .find(|(_, uri)| uri == ns)
+                        .map(|(prefix, _)| prefix.as_str())
+                        .or_else(|| serializer.prefix(ns))
+                        .ok_or_else(|| not_foreign(ns))?;
+                    qualified(prefix, attribute.name())
+                }
+            };
+            serializer.write_attr(&name, "", attribute.value())?;
+        }
+        Ok(())
+    }
+
     /// Writes a foreign element outside of any slot (for example as an object shape), declaring
     /// its namespaces on the element itself.
     pub(crate) fn write_standalone_element<W: fmt::Write + ?Sized>(

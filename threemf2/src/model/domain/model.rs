@@ -648,10 +648,12 @@ mod write_tests {
                         vertices: Vertices {
                             vertex: vec![],
                             any_extensions: Default::default(),
+                            vertex_any_extensions: Default::default(),
                         },
                         triangles: Triangles {
                             triangle: vec![],
                             any_extensions: Default::default(),
+                            triangle_any_extensions: Default::default(),
                         },
                         trianglesets: None,
                         beamlattice: None,
@@ -717,10 +719,12 @@ mod write_tests {
                         vertices: Vertices {
                             vertex: vec![],
                             any_extensions: Default::default(),
+                            vertex_any_extensions: Default::default(),
                         },
                         triangles: Triangles {
                             triangle: vec![],
                             any_extensions: Default::default(),
+                            triangle_any_extensions: Default::default(),
                         },
                         trianglesets: None,
                         beamlattice: None,
@@ -787,10 +791,12 @@ mod write_tests {
                         vertices: Vertices {
                             vertex: vec![],
                             any_extensions: Default::default(),
+                            vertex_any_extensions: Default::default(),
                         },
                         triangles: Triangles {
                             triangle: vec![],
                             any_extensions: Default::default(),
+                            triangle_any_extensions: Default::default(),
                         },
                         trianglesets: None,
                         beamlattice: Some(beamlattice::BeamLattice {
@@ -807,6 +813,7 @@ mod write_tests {
                             beams: beamlattice::Beams {
                                 beam: vec![],
                                 any_extensions: Default::default(),
+                                beam_any_extensions: Default::default(),
                             },
                             balls: None,
                             beamsets: None,
@@ -875,10 +882,12 @@ mod write_tests {
                         vertices: Vertices {
                             vertex: vec![],
                             any_extensions: Default::default(),
+                            vertex_any_extensions: Default::default(),
                         },
                         triangles: Triangles {
                             triangle: vec![],
                             any_extensions: Default::default(),
+                            triangle_any_extensions: Default::default(),
                         },
                         trianglesets: None,
                         beamlattice: Some(beamlattice::BeamLattice {
@@ -895,10 +904,12 @@ mod write_tests {
                             beams: beamlattice::Beams {
                                 beam: vec![],
                                 any_extensions: Default::default(),
+                                beam_any_extensions: Default::default(),
                             },
                             balls: Some(beamlattice::Balls {
                                 ball: vec![],
                                 any_extensions: Default::default(),
+                                ball_any_extensions: Default::default(),
                             }),
                             beamsets: None,
                             any_extensions: Default::default(),
@@ -970,10 +981,12 @@ mod write_tests {
                         vertices: Vertices {
                             vertex: vec![],
                             any_extensions: Default::default(),
+                            vertex_any_extensions: Default::default(),
                         },
                         triangles: Triangles {
                             triangle: vec![],
                             any_extensions: Default::default(),
+                            triangle_any_extensions: Default::default(),
                         },
                         trianglesets: Some(triangle_set::TriangleSets {
                             trianglesets: vec![],
@@ -1101,7 +1114,10 @@ mod write_tests {
                     sliceref: vec![],
                     slice: vec![slice::Slice {
                         ztop: 1.0.into(),
-                        vertices: Some(slice::Vertices { vertex: vec![] }),
+                        vertices: Some(slice::Vertices {
+                            vertex: vec![],
+                            vertex_any_extensions: Default::default(),
+                        }),
                         polygon: vec![slice::Polygon {
                             startv: 0,
                             segment: vec![slice::Segment {
@@ -1110,6 +1126,7 @@ mod write_tests {
                                 p2: OptionalResourceIndex::none(),
                                 pid: OptionalResourceId::none(),
                             }],
+                            segment_any_extensions: Default::default(),
                         }],
                         any_extensions: Default::default(),
                     }],
@@ -1164,10 +1181,12 @@ mod write_tests {
                             vertices: Vertices {
                                 vertex: vec![],
                                 any_extensions: Default::default(),
+                                vertex_any_extensions: Default::default(),
                             },
                             triangles: Triangles {
                                 triangle: vec![],
                                 any_extensions: Default::default(),
+                                triangle_any_extensions: Default::default(),
                             },
                             trianglesets: Some(triangle_set::TriangleSets {
                                 trianglesets: vec![],
@@ -1187,6 +1206,7 @@ mod write_tests {
                                 beams: beamlattice::Beams {
                                     beam: vec![],
                                     any_extensions: Default::default(),
+                                    beam_any_extensions: Default::default(),
                                 },
                                 balls: None,
                                 beamsets: None,
@@ -1290,6 +1310,7 @@ mod write_tests {
                         v: 0.0.into(),
                     }],
                     any_extensions: Default::default(),
+                    tex2coord_any_extensions: Default::default(),
                 }],
                 compositematerials: vec![CompositeMaterials {
                     id: 3,
@@ -1308,6 +1329,7 @@ mod write_tests {
                         pindices: ResourceIndexCollection::from(vec![0, 0]),
                     }],
                     any_extensions: Default::default(),
+                    multi_any_extensions: Default::default(),
                 }],
                 texture2d: vec![Texture2D {
                     id: 5,

@@ -34,6 +34,7 @@ fn validate_simple_mesh_against_core_xsd() {
             Vertex::new(1.0, 0.0, 0.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -76,6 +77,7 @@ fn validate_simple_mesh_against_core_xsd() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -164,6 +166,7 @@ fn validate_model_with_metadata_against_core_xsd() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -206,6 +209,7 @@ fn validate_model_with_metadata_against_core_xsd() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -315,6 +319,7 @@ fn validate_model_with_different_units() {
                 Vertex::new(0.5, 0.5, 1.0),
             ],
             any_extensions: Default::default(),
+            vertex_any_extensions: Default::default(),
         };
 
         let triangles = Triangles {
@@ -357,6 +362,7 @@ fn validate_model_with_different_units() {
                 },
             ],
             any_extensions: Default::default(),
+            triangle_any_extensions: Default::default(),
         };
 
         let mesh = Mesh {

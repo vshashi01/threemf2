@@ -29,6 +29,7 @@ mod tests {
                 Vertex::new(0.0, 1.0, 1.0),
             ],
             any_extensions: Default::default(),
+            vertex_any_extensions: Default::default(),
         };
 
         let triangles = Triangles {
@@ -42,6 +43,7 @@ mod tests {
                 pid: OptionalResourceId::none(),
             }],
             any_extensions: Default::default(),
+            triangle_any_extensions: Default::default(),
         };
 
         let mesh = Mesh {

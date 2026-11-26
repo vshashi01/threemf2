@@ -50,6 +50,7 @@ fn validate_simple_trianglesets() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -92,6 +93,7 @@ fn validate_simple_trianglesets() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let triangle_sets = TriangleSets {
@@ -102,6 +104,8 @@ fn validate_simple_trianglesets() {
                 triangle_ref: vec![TriangleRef { index: 0 }, TriangleRef { index: 1 }],
                 triangle_refrange: vec![],
                 any_extensions: Default::default(),
+                triangle_ref_any_extensions: Default::default(),
+                triangle_refrange_any_extensions: Default::default(),
             },
             TriangleSet {
                 name: "Side Surface".into(),
@@ -109,6 +113,8 @@ fn validate_simple_trianglesets() {
                 triangle_ref: vec![TriangleRef { index: 2 }],
                 triangle_refrange: vec![],
                 any_extensions: Default::default(),
+                triangle_ref_any_extensions: Default::default(),
+                triangle_refrange_any_extensions: Default::default(),
             },
         ],
         any_extensions: Default::default(),
@@ -218,10 +224,12 @@ fn validate_trianglesets_with_ref_ranges() {
     let vertices = Vertices {
         vertex: vertices,
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
     let triangles = Triangles {
         triangle: triangles,
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let triangle_sets = TriangleSets {
@@ -235,6 +243,8 @@ fn validate_trianglesets_with_ref_ranges() {
                     endindex: 7,
                 }],
                 any_extensions: Default::default(),
+                triangle_ref_any_extensions: Default::default(),
+                triangle_refrange_any_extensions: Default::default(),
             },
             TriangleSet {
                 name: "Second Half".into(),
@@ -245,6 +255,8 @@ fn validate_trianglesets_with_ref_ranges() {
                     endindex: 14,
                 }],
                 any_extensions: Default::default(),
+                triangle_ref_any_extensions: Default::default(),
+                triangle_refrange_any_extensions: Default::default(),
             },
         ],
         any_extensions: Default::default(),

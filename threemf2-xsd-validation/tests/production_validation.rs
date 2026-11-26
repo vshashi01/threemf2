@@ -52,6 +52,7 @@ fn validate_simple_production_model_with_uuids() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -94,6 +95,7 @@ fn validate_simple_production_model_with_uuids() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh = Mesh {
@@ -179,6 +181,7 @@ fn validate_production_model_with_components() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles1 = Triangles {
@@ -195,6 +198,7 @@ fn validate_production_model_with_components() {
             4
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let vertices2 = Vertices {
@@ -205,6 +209,7 @@ fn validate_production_model_with_components() {
             Vertex::new(2.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles2 = Triangles {
@@ -221,6 +226,7 @@ fn validate_production_model_with_components() {
             4
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let mesh1 = Mesh {

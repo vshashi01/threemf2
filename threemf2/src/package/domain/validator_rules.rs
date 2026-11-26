@@ -834,10 +834,12 @@ mod tests {
                 vertices: mesh::Vertices {
                     vertex: vec![],
                     any_extensions: Default::default(),
+                    vertex_any_extensions: Default::default(),
                 },
                 triangles: mesh::Triangles {
                     triangle: vec![],
                     any_extensions: Default::default(),
+                    triangle_any_extensions: Default::default(),
                 },
                 trianglesets: None,
                 beamlattice: None,

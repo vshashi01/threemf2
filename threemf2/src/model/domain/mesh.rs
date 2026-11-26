@@ -4,7 +4,9 @@ use instant_xml::ToXml;
 #[cfg(feature = "read")]
 use instant_xml::FromXml;
 
-use crate::model::domain::any_extensions::{AnyAttributeExtensions, AnyExtensions};
+use crate::model::domain::any_extensions::{
+    AnyAttributeExtensions, AnyExtensions, ItemAttributeExtensions,
+};
 use crate::model::domain::beamlattice::BeamLattice;
 #[cfg(feature = "read")]
 use crate::model::domain::constants;
@@ -84,6 +86,11 @@ pub struct Vertices {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyAttributeExtensions,
+
+    /// Foreign attributes of the individual `vertex` entries, by index in [`Self::vertex`].
+    ///
+    /// Only populated with the `any` feature.
+    pub vertex_any_extensions: ItemAttributeExtensions,
 }
 
 #[cfg(feature = "write")]
@@ -97,23 +104,36 @@ impl ToXml for Vertices {
         context.default_ns = CORE_NS;
         let element = serializer.write_start("vertices", CORE_NS, Some(context))?;
         #[cfg(feature = "any")]
-        crate::model::domain::any::write::write_foreign_attributes(
+        let mut scope = crate::model::domain::any::write::write_foreign_attributes(
             serializer,
             &[],
             CORE_NS,
             self.any_extensions.attributes(),
             &[],
         )?;
+        #[cfg(feature = "any")]
+        crate::model::domain::any::write::declare_item_namespaces(
+            serializer,
+            &mut scope,
+            CORE_NS,
+            &self.vertex_any_extensions,
+            self.vertex.len(),
+            "vertex",
+        )?;
         serializer.end_start()?;
-        for item in &self.vertex {
-            item.serialize(
-                Some(instant_xml::Id {
-                    ns: CORE_NS,
-                    name: "vertex",
-                }),
-                serializer,
-            )?;
-        }
+        #[cfg(feature = "any")]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.vertex,
+            &self.vertex_any_extensions,
+            &scope,
+        )?;
+        #[cfg(not(feature = "any"))]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.vertex,
+            &self.vertex_any_extensions,
+        )?;
         serializer.write_close(element)
     }
 }
@@ -139,6 +159,7 @@ impl<'xml> FromXml<'xml> for Vertices {
         let mut vertices: Vec<Vertex> = Vec::with_capacity(constants::MAX_VERTEX_BUFFER);
         #[allow(unused_mut)]
         let mut any_extensions = AnyAttributeExtensions::default();
+        let mut vertex_any_extensions = ItemAttributeExtensions::default();
 
         while let Some(node) = deserializer.next() {
             #[cfg(feature = "any")]
@@ -158,20 +179,13 @@ impl<'xml> FromXml<'xml> for Vertices {
             if let Ok(n) = node
                 && let instant_xml::de::Node::Open(element) = n
             {
-                //println!("This is element value {:?}", element);
-                let mut vertex_value: Option<Vertex> = None;
                 let mut nested = deserializer.nested(element);
-
-                if <Vertex as instant_xml::FromXml>::deserialize(
-                    &mut vertex_value,
-                    "vertex",
+                // Malformed entries are skipped.
+                let _ = crate::model::domain::xml_item::read_item_into(
                     &mut nested,
-                )
-                .is_ok()
-                    && let Some(vertex) = vertex_value
-                {
-                    vertices.push(vertex);
-                };
+                    &mut vertices,
+                    &mut vertex_any_extensions,
+                );
             }
         }
 
@@ -179,6 +193,7 @@ impl<'xml> FromXml<'xml> for Vertices {
         *into = Some(Vertices {
             vertex: vertices,
             any_extensions,
+            vertex_any_extensions,
         });
 
         Ok(())
@@ -233,6 +248,29 @@ impl<'xml> FromXml<'xml> for Vertex {
         _: &'static str,
         deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
     ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        *into = Some(
+            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
+                deserializer,
+                &mut crate::model::domain::any_extensions::ItemCapture::default(),
+            )?,
+        );
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+impl crate::model::domain::xml_item::XmlItem for Vertex {
+    const TAG: &'static str = "vertex";
+    const NS: &'static str = CORE_NS;
+
+    #[cfg(feature = "read")]
+    fn read_item(
+        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
+        capture: &mut crate::model::domain::any_extensions::ItemCapture,
+    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
         use ::instant_xml::Error;
         use ::instant_xml::de::Node;
         let mut x: f64 = 0.0;
@@ -246,19 +284,14 @@ impl<'xml> FromXml<'xml> for Vertex {
                     let id = deserializer.attribute_id(&attr)?;
                     // Schema attributes are unqualified; prefixed ones belong to other namespaces.
                     if !id.ns.is_empty() {
+                        capture.attribute(id, CORE_NS, attr.prefix, &attr.value);
                         continue;
                     }
 
                     match id.name {
-                        "x" => {
-                            x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
-                        }
-                        "y" => {
-                            y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
-                        }
-                        "z" => {
-                            z = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
-                        }
+                        "x" => x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "y" => y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "z" => z = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
                         _ => {}
                     };
                 }
@@ -273,16 +306,32 @@ impl<'xml> FromXml<'xml> for Vertex {
             }
         }
 
-        *into = Some(Self {
+        Ok(Self {
             x: Double::new(x),
             y: Double::new(y),
             z: Double::new(z),
-        });
-        Ok(())
+        })
     }
 
-    type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+    #[cfg(feature = "write")]
+    fn write_open<W: std::fmt::Write + ?Sized>(
+        &self,
+        serializer: &mut ::instant_xml::Serializer<'_, W>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        let mut context = ::instant_xml::ser::Context::<0>::default();
+        context.default_ns = CORE_NS;
+        serializer.write_start(Self::TAG, CORE_NS, Some(context))?;
+        if ToXml::present(&self.x) {
+            serializer.write_attr("x", "", &self.x)?;
+        }
+        if ToXml::present(&self.y) {
+            serializer.write_attr("y", "", &self.y)?;
+        }
+        if ToXml::present(&self.z) {
+            serializer.write_attr("z", "", &self.z)?;
+        }
+        Ok(())
+    }
 }
 
 /// Collection of Triangle
@@ -297,6 +346,11 @@ pub struct Triangles {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyAttributeExtensions,
+
+    /// Foreign attributes of the individual `triangle` entries, by index in [`Self::triangle`].
+    ///
+    /// Only populated with the `any` feature.
+    pub triangle_any_extensions: ItemAttributeExtensions,
 }
 
 #[cfg(feature = "write")]
@@ -310,23 +364,36 @@ impl ToXml for Triangles {
         context.default_ns = CORE_NS;
         let element = serializer.write_start("triangles", CORE_NS, Some(context))?;
         #[cfg(feature = "any")]
-        crate::model::domain::any::write::write_foreign_attributes(
+        let mut scope = crate::model::domain::any::write::write_foreign_attributes(
             serializer,
             &[],
             CORE_NS,
             self.any_extensions.attributes(),
             &[],
         )?;
+        #[cfg(feature = "any")]
+        crate::model::domain::any::write::declare_item_namespaces(
+            serializer,
+            &mut scope,
+            CORE_NS,
+            &self.triangle_any_extensions,
+            self.triangle.len(),
+            "triangle",
+        )?;
         serializer.end_start()?;
-        for item in &self.triangle {
-            item.serialize(
-                Some(instant_xml::Id {
-                    ns: CORE_NS,
-                    name: "triangle",
-                }),
-                serializer,
-            )?;
-        }
+        #[cfg(feature = "any")]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.triangle,
+            &self.triangle_any_extensions,
+            &scope,
+        )?;
+        #[cfg(not(feature = "any"))]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.triangle,
+            &self.triangle_any_extensions,
+        )?;
         serializer.write_close(element)
     }
 }
@@ -352,6 +419,7 @@ impl<'xml> FromXml<'xml> for Triangles {
         let mut triangles: Vec<Triangle> = Vec::with_capacity(constants::MAX_TRIANGLE_BUFFER);
         #[allow(unused_mut)]
         let mut any_extensions = AnyAttributeExtensions::default();
+        let mut triangle_any_extensions = ItemAttributeExtensions::default();
         while let Some(node) = deserializer.next() {
             #[cfg(feature = "any")]
             if let Ok(instant_xml::de::Node::Attribute(attr)) = &node
@@ -370,18 +438,13 @@ impl<'xml> FromXml<'xml> for Triangles {
             if let Ok(n) = node
                 && let instant_xml::de::Node::Open(element) = n
             {
-                let mut triangle_value: Option<Triangle> = None;
                 let mut nested = deserializer.nested(element);
-                if <Triangle as instant_xml::FromXml>::deserialize(
-                    &mut triangle_value,
-                    field,
+                // Malformed entries are skipped.
+                let _ = crate::model::domain::xml_item::read_item_into(
                     &mut nested,
-                )
-                .is_ok()
-                    && let Some(vertex) = triangle_value
-                {
-                    triangles.push(vertex);
-                }
+                    &mut triangles,
+                    &mut triangle_any_extensions,
+                );
             }
         }
 
@@ -389,6 +452,7 @@ impl<'xml> FromXml<'xml> for Triangles {
         *into = Some(Triangles {
             triangle: triangles,
             any_extensions,
+            triangle_any_extensions,
         });
 
         Ok(())
@@ -452,6 +516,29 @@ impl<'xml> FromXml<'xml> for Triangle {
         _: &'static str,
         deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
     ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        *into = Some(
+            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
+                deserializer,
+                &mut crate::model::domain::any_extensions::ItemCapture::default(),
+            )?,
+        );
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+impl crate::model::domain::xml_item::XmlItem for Triangle {
+    const TAG: &'static str = "triangle";
+    const NS: &'static str = CORE_NS;
+
+    #[cfg(feature = "read")]
+    fn read_item(
+        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
+        capture: &mut crate::model::domain::any_extensions::ItemCapture,
+    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
         use ::instant_xml::Error;
         use ::instant_xml::de::Node;
         let mut v1: ResourceIndex = 0;
@@ -469,6 +556,7 @@ impl<'xml> FromXml<'xml> for Triangle {
                     let id = deserializer.attribute_id(&attr)?;
                     // Schema attributes are unqualified; prefixed ones belong to other namespaces.
                     if !id.ns.is_empty() {
+                        capture.attribute(id, CORE_NS, attr.prefix, &attr.value);
                         continue;
                     }
 
@@ -510,7 +598,7 @@ impl<'xml> FromXml<'xml> for Triangle {
             }
         }
 
-        *into = Some(Self {
+        Ok(Self {
             v1,
             v2,
             v3,
@@ -518,12 +606,40 @@ impl<'xml> FromXml<'xml> for Triangle {
             p2,
             p3,
             pid,
-        });
-        Ok(())
+        })
     }
 
-    type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+    #[cfg(feature = "write")]
+    fn write_open<W: std::fmt::Write + ?Sized>(
+        &self,
+        serializer: &mut ::instant_xml::Serializer<'_, W>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        let mut context = ::instant_xml::ser::Context::<0>::default();
+        context.default_ns = CORE_NS;
+        serializer.write_start(Self::TAG, CORE_NS, Some(context))?;
+        if ToXml::present(&self.v1) {
+            serializer.write_attr("v1", "", &self.v1)?;
+        }
+        if ToXml::present(&self.v2) {
+            serializer.write_attr("v2", "", &self.v2)?;
+        }
+        if ToXml::present(&self.v3) {
+            serializer.write_attr("v3", "", &self.v3)?;
+        }
+        if ToXml::present(&self.p1) {
+            serializer.write_attr("p1", "", &self.p1)?;
+        }
+        if ToXml::present(&self.p2) {
+            serializer.write_attr("p2", "", &self.p2)?;
+        }
+        if ToXml::present(&self.p3) {
+            serializer.write_attr("p3", "", &self.p3)?;
+        }
+        if ToXml::present(&self.pid) {
+            serializer.write_attr("pid", "", &self.pid)?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(feature = "write")]
@@ -560,6 +676,7 @@ mod write_tests {
                 Vertex::new(0.156, 55.6896, -10.0),
             ],
             any_extensions: Default::default(),
+            vertex_any_extensions: Default::default(),
         };
         let vertices_string = to_string(&vertices).unwrap();
 
@@ -611,6 +728,7 @@ mod write_tests {
                 },
             ],
             any_extensions: Default::default(),
+            triangle_any_extensions: Default::default(),
         };
         let triangles_string = to_string(&triangles).unwrap();
 
@@ -636,6 +754,7 @@ mod write_tests {
                     Vertex::new(-1.0, 1.0, 0.0),
                 ],
                 any_extensions: Default::default(),
+                vertex_any_extensions: Default::default(),
             },
             triangles: Triangles {
                 triangle: vec![
@@ -659,6 +778,7 @@ mod write_tests {
                     },
                 ],
                 any_extensions: Default::default(),
+                triangle_any_extensions: Default::default(),
             },
             trianglesets: None,
             beamlattice: None,
@@ -738,6 +858,7 @@ mod memory_optimized_read_tests {
                     Vertex::new(0.156, 55.6896, -10.0,),
                 ],
                 any_extensions: Default::default(),
+                vertex_any_extensions: Default::default(),
             }
         )
     }
@@ -793,6 +914,7 @@ mod memory_optimized_read_tests {
                     },
                 ],
                 any_extensions: Default::default(),
+                triangle_any_extensions: Default::default(),
             }
         );
     }
@@ -816,6 +938,7 @@ mod memory_optimized_read_tests {
                         Vertex::new(-1.0, 1.0, 0.0),
                     ],
                     any_extensions: Default::default(),
+                    vertex_any_extensions: Default::default(),
                 },
                 triangles: Triangles {
                     triangle: vec![
@@ -839,6 +962,7 @@ mod memory_optimized_read_tests {
                         }
                     ],
                     any_extensions: Default::default(),
+                    triangle_any_extensions: Default::default(),
                 },
                 trianglesets: None,
                 beamlattice: None,

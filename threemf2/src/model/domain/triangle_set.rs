@@ -1,10 +1,11 @@
 #[cfg(feature = "write")]
 use instant_xml::ToXml;
 
-#[cfg(feature = "read")]
-use instant_xml::FromXml;
-
-use crate::model::domain::any_extensions::{AnyAttributeExtensions, AnyExtensions};
+use crate::model::domain::any_extensions::{
+    AnyAttributeExtensions, AnyExtensions, ItemAttributeExtensions,
+};
+#[cfg(any(feature = "read", feature = "write"))]
+use crate::model::domain::xml_item::xml_item;
 #[cfg(any(feature = "read", feature = "write"))]
 use crate::model::domain::xml_struct::xml_struct;
 use crate::{
@@ -60,6 +61,17 @@ pub struct TriangleSet {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyExtensions,
+
+    /// Foreign attributes of the individual `ref` entries, by index in [`Self::triangle_ref`].
+    ///
+    /// Only populated with the `any` feature.
+    pub triangle_ref_any_extensions: ItemAttributeExtensions,
+
+    /// Foreign attributes of the individual `refrange` entries, by index in
+    /// [`Self::triangle_refrange`].
+    ///
+    /// Only populated with the `any` feature.
+    pub triangle_refrange_any_extensions: ItemAttributeExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]
@@ -73,44 +85,68 @@ xml_struct! {
             name: StrResource => ("", "name"),
             identifier: StrResource => ("", "identifier"),
         },
-        elements: {
-            triangle_ref: Vec<TriangleRef> => (CORE_TRIANGLESET_NS, "triangle_ref"),
-            triangle_refrange: Vec<TriangleRefRange> => (CORE_TRIANGLESET_NS, "triangle_refrange"),
+        elements: {},
+        items: {
+            triangle_ref: TriangleRef => triangle_ref_any_extensions,
+            triangle_refrange: TriangleRefRange => triangle_refrange_any_extensions,
         },
         any: any_extensions: AnyExtensions,
     }
 }
 
 /// A reference to a Triangle in the Mesh as an index into [`Triangles`](crate::model::domain::mesh::Triangles).
-#[cfg_attr(feature = "read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    any(feature = "write", feature = "read"),
+    feature = "write",
     xml(ns(CORE_TRIANGLESET_NS), rename = "ref", force_prefix)
 )]
 pub struct TriangleRef {
     /// Index of the Triangle
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub index: ResourceIndex,
 }
 
+#[cfg(any(feature = "read", feature = "write"))]
+xml_item! {
+    TriangleRef {
+        tag: "ref",
+        ns: CORE_TRIANGLESET_NS,
+        force_prefix: true,
+        attributes: {
+            index: ResourceIndex => "index",
+        },
+    }
+}
+
 /// A reference to continous Range of Triangles in the Mesh.
-#[cfg_attr(feature = "read", derive(FromXml))]
 #[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
-    any(feature = "write", feature = "read"),
+    feature = "write",
     xml(ns(CORE_TRIANGLESET_NS), rename = "refrange", force_prefix)
 )]
 pub struct TriangleRefRange {
     /// The start index of the range.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub startindex: ResourceIndex,
 
     /// The end idnex of the range.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
+    #[cfg_attr(feature = "write", xml(attribute))]
     pub endindex: ResourceIndex,
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+xml_item! {
+    TriangleRefRange {
+        tag: "refrange",
+        ns: CORE_TRIANGLESET_NS,
+        force_prefix: true,
+        attributes: {
+            startindex: ResourceIndex => "startindex",
+            endindex: ResourceIndex => "endindex",
+        },
+    }
 }
 
 #[cfg(feature = "write")]
@@ -145,6 +181,7 @@ mod write_tests {
                     Vertex::new(-1.0, 1.0, 0.0),
                 ],
                 any_extensions: Default::default(),
+                vertex_any_extensions: Default::default(),
             },
             triangles: Triangles {
                 triangle: vec![
@@ -168,6 +205,7 @@ mod write_tests {
                     },
                 ],
                 any_extensions: Default::default(),
+                triangle_any_extensions: Default::default(),
             },
             trianglesets: Some(TriangleSets {
                 trianglesets: vec![
@@ -180,6 +218,8 @@ mod write_tests {
                             endindex: 102,
                         }],
                         any_extensions: Default::default(),
+                        triangle_refrange_any_extensions: Default::default(),
+                        triangle_ref_any_extensions: Default::default(),
                     },
                     TriangleSet {
                         name: "Triangle Set 2".into(),
@@ -196,6 +236,8 @@ mod write_tests {
                             },
                         ],
                         any_extensions: Default::default(),
+                        triangle_refrange_any_extensions: Default::default(),
+                        triangle_ref_any_extensions: Default::default(),
                     },
                 ],
                 any_extensions: Default::default(),
@@ -225,6 +267,8 @@ mod write_tests {
                         endindex: 102,
                     }],
                     any_extensions: Default::default(),
+                    triangle_refrange_any_extensions: Default::default(),
+                    triangle_ref_any_extensions: Default::default(),
                 },
                 TriangleSet {
                     name: "Triangle Set 2".into(),
@@ -241,6 +285,8 @@ mod write_tests {
                         },
                     ],
                     any_extensions: Default::default(),
+                    triangle_refrange_any_extensions: Default::default(),
+                    triangle_ref_any_extensions: Default::default(),
                 },
             ],
             any_extensions: Default::default(),
@@ -288,6 +334,7 @@ mod memory_optimized_read_tests {
                         Vertex::new(-1.0, 1.0, 0.0),
                     ],
                     any_extensions: Default::default(),
+                    vertex_any_extensions: Default::default(),
                 },
                 triangles: Triangles {
                     triangle: vec![
@@ -311,6 +358,7 @@ mod memory_optimized_read_tests {
                         }
                     ],
                     any_extensions: Default::default(),
+                    triangle_any_extensions: Default::default(),
                 },
                 trianglesets: Some(TriangleSets {
                     trianglesets: vec![
@@ -323,6 +371,8 @@ mod memory_optimized_read_tests {
                                 endindex: 102,
                             }],
                             any_extensions: Default::default(),
+                            triangle_refrange_any_extensions: Default::default(),
+                            triangle_ref_any_extensions: Default::default(),
                         },
                         TriangleSet {
                             name: "Triangle Set 2".into(),
@@ -339,6 +389,8 @@ mod memory_optimized_read_tests {
                                 },
                             ],
                             any_extensions: Default::default(),
+                            triangle_refrange_any_extensions: Default::default(),
+                            triangle_ref_any_extensions: Default::default(),
                         },
                     ],
                     any_extensions: Default::default(),
@@ -370,6 +422,8 @@ mod memory_optimized_read_tests {
                             endindex: 102,
                         }],
                         any_extensions: Default::default(),
+                        triangle_refrange_any_extensions: Default::default(),
+                        triangle_ref_any_extensions: Default::default(),
                     },
                     TriangleSet {
                         name: "Triangle Set 2".into(),
@@ -386,6 +440,8 @@ mod memory_optimized_read_tests {
                             },
                         ],
                         any_extensions: Default::default(),
+                        triangle_refrange_any_extensions: Default::default(),
+                        triangle_ref_any_extensions: Default::default(),
                     },
                 ],
                 any_extensions: Default::default(),

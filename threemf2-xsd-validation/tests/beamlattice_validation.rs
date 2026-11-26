@@ -55,6 +55,7 @@ fn validate_simple_beamlattice() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -97,6 +98,7 @@ fn validate_simple_beamlattice() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let beamlattice = BeamLattice {
@@ -140,6 +142,7 @@ fn validate_simple_beamlattice() {
                 },
             ],
             any_extensions: Default::default(),
+            beam_any_extensions: Default::default(),
         },
         balls: None,
         ballmode: None,
@@ -235,6 +238,7 @@ fn validate_beamlattice_with_balls() {
             Vertex::new(0.5, 0.5, 1.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -251,6 +255,7 @@ fn validate_beamlattice_with_balls() {
             4
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     let beamlattice = BeamLattice {
@@ -283,6 +288,7 @@ fn validate_beamlattice_with_balls() {
                 },
             ],
             any_extensions: Default::default(),
+            beam_any_extensions: Default::default(),
         },
         ballmode: Some(BallMode::Mixed),
         ballradius: Some(1.0),
@@ -302,6 +308,7 @@ fn validate_beamlattice_with_balls() {
                 },
             ],
             any_extensions: Default::default(),
+            ball_any_extensions: Default::default(),
         }),
         beamsets: None,
         clippingmode: None,

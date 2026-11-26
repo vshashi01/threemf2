@@ -41,7 +41,9 @@
 //! </s:slicestack>
 //! ```
 
-use crate::model::domain::any_extensions::{AnyAttributeExtensions, AnyExtensions};
+use crate::model::domain::any_extensions::{
+    AnyAttributeExtensions, AnyExtensions, ItemAttributeExtensions,
+};
 #[cfg(any(feature = "read", feature = "write"))]
 use crate::model::domain::xml_struct::xml_struct;
 use crate::{
@@ -229,15 +231,73 @@ xml_struct! {
 }
 
 /// Container for 2D vertices within a slice.
-#[cfg_attr(feature = "write", derive(ToXml))]
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    feature = "write",
-    xml(ns(SLICE_NS), rename = "vertices", force_prefix)
-)]
 pub struct Vertices {
     /// 2D vertices within a slice.
     pub vertex: Vec<Vertex>,
+
+    /// Foreign attributes of the individual `vertex` entries, by index in [`Self::vertex`].
+    ///
+    /// Only populated with the `any` feature.
+    pub vertex_any_extensions: ItemAttributeExtensions,
+}
+
+#[cfg(feature = "write")]
+impl ToXml for Vertices {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let mut context = instant_xml::ser::Context::<0>::default();
+        context.default_ns = SLICE_NS;
+        context.force_prefix = true;
+        let element = serializer.write_start("vertices", SLICE_NS, Some(context))?;
+        #[cfg(feature = "any")]
+        let scope = write_item_namespaces(
+            serializer,
+            &self.vertex_any_extensions,
+            self.vertex.len(),
+            "vertex",
+        )?;
+        serializer.end_start()?;
+        #[cfg(feature = "any")]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.vertex,
+            &self.vertex_any_extensions,
+            &scope,
+        )?;
+        #[cfg(not(feature = "any"))]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.vertex,
+            &self.vertex_any_extensions,
+        )?;
+        serializer.write_close(element)
+    }
+}
+
+/// Declares the namespaces of the per-entry foreign attributes of a slice list element, which
+/// has no foreign attributes of its own.
+#[cfg(all(feature = "write", feature = "any"))]
+fn write_item_namespaces<W: std::fmt::Write + ?Sized>(
+    serializer: &mut instant_xml::Serializer<W>,
+    table: &ItemAttributeExtensions,
+    len: usize,
+    entry: &str,
+) -> Result<crate::model::domain::any::write::ForeignScope, instant_xml::Error> {
+    let mut scope = crate::model::domain::any::write::write_foreign_attributes(
+        serializer,
+        &[],
+        SLICE_NS,
+        crate::model::domain::any::AnyAttributes::empty(),
+        &[],
+    )?;
+    crate::model::domain::any::write::declare_item_namespaces(
+        serializer, &mut scope, SLICE_NS, table, len, entry,
+    )?;
+    Ok(scope)
 }
 
 #[cfg(feature = "read")]
@@ -259,30 +319,27 @@ impl<'xml> FromXml<'xml> for Vertices {
         }
 
         let mut vertices: Vec<Vertex> = Vec::with_capacity(MAX_VERTEX_BUFFER);
+        let mut vertex_any_extensions = ItemAttributeExtensions::default();
 
         while let Some(node) = deserializer.next() {
             if let Ok(n) = node
                 && let instant_xml::de::Node::Open(element) = n
             {
-                //println!("This is element value {:?}", element);
-                let mut vertex_value: Option<Vertex> = None;
                 let mut nested = deserializer.nested(element);
-
-                if <Vertex as instant_xml::FromXml>::deserialize(
-                    &mut vertex_value,
-                    "vertex",
+                // Malformed entries are skipped.
+                let _ = crate::model::domain::xml_item::read_item_into(
                     &mut nested,
-                )
-                .is_ok()
-                    && let Some(vertex) = vertex_value
-                {
-                    vertices.push(vertex);
-                };
+                    &mut vertices,
+                    &mut vertex_any_extensions,
+                );
             }
         }
 
         vertices.shrink_to_fit();
-        *into = Some(Vertices { vertex: vertices });
+        *into = Some(Vertices {
+            vertex: vertices,
+            vertex_any_extensions,
+        });
 
         Ok(())
     }
@@ -321,6 +378,29 @@ impl<'xml> FromXml<'xml> for Vertex {
         _: &'static str,
         deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
     ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        *into = Some(
+            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
+                deserializer,
+                &mut crate::model::domain::any_extensions::ItemCapture::default(),
+            )?,
+        );
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+impl crate::model::domain::xml_item::XmlItem for Vertex {
+    const TAG: &'static str = "vertex";
+    const NS: &'static str = SLICE_NS;
+
+    #[cfg(feature = "read")]
+    fn read_item(
+        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
+        capture: &mut crate::model::domain::any_extensions::ItemCapture,
+    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
         use ::instant_xml::Error;
         use ::instant_xml::de::Node;
         let mut x: f64 = 0.0;
@@ -333,16 +413,13 @@ impl<'xml> FromXml<'xml> for Vertex {
                     let id = deserializer.attribute_id(&attr)?;
                     // Schema attributes are unqualified; prefixed ones belong to other namespaces.
                     if !id.ns.is_empty() {
+                        capture.attribute(id, SLICE_NS, attr.prefix, &attr.value);
                         continue;
                     }
 
                     match id.name {
-                        "x" => {
-                            x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
-                        }
-                        "y" => {
-                            y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default()
-                        }
+                        "x" => x = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
+                        "y" => y = lexical_core::parse(attr.value.as_bytes()).unwrap_or_default(),
                         _ => {}
                     };
                 }
@@ -357,32 +434,148 @@ impl<'xml> FromXml<'xml> for Vertex {
             }
         }
 
-        *into = Some(Self {
+        Ok(Self {
             x: Double::new(x),
             y: Double::new(y),
+        })
+    }
+
+    #[cfg(feature = "write")]
+    fn write_open<W: std::fmt::Write + ?Sized>(
+        &self,
+        serializer: &mut ::instant_xml::Serializer<'_, W>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        let mut context = ::instant_xml::ser::Context::<0>::default();
+        context.default_ns = SLICE_NS;
+        context.force_prefix = true;
+        serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
+        if ToXml::present(&self.x) {
+            serializer.write_attr("x", "", &self.x)?;
+        }
+        if ToXml::present(&self.y) {
+            serializer.write_attr("y", "", &self.y)?;
+        }
+        Ok(())
+    }
+}
+
+/// Closed or open contour defined by a sequence of segments.
+#[derive(Debug, PartialEq, Clone)]
+pub struct Polygon {
+    /// Index of the first vertex of the first segment.
+    pub startv: ResourceIndex,
+
+    /// Segments defining this polygon.
+    pub segment: Vec<Segment>,
+
+    /// Foreign attributes of the individual `segment` entries, by index in [`Self::segment`].
+    ///
+    /// Only populated with the `any` feature.
+    pub segment_any_extensions: ItemAttributeExtensions,
+}
+
+#[cfg(feature = "write")]
+impl ToXml for Polygon {
+    fn serialize<W: std::fmt::Write + ?Sized>(
+        &self,
+        _field: Option<instant_xml::Id<'_>>,
+        serializer: &mut instant_xml::Serializer<W>,
+    ) -> Result<(), instant_xml::Error> {
+        let mut context = instant_xml::ser::Context::<0>::default();
+        context.default_ns = SLICE_NS;
+        context.force_prefix = true;
+        let element = serializer.write_start("polygon", SLICE_NS, Some(context))?;
+        if self.startv.present() {
+            serializer.write_attr("startv", "", &self.startv)?;
+        }
+        #[cfg(feature = "any")]
+        let scope = write_item_namespaces(
+            serializer,
+            &self.segment_any_extensions,
+            self.segment.len(),
+            "segment",
+        )?;
+        serializer.end_start()?;
+        #[cfg(feature = "any")]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.segment,
+            &self.segment_any_extensions,
+            &scope,
+        )?;
+        #[cfg(not(feature = "any"))]
+        crate::model::domain::xml_item::write_items(
+            serializer,
+            &self.segment,
+            &self.segment_any_extensions,
+        )?;
+        serializer.write_close(element)
+    }
+}
+
+#[cfg(feature = "read")]
+impl<'xml> FromXml<'xml> for Polygon {
+    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
+        id == instant_xml::Id {
+            ns: SLICE_NS,
+            name: "polygon",
+        }
+    }
+
+    fn deserialize<'cx>(
+        into: &mut Self::Accumulator,
+        field: &'static str,
+        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
+    ) -> Result<(), instant_xml::Error> {
+        use instant_xml::{Accumulate, de::Node};
+
+        if into.is_some() {
+            return Err(instant_xml::Error::DuplicateValue(field));
+        }
+
+        let mut startv = <ResourceIndex as FromXml<'xml>>::Accumulator::default();
+        let mut segment = Vec::new();
+        let mut segment_any_extensions = ItemAttributeExtensions::default();
+        while let Some(node) = deserializer.next() {
+            match node? {
+                Node::Attribute(attr) => {
+                    let id = deserializer.attribute_id(&attr)?;
+                    if id.ns.is_empty() && id.name == "startv" {
+                        crate::model::domain::xml_helpers::read_attribute::<ResourceIndex>(
+                            &mut startv,
+                            "startv",
+                            deserializer,
+                            attr.value,
+                        )?;
+                    }
+                }
+                Node::Open(element) => {
+                    let id = deserializer.element_id(&element)?;
+                    let mut nested = deserializer.nested(element);
+                    if <Segment as FromXml<'xml>>::matches(id, None) {
+                        crate::model::domain::xml_item::read_item_into(
+                            &mut nested,
+                            &mut segment,
+                            &mut segment_any_extensions,
+                        )?;
+                    } else {
+                        nested.ignore()?;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        *into = Some(Self {
+            startv: startv.try_done("startv")?,
+            segment,
+            segment_any_extensions,
         });
         Ok(())
     }
 
     type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
-}
-
-/// Closed or open contour defined by a sequence of segments.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(SLICE_NS), rename = "polygon", force_prefix)
-)]
-pub struct Polygon {
-    /// Index of the first vertex of the first segment.
-    #[cfg_attr(any(feature = "write", feature = "read"), xml(attribute))]
-    pub startv: ResourceIndex,
-
-    /// Segments defining this polygon.
-    pub segment: Vec<Segment>,
+    const KIND: instant_xml::Kind = instant_xml::Kind::Element;
 }
 
 /// Line segment connecting vertices in a slice polygon.
@@ -425,6 +618,29 @@ impl<'xml> FromXml<'xml> for Segment {
         _: &'static str,
         deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
     ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        *into = Some(
+            <Self as crate::model::domain::xml_item::XmlItem>::read_item(
+                deserializer,
+                &mut crate::model::domain::any_extensions::ItemCapture::default(),
+            )?,
+        );
+        Ok(())
+    }
+
+    type Accumulator = Option<Self>;
+    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+impl crate::model::domain::xml_item::XmlItem for Segment {
+    const TAG: &'static str = "segment";
+    const NS: &'static str = SLICE_NS;
+
+    #[cfg(feature = "read")]
+    fn read_item(
+        deserializer: &mut ::instant_xml::Deserializer<'_, '_>,
+        capture: &mut crate::model::domain::any_extensions::ItemCapture,
+    ) -> ::std::result::Result<Self, ::instant_xml::Error> {
         use ::instant_xml::Error;
         use ::instant_xml::de::Node;
         let mut v2: ResourceIndex = 0;
@@ -439,6 +655,7 @@ impl<'xml> FromXml<'xml> for Segment {
                     let id = deserializer.attribute_id(&attr)?;
                     // Schema attributes are unqualified; prefixed ones belong to other namespaces.
                     if !id.ns.is_empty() {
+                        capture.attribute(id, SLICE_NS, attr.prefix, &attr.value);
                         continue;
                     }
 
@@ -473,12 +690,32 @@ impl<'xml> FromXml<'xml> for Segment {
             }
         }
 
-        *into = Some(Self { v2, p1, p2, pid });
-        Ok(())
+        Ok(Self { v2, p1, p2, pid })
     }
 
-    type Accumulator = Option<Self>;
-    const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+    #[cfg(feature = "write")]
+    fn write_open<W: std::fmt::Write + ?Sized>(
+        &self,
+        serializer: &mut ::instant_xml::Serializer<'_, W>,
+    ) -> ::std::result::Result<(), ::instant_xml::Error> {
+        let mut context = ::instant_xml::ser::Context::<0>::default();
+        context.default_ns = SLICE_NS;
+        context.force_prefix = true;
+        serializer.write_start(Self::TAG, SLICE_NS, Some(context))?;
+        if ToXml::present(&self.v2) {
+            serializer.write_attr("v2", "", &self.v2)?;
+        }
+        if ToXml::present(&self.p1) {
+            serializer.write_attr("p1", "", &self.p1)?;
+        }
+        if ToXml::present(&self.p2) {
+            serializer.write_attr("p2", "", &self.p2)?;
+        }
+        if ToXml::present(&self.pid) {
+            serializer.write_attr("pid", "", &self.pid)?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(feature = "write")]
@@ -566,6 +803,7 @@ mod write_tests {
                         y: 1.0.into(),
                     },
                 ],
+                vertex_any_extensions: Default::default(),
             }),
             polygon: vec![super::Polygon {
                 startv: 0,
@@ -589,6 +827,7 @@ mod write_tests {
                         pid: OptionalResourceId::none(),
                     },
                 ],
+                segment_any_extensions: Default::default(),
             }],
             any_extensions: Default::default(),
         };
@@ -636,6 +875,7 @@ mod write_tests {
                             y: 0.0.into(),
                         },
                     ],
+                    vertex_any_extensions: Default::default(),
                 }),
                 polygon: vec![super::Polygon {
                     startv: 0,
@@ -645,6 +885,7 @@ mod write_tests {
                         p2: OptionalResourceIndex::none(),
                         pid: OptionalResourceId::none(),
                     }],
+                    segment_any_extensions: Default::default(),
                 }],
                 any_extensions: Default::default(),
             }],
@@ -755,6 +996,7 @@ mod memory_optimized_read_tests {
                             y: 0.0.into()
                         },
                     ],
+                    vertex_any_extensions: Default::default(),
                 }),
                 polygon: vec![super::Polygon {
                     startv: 0,
@@ -764,6 +1006,7 @@ mod memory_optimized_read_tests {
                         p2: OptionalResourceIndex::none(),
                         pid: OptionalResourceId::none(),
                     }],
+                    segment_any_extensions: Default::default(),
                 }],
                 any_extensions: Default::default(),
             }

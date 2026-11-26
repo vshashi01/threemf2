@@ -48,6 +48,7 @@ fn validate_simple_slice() {
             mesh::Vertex::new(0.0, 10.0, 0.0),
         ],
         any_extensions: Default::default(),
+        vertex_any_extensions: Default::default(),
     };
 
     let triangles = Triangles {
@@ -90,6 +91,7 @@ fn validate_simple_slice() {
             },
         ],
         any_extensions: Default::default(),
+        triangle_any_extensions: Default::default(),
     };
 
     // Create slice data
@@ -108,6 +110,7 @@ fn validate_simple_slice() {
                 y: 10.0.into(),
             },
         ],
+        vertex_any_extensions: Default::default(),
     };
 
     let slice = Slice {
@@ -129,6 +132,7 @@ fn validate_simple_slice() {
                     pid: OptionalResourceId::none(),
                 },
             ],
+            segment_any_extensions: Default::default(),
         }],
         any_extensions: Default::default(),
     };
@@ -248,6 +252,7 @@ fn validate_slice_multiple_polygons() {
                 y: 8.0.into(),
             },
         ],
+        vertex_any_extensions: Default::default(),
     };
 
     let slice = Slice {
@@ -277,6 +282,7 @@ fn validate_slice_multiple_polygons() {
                         pid: OptionalResourceId::none(),
                     },
                 ],
+                segment_any_extensions: Default::default(),
             },
             // Inner polygon (hole)
             Polygon {
@@ -301,6 +307,7 @@ fn validate_slice_multiple_polygons() {
                         pid: OptionalResourceId::none(),
                     },
                 ],
+                segment_any_extensions: Default::default(),
             },
         ],
         any_extensions: Default::default(),
@@ -335,6 +342,7 @@ fn validate_slice_multiple_polygons() {
                     Vertex::new(0.0, 10.0, 0.0),
                 ],
                 any_extensions: Default::default(),
+                vertex_any_extensions: Default::default(),
             },
             triangles: Triangles {
                 triangle: vec![
@@ -376,6 +384,7 @@ fn validate_slice_multiple_polygons() {
                     },
                 ],
                 any_extensions: Default::default(),
+                triangle_any_extensions: Default::default(),
             },
             trianglesets: None,
             beamlattice: None,
