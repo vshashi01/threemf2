@@ -40,6 +40,7 @@ fn main() {
                     poly.add_segment(3);
                 });
             });
+            Ok(())
         })
         .unwrap();
 
@@ -48,7 +49,7 @@ fn main() {
             obj.object_type(ObjectType::Model)
                 .part_number("SLICE_EXAMPLE_001")
                 .name("SlicedCube")
-                .slice_stack(slicestack_id, None, Some(MeshResolution::LowRes));
+                .slice_stack(slicestack_id, None, Some(MeshResolution::LowRes))?;
 
             obj.add_vertices(&[
                 [0.0, 0.0, 0.0],

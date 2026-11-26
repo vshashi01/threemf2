@@ -634,12 +634,12 @@ impl ModelBuilder {
     ///
     pub fn add_slice_stack<F>(&mut self, f: F) -> Result<SliceStackId, SliceStackBuilderError>
     where
-        F: FnOnce(&mut SliceStackBuilder),
+        F: FnOnce(&mut SliceStackBuilder) -> Result<(), SliceStackBuilderError>,
     {
         let id = self.next_slicestack_id;
         let mut builder = SliceStackBuilder::new(id);
 
-        f(&mut builder);
+        f(&mut builder)?;
         let slice_stack = builder.build()?;
 
         self.resources.slicestack.push(slice_stack);
@@ -681,11 +681,11 @@ impl ModelBuilder {
     /// Add a texture2d resource.
     pub fn add_texture2d<F>(&mut self, f: F) -> Result<ResourceId, Texture2DError>
     where
-        F: FnOnce(&mut Texture2DBuilder),
+        F: FnOnce(&mut Texture2DBuilder) -> Result<(), Texture2DError>,
     {
         let id = self.next_texture2d_id;
         let mut builder = Texture2DBuilder::new(id);
-        f(&mut builder);
+        f(&mut builder)?;
         let texture = builder.build()?;
         self.resources.texture2d.push(texture);
         self.next_texture2d_id += 1;
@@ -753,11 +753,11 @@ impl ModelBuilder {
     /// Add a displacement2d resource.
     pub fn add_displacement2d<F>(&mut self, f: F) -> Result<ResourceId, Displacement2DError>
     where
-        F: FnOnce(&mut Displacement2DBuilder),
+        F: FnOnce(&mut Displacement2DBuilder) -> Result<(), Displacement2DError>,
     {
         let id = self.next_displacement2d_id;
         let mut builder = Displacement2DBuilder::new(id);
-        f(&mut builder);
+        f(&mut builder)?;
         let displacement = builder.build()?;
         self.resources.displacement2d.push(displacement);
         self.next_displacement2d_id += 1;
@@ -1196,7 +1196,7 @@ pub enum ItemError {
 }
 
 /// Errors that can occur when building a Texture2D resource.
-#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum Texture2DError {
     /// Texture2D path is not set.
     #[error("Texture2D path is not set")]
@@ -1204,6 +1204,10 @@ pub enum Texture2DError {
     /// Texture2D content type is not set.
     #[error("Texture2D content type is not set")]
     ContentTypeNotSet,
+
+    /// A path passed to a builder method is not a valid package path.
+    #[error("Invalid path: {0}")]
+    InvalidPath(#[from] PathResourceError),
 }
 
 /// Errors that can occur when building a Texture2DGroup resource.
@@ -1234,11 +1238,15 @@ pub enum MultiPropertiesError {
 }
 
 /// Errors that can occur when building Displacement2D.
-#[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum Displacement2DError {
     /// Displacement2D path is not set.
     #[error("Displacement2D path is not set")]
     PathNotSet,
+
+    /// A path passed to a builder method is not a valid package path.
+    #[error("Invalid path: {0}")]
+    InvalidPath(#[from] PathResourceError),
 }
 
 /// Errors that can occur when building Disp2DGroup.
@@ -1320,8 +1328,8 @@ impl ItemBuilder {
     ///
     /// # Errors
     ///
-    /// Returns [`ItemError::InvalidPath`] if `path` is not a valid package path.
-    pub fn path(&mut self, path: &str) -> Result<&mut Self, ItemError> {
+    /// Returns [`PathResourceError`] if `path` is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, PathResourceError> {
         self.path = Some(PathResource::try_from(path)?);
         Ok(self)
     }
@@ -1407,14 +1415,13 @@ impl<T> ObjectBuilder<T> {
     }
 
     /// Set a thumbnail path for this object.
-    pub fn thumbnail(&mut self, path: &str) -> &mut Self {
-        match PathResource::try_from(path) {
-            Ok(path) => {
-                self.thumbnail = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PathResourceError`] if the path is not a valid package path.
+    pub fn thumbnail(&mut self, path: &str) -> Result<&mut Self, PathResourceError> {
+        self.thumbnail = Some(PathResource::try_from(path)?);
+        Ok(self)
     }
 
     /// Set the object name
@@ -1454,14 +1461,13 @@ impl<T> ObjectBuilder<T> {
     }
 
     /// Set the slice path for this object.
-    pub fn slicepath(&mut self, slicepath: &str) -> &mut Self {
-        match PathResource::try_from(slicepath) {
-            Ok(path) => {
-                self.slicepath = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PathResourceError`] if the path is not a valid package path.
+    pub fn slicepath(&mut self, slicepath: &str) -> Result<&mut Self, PathResourceError> {
+        self.slicepath = Some(PathResource::try_from(slicepath)?);
+        Ok(self)
     }
 
     /// Set the mesh resolution for this object when slice data is present.
@@ -1471,20 +1477,24 @@ impl<T> ObjectBuilder<T> {
     }
 
     /// Configure slice stack attributes together.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PathResourceError`] if `slicepath` is not a valid package path.
     pub fn slice_stack(
         &mut self,
         slicestack_id: SliceStackId,
         slicepath: Option<&str>,
         meshresolution: Option<slice::MeshResolution>,
-    ) -> &mut Self {
+    ) -> Result<&mut Self, PathResourceError> {
         self.slice_stack_id(slicestack_id);
         if let Some(path) = slicepath {
-            self.slicepath(path);
+            self.slicepath(path)?;
         }
         if let Some(resolution) = meshresolution {
             self.meshresolution(resolution);
         }
-        self
+        Ok(self)
     }
 }
 
@@ -1510,6 +1520,10 @@ pub enum MeshObjectError {
     /// Call [`MeshObjectBuilder::uuid()`] to set the UUID.
     #[error("Production extension is enabled but Uuid is not set!")]
     ObjectUuidNotSet,
+
+    /// A path passed to a builder method is not a valid package path.
+    #[error("Invalid path: {0}")]
+    InvalidPath(#[from] PathResourceError),
 }
 
 /// Errors that can occur when building a displacement mesh object.
@@ -1520,6 +1534,10 @@ pub enum DisplacementMeshObjectError {
     /// Call [`DisplacementMeshObjectBuilder::uuid()`] to set the UUID.
     #[error("Production extension is enabled but Uuid is not set!")]
     ObjectUuidNotSet,
+
+    /// A path passed to a builder method is not a valid package path.
+    #[error("Invalid path: {0}")]
+    InvalidPath(#[from] PathResourceError),
 }
 
 /// Builder for creating mesh objects with triangle geometry.
@@ -1548,7 +1566,7 @@ impl MeshObjectBuilder {
     }
 
     fn build(self) -> Result<object::Object, MeshObjectError> {
-        let mesh = self.entity.build_mesh().unwrap();
+        let mesh = self.entity.build_mesh()?;
 
         if self.is_production_ext_required && self.uuid.is_none() {
             return Err(MeshObjectError::ObjectUuidNotSet);
@@ -2458,8 +2476,8 @@ impl ComponentBuilder {
     ///
     /// # Errors
     ///
-    /// Returns [`ComponentsObjectError::InvalidPath`] if `path` is not a valid package path.
-    pub fn path(&mut self, path: &str) -> Result<&mut Self, ComponentsObjectError> {
+    /// Returns [`PathResourceError`] if `path` is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, PathResourceError> {
         self.path = Some(PathResource::try_from(path)?);
         Ok(self)
     }
@@ -2642,14 +2660,13 @@ impl BooleanShapeBuilder {
     /// # Parameters
     ///
     /// - `path`: Path to the model file containing the base object
-    pub fn base_path(&mut self, path: &str) -> &mut Self {
-        match PathResource::try_from(path) {
-            Ok(path) => {
-                self.base_path = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PathResourceError`] if the path is not a valid package path.
+    pub fn base_path(&mut self, path: &str) -> Result<&mut Self, PathResourceError> {
+        self.base_path = Some(PathResource::try_from(path)?);
+        Ok(self)
     }
 
     /// Add a boolean operand with the default configuration.
@@ -2748,8 +2765,8 @@ impl BooleanBuilder {
     ///
     /// # Errors
     ///
-    /// Returns [`BooleanShapeError::InvalidPath`] if `path` is not a valid package path.
-    pub fn path(&mut self, path: &str) -> Result<&mut Self, BooleanShapeError> {
+    /// Returns [`PathResourceError`] if `path` is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, PathResourceError> {
         self.path = Some(PathResource::try_from(path)?);
         Ok(self)
     }
@@ -3350,14 +3367,13 @@ impl Texture2DBuilder {
     }
 
     /// Sets the path to the texture image file.
-    pub fn path(&mut self, path: &str) -> &mut Self {
-        match PathResource::try_from(path) {
-            Ok(path) => {
-                self.path = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PathResourceError`] if the path is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, PathResourceError> {
+        self.path = Some(PathResource::try_from(path)?);
+        Ok(self)
     }
 
     /// Sets the content type of the texture.
@@ -3643,14 +3659,13 @@ impl Displacement2DBuilder {
     }
 
     /// Sets the path to the displacement map image file.
-    pub fn path(&mut self, path: &str) -> &mut Self {
-        match PathResource::try_from(path) {
-            Ok(path) => {
-                self.path = Some(path);
-                self
-            }
-            Err(err) => panic!("{err:?}"),
-        }
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PathResourceError`] if the path is not a valid package path.
+    pub fn path(&mut self, path: &str) -> Result<&mut Self, PathResourceError> {
+        self.path = Some(PathResource::try_from(path)?);
+        Ok(self)
     }
 
     /// Sets the channel name for this displacement map.
@@ -3807,11 +3822,15 @@ impl Disp2DGroupBuilder {
 }
 
 /// Errors that can occur when SliceStack is built.
-#[derive(Debug, Error, Clone, Copy, PartialEq)]
+#[derive(Debug, Error, Clone, PartialEq)]
 pub enum SliceStackBuilderError {
     /// Both Slice and Slice ref is set.
     #[error("Slice stack cannot contain both Slices and SliceRefs")]
     BothSliceAndSliceRefCannotBeSet,
+
+    /// A path passed to a builder method is not a valid package path.
+    #[error("Invalid path: {0}")]
+    InvalidPath(#[from] PathResourceError),
 }
 
 /// Builder for constructing a slice stack with 2D slice data.
@@ -3850,12 +3869,13 @@ pub enum SliceStackBuilderError {
 ///             poly.add_segment(3);
 ///         });
 ///     });
-/// });
+///     Ok(())
+/// })?;
 ///
 /// // Create an object that references the slice stack
 /// let obj_id = builder.add_mesh_object(|obj| {
 ///     obj.name("SlicedObject");
-///     obj.slice_stack(stack_id, None, None); // slicestack_id, slicepath, meshresolution
+///     obj.slice_stack(stack_id, None, None)?; // slicestack_id, slicepath, meshresolution
 ///     // ... add mesh data
 ///     Ok(())
 /// }).unwrap();
@@ -3912,12 +3932,20 @@ impl SliceStackBuilder {
     ///
     /// - `slicestackid`: The ID of the slice stack in the external file
     /// - `slicepath`: Path to the model file containing the slice stack
-    pub fn add_sliceref(&mut self, slicestackid: ResourceId, slicepath: &str) -> &mut Self {
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PathResourceError`] if the path is not a valid package path.
+    pub fn add_sliceref(
+        &mut self,
+        slicestackid: ResourceId,
+        slicepath: &str,
+    ) -> Result<&mut Self, PathResourceError> {
         self.slicerefs.push(slice::SliceRef {
             slicestackid,
-            slicepath: PathResource::try_from(slicepath).expect("Invalid PathResource"),
+            slicepath: PathResource::try_from(slicepath)?,
         });
-        self
+        Ok(self)
     }
 
     fn build(self) -> Result<slice::SliceStack, SliceStackBuilderError> {
@@ -4407,7 +4435,8 @@ mod tests {
 
         builder
             .add_displacement2d(|disp| {
-                disp.path("/3D/Textures/disp.png");
+                disp.path("/3D/Textures/disp.png")?;
+                Ok(())
             })
             .unwrap();
 
@@ -5088,5 +5117,60 @@ mod tests {
                 ThreemfNamespace::BeamLattice,
             ])
         )
+    }
+    #[test]
+    fn invalid_paths_return_errors_instead_of_panicking() {
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+
+        let mesh = builder.add_mesh_object(|obj| {
+            obj.thumbnail("")?;
+            Ok(())
+        });
+        assert!(matches!(mesh, Err(MeshObjectError::InvalidPath(_))));
+
+        let mesh = builder.add_mesh_object(|obj| {
+            obj.slice_stack(SliceStackId(1), Some(""), None)?;
+            Ok(())
+        });
+        assert!(matches!(mesh, Err(MeshObjectError::InvalidPath(_))));
+
+        let texture = builder.add_texture2d(|texture| {
+            texture.path("")?;
+            Ok(())
+        });
+        assert!(matches!(texture, Err(Texture2DError::InvalidPath(_))));
+
+        let displacement = builder.add_displacement2d(|displacement| {
+            displacement.path("")?;
+            Ok(())
+        });
+        assert!(matches!(
+            displacement,
+            Err(Displacement2DError::InvalidPath(_))
+        ));
+
+        let stack = builder.add_slice_stack(|stack| {
+            stack.add_sliceref(1, "")?;
+            Ok(())
+        });
+        assert!(matches!(stack, Err(SliceStackBuilderError::InvalidPath(_))));
+
+        let boolean = builder.add_booleanshape_object(|obj| {
+            obj.base_path("")?;
+            Ok(())
+        });
+        assert!(matches!(boolean, Err(BooleanShapeError::InvalidPath(_))));
+
+        let components = builder.add_components_object(|obj| {
+            obj.add_component_advanced(ObjectId(1), |component| {
+                component.path("")?;
+                Ok(())
+            })?;
+            Ok(())
+        });
+        assert!(matches!(
+            components,
+            Err(ComponentsObjectError::InvalidPath(_))
+        ));
     }
 }
