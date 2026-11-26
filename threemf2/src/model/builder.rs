@@ -59,7 +59,7 @@ use crate::{
         displacement::{self},
         material::{self},
         mesh::{self},
-        metadata::Metadata,
+        metadata::{Metadata, MetadataGroup},
         model::{self, Model, ThreemfExtensions},
         object::{self},
         resources::{Base, BaseMaterials, Resources},
@@ -1287,6 +1287,7 @@ pub enum Disp2DGroupError {
 /// This builder is used via [`ModelBuilder::add_build_item_advanced()`].
 pub struct ItemBuilder {
     objectid: ObjectId,
+    metadata: Vec<Metadata>,
     transform: Option<Transform>,
     partnumber: Option<String>,
     path: Option<PathResource>,
@@ -1302,6 +1303,7 @@ impl ItemBuilder {
     fn new(objectid: ObjectId) -> Self {
         Self {
             objectid,
+            metadata: Vec::new(),
             transform: None,
             partnumber: None,
             path: None,
@@ -1317,6 +1319,17 @@ impl ItemBuilder {
     /// in row-major order.
     pub fn transform(&mut self, transform: &[f64; 16]) -> &mut Self {
         self.transform = Some(Transform::from_column_major_matrix(transform));
+        self
+    }
+
+    /// Add a metadata entry to this build item, written in its `<metadatagroup>`.
+    pub fn add_metadata(&mut self, name: &str, value: Option<&str>) -> &mut Self {
+        self.metadata.push(Metadata {
+            name: name.into(),
+            preserve: None,
+            value: value.map(Into::into),
+            any_extensions: Default::default(),
+        });
         self
     }
 
@@ -1366,6 +1379,7 @@ impl ItemBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            metadatagroup: MetadataGroup::from_entries(self.metadata),
         })
     }
 }
@@ -1405,6 +1419,7 @@ impl From<SliceStackId> for ResourceId {
 /// Builder for Object
 pub struct ObjectBuilder<T> {
     entity: T,
+    metadata: Vec<Metadata>,
     object_id: ObjectId,
     objecttype: Option<object::ObjectType>,
     thumbnail: Option<PathResource>,
@@ -1485,6 +1500,17 @@ impl<T> ObjectBuilder<T> {
     pub fn slicepath(&mut self, slicepath: &str) -> Result<&mut Self, PathResourceError> {
         self.slicepath = Some(PathResource::try_from(slicepath)?);
         Ok(self)
+    }
+
+    /// Add a metadata entry to this object, written in its `<metadatagroup>`.
+    pub fn add_metadata(&mut self, name: &str, value: Option<&str>) -> &mut Self {
+        self.metadata.push(Metadata {
+            name: name.into(),
+            preserve: None,
+            value: value.map(Into::into),
+            any_extensions: Default::default(),
+        });
+        self
     }
 
     /// Set the mesh resolution for this object when slice data is present.
@@ -1578,6 +1604,7 @@ impl MeshObjectBuilder {
     fn new(object_id: ObjectId, is_production_ext_required: bool) -> Self {
         Self {
             entity: MeshBuilder::new(),
+            metadata: Vec::new(),
             object_id,
             objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
@@ -1620,6 +1647,7 @@ impl MeshObjectBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            metadatagroup: MetadataGroup::from_entries(self.metadata),
         })
     }
 }
@@ -1631,6 +1659,7 @@ impl DisplacementMeshObjectBuilder {
     fn new(object_id: ObjectId, is_production_ext_required: bool) -> Self {
         Self {
             entity: DisplacementMeshBuilder::new(),
+            metadata: Vec::new(),
             object_id,
             objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
@@ -1672,6 +1701,7 @@ impl DisplacementMeshObjectBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            metadatagroup: MetadataGroup::from_entries(self.metadata),
         })
     }
 }
@@ -2328,6 +2358,7 @@ impl ComponentsObjectBuilder {
     ) -> Self {
         Self {
             entity: ComponentsBuilder::new(all_existing_object_ids),
+            metadata: Vec::new(),
             object_id,
             objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
@@ -2372,6 +2403,7 @@ impl ComponentsObjectBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            metadatagroup: MetadataGroup::from_entries(self.metadata),
         })
     }
 }
@@ -2625,6 +2657,7 @@ impl BooleanObjectBuilder {
     fn new(object_id: ObjectId, is_production_ext_required: bool) -> Self {
         Self {
             entity: BooleanShapeBuilder::new(),
+            metadata: Vec::new(),
             object_id,
             objecttype: Some(object::ObjectType::Model),
             thumbnail: None,
@@ -2666,6 +2699,7 @@ impl BooleanObjectBuilder {
             any_extensions: self.any_extensions,
             #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
+            metadatagroup: MetadataGroup::from_entries(self.metadata),
         })
     }
 }
@@ -5250,5 +5284,62 @@ mod tests {
             components,
             Err(ComponentsObjectError::InvalidPath(_))
         ));
+    }
+    #[cfg(all(feature = "read", feature = "write"))]
+    #[test]
+    fn metadata_on_objects_and_items_roundtrips() {
+        use crate::model::query::{get_items_from_model, get_mesh_objects_from_model};
+
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        let object_id = builder
+            .add_mesh_object(|obj| {
+                obj.add_metadata("Title", Some("Cube"))
+                    .add_metadata("Empty", None);
+                obj.add_vertices(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+                    .add_triangle(&[0, 1, 2]);
+                Ok(())
+            })
+            .unwrap();
+        builder.add_build(None).unwrap();
+        builder
+            .add_build_item_advanced(object_id, |item| {
+                item.add_metadata("Batch", Some("42"));
+                Ok(())
+            })
+            .unwrap();
+        builder.add_build_item(object_id).unwrap();
+        let model = builder.build().unwrap();
+
+        let xml = instant_xml::to_string(&model).unwrap();
+        let group = xml.find("<metadatagroup").expect("object metadata group");
+        assert!(
+            group < xml.find("<mesh").unwrap(),
+            "metadatagroup must precede the shape"
+        );
+        assert!(
+            xml.contains(r#"<item objectid="1" />"#),
+            "item without metadata stays self-closing"
+        );
+
+        let read = instant_xml::from_str::<Model>(&xml).unwrap();
+        assert_eq!(read, model);
+
+        let object = get_mesh_objects_from_model(&read).next().unwrap();
+        let entries = object
+            .metadata_iter()
+            .map(|m| (m.name().to_owned(), m.value().map(str::to_owned)))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            entries,
+            [
+                ("Title".to_owned(), Some("Cube".to_owned())),
+                ("Empty".to_owned(), None)
+            ]
+        );
+
+        let items = get_items_from_model(&read).collect::<Vec<_>>();
+        assert_eq!(items[0].metadata_count(), 1);
+        assert_eq!(items[0].metadata_iter().next().unwrap().value(), Some("42"));
+        assert_eq!(items[1].metadata_count(), 0);
     }
 }

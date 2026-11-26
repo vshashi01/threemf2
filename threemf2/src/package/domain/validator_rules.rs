@@ -425,6 +425,7 @@ mod tests {
             meshresolution: None,
             kind: None,
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         }
     }
 
@@ -443,6 +444,7 @@ mod tests {
             meshresolution: None,
             kind: None,
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         }
     }
 
@@ -674,6 +676,7 @@ mod tests {
             meshresolution: None,
             kind: None,
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         };
         let resources = Resources {
             object: vec![object],
@@ -810,6 +813,7 @@ mod tests {
                 any_extensions: Default::default(),
             })),
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         }
     }
 
@@ -840,6 +844,7 @@ mod tests {
                 any_extensions: Default::default(),
             })),
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         }
     }
 

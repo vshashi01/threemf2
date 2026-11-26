@@ -907,6 +907,7 @@ mod memory_optimized_read_tests {
                             any_extensions: Default::default(),
                         })),
                         any_extensions: Default::default(),
+                        metadatagroup: Default::default(),
                     }],
                     basematerials: vec![],
                     slicestack: vec![],

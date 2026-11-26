@@ -151,17 +151,39 @@ impl ToXml for Metadata {
     }
 }
 
-/// Group of metadata entries.
-#[cfg_attr(feature = "read", derive(FromXml))]
-#[cfg_attr(feature = "write", derive(ToXml))]
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(
-    any(feature = "write", feature = "read"),
-    xml(ns(CORE_NS), rename = "metadatagroup")
-)]
+/// Group of metadata entries attached to an object or a build item (`<metadatagroup>`).
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct MetadataGroup {
     /// Metadata entries in this group.
     pub metadata: Vec<Metadata>,
+
+    /// Foreign attributes of the group (`xs:anyAttribute`).
+    ///
+    /// Only populated with the `any` feature.
+    pub any_extensions: AnyAttributeExtensions,
+}
+
+impl MetadataGroup {
+    /// Creates a group from metadata entries, or `None` if there are no entries.
+    pub fn from_entries(metadata: Vec<Metadata>) -> Option<Self> {
+        (!metadata.is_empty()).then(|| Self {
+            metadata,
+            any_extensions: Default::default(),
+        })
+    }
+}
+
+#[cfg(any(feature = "read", feature = "write"))]
+crate::model::domain::xml_struct::xml_struct! {
+    MetadataGroup {
+        tag: "metadatagroup",
+        ns: CORE_NS,
+        prefixes: [],
+        force_prefix: false,
+        attributes: {},
+        elements: { metadata: Vec<Metadata> => (CORE_NS, "metadata") },
+        any: any_extensions: AnyAttributeExtensions,
+    }
 }
 
 /// Whether metadata must be preserved when processing the model.
@@ -285,6 +307,7 @@ mod write_tests {
                     any_extensions: Default::default(),
                 },
             ],
+            any_extensions: Default::default(),
         };
         let metadatagroup_string = to_string(&metadatagroup).unwrap();
 
@@ -361,7 +384,8 @@ mod memory_optimized_read_tests {
                         value: None,
                         any_extensions: Default::default(),
                     }
-                ]
+                ],
+                any_extensions: Default::default(),
             }
         )
     }

@@ -7,6 +7,7 @@ use crate::threemf_namespaces::{CORE_NS, PROD_NS};
 use crate::{
     model::domain::{
         any_extensions::{AnyAttributeExtensions, AnyExtensions},
+        metadata::MetadataGroup,
         transform::Transform,
     },
     model::{
@@ -68,6 +69,9 @@ pub struct Item {
     /// Uuuid assigned to this Item
     pub uuid: Option<UuidResource>,
 
+    /// Metadata attached to this build item (`<metadatagroup>`).
+    pub metadatagroup: Option<MetadataGroup>,
+
     /// Foreign attributes and trailing child elements of this Item (`xs:anyAttribute` / `xs:any`).
     ///
     /// Only populated with the `any` feature.
@@ -88,8 +92,9 @@ xml_struct! {
             path: Option<PathResource> => (PROD_NS, "path"),
             uuid: Option<UuidResource> => (PROD_NS, "UUID"),
         },
-        elements: {},
+        elements: { metadatagroup: Option<MetadataGroup> => (CORE_NS, "metadatagroup") },
         any: any_extensions: AnyExtensions,
+        self_closing: true,
     }
 }
 

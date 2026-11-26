@@ -72,6 +72,7 @@ mod tests {
                     slicepath: None,
                     meshresolution: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 }],
                 basematerials: vec![],
                 slicestack: vec![],

@@ -322,6 +322,7 @@ mod write_tests {
                 ],
             })),
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         };
 
         let xml_string = format!(
@@ -530,6 +531,7 @@ mod memory_optimized_read_tests {
                     ]
                 })),
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }
         )
     }

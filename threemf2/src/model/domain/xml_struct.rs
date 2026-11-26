@@ -28,8 +28,17 @@
 //!   read, as for the shape of a 3MF object.
 //! - `start_hook: path` (optional): called right after the start tag is opened with
 //!   `(&self, &mut Serializer)`; returns the `(prefix, namespace)` pairs it declared.
+//! - `self_closing: true` (optional): write `<tag ... />` when no child element is present
+//!   (`None` optional children are skipped). The default matches the derive, which writes an
+//!   open/close pair whenever the type has child element fields.
 
 macro_rules! xml_struct {
+    (@self_closing) => {
+        false
+    };
+    (@self_closing $value:literal) => {
+        $value
+    };
     (
         $ty:ident {
             tag: $tag:literal,
@@ -41,6 +50,7 @@ macro_rules! xml_struct {
             any: $any:ident: $anyty:ty,
             $(shape: $shape:ident => $variant:path,)?
             $(start_hook: $hook:path,)?
+            $(self_closing: $self_closing:literal,)?
         }
     ) => {
         #[cfg(feature = "read")]
@@ -197,7 +207,13 @@ macro_rules! xml_struct {
                 #[cfg(not(feature = "any"))]
                 let has_foreign_elements = false;
 
-                let has_elements = <[&str]>::len(&[$(stringify!($efield)),*]) > 0;
+                // The derive always writes an open/close pair when the type has child element fields.
+                // With `self_closing: true`, absent optional children (`None`) do not count.
+                let self_closing = $crate::model::domain::xml_struct::xml_struct!(@self_closing $($self_closing)?);
+                let has_elements = match self_closing {
+                    true => false $(|| ToXml::present(&self.$efield))*,
+                    false => <[&str]>::len(&[$(stringify!($efield)),*]) > 0,
+                };
                 if !has_elements && !has_foreign_elements {
                     return serializer.end_empty();
                 }

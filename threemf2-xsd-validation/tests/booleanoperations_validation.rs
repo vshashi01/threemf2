@@ -468,6 +468,7 @@ fn validate_simple_boolean_difference() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -483,6 +484,7 @@ fn validate_simple_boolean_difference() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -498,6 +500,7 @@ fn validate_simple_boolean_difference() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -579,6 +582,7 @@ fn validate_simple_boolean_intersection() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -594,6 +598,7 @@ fn validate_simple_boolean_intersection() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -609,6 +614,7 @@ fn validate_simple_boolean_intersection() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -706,6 +712,7 @@ fn validate_boolean_with_multiple_operands() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -721,6 +728,7 @@ fn validate_boolean_with_multiple_operands() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -736,6 +744,7 @@ fn validate_boolean_with_multiple_operands() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -833,6 +842,7 @@ fn validate_nested_boolean_shapes() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -848,6 +858,7 @@ fn validate_nested_boolean_shapes() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -863,6 +874,7 @@ fn validate_nested_boolean_shapes() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 4,
@@ -878,6 +890,7 @@ fn validate_nested_boolean_shapes() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 5,
@@ -893,6 +906,7 @@ fn validate_nested_boolean_shapes() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
             ],
             basematerials: vec![],
@@ -975,6 +989,7 @@ fn validate_boolean_with_production_extension() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -992,6 +1007,7 @@ fn validate_boolean_with_production_extension() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -1009,6 +1025,7 @@ fn validate_boolean_with_production_extension() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
             ],
             basematerials: vec![],

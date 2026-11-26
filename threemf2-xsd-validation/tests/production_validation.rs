@@ -124,6 +124,7 @@ fn validate_simple_production_model_with_uuids() {
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],
@@ -267,6 +268,7 @@ fn validate_production_model_with_components() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 2,
@@ -282,6 +284,7 @@ fn validate_production_model_with_components() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
                 Object {
                     id: 3,
@@ -302,6 +305,7 @@ fn validate_production_model_with_components() {
                     slicestackid: OptionalResourceId::none(),
                     slicepath: None,
                     any_extensions: Default::default(),
+                    metadatagroup: Default::default(),
                 },
             ],
             basematerials: vec![],

@@ -199,6 +199,7 @@ mod tests {
   <resources acme:res="3">
     <basematerials id="1" acme:bm="4"><base name="Red" displaycolor="#FF0000" acme:base="5"/></basematerials>
     <object id="2" type="model" acme:obj="6">
+      <metadatagroup acme:mg="14"><metadata name="Part">Gear</metadata></metadatagroup>
       <mesh acme:mesh="7">
         <vertices acme:verts="8"><vertex x="0" y="0" z="0"/><vertex x="1" y="0" z="0"/><vertex x="0" y="1" z="0"/></vertices>
         <triangles acme:tris="9"><triangle v1="0" v2="1" v3="2"/></triangles>
@@ -262,6 +263,12 @@ mod tests {
             Some("6")
         );
         assert_eq!(names(mesh_object.any_extensions.elements()), ["objdata"]);
+        let group = mesh_object.metadatagroup.as_ref().expect("metadata group");
+        assert_eq!(group.metadata[0].value.as_deref(), Some("Gear"));
+        assert_eq!(
+            attr(group.any_extensions.attributes(), "mg").as_deref(),
+            Some("14")
+        );
         let mesh = mesh_object.get_mesh().expect("mesh");
         assert_eq!(
             attr(mesh.any_extensions.attributes(), "mesh").as_deref(),

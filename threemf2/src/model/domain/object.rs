@@ -19,6 +19,7 @@ use crate::{
 #[cfg(feature = "any")]
 use crate::model::domain::any::AnyElement;
 use crate::model::domain::any_extensions::AnyExtensions;
+use crate::model::domain::metadata::MetadataGroup;
 #[cfg(any(feature = "read", feature = "write"))]
 use crate::model::domain::xml_struct::xml_struct;
 #[cfg(feature = "write")]
@@ -80,6 +81,9 @@ pub struct Object {
     /// Packages with "lowres" MUST list the slice extension in requiredextensions.
     pub meshresolution: Option<MeshResolution>,
 
+    /// Metadata attached to this object (`<metadatagroup>`).
+    pub metadatagroup: Option<MetadataGroup>,
+
     /// The actual geometry that is contained in this [`Object`].
     /// This deviates from the standard 3MF Data Model intentionally for
     /// Rust library ergonomics..
@@ -119,7 +123,10 @@ xml_struct! {
             slicepath: Option<PathResource> => (SLICE_NS, "slicepath"),
             meshresolution: Option<MeshResolution> => (SLICE_NS, "meshresolution"),
         },
-        elements: { kind: Option<ObjectKind> => (CORE_NS, "kind") },
+        elements: {
+            metadatagroup: Option<MetadataGroup> => (CORE_NS, "metadatagroup"),
+            kind: Option<ObjectKind> => (CORE_NS, "kind"),
+        },
         any: any_extensions: AnyExtensions,
         shape: kind => ObjectKind::Any,
     }
@@ -283,6 +290,7 @@ mod write_tests {
             meshresolution: None,
             kind: None,
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -316,6 +324,7 @@ mod write_tests {
             meshresolution: None,
             kind: None,
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -342,6 +351,7 @@ mod write_tests {
             meshresolution: None,
             kind: None,
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
         println!("{}", object_string);
@@ -380,6 +390,7 @@ mod write_tests {
                 any_extensions: Default::default(),
             })),
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -424,6 +435,7 @@ mod write_tests {
                 any_extensions: Default::default(),
             })),
             any_extensions: Default::default(),
+            metadatagroup: Default::default(),
         };
         let object_string = to_string(&object).unwrap();
 
@@ -507,6 +519,7 @@ mod memory_optimized_read_tests {
                 meshresolution: None,
                 kind: None,
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }
         );
     }
@@ -536,6 +549,7 @@ mod memory_optimized_read_tests {
                 meshresolution: None,
                 kind: None,
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }
         );
     }
@@ -564,6 +578,7 @@ mod memory_optimized_read_tests {
                 meshresolution: None,
                 kind: None,
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }
         );
     }
@@ -592,6 +607,7 @@ mod memory_optimized_read_tests {
                 meshresolution: None,
                 kind: None,
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }
         );
     }
@@ -640,6 +656,7 @@ mod memory_optimized_read_tests {
                     any_extensions: Default::default(),
                 })),
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }
         );
     }
@@ -677,6 +694,7 @@ mod memory_optimized_read_tests {
                     any_extensions: Default::default(),
                 })),
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }
         );
     }

@@ -204,6 +204,7 @@ fn create_cube_model() -> Model {
         slicestackid: OptionalResourceId::none(),
         slicepath: None,
         any_extensions: Default::default(),
+        metadatagroup: Default::default(),
     };
 
     let resources = Resources {

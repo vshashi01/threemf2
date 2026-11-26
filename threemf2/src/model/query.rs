@@ -1823,3 +1823,34 @@ mod any_views {
     any_extensions_view_methods!(BooleanShapeView);
     any_extensions_view_methods!(ComponentView);
 }
+
+fn group_metadata<'a>(
+    group: &'a Option<crate::model::domain::metadata::MetadataGroup>,
+) -> &'a [Metadata] {
+    group.as_ref().map_or(&[], |group| &group.metadata)
+}
+
+macro_rules! metadata_group_view_methods {
+    ($view:ident, $($path:ident).+) => {
+        impl<'a> $view<'a> {
+            /// Returns the number of metadata entries in the `<metadatagroup>`.
+            pub fn metadata_count(&self) -> usize {
+                group_metadata(&self.$($path).+.metadatagroup).len()
+            }
+
+            /// Returns an iterator over the metadata entries in the `<metadatagroup>`.
+            pub fn metadata_iter(&self) -> impl Iterator<Item = MetadataView<'a>> + use<'a> {
+                group_metadata(&self.$($path).+.metadatagroup)
+                    .iter()
+                    .map(MetadataView::new)
+            }
+        }
+    };
+}
+
+metadata_group_view_methods!(ItemView, item);
+metadata_group_view_methods!(ObjectView, object);
+metadata_group_view_methods!(MeshObjectView, object);
+metadata_group_view_methods!(DisplacementMeshObjectView, object);
+metadata_group_view_methods!(ComponentsObjectView, object);
+metadata_group_view_methods!(BooleanShapeView, object);

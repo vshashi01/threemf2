@@ -192,6 +192,7 @@ fn validate_beamlattice_with_trianglesets() {
                 slicestackid: OptionalResourceId::none(),
                 slicepath: None,
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],

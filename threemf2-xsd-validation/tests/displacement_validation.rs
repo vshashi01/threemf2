@@ -132,6 +132,7 @@ fn validate_displacement_model_schema() {
                 slicepath: None,
                 meshresolution: None,
                 any_extensions: Default::default(),
+                metadatagroup: Default::default(),
             }],
             basematerials: vec![],
             slicestack: vec![],

@@ -159,6 +159,7 @@ fn validate_simple_slice() {
             any_extensions: Default::default(),
         })),
         any_extensions: Default::default(),
+        metadatagroup: Default::default(),
     };
 
     let model = Model {
@@ -377,6 +378,7 @@ fn validate_slice_multiple_polygons() {
             any_extensions: Default::default(),
         })),
         any_extensions: Default::default(),
+        metadatagroup: Default::default(),
     };
 
     let model = Model {
