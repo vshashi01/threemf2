@@ -81,6 +81,12 @@ use crate::model::{
     ResourceIndex, ResourceIndexCollection, StrResource, UuidResource,
 };
 
+#[cfg(feature = "any")]
+use crate::model::domain::{
+    any::AnyError,
+    any_extensions::{AnyExtensions, any_extensions_builder_methods},
+};
+
 use std::ops::{Deref, DerefMut};
 
 /// Errors that can occur when building a [`Model`].
@@ -1177,6 +1183,13 @@ pub enum ItemError {
     /// Use [`ModelBuilder::add_build_item_advanced()`] with [`ItemBuilder::uuid()`].
     #[error("Production extension is enabled but Uuid is not set!")]
     ItemUuidNotSet,
+
+    /// Foreign content added with [`ItemBuilder::any_attribute`] or [`ItemBuilder::any_element`]
+    /// is invalid: a name is not a valid XML name or a namespace is not foreign.
+    ///
+    /// Only produced with the `any` feature.
+    #[error("Invalid foreign (xs:any) content on the build item!")]
+    InvalidAnyExtension,
 }
 
 /// Errors that can occur when building a Texture2D resource.
@@ -1252,7 +1265,14 @@ pub struct ItemBuilder {
     partnumber: Option<String>,
     path: Option<PathResource>,
     uuid: Option<UuidResource>,
+    #[cfg(feature = "any")]
+    any_extensions: AnyExtensions,
+    #[cfg(feature = "any")]
+    any_extensions_error: Option<AnyError>,
 }
+
+#[cfg(feature = "any")]
+any_extensions_builder_methods!(ItemBuilder);
 
 impl ItemBuilder {
     fn new(objectid: ObjectId) -> Self {
@@ -1262,6 +1282,10 @@ impl ItemBuilder {
             partnumber: None,
             path: None,
             uuid: None,
+            #[cfg(feature = "any")]
+            any_extensions: AnyExtensions::default(),
+            #[cfg(feature = "any")]
+            any_extensions_error: None,
         }
     }
 
@@ -1310,12 +1334,20 @@ impl ItemBuilder {
         } else if is_production_ext_enabled && self.uuid.is_none() {
             return Err(ItemError::ItemUuidNotSet);
         }
+        #[cfg(feature = "any")]
+        if self.any_extensions_error.is_some() {
+            return Err(ItemError::InvalidAnyExtension);
+        }
+
         Ok(Item {
             objectid: self.objectid.0,
             transform: self.transform,
             partnumber: self.partnumber.map(Into::into),
             path: self.path,
             uuid: self.uuid,
+            #[cfg(feature = "any")]
+            any_extensions: self.any_extensions,
+            #[cfg(not(feature = "any"))]
             any_extensions: Default::default(),
         })
     }

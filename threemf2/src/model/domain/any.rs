@@ -75,7 +75,9 @@ fn check_name(name: &str) -> Result<(), AnyError> {
 /// An empty namespace means the attribute has no namespace. That is only valid for attributes
 /// nested inside an [`AnyElement`]; attributes stored in [`AnyAttributes`] always have a foreign
 /// namespace.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Equality compares namespace, name and value; the prefix hint is ignored because prefixes carry
+/// no meaning in XML.
+#[derive(Debug, Clone)]
 pub struct AnyAttribute {
     ns: StrResource,
     name: StrResource,
@@ -130,6 +132,14 @@ impl AnyAttribute {
         &*self.ns == ns && &*self.name == name
     }
 }
+
+impl PartialEq for AnyAttribute {
+    fn eq(&self, other: &Self) -> bool {
+        self.ns == other.ns && self.name == other.name && self.value == other.value
+    }
+}
+
+impl Eq for AnyAttribute {}
 
 /// The foreign attributes of an element with an `xs:anyAttribute` slot.
 ///
@@ -223,7 +233,9 @@ pub enum AnyNode {
 ///
 /// Used for `xs:any` slots. The element stored directly in a slot must have a foreign namespace
 /// (checked on write); nested elements and attributes may use any namespace, including none.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Equality compares namespace, name, attributes and content; the prefix hint is ignored because
+/// prefixes carry no meaning in XML.
+#[derive(Debug, Clone)]
 pub struct AnyElement {
     ns: StrResource,
     name: StrResource,
@@ -372,6 +384,17 @@ impl AnyElement {
             .collect()
     }
 }
+
+impl PartialEq for AnyElement {
+    fn eq(&self, other: &Self) -> bool {
+        self.ns == other.ns
+            && self.name == other.name
+            && self.attributes == other.attributes
+            && self.children == other.children
+    }
+}
+
+impl Eq for AnyElement {}
 
 #[cfg(feature = "read")]
 pub(crate) mod read {

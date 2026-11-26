@@ -21,6 +21,9 @@ use crate::model::domain::{
 use crate::model::{Color, OptionalResourceId, OptionalResourceIndex, UuidResource};
 use crate::threemf_namespaces::ThreemfNamespace;
 
+#[cfg(feature = "any")]
+use crate::model::domain::any_extensions::{AnyExtensions, any_extensions_view_methods};
+
 use std::{borrow::Cow, num::NonZeroU32};
 
 /// Stable classification for object kinds.
@@ -905,7 +908,16 @@ impl<'a> ItemView<'a> {
             .and_then(|uuid| uuid.to_string())
             .map(Cow::Owned)
     }
+
+    /// Foreign content (`xs:anyAttribute` / `xs:any`) of the build item. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn any_extensions(&self) -> &'a AnyExtensions {
+        &self.item.any_extensions
+    }
 }
+
+#[cfg(feature = "any")]
+any_extensions_view_methods!(ItemView);
 
 /// Stable view over a slicestack reference.
 pub struct SliceRefView<'a> {
