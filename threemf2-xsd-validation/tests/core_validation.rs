@@ -122,6 +122,7 @@ fn validate_simple_mesh_against_core_xsd() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
@@ -254,6 +255,7 @@ fn validate_model_with_metadata_against_core_xsd() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
@@ -383,6 +385,7 @@ fn validate_model_with_different_units() {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };

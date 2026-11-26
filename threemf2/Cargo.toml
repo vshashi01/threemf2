@@ -27,6 +27,8 @@ package-write = ["dep:zip", "write"]
 package-read = ["dep:zip", "read"]
 package-lazy-read = ["dep:once_cell", "package-read"]
 uuid = ["dep:uuid"]
+# Keep foreign (xs:any / xs:anyAttribute) XML content when reading and write it back.
+any = []
 
 [dependencies]
 instant-xml = { version = "0.7.6", optional = true }

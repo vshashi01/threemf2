@@ -524,6 +524,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -601,6 +602,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -655,6 +657,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -726,6 +729,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -797,6 +801,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -860,6 +865,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -918,6 +924,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -1063,6 +1070,7 @@ mod write_tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };
@@ -1332,6 +1340,7 @@ mod memory_optimized_read_tests {
                         partnumber: None,
                         path: None,
                         uuid: None,
+                        ..Default::default()
                     }],
                 },
             }
@@ -1409,6 +1418,7 @@ mod memory_optimized_read_tests {
                         partnumber: None,
                         path: None,
                         uuid: Some(UuidResource::from("someItemUUID")),
+                        ..Default::default()
                     }],
                 },
             }

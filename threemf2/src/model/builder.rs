@@ -1316,6 +1316,7 @@ impl ItemBuilder {
             partnumber: self.partnumber.map(Into::into),
             path: self.path,
             uuid: self.uuid,
+            any_extensions: Default::default(),
         })
     }
 }

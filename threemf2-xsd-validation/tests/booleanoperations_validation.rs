@@ -503,6 +503,7 @@ fn validate_simple_boolean_difference() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     });
@@ -607,6 +608,7 @@ fn validate_simple_boolean_intersection() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     });
@@ -727,6 +729,7 @@ fn validate_boolean_with_multiple_operands() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     });
@@ -875,6 +878,7 @@ fn validate_nested_boolean_shapes() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     });
@@ -988,6 +992,7 @@ fn validate_boolean_with_production_extension() {
                 uuid: Some(UuidResource::NotUuid(
                     "55555555-5555-5555-5555-555555555555".into(),
                 )),
+                ..Default::default()
             }],
         },
     });

@@ -42,4 +42,14 @@ pub mod displacement;
 
 pub mod types;
 
+/// Owned foreign XML content for the `xs:any` and `xs:anyAttribute` extension points.
+#[cfg(feature = "any")]
+pub mod any;
+
+/// Always-present containers for foreign XML content, populated with the `any` feature.
+pub mod any_extensions;
+
+#[cfg(feature = "read")]
+pub(crate) mod xml_helpers;
+
 mod constants;

@@ -183,6 +183,7 @@ fn validate_simple_slice() {
                 partnumber: None,
                 uuid: None,
                 path: None,
+                ..Default::default()
             }],
         },
     };
@@ -393,6 +394,7 @@ fn validate_slice_multiple_polygons() {
                 partnumber: None,
                 uuid: None,
                 path: None,
+                ..Default::default()
             }],
         },
     };

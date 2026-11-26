@@ -208,6 +208,7 @@ fn validate_beamlattice_with_trianglesets() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };

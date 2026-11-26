@@ -163,6 +163,7 @@ fn validate_simple_colorgroup() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
@@ -312,6 +313,7 @@ fn validate_texture2d_with_uv_mapping() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
@@ -494,6 +496,7 @@ fn validate_multi_properties() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
@@ -641,6 +644,7 @@ fn validate_vertex_color_application() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };

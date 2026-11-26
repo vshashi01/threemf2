@@ -140,6 +140,7 @@ fn validate_simple_production_model_with_uuids() {
                 partnumber: None,
                 path: None,
                 uuid: Some(UuidResource::from("b3de5826-ccb6-3dbc-d6c4-29a2d730766c")),
+                ..Default::default()
             }],
         },
     };
@@ -304,6 +305,7 @@ fn validate_production_model_with_components() {
                 partnumber: None,
                 path: None,
                 uuid: Some(UuidResource::from("item-uuid-1234-5678-90ab-cdef12345678")),
+                ..Default::default()
             }],
         },
     };

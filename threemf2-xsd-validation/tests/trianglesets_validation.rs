@@ -155,6 +155,7 @@ fn validate_simple_trianglesets() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
@@ -277,6 +278,7 @@ fn validate_trianglesets_with_ref_ranges() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };

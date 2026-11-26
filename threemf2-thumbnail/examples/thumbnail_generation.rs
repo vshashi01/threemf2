@@ -224,6 +224,7 @@ fn create_cube_model() -> Model {
             partnumber: None,
             uuid: None,
             path: None,
+            ..Default::default()
         }],
     };
 

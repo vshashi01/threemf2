@@ -203,6 +203,7 @@ fn validate_displacement_model_schema() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };

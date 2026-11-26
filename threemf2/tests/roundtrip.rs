@@ -88,6 +88,7 @@ mod tests {
                     partnumber: None,
                     path: None,
                     uuid: None,
+                    ..Default::default()
                 }],
             },
         };

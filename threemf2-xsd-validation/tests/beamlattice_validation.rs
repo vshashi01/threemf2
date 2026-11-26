@@ -195,6 +195,7 @@ fn validate_simple_beamlattice() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
@@ -345,6 +346,7 @@ fn validate_beamlattice_with_balls() {
                 partnumber: None,
                 path: None,
                 uuid: None,
+                ..Default::default()
             }],
         },
     };
