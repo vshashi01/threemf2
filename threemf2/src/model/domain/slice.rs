@@ -242,39 +242,15 @@ pub struct Vertices {
     pub vertex_any_extensions: ItemAttributeExtensions,
 }
 
-#[cfg(feature = "write")]
-impl ToXml for Vertices {
-    fn serialize<W: std::fmt::Write + ?Sized>(
-        &self,
-        _field: Option<instant_xml::Id<'_>>,
-        serializer: &mut instant_xml::Serializer<W>,
-    ) -> Result<(), instant_xml::Error> {
-        let mut context = instant_xml::ser::Context::<0>::default();
-        context.default_ns = SLICE_NS;
-        context.force_prefix = true;
-        let element = serializer.write_start("vertices", SLICE_NS, Some(context))?;
-        #[cfg(feature = "any")]
-        let scope = write_item_namespaces(
-            serializer,
-            &self.vertex_any_extensions,
-            self.vertex.len(),
-            "vertex",
-        )?;
-        serializer.end_start()?;
-        #[cfg(feature = "any")]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.vertex,
-            &self.vertex_any_extensions,
-            &scope,
-        )?;
-        #[cfg(not(feature = "any"))]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.vertex,
-            &self.vertex_any_extensions,
-        )?;
-        serializer.write_close(element)
+#[cfg(any(feature = "read", feature = "write"))]
+crate::model::domain::xml_item::xml_list! {
+    Vertices {
+        tag: "vertices",
+        ns: SLICE_NS,
+        force_prefix: true,
+        attributes: {},
+        items: vertex: Vertex => vertex_any_extensions,
+        capacity: MAX_VERTEX_BUFFER,
     }
 }
 
@@ -298,54 +274,6 @@ fn write_item_namespaces<W: std::fmt::Write + ?Sized>(
         serializer, &mut scope, SLICE_NS, table, len, entry,
     )?;
     Ok(scope)
-}
-
-#[cfg(feature = "read")]
-impl<'xml> FromXml<'xml> for Vertices {
-    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
-        id == ::instant_xml::Id {
-            ns: SLICE_NS,
-            name: "vertices",
-        }
-    }
-
-    fn deserialize<'cx>(
-        into: &mut Self::Accumulator,
-        field: &'static str,
-        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
-    ) -> Result<(), instant_xml::Error> {
-        if into.is_some() {
-            return Err(instant_xml::Error::DuplicateValue(field));
-        }
-
-        let mut vertices: Vec<Vertex> = Vec::with_capacity(MAX_VERTEX_BUFFER);
-        let mut vertex_any_extensions = ItemAttributeExtensions::default();
-
-        while let Some(node) = deserializer.next() {
-            if let Ok(n) = node
-                && let instant_xml::de::Node::Open(element) = n
-            {
-                let mut nested = deserializer.nested(element);
-                // Malformed entries are skipped.
-                let _ = crate::model::domain::xml_item::read_item_into(
-                    &mut nested,
-                    &mut vertices,
-                    &mut vertex_any_extensions,
-                );
-            }
-        }
-
-        vertices.shrink_to_fit();
-        *into = Some(Vertices {
-            vertex: vertices,
-            vertex_any_extensions,
-        });
-
-        Ok(())
-    }
-
-    type Accumulator = Option<Self>;
-    const KIND: instant_xml::Kind = instant_xml::Kind::Scalar;
 }
 
 /// 2D vertex representing a point in slice space.

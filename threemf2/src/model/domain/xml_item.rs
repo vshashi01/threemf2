@@ -209,6 +209,12 @@ macro_rules! fast_item {
     (@assign bytes $ty:ty, $var:ident, $value:expr) => {
         $var = $value.into()
     };
+    (@init checked $ty:ty) => { <$ty as ::std::default::Default>::default() };
+    (@assign checked $ty:ty, $var:ident, $value:expr) => {
+        $var = ::lexical_core::parse($value).map_err(|_| {
+            ::instant_xml::Error::MissingValue(concat!("Invalid values as ", stringify!($var)))
+        })?
+    };
 
     (@done number $var:ident) => { $crate::model::Double::new($var) };
     (@done $kind:ident $var:ident) => { $var };
@@ -322,6 +328,231 @@ macro_rules! fast_item {
 }
 
 pub(crate) use fast_item;
+
+/// Implements `FromXml` and `ToXml` for the list element of a numerous entry type (such as
+/// `<vertices>`), read leniently: malformed entries are skipped and any other child element is
+/// read as an entry. The entries are collected into a buffer preallocated with `capacity`.
+///
+/// - `attributes`: the list element's own attributes, as `field: Type = kind` with the kinds of
+///   [`fast_item!`], plus `checked` (a `lexical_core` integer that fails the list if invalid).
+///   Empty values are ignored.
+/// - `items`: the entry field, its [`XmlItem`] type and the table of their foreign content.
+/// - `any` (optional): the list element's own foreign content. With an `AnyExtensions`, foreign
+///   child elements are kept there instead of being read as entries.
+///
+/// ```ignore
+/// xml_list! {
+///     Triangles {
+///         tag: "triangles",
+///         ns: DISPLACEMENT_NS,
+///         force_prefix: false,
+///         attributes: { did: OptionalResourceId = bytes },
+///         items: triangle: Triangle => triangle_any_extensions,
+///         capacity: constants::MAX_TRIANGLE_BUFFER,
+///         any: any_extensions: AnyAttributeExtensions,
+///     }
+/// }
+/// ```
+macro_rules! xml_list {
+    (
+        $ty:ident {
+            tag: $tag:literal,
+            ns: $ns:expr,
+            force_prefix: $force:literal,
+            attributes: { $($afield:ident: $aty:ty = $kind:ident),* $(,)? },
+            items: $ifield:ident: $ity:ty => $itable:ident,
+            capacity: $capacity:expr,
+            $(any: $any:ident: $anyty:ty,)?
+        }
+    ) => {
+        #[cfg(feature = "read")]
+        impl<'xml> ::instant_xml::FromXml<'xml> for $ty {
+            #[inline]
+            fn matches(id: ::instant_xml::Id<'_>, _: Option<::instant_xml::Id<'_>>) -> bool {
+                id == ::instant_xml::Id { ns: $ns, name: $tag }
+            }
+
+            fn deserialize<'cx>(
+                into: &mut Self::Accumulator,
+                field: &'static str,
+                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+            ) -> ::std::result::Result<(), ::instant_xml::Error> {
+                use ::instant_xml::de::Node;
+
+                if into.is_some() {
+                    return Err(::instant_xml::Error::DuplicateValue(field));
+                }
+
+                $(let mut $afield = $crate::model::domain::xml_item::fast_item!(@init $kind $aty);)*
+                let mut $ifield: ::std::vec::Vec<$ity> = ::std::vec::Vec::with_capacity($capacity);
+                let mut $itable = ::std::default::Default::default();
+                $(
+                    #[allow(unused_mut)]
+                    let mut $any = <$anyty>::default();
+                )?
+
+                while let Some(node) = deserializer.next() {
+                    let Ok(node) = node else { continue };
+                    match node {
+                        #[allow(unused_variables)]
+                        Node::Attribute(attr) => {
+                            let Ok(id) = deserializer.attribute_id(&attr) else { continue };
+                            if id.ns.is_empty() && !attr.value.is_empty() {
+                                #[allow(clippy::match_single_binding)]
+                                match id.name {
+                                    $(
+                                        stringify!($afield) => {
+                                            $crate::model::domain::xml_item::fast_item!(
+                                                @assign $kind $aty, $afield, attr.value.as_bytes()
+                                            );
+                                            continue;
+                                        }
+                                    )*
+                                    _ => {}
+                                }
+                            }
+                            $(
+                                #[cfg(feature = "any")]
+                                if let Some(attributes) =
+                                    $crate::model::domain::any_extensions::AnySlot::slot_attributes_mut(
+                                        &mut $any,
+                                    )
+                                {
+                                    $crate::model::domain::any::read::capture_attribute(
+                                        attributes,
+                                        id,
+                                        $ns,
+                                        attr.prefix,
+                                        &attr.value,
+                                    );
+                                }
+                            )?
+                        }
+                        Node::Open(element) => {
+                            $(
+                                #[cfg(feature = "any")]
+                                if let Some(elements) =
+                                    $crate::model::domain::any_extensions::AnySlot::slot_elements_mut(
+                                        &mut $any,
+                                    )
+                                {
+                                    let id = deserializer.element_id(&element)?;
+                                    if $crate::model::domain::any::is_foreign_for(id.ns, $ns) {
+                                        let mut nested = deserializer.nested(element);
+                                        elements.push(
+                                            $crate::model::domain::any::read::read_element(
+                                                &mut nested,
+                                                id,
+                                            )?,
+                                        );
+                                        continue;
+                                    }
+                                }
+                            )?
+                            let mut nested = deserializer.nested(element);
+                            // Malformed entries are skipped.
+                            let _ = $crate::model::domain::xml_item::read_item_into(
+                                &mut nested,
+                                &mut $ifield,
+                                &mut $itable,
+                            );
+                        }
+                        _ => {}
+                    }
+                }
+
+                $ifield.shrink_to_fit();
+                *into = Some(Self {
+                    $($afield: $crate::model::domain::xml_item::fast_item!(@done $kind $afield),)*
+                    $ifield,
+                    $itable,
+                    $($any,)?
+                });
+                Ok(())
+            }
+
+            type Accumulator = Option<Self>;
+            const KIND: ::instant_xml::Kind = ::instant_xml::Kind::Element;
+        }
+
+        #[cfg(feature = "write")]
+        impl ::instant_xml::ToXml for $ty {
+            fn serialize<W: ::std::fmt::Write + ?Sized>(
+                &self,
+                _: Option<::instant_xml::Id<'_>>,
+                serializer: &mut ::instant_xml::Serializer<W>,
+            ) -> ::std::result::Result<(), ::instant_xml::Error> {
+                #[allow(unused_imports)]
+                use ::instant_xml::ToXml;
+
+                let mut context = ::instant_xml::ser::Context::<0>::default();
+                context.default_ns = $ns;
+                context.force_prefix = $force;
+                let element = serializer.write_start($tag, $ns, Some(context))?;
+                $(
+                    if ToXml::present(&self.$afield) {
+                        serializer.write_attr(stringify!($afield), "", &self.$afield)?;
+                    }
+                )*
+
+                #[cfg(feature = "any")]
+                #[allow(unused_variables)]
+                let (foreign_attributes, foreign_elements) = (
+                    $crate::model::domain::any::AnyAttributes::empty(),
+                    &[] as &[$crate::model::domain::any::AnyElement],
+                );
+                $(
+                    #[cfg(feature = "any")]
+                    let (foreign_attributes, foreign_elements) = (
+                        $crate::model::domain::any_extensions::AnySlot::slot_attributes(&self.$any),
+                        $crate::model::domain::any_extensions::AnySlot::slot_elements(&self.$any),
+                    );
+                )?
+                #[cfg(feature = "any")]
+                let mut scope = $crate::model::domain::any::write::write_foreign_attributes(
+                    serializer,
+                    &[],
+                    $ns,
+                    foreign_attributes,
+                    foreign_elements,
+                )?;
+                #[cfg(feature = "any")]
+                $crate::model::domain::any::write::declare_item_namespaces(
+                    serializer,
+                    &mut scope,
+                    $ns,
+                    &self.$itable,
+                    self.$ifield.len(),
+                    <$ity as $crate::model::domain::xml_item::XmlItem>::TAG,
+                )?;
+                serializer.end_start()?;
+
+                #[cfg(feature = "any")]
+                $crate::model::domain::xml_item::write_items(
+                    serializer,
+                    &self.$ifield,
+                    &self.$itable,
+                    &scope,
+                )?;
+                #[cfg(not(feature = "any"))]
+                $crate::model::domain::xml_item::write_items(
+                    serializer,
+                    &self.$ifield,
+                    &self.$itable,
+                )?;
+                #[cfg(feature = "any")]
+                $crate::model::domain::any::write::write_foreign_elements(
+                    serializer,
+                    &scope,
+                    foreign_elements,
+                )?;
+                serializer.write_close(element)
+            }
+        }
+    };
+}
+
+pub(crate) use xml_list;
 
 /// Reads one entry and appends it to `items`, recording its foreign content in `table`.
 #[cfg(feature = "read")]

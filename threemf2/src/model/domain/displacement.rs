@@ -183,147 +183,17 @@ pub struct NormVectorGroup {
     pub normvector_any_extensions: ItemAttributeExtensions,
 }
 
-#[cfg(feature = "write")]
-impl ToXml for NormVectorGroup {
-    fn serialize<W: std::fmt::Write + ?Sized>(
-        &self,
-        _field: Option<instant_xml::Id<'_>>,
-        serializer: &mut instant_xml::Serializer<W>,
-    ) -> Result<(), instant_xml::Error> {
-        let mut context = instant_xml::ser::Context::<0>::default();
-        context.default_ns = DISPLACEMENT_NS;
-        let element = serializer.write_start("normvectorgroup", DISPLACEMENT_NS, Some(context))?;
-        if self.id.present() {
-            serializer.write_attr("id", "", &self.id)?;
-        }
-        #[cfg(feature = "any")]
-        let mut scope = crate::model::domain::any::write::write_foreign_attributes(
-            serializer,
-            &[],
-            DISPLACEMENT_NS,
-            self.any_extensions.attributes(),
-            self.any_extensions.elements(),
-        )?;
-        #[cfg(feature = "any")]
-        crate::model::domain::any::write::declare_item_namespaces(
-            serializer,
-            &mut scope,
-            DISPLACEMENT_NS,
-            &self.normvector_any_extensions,
-            self.normvector.len(),
-            "normvector",
-        )?;
-        serializer.end_start()?;
-        #[cfg(feature = "any")]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.normvector,
-            &self.normvector_any_extensions,
-            &scope,
-        )?;
-        #[cfg(not(feature = "any"))]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.normvector,
-            &self.normvector_any_extensions,
-        )?;
-        #[cfg(feature = "any")]
-        crate::model::domain::any::write::write_foreign_elements(
-            serializer,
-            &scope,
-            self.any_extensions.elements(),
-        )?;
-        serializer.write_close(element)
+#[cfg(any(feature = "read", feature = "write"))]
+crate::model::domain::xml_item::xml_list! {
+    NormVectorGroup {
+        tag: "normvectorgroup",
+        ns: DISPLACEMENT_NS,
+        force_prefix: false,
+        attributes: { id: ResourceId = checked },
+        items: normvector: NormVector => normvector_any_extensions,
+        capacity: constants::MAX_VERTEX_BUFFER,
+        any: any_extensions: AnyExtensions,
     }
-}
-
-#[cfg(feature = "read")]
-impl<'xml> FromXml<'xml> for NormVectorGroup {
-    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
-        id == ::instant_xml::Id {
-            ns: DISPLACEMENT_NS,
-            name: "normvectorgroup",
-        }
-    }
-
-    fn deserialize<'cx>(
-        into: &mut Self::Accumulator,
-        field: &'static str,
-        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
-    ) -> Result<(), instant_xml::Error> {
-        if into.is_some() {
-            return Err(instant_xml::Error::DuplicateValue(field));
-        }
-
-        let mut norm_id: u32 = 0;
-        let mut norm_vectors: Vec<NormVector> = Vec::with_capacity(constants::MAX_VERTEX_BUFFER);
-        #[allow(unused_mut)]
-        let mut any_extensions = AnyExtensions::default();
-        let mut normvector_any_extensions = ItemAttributeExtensions::default();
-        while let Some(node) = deserializer.next()
-            && let Ok(node) = node
-        {
-            match node {
-                instant_xml::de::Node::Attribute(attr) => {
-                    let id = deserializer.attribute_id(&attr)?;
-                    if id.ns.is_empty() && id.name == "id" && !attr.value.is_empty() {
-                        match lexical_core::parse::<u32>(attr.value.as_bytes()) {
-                            Ok(value) => norm_id = value,
-                            Err(_) => {
-                                return Err(instant_xml::Error::MissingValue(
-                                    "Invalid values as id",
-                                ));
-                            }
-                        }
-                    } else {
-                        #[cfg(feature = "any")]
-                        crate::model::domain::any::read::capture_attribute(
-                            any_extensions.attributes_mut(),
-                            id,
-                            DISPLACEMENT_NS,
-                            attr.prefix,
-                            &attr.value,
-                        );
-                    }
-                }
-                instant_xml::de::Node::Open(element) => {
-                    #[cfg(feature = "any")]
-                    {
-                        let id = deserializer.element_id(&element)?;
-                        if crate::model::domain::any::is_foreign_for(id.ns, DISPLACEMENT_NS) {
-                            let mut nested = deserializer.nested(element);
-                            let foreign =
-                                crate::model::domain::any::read::read_element(&mut nested, id)?;
-                            any_extensions.elements_mut().push(foreign);
-                            continue;
-                        }
-                    }
-                    let mut nested = deserializer.nested(element);
-                    // Malformed entries are skipped.
-                    let _ = crate::model::domain::xml_item::read_item_into(
-                        &mut nested,
-                        &mut norm_vectors,
-                        &mut normvector_any_extensions,
-                    );
-                }
-                _ => {}
-            }
-        }
-
-        norm_vectors.shrink_to_fit();
-        *into = Some(Self {
-            id: norm_id,
-            normvector: norm_vectors,
-            any_extensions,
-            normvector_any_extensions,
-        });
-
-        Ok(())
-    }
-
-    type Accumulator = Option<Self>;
-
-    const KIND: instant_xml::Kind = instant_xml::Kind::Element;
 }
 
 /// Normalized displacement vector.
@@ -510,113 +380,17 @@ pub struct Vertices {
     pub vertex_any_extensions: ItemAttributeExtensions,
 }
 
-#[cfg(feature = "write")]
-impl ToXml for Vertices {
-    fn serialize<W: std::fmt::Write + ?Sized>(
-        &self,
-        _field: Option<instant_xml::Id<'_>>,
-        serializer: &mut instant_xml::Serializer<W>,
-    ) -> Result<(), instant_xml::Error> {
-        let mut context = instant_xml::ser::Context::<0>::default();
-        context.default_ns = DISPLACEMENT_NS;
-        let element = serializer.write_start("vertices", DISPLACEMENT_NS, Some(context))?;
-        #[cfg(feature = "any")]
-        let mut scope = crate::model::domain::any::write::write_foreign_attributes(
-            serializer,
-            &[],
-            DISPLACEMENT_NS,
-            self.any_extensions.attributes(),
-            &[],
-        )?;
-        #[cfg(feature = "any")]
-        crate::model::domain::any::write::declare_item_namespaces(
-            serializer,
-            &mut scope,
-            DISPLACEMENT_NS,
-            &self.vertex_any_extensions,
-            self.vertex.len(),
-            "vertex",
-        )?;
-        serializer.end_start()?;
-        #[cfg(feature = "any")]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.vertex,
-            &self.vertex_any_extensions,
-            &scope,
-        )?;
-        #[cfg(not(feature = "any"))]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.vertex,
-            &self.vertex_any_extensions,
-        )?;
-        serializer.write_close(element)
+#[cfg(any(feature = "read", feature = "write"))]
+crate::model::domain::xml_item::xml_list! {
+    Vertices {
+        tag: "vertices",
+        ns: DISPLACEMENT_NS,
+        force_prefix: false,
+        attributes: {},
+        items: vertex: Vertex => vertex_any_extensions,
+        capacity: constants::MAX_VERTEX_BUFFER,
+        any: any_extensions: AnyAttributeExtensions,
     }
-}
-
-#[cfg(feature = "read")]
-impl<'xml> FromXml<'xml> for Vertices {
-    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
-        id == ::instant_xml::Id {
-            ns: DISPLACEMENT_NS,
-            name: "vertices",
-        }
-    }
-
-    fn deserialize<'cx>(
-        into: &mut Self::Accumulator,
-        field: &'static str,
-        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
-    ) -> Result<(), instant_xml::Error> {
-        if into.is_some() {
-            return Err(instant_xml::Error::DuplicateValue(field));
-        }
-
-        #[allow(unused_mut)]
-        let mut any_extensions = AnyAttributeExtensions::default();
-        let mut vertex_any_extensions = ItemAttributeExtensions::default();
-        let mut vertices: Vec<Vertex> = Vec::with_capacity(constants::MAX_VERTEX_BUFFER);
-
-        while let Some(node) = deserializer.next() {
-            #[cfg(feature = "any")]
-            if let Ok(instant_xml::de::Node::Attribute(attr)) = &node
-                && let Ok(id) = deserializer.attribute_id(attr)
-            {
-                crate::model::domain::any::read::capture_attribute(
-                    any_extensions.attributes_mut(),
-                    id,
-                    DISPLACEMENT_NS,
-                    attr.prefix,
-                    &attr.value,
-                );
-                continue;
-            }
-            if let Ok(n) = node
-                && let instant_xml::de::Node::Open(element) = n
-            {
-                let mut nested = deserializer.nested(element);
-                // Malformed entries are skipped.
-                let _ = crate::model::domain::xml_item::read_item_into(
-                    &mut nested,
-                    &mut vertices,
-                    &mut vertex_any_extensions,
-                );
-            }
-        }
-
-        vertices.shrink_to_fit();
-        *into = Some(Vertices {
-            vertex: vertices,
-            any_extensions,
-            vertex_any_extensions,
-        });
-
-        Ok(())
-    }
-
-    type Accumulator = Option<Self>;
-    const KIND: instant_xml::Kind = instant_xml::Kind::Scalar;
 }
 
 /// A displacement mesh vertex.
@@ -671,123 +445,17 @@ pub struct Triangles {
     pub triangle_any_extensions: ItemAttributeExtensions,
 }
 
-#[cfg(feature = "write")]
-impl ToXml for Triangles {
-    fn serialize<W: std::fmt::Write + ?Sized>(
-        &self,
-        _field: Option<instant_xml::Id<'_>>,
-        serializer: &mut instant_xml::Serializer<W>,
-    ) -> Result<(), instant_xml::Error> {
-        let mut context = instant_xml::ser::Context::<0>::default();
-        context.default_ns = DISPLACEMENT_NS;
-        let element = serializer.write_start("triangles", DISPLACEMENT_NS, Some(context))?;
-        if self.did.present() {
-            serializer.write_attr("did", "", &self.did)?;
-        }
-        #[cfg(feature = "any")]
-        let mut scope = crate::model::domain::any::write::write_foreign_attributes(
-            serializer,
-            &[],
-            DISPLACEMENT_NS,
-            self.any_extensions.attributes(),
-            &[],
-        )?;
-        #[cfg(feature = "any")]
-        crate::model::domain::any::write::declare_item_namespaces(
-            serializer,
-            &mut scope,
-            DISPLACEMENT_NS,
-            &self.triangle_any_extensions,
-            self.triangle.len(),
-            "triangle",
-        )?;
-        serializer.end_start()?;
-        #[cfg(feature = "any")]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.triangle,
-            &self.triangle_any_extensions,
-            &scope,
-        )?;
-        #[cfg(not(feature = "any"))]
-        crate::model::domain::xml_item::write_items(
-            serializer,
-            &self.triangle,
-            &self.triangle_any_extensions,
-        )?;
-        serializer.write_close(element)
+#[cfg(any(feature = "read", feature = "write"))]
+crate::model::domain::xml_item::xml_list! {
+    Triangles {
+        tag: "triangles",
+        ns: DISPLACEMENT_NS,
+        force_prefix: false,
+        attributes: { did: OptionalResourceId = bytes },
+        items: triangle: Triangle => triangle_any_extensions,
+        capacity: constants::MAX_TRIANGLE_BUFFER,
+        any: any_extensions: AnyAttributeExtensions,
     }
-}
-
-#[cfg(feature = "read")]
-impl<'xml> FromXml<'xml> for Triangles {
-    fn matches(id: instant_xml::Id<'_>, _field: Option<instant_xml::Id<'_>>) -> bool {
-        id == ::instant_xml::Id {
-            ns: DISPLACEMENT_NS,
-            name: "triangles",
-        }
-    }
-
-    fn deserialize<'cx>(
-        into: &mut Self::Accumulator,
-        field: &'static str,
-        deserializer: &mut instant_xml::Deserializer<'cx, 'xml>,
-    ) -> Result<(), instant_xml::Error> {
-        if into.is_some() {
-            return Err(instant_xml::Error::DuplicateValue(field));
-        }
-
-        let mut did = OptionalResourceId::none();
-        #[allow(unused_mut)]
-        let mut any_extensions = AnyAttributeExtensions::default();
-        let mut triangle_any_extensions = ItemAttributeExtensions::default();
-        let mut triangles: Vec<Triangle> = Vec::with_capacity(constants::MAX_TRIANGLE_BUFFER);
-        while let Some(node) = deserializer.next()
-            && let Ok(node) = node
-        {
-            match node {
-                instant_xml::de::Node::Attribute(attr) => {
-                    let id = deserializer.attribute_id(&attr)?;
-                    if id.ns.is_empty() && id.name == "did" && !attr.value.is_empty() {
-                        did = attr.value.as_bytes().into();
-                    } else {
-                        #[cfg(feature = "any")]
-                        crate::model::domain::any::read::capture_attribute(
-                            any_extensions.attributes_mut(),
-                            id,
-                            DISPLACEMENT_NS,
-                            attr.prefix,
-                            &attr.value,
-                        );
-                    }
-                }
-                instant_xml::de::Node::Open(element) => {
-                    let mut nested = deserializer.nested(element);
-                    // Malformed entries are skipped.
-                    let _ = crate::model::domain::xml_item::read_item_into(
-                        &mut nested,
-                        &mut triangles,
-                        &mut triangle_any_extensions,
-                    );
-                }
-                _ => {}
-            }
-        }
-
-        triangles.shrink_to_fit();
-        *into = Some(Triangles {
-            did,
-            triangle: triangles,
-            any_extensions,
-            triangle_any_extensions,
-        });
-
-        Ok(())
-    }
-
-    type Accumulator = Option<Self>;
-
-    const KIND: instant_xml::Kind = instant_xml::Kind::Element;
 }
 
 /// A displacement mesh triangle with optional displacement indices.
@@ -1339,6 +1007,33 @@ mod memory_optimized_read_tests {
                 normvector_any_extensions: Default::default(),
             }
         );
+    }
+
+    #[test]
+    fn fromxml_list_attributes_test() {
+        // A missing or empty id stays 0, an invalid one fails the group.
+        for (attr, id) in [("", 0), (" id=\"\"", 0), (" id=\"7\"", 7)] {
+            let xml_string = format!(
+                "<normvectorgroup xmlns=\"{DISPLACEMENT_NS}\"{attr}><normvector x=\"1\" y=\"0\" z=\"0\" /></normvectorgroup>"
+            );
+            let group = from_str::<NormVectorGroup>(&xml_string).unwrap();
+            assert_eq!((group.id, group.normvector.len()), (id, 1));
+        }
+        let xml_string = format!("<normvectorgroup xmlns=\"{DISPLACEMENT_NS}\" id=\"x\" />");
+        assert!(from_str::<NormVectorGroup>(&xml_string).is_err());
+
+        // `did` is optional; an empty value leaves it unset.
+        for (attr, did) in [
+            ("", OptionalResourceId::none()),
+            (" did=\"\"", OptionalResourceId::none()),
+            (" did=\"3\"", OptionalResourceId::new(3)),
+        ] {
+            let xml_string = format!(
+                "<triangles xmlns=\"{DISPLACEMENT_NS}\"{attr}><triangle v1=\"0\" v2=\"1\" v3=\"2\" /></triangles>"
+            );
+            let triangles = from_str::<Triangles>(&xml_string).unwrap();
+            assert_eq!((triangles.did, triangles.triangle.len()), (did, 1));
+        }
     }
 
     #[test]
