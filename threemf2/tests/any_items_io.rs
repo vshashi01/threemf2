@@ -100,6 +100,32 @@ mod tests {
         assert_eq!(reread, value, "{tag}: round trip");
     }
 
+    /// The displacement schema allows no foreign attributes on `vertex` and `triangle`, so they
+    /// are dropped while reading and the entries are written plainly.
+    #[test]
+    fn displacement_entries_drop_foreign_attributes() {
+        let a = format!(r#"xmlns:acme="{ACME_NS}""#);
+
+        let vertices = instant_xml::from_str::<displacement::Vertices>(&format!(
+            r#"<vertices xmlns="{DISPLACEMENT_NS}" {a}><vertex x="0" y="0" z="1" acme:w="2" /></vertices>"#
+        ))
+        .unwrap();
+        assert_eq!(vertices.vertex.len(), 1);
+        assert_eq!(
+            instant_xml::to_string(&vertices).unwrap(),
+            format!(
+                r#"<vertices xmlns="{DISPLACEMENT_NS}"><vertex x="0" y="0" z="1" /></vertices>"#
+            )
+        );
+
+        let triangles = instant_xml::from_str::<displacement::Triangles>(&format!(
+            r#"<triangles xmlns="{DISPLACEMENT_NS}" {a} did="4"><triangle v1="0" v2="1" v3="2" d1="0" acme:w="2" /></triangles>"#
+        ))
+        .unwrap();
+        assert_eq!(triangles.triangle.len(), 1);
+        assert!(!instant_xml::to_string(&triangles).unwrap().contains("acme"));
+    }
+
     #[test]
     fn entry_attributes_roundtrip_in_every_list() {
         let a = format!(r#"xmlns:acme="{ACME_NS}""#);
@@ -114,20 +140,6 @@ mod tests {
         check::<mesh::Triangles, _>(
             &format!(
                 r#"<triangles xmlns="{CORE_NS}" {a}><triangle v1="0" v2="1" v3="2" p1="1" pid="3" acme:w="2" /></triangles>"#
-            ),
-            "triangle",
-            |v| &mut v.triangle_any_extensions,
-        );
-        check::<displacement::Vertices, _>(
-            &format!(
-                r#"<vertices xmlns="{DISPLACEMENT_NS}" {a}><vertex x="0" y="0" z="0" acme:w="2" /></vertices>"#
-            ),
-            "vertex",
-            |v| &mut v.vertex_any_extensions,
-        );
-        check::<displacement::Triangles, _>(
-            &format!(
-                r#"<triangles xmlns="{DISPLACEMENT_NS}" {a} did="4"><triangle v1="0" v2="1" v3="2" d1="0" acme:w="2" /></triangles>"#
             ),
             "triangle",
             |v| &mut v.triangle_any_extensions,

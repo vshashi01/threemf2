@@ -336,7 +336,9 @@ pub(crate) use fast_item;
 /// - `attributes`: the list element's own attributes, as `field: Type = kind` with the kinds of
 ///   [`fast_item!`], plus `checked` (a `lexical_core` integer that fails the list if invalid).
 ///   Empty values are ignored.
-/// - `items`: the entry field, its [`XmlItem`] type and the table of their foreign content.
+/// - `items`: the entry field, its [`XmlItem`] type and the table of their foreign content, if
+///   its schema type allows any (`field: Type => table`; without `=> table`, foreign content of the
+///   entries is dropped).
 /// - `any` (optional): the list element's own foreign content. With an `AnyExtensions`, foreign
 ///   child elements are kept there instead of being read as entries.
 ///
@@ -360,7 +362,7 @@ macro_rules! xml_list {
             ns: $ns:expr,
             force_prefix: $force:literal,
             attributes: { $($afield:ident: $aty:ty = $kind:ident),* $(,)? },
-            items: $ifield:ident: $ity:ty => $itable:ident,
+            items: $ifield:ident: $ity:ty $(=> $itable:ident)?,
             capacity: $capacity:expr,
             $(any: $any:ident: $anyty:ty,)?
         }
@@ -385,7 +387,13 @@ macro_rules! xml_list {
 
                 $(let mut $afield = $crate::model::domain::xml_item::fast_item!(@init $kind $aty);)*
                 let mut $ifield: ::std::vec::Vec<$ity> = ::std::vec::Vec::with_capacity($capacity);
-                let mut $itable = ::std::default::Default::default();
+                let mut no_table = ();
+                #[allow(unused_variables)]
+                let table = &mut no_table;
+                $(
+                    let mut $itable = ::std::default::Default::default();
+                    let table = &mut $itable;
+                )?
                 $(
                     #[allow(unused_mut)]
                     let mut $any = <$anyty>::default();
@@ -454,7 +462,7 @@ macro_rules! xml_list {
                             let _ = $crate::model::domain::xml_item::read_item_into(
                                 &mut nested,
                                 &mut $ifield,
-                                &mut $itable,
+                                &mut *table,
                             );
                         }
                         _ => {}
@@ -465,7 +473,7 @@ macro_rules! xml_list {
                 *into = Some(Self {
                     $($afield: $crate::model::domain::xml_item::fast_item!(@done $kind $afield),)*
                     $ifield,
-                    $itable,
+                    $($itable,)?
                     $($any,)?
                 });
                 Ok(())
@@ -495,6 +503,10 @@ macro_rules! xml_list {
                     }
                 )*
 
+                #[allow(unused_variables)]
+                let table = &();
+                $(let table = &self.$itable;)?
+
                 #[cfg(feature = "any")]
                 #[allow(unused_variables)]
                 let (foreign_attributes, foreign_elements) = (
@@ -521,7 +533,7 @@ macro_rules! xml_list {
                     serializer,
                     &mut scope,
                     $ns,
-                    &self.$itable,
+                    table,
                     self.$ifield.len(),
                     <$ity as $crate::model::domain::xml_item::XmlItem>::TAG,
                 )?;
@@ -531,14 +543,14 @@ macro_rules! xml_list {
                 $crate::model::domain::xml_item::write_items(
                     serializer,
                     &self.$ifield,
-                    &self.$itable,
+                    table,
                     &scope,
                 )?;
                 #[cfg(not(feature = "any"))]
                 $crate::model::domain::xml_item::write_items(
                     serializer,
                     &self.$ifield,
-                    &self.$itable,
+                    table,
                 )?;
                 #[cfg(feature = "any")]
                 $crate::model::domain::any::write::write_foreign_elements(

@@ -461,6 +461,23 @@ impl ItemTable for ItemAttributeExtensions {}
 #[cfg(not(feature = "any"))]
 impl ItemTable for ItemAnyExtensions {}
 
+/// No table, for entries whose schema type allows no foreign content: what is read is dropped
+/// and nothing is written.
+impl ItemTable for () {
+    #[cfg(feature = "any")]
+    fn entry_parts(&self) -> impl Iterator<Item = (usize, &AnyAttributes, &[AnyElement])> {
+        std::iter::empty()
+    }
+
+    #[cfg(feature = "any")]
+    fn last_index(&self) -> Option<usize> {
+        None
+    }
+
+    #[cfg(all(feature = "any", feature = "read"))]
+    fn push_read(&mut self, _: usize, _: AnyAttributes, _: Vec<AnyElement>) {}
+}
+
 /// Collects the foreign content of one list entry while it is read. Empty and free without the
 /// `any` feature.
 #[cfg(feature = "read")]

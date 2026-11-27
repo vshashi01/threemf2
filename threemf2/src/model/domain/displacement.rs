@@ -373,11 +373,6 @@ pub struct Vertices {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyAttributeExtensions,
-
-    /// Foreign attributes of the individual `vertex` entries, by index in [`Self::vertex`].
-    ///
-    /// Only populated with the `any` feature.
-    pub vertex_any_extensions: ItemAttributeExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]
@@ -387,7 +382,8 @@ crate::model::domain::xml_item::xml_list! {
         ns: DISPLACEMENT_NS,
         force_prefix: false,
         attributes: {},
-        items: vertex: Vertex => vertex_any_extensions,
+        // The schema allows no foreign content on displacement vertices.
+        items: vertex: Vertex,
         capacity: constants::MAX_VERTEX_BUFFER,
         any: any_extensions: AnyAttributeExtensions,
     }
@@ -438,11 +434,6 @@ pub struct Triangles {
     ///
     /// Only populated with the `any` feature.
     pub any_extensions: AnyAttributeExtensions,
-
-    /// Foreign attributes of the individual `triangle` entries, by index in [`Self::triangle`].
-    ///
-    /// Only populated with the `any` feature.
-    pub triangle_any_extensions: ItemAttributeExtensions,
 }
 
 #[cfg(any(feature = "read", feature = "write"))]
@@ -452,7 +443,8 @@ crate::model::domain::xml_item::xml_list! {
         ns: DISPLACEMENT_NS,
         force_prefix: false,
         attributes: { did: OptionalResourceId = bytes },
-        items: triangle: Triangle => triangle_any_extensions,
+        // The schema allows no foreign content on displacement triangles.
+        items: triangle: Triangle,
         capacity: constants::MAX_TRIANGLE_BUFFER,
         any: any_extensions: AnyAttributeExtensions,
     }
@@ -792,7 +784,6 @@ mod write_tests {
                 },
             ],
             any_extensions: Default::default(),
-            vertex_any_extensions: Default::default(),
         };
         let xml_output = to_string(&vertices).unwrap();
 
@@ -821,7 +812,6 @@ mod write_tests {
                 pid: OptionalResourceId::none(),
             }],
             any_extensions: Default::default(),
-            triangle_any_extensions: Default::default(),
         };
         let xml_output = to_string(&triangles).unwrap();
 
@@ -858,7 +848,6 @@ mod write_tests {
                     },
                 ],
                 any_extensions: Default::default(),
-                vertex_any_extensions: Default::default(),
             },
             triangles: Triangles {
                 did: OptionalResourceId::none(),
@@ -876,7 +865,6 @@ mod write_tests {
                     pid: OptionalResourceId::none(),
                 }],
                 any_extensions: Default::default(),
-                triangle_any_extensions: Default::default(),
             },
             trianglesets: None,
             beamlattice: None,
@@ -1096,7 +1084,6 @@ mod memory_optimized_read_tests {
                     },
                 ],
                 any_extensions: Default::default(),
-                vertex_any_extensions: Default::default(),
             }
         );
     }
@@ -1127,7 +1114,6 @@ mod memory_optimized_read_tests {
                     pid: OptionalResourceId::new(6),
                 }],
                 any_extensions: Default::default(),
-                triangle_any_extensions: Default::default(),
             }
         );
     }
@@ -1162,7 +1148,6 @@ mod memory_optimized_read_tests {
                         },
                     ],
                     any_extensions: Default::default(),
-                    vertex_any_extensions: Default::default(),
                 },
                 triangles: Triangles {
                     did: OptionalResourceId::none(),
@@ -1180,7 +1165,6 @@ mod memory_optimized_read_tests {
                         pid: OptionalResourceId::none(),
                     }],
                     any_extensions: Default::default(),
-                    triangle_any_extensions: Default::default(),
                 },
                 trianglesets: None,
                 beamlattice: None,

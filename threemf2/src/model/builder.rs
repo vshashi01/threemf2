@@ -1979,8 +1979,6 @@ impl TriangleBuilder {
 
 /// Builder for constructing displacement mesh geometry.
 pub struct DisplacementMeshBuilder {
-    triangle_any_extensions: ItemAttributeExtensions,
-    vertex_any_extensions: ItemAttributeExtensions,
     any_extensions: AnyExtensions,
     vertices: Vec<displacement::Vertex>,
     triangles: Vec<displacement::Triangle>,
@@ -1992,8 +1990,6 @@ pub struct DisplacementMeshBuilder {
 impl DisplacementMeshBuilder {
     fn new() -> Self {
         Self {
-            triangle_any_extensions: Default::default(),
-            vertex_any_extensions: Default::default(),
             any_extensions: Default::default(),
             vertices: Vec::new(),
             triangles: Vec::new(),
@@ -2166,13 +2162,11 @@ impl DisplacementMeshBuilder {
             vertices: crate::model::domain::displacement::Vertices {
                 vertex: self.vertices,
                 any_extensions: Default::default(),
-                vertex_any_extensions: self.vertex_any_extensions,
             },
             triangles: crate::model::domain::displacement::Triangles {
                 did: self.triangles_did,
                 triangle: self.triangles,
                 any_extensions: Default::default(),
-                triangle_any_extensions: self.triangle_any_extensions,
             },
             trianglesets,
             beamlattice,
@@ -2181,10 +2175,6 @@ impl DisplacementMeshBuilder {
     }
 
     foreign_content_accessor!(content mesh_any_extensions_mut => any_extensions: AnyExtensions, "d:displacementmesh");
-
-    foreign_content_accessor!(entries vertex_any_extensions_mut => vertex_any_extensions: ItemAttributeExtensions, "d:vertex");
-
-    foreign_content_accessor!(entries triangle_any_extensions_mut => triangle_any_extensions: ItemAttributeExtensions, "d:triangle");
 }
 
 /// Builder for displacement mesh triangles.

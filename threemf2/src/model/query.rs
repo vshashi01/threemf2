@@ -1820,15 +1820,6 @@ mod any_views {
         triangle_any_extensions: ItemAttributeExtensions = mesh.triangles.triangle_any_extensions,
     });
 
-    foreign_content_getters!(DisplacementMeshObjectView {
-        /// Foreign attributes of the individual `<d:vertex>` entries, by entry index.
-        /// Requires the `any` feature.
-        vertex_any_extensions: ItemAttributeExtensions = mesh.vertices.vertex_any_extensions,
-        /// Foreign attributes of the individual `<d:triangle>` entries, by entry index.
-        /// Requires the `any` feature.
-        triangle_any_extensions: ItemAttributeExtensions = mesh.triangles.triangle_any_extensions,
-    });
-
     foreign_content_getters!(LatticeView {
         /// Foreign attributes and child elements of the individual `<b:beam>` entries, by entry index.
         /// Requires the `any` feature.
