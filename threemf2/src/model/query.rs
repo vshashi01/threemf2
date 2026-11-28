@@ -22,6 +22,8 @@ use crate::model::{Color, OptionalResourceId, OptionalResourceIndex, UuidResourc
 use crate::threemf_namespaces::ThreemfNamespace;
 
 #[cfg(feature = "any")]
+use crate::model::domain::any::AnyElement;
+#[cfg(feature = "any")]
 use crate::model::domain::any_extensions::{AnyExtensions, any_extensions_view_methods};
 
 use std::{borrow::Cow, num::NonZeroU32};
@@ -258,6 +260,12 @@ impl<'a> ObjectView<'a> {
     /// Returns true if the object is a boolean shape.
     pub fn is_boolean_shape(&self) -> bool {
         matches!(self.object.kind, Some(object::ObjectKind::BooleanShape(_)))
+    }
+
+    /// Returns true if the object shape is a foreign element. Requires the `any` feature.
+    #[cfg(feature = "any")]
+    pub fn is_any_shape(&self) -> bool {
+        matches!(self.object.kind, Some(object::ObjectKind::Any(_)))
     }
 
     /// Returns true if the object is a displacement mesh.
@@ -875,6 +883,66 @@ impl<'a> BooleanShapeView<'a> {
     }
 }
 
+/// Stable view over an object whose shape is a foreign element (`xs:any`) instead of a mesh,
+/// components, boolean shape or displacement mesh. Requires the `any` feature.
+#[cfg(feature = "any")]
+pub struct AnyShapeObjectView<'a> {
+    object: &'a Object,
+    shape: &'a AnyElement,
+}
+
+#[cfg(feature = "any")]
+impl<'a> AnyShapeObjectView<'a> {
+    pub(crate) fn from_object(object: &'a Object) -> Option<Self> {
+        match &object.kind {
+            Some(object::ObjectKind::Any(shape)) => Some(Self { object, shape }),
+            _ => None,
+        }
+    }
+
+    /// Returns the identifier of the object.
+    pub fn id(&self) -> u32 {
+        self.object.id
+    }
+
+    /// Returns the name of the object, if any.
+    pub fn name(&self) -> Option<&'a str> {
+        self.object.name.as_deref()
+    }
+
+    /// Returns the type of the object.
+    pub fn object_type(&self) -> object::ObjectType {
+        self.object.objecttype.unwrap_or(object::ObjectType::Model)
+    }
+
+    /// Returns the part number of the object, if any.
+    pub fn part_number(&self) -> Option<&'a str> {
+        self.object.partnumber.as_deref()
+    }
+
+    /// Returns the UUID of the object, if any.
+    pub fn uuid(&self) -> Option<Cow<'a, str>> {
+        self.object().uuid()
+    }
+
+    /// Returns the general view of the object, for example for its material properties.
+    pub fn object(&self) -> ObjectView<'a> {
+        ObjectView::new(self.object)
+    }
+
+    /// Returns the foreign element that defines the shape, with its full subtree.
+    ///
+    /// Use [`AnyElement::decode`] to read it into a type modelling the extension.
+    pub fn shape(&self) -> &'a AnyElement {
+        self.shape
+    }
+
+    /// Returns `true` if the shape element has namespace `ns` and local name `name`.
+    pub fn is_shape(&self, ns: &str, name: &str) -> bool {
+        self.shape.is(ns, name)
+    }
+}
+
 /// Stable view over a build item.
 pub struct ItemView<'a> {
     item: &'a Item,
@@ -1430,6 +1498,19 @@ pub fn get_boolean_shape_objects_from_model<'a>(
         .filter_map(BooleanShapeView::from_object)
 }
 
+/// Returns an iterator over all objects whose shape is a foreign element. Requires the `any`
+/// feature.
+#[cfg(feature = "any")]
+pub fn get_any_shape_objects_from_model<'a>(
+    model: &'a Model,
+) -> impl Iterator<Item = AnyShapeObjectView<'a>> {
+    model
+        .resources
+        .object
+        .iter()
+        .filter_map(AnyShapeObjectView::from_object)
+}
+
 /// Returns an iterator over all build items in the model.
 pub fn get_items_from_model<'a>(model: &'a Model) -> impl Iterator<Item = ItemView<'a>> {
     model.build.item.iter().map(ItemView::new)
@@ -1727,11 +1808,11 @@ pub fn get_texture_for_group<'a>(
 #[cfg(feature = "any")]
 mod any_views {
     use super::{
-        BeamSetView, BooleanShapeView, ColorGroupView, ComponentView, ComponentsObjectView,
-        CompositeMaterialsView, Disp2DGroupView, Displacement2DView, DisplacementMeshObjectView,
-        LatticeView, MeshObjectView, ModelView, MultiPropertiesView, NormVectorGroupView,
-        ObjectView, PolygonView, SliceRefView, SliceStackView, SliceView, Texture2DGroupView,
-        Texture2DView, TriangleSetView,
+        AnyShapeObjectView, BeamSetView, BooleanShapeView, ColorGroupView, ComponentView,
+        ComponentsObjectView, CompositeMaterialsView, Disp2DGroupView, Displacement2DView,
+        DisplacementMeshObjectView, LatticeView, MeshObjectView, ModelView, MultiPropertiesView,
+        NormVectorGroupView, ObjectView, PolygonView, SliceRefView, SliceStackView, SliceView,
+        Texture2DGroupView, Texture2DView, TriangleSetView,
     };
     use crate::model::domain::{
         any::AnyElement,
@@ -1795,6 +1876,12 @@ mod any_views {
         any_extensions: AnyExtensions = object.any_extensions,
     });
 
+    foreign_content_getters!(AnyShapeObjectView {
+        /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the object.
+        /// Requires the `any` feature.
+        any_extensions: AnyExtensions = object.any_extensions,
+    });
+
     impl<'a> ComponentView<'a> {
         /// Foreign content (`xs:anyAttribute` / trailing `xs:any`) of the component.
         /// Requires the `any` feature.
@@ -1809,6 +1896,7 @@ mod any_views {
     any_extensions_view_methods!(DisplacementMeshObjectView);
     any_extensions_view_methods!(ComponentsObjectView);
     any_extensions_view_methods!(BooleanShapeView);
+    any_extensions_view_methods!(AnyShapeObjectView);
     any_extensions_view_methods!(ComponentView);
 
     foreign_content_getters!(MeshObjectView {
@@ -2059,3 +2147,5 @@ metadata_group_view_methods!(MeshObjectView, object);
 metadata_group_view_methods!(DisplacementMeshObjectView, object);
 metadata_group_view_methods!(ComponentsObjectView, object);
 metadata_group_view_methods!(BooleanShapeView, object);
+#[cfg(feature = "any")]
+metadata_group_view_methods!(AnyShapeObjectView, object);

@@ -82,6 +82,8 @@ use crate::model::{
 };
 
 #[cfg(feature = "any")]
+use crate::model::domain::any::{AnyElement, is_foreign_namespace};
+#[cfg(feature = "any")]
 use crate::model::domain::any_extensions::any_extensions_builder_methods;
 use crate::model::domain::any_extensions::foreign_content_accessor;
 use crate::model::domain::any_extensions::{
@@ -538,6 +540,54 @@ impl ModelBuilder {
         &mut self,
         builder: BooleanObjectBuilder,
     ) -> Result<ObjectId, BooleanShapeError> {
+        let id = builder.object_id;
+        let object = builder.build()?;
+
+        self.resources.objects.push(object);
+        self.next_object_id = ObjectId(id.0 + 1);
+
+        Ok(id)
+    }
+
+    /// Add an object whose shape is a foreign element (`xs:any`), as defined by a custom or
+    /// future extension, using a builder closure. Requires the `any` feature.
+    ///
+    /// The object is automatically assigned a unique [`ObjectId`] which is returned. No
+    /// extension is marked as required automatically; register the shape's namespace with
+    /// [`add_required_extension()`](ModelBuilder::add_required_extension) if consumers must
+    /// understand it.
+    ///
+    /// # Parameters
+    ///
+    /// - `f`: A closure that configures the [`AnyShapeObjectBuilder`]
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AnyShapeObjectError`] if the shape is not set or not in a foreign namespace, or
+    /// the UUID is missing when the Production extension is enabled.
+    #[cfg(feature = "any")]
+    pub fn add_any_shape_object<F>(&mut self, f: F) -> Result<ObjectId, AnyShapeObjectError>
+    where
+        F: FnOnce(&mut AnyShapeObjectBuilder) -> Result<(), AnyShapeObjectError>,
+    {
+        let id = self.next_object_id;
+
+        let mut obj_builder = AnyShapeObjectBuilder::new(id, self.is_production_ext_required);
+        f(&mut obj_builder)?;
+
+        self.add_any_shape_object_from_builder(obj_builder)
+    }
+
+    /// Add an object with a foreign shape from a pre-configured [`AnyShapeObjectBuilder`].
+    /// Requires the `any` feature.
+    ///
+    /// This is an advanced method for cases where you need to construct the builder
+    /// separately. Most users should use [`add_any_shape_object()`](ModelBuilder::add_any_shape_object) instead.
+    #[cfg(feature = "any")]
+    pub fn add_any_shape_object_from_builder(
+        &mut self,
+        builder: AnyShapeObjectBuilder,
+    ) -> Result<ObjectId, AnyShapeObjectError> {
         let id = builder.object_id;
         let object = builder.build()?;
 
@@ -2889,6 +2939,125 @@ impl BooleanBuilder {
     }
 
     foreign_content_accessor!(content any_extensions_mut => any_extensions: AnyAttributeExtensions, "bo:boolean");
+}
+
+/// Errors that can occur when building an object whose shape is a foreign element.
+/// Requires the `any` feature.
+#[cfg(feature = "any")]
+#[derive(Debug, Error)]
+pub enum AnyShapeObjectError {
+    /// The shape element is not set.
+    ///
+    /// Call [`AnyShapeBuilder::shape()`] before building.
+    #[error("Shape element is not set")]
+    ShapeNotSet,
+
+    /// Object is missing a UUID when Production extension is required.
+    ///
+    /// Call [`AnyShapeObjectBuilder::uuid()`] to set the UUID.
+    #[error("Production extension is enabled but Uuid is not set")]
+    ObjectUuidNotSet,
+
+    /// The shape element or foreign content passed to an `any_attribute` / `any_element` builder
+    /// method is invalid.
+    #[error("Invalid foreign (xs:any) content: {0}")]
+    InvalidAnyExtension(#[from] AnyError),
+}
+
+/// Builder for objects whose shape is a foreign element (`xs:any`) instead of a mesh,
+/// components, boolean shape or displacement mesh, as defined by a custom or future extension.
+/// Requires the `any` feature.
+///
+/// Access the shape configuration via [`Deref`] to [`AnyShapeBuilder`].
+///
+/// A consumer has to understand the shape to use the object, so consider also registering its
+/// namespace with [`ModelBuilder::add_required_extension`]; the shape then uses that prefix.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// let id = builder.add_any_shape_object(|obj| {
+///     obj.name("Sphere");
+///     obj.shape(AnyElement::new(ACME_NS, "sphere")?.with_attribute("", "radius", "5")?)?;
+///     Ok(())
+/// })?;
+/// ```
+#[cfg(feature = "any")]
+pub type AnyShapeObjectBuilder = ObjectBuilder<AnyShapeBuilder>;
+
+#[cfg(feature = "any")]
+impl AnyShapeObjectBuilder {
+    fn new(object_id: ObjectId, is_production_ext_required: bool) -> Self {
+        Self {
+            entity: AnyShapeBuilder { shape: None },
+            metadata: Vec::new(),
+            object_id,
+            objecttype: Some(object::ObjectType::Model),
+            thumbnail: None,
+            partnumber: None,
+            name: None,
+            pid: OptionalResourceId::none(),
+            pindex: OptionalResourceIndex::none(),
+            uuid: None,
+            slicestackid: OptionalResourceId::none(),
+            slicepath: None,
+            meshresolution: None,
+            any_extensions: AnyExtensions::default(),
+            is_production_ext_required,
+        }
+    }
+
+    fn build(self) -> Result<object::Object, AnyShapeObjectError> {
+        let shape = self.entity.shape.ok_or(AnyShapeObjectError::ShapeNotSet)?;
+
+        if self.is_production_ext_required && self.uuid.is_none() {
+            return Err(AnyShapeObjectError::ObjectUuidNotSet);
+        }
+
+        Ok(object::Object {
+            id: self.object_id.0,
+            objecttype: self.objecttype,
+            thumbnail: self.thumbnail,
+            partnumber: self.partnumber.map(Into::into),
+            name: self.name.map(Into::into),
+            pid: self.pid,
+            pindex: self.pindex,
+            uuid: self.uuid,
+            slicestackid: self.slicestackid,
+            slicepath: self.slicepath,
+            meshresolution: self.meshresolution,
+            kind: Some(object::ObjectKind::Any(shape)),
+            any_extensions: self.any_extensions,
+            metadatagroup: MetadataGroup::from_entries(self.metadata),
+        })
+    }
+}
+
+/// Builder for the foreign element that defines the shape of an [`AnyShapeObjectBuilder`].
+/// Requires the `any` feature.
+#[cfg(feature = "any")]
+pub struct AnyShapeBuilder {
+    shape: Option<AnyElement>,
+}
+
+#[cfg(feature = "any")]
+impl AnyShapeBuilder {
+    /// Set the element that defines the shape, replacing an earlier one.
+    ///
+    /// The element keeps its full subtree. Use [`AnyElement::encode`] to create it from a type
+    /// modelling the extension.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AnyShapeObjectError::InvalidAnyExtension`] if the element is not in a foreign
+    /// namespace (empty or the 3MF core namespace).
+    pub fn shape(&mut self, element: AnyElement) -> Result<&mut Self, AnyShapeObjectError> {
+        if !is_foreign_namespace(element.ns()) {
+            return Err(AnyError::NotForeignNamespace(element.ns().to_owned()).into());
+        }
+        self.shape = Some(element);
+        Ok(self)
+    }
 }
 
 /// Builder for organizing triangles into named sets.

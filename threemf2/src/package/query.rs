@@ -11,6 +11,9 @@ use crate::model::{
 };
 use crate::package::ThreemfPackage;
 
+#[cfg(feature = "any")]
+use crate::model::query::AnyShapeObjectView;
+
 /// Package view for an object with origin model path.
 pub struct ObjectPackageView<'a> {
     /// The object view.
@@ -47,6 +50,15 @@ pub struct ComponentsObjectPackageView<'a> {
 pub struct BooleanShapePackageView<'a> {
     /// The boolean shape view.
     pub view: BooleanShapeView<'a>,
+    /// Path to the model containing this object, if a sub-model.
+    pub origin_model_path: Option<&'a str>,
+}
+
+/// Package view for an object whose shape is a foreign element. Requires the `any` feature.
+#[cfg(feature = "any")]
+pub struct AnyShapeObjectPackageView<'a> {
+    /// The foreign shape object view.
+    pub view: AnyShapeObjectView<'a>,
     /// Path to the model containing this object, if a sub-model.
     pub origin_model_path: Option<&'a str>,
 }
@@ -189,6 +201,27 @@ pub fn get_boolean_shape_objects<'a>(
             .iter()
             .filter_map(move |o| {
                 BooleanShapeView::from_object(o).map(|view| BooleanShapePackageView {
+                    view,
+                    origin_model_path: model_ref.path,
+                })
+            })
+    })
+}
+
+/// Returns an iterator over package views for all objects whose shape is a foreign element.
+/// Requires the `any` feature.
+#[cfg(feature = "any")]
+pub fn get_any_shape_objects<'a>(
+    package: &'a ThreemfPackage,
+) -> impl Iterator<Item = AnyShapeObjectPackageView<'a>> {
+    iter_models(package).flat_map(|model_ref| {
+        model_ref
+            .model
+            .resources
+            .object
+            .iter()
+            .filter_map(move |o| {
+                AnyShapeObjectView::from_object(o).map(|view| AnyShapeObjectPackageView {
                     view,
                     origin_model_path: model_ref.path,
                 })

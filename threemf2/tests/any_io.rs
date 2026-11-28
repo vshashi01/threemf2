@@ -755,4 +755,117 @@ mod tests {
         assert_eq!(package.root.resources, model.resources);
         assert_eq!(package.root.build, model.build);
     }
+
+    #[test]
+    fn foreign_shape_objects_are_queryable() {
+        use threemf2::model::{
+            domain::object::ObjectType,
+            query::{ObjectKindView, get_any_shape_objects_from_model, get_objects_from_model},
+        };
+        use threemf2::package::query::get_any_shape_objects;
+        use threemf2::threemf_namespaces::ThreemfNamespace;
+
+        let shape = AnyElement::new(ACME_NS, "sphere")
+            .unwrap()
+            .with_attribute("", "radius", "5")
+            .unwrap();
+
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        builder.add_required_extension(ThreemfNamespace::Unknown {
+            prefix: "acme".into(),
+            uri: ACME_NS.into(),
+        });
+        builder.add_build(None).unwrap();
+        let mesh = add_triangle_object(&mut builder);
+        let sphere = builder
+            .add_any_shape_object(|obj| {
+                obj.name("Sphere")
+                    .part_number("SPH-1")
+                    .object_type(ObjectType::Support);
+                obj.any_attribute(ACME_NS, "batch", "4")?;
+                obj.shape(shape.clone())?;
+                Ok(())
+            })
+            .unwrap();
+        builder.add_build_item(mesh).unwrap();
+        builder.add_build_item(sphere).unwrap();
+        let model = builder.build().unwrap();
+
+        // The shape uses the prefix of the registered extension.
+        let xml = instant_xml::to_string(&model).expect("write model");
+        assert!(
+            xml.contains(r#"acme:batch="4"><acme:sphere radius="5" /></object>"#),
+            "{xml}"
+        );
+
+        let mut buf = write(model);
+        let package = ThreemfPackage::from_reader(&mut buf, false).expect("read package");
+
+        let kinds: Vec<_> = get_objects_from_model(&package.root)
+            .map(|object| (object.kind(), object.is_any_shape()))
+            .collect();
+        assert_eq!(
+            kinds,
+            [(ObjectKindView::Mesh, false), (ObjectKindView::Any, true)]
+        );
+
+        let views: Vec<_> = get_any_shape_objects_from_model(&package.root).collect();
+        assert_eq!(views.len(), 1);
+        let view = &views[0];
+        assert_eq!(view.id(), sphere.0);
+        assert_eq!(view.name(), Some("Sphere"));
+        assert_eq!(view.part_number(), Some("SPH-1"));
+        assert_eq!(view.object_type(), ObjectType::Support);
+        assert_eq!(view.uuid(), None);
+        assert_eq!(view.shape(), &shape);
+        assert!(view.is_shape(ACME_NS, "sphere"));
+        assert_eq!(view.shape().attribute("", "radius"), Some("5"));
+        assert_eq!(view.object().kind(), ObjectKindView::Any);
+        assert_eq!(view.metadata_count(), 0);
+        assert_eq!(view.any_attribute(ACME_NS, "batch"), Some("4"));
+
+        let package_views: Vec<_> = get_any_shape_objects(&package).collect();
+        assert_eq!(package_views.len(), 1);
+        assert_eq!(package_views[0].view.id(), sphere.0);
+        assert_eq!(package_views[0].origin_model_path, None);
+    }
+
+    #[test]
+    fn any_shape_object_builder_errors() {
+        use threemf2::model::builder::AnyShapeObjectError;
+        use threemf2::threemf_namespaces::CORE_NS;
+
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        assert!(matches!(
+            builder.add_any_shape_object(|_| Ok(())),
+            Err(AnyShapeObjectError::ShapeNotSet)
+        ));
+        assert!(matches!(
+            builder.add_any_shape_object(|obj| {
+                obj.shape(AnyElement::new(CORE_NS, "sphere").unwrap())?;
+                Ok(())
+            }),
+            Err(AnyShapeObjectError::InvalidAnyExtension(
+                AnyError::NotForeignNamespace(_)
+            ))
+        ));
+
+        builder.make_production_extension_required().unwrap();
+        let shape = || AnyElement::new(ACME_NS, "sphere").unwrap();
+        assert!(matches!(
+            builder.add_any_shape_object(|obj| {
+                obj.shape(shape())?;
+                Ok(())
+            }),
+            Err(AnyShapeObjectError::ObjectUuidNotSet)
+        ));
+        let id = builder
+            .add_any_shape_object(|obj| {
+                obj.uuid("2c7c17d8-22b5-4d84-8835-1976022ea369");
+                obj.shape(shape())?;
+                Ok(())
+            })
+            .expect("object with uuid");
+        assert_eq!(id.0, 1);
+    }
 }
