@@ -694,4 +694,65 @@ mod tests {
         let package = ThreemfPackage::from_reader(&mut buf, false).expect("read package");
         assert_eq!(package.root.resources, model.resources);
     }
+
+    #[test]
+    fn foreign_content_in_extension_namespaces_is_declared_on_model() {
+        use threemf2::threemf_namespaces::{MATERIAL_NS, PROD_NS, SLICE_NS, ThreemfNamespace};
+
+        // Foreign content in 3MF extension namespaces the model does not use otherwise: an
+        // element in the material namespace, a nested attribute in the production namespace on a
+        // build item, and a foreign attribute in the slice namespace on a vertex.
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        builder.add_build(None).unwrap();
+        let object = builder
+            .add_mesh_object(|obj| {
+                obj.add_vertices(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+                    .add_triangle(&[0, 1, 2]);
+                obj.any_element(AnyElement::new(MATERIAL_NS, "future").unwrap())?;
+                obj.vertex_any_extensions_mut()
+                    .entry(1)
+                    .set(SLICE_NS, "hint", "1")?;
+                Ok(())
+            })
+            .unwrap();
+        builder
+            .add_build_item_advanced(object, |item| {
+                item.any_element(
+                    AnyElement::new(ACME_NS, "info").unwrap().with_child(
+                        AnyElement::new(ACME_NS, "part")
+                            .unwrap()
+                            .with_attribute(PROD_NS, "ref", "x")
+                            .unwrap(),
+                    ),
+                )?;
+                Ok(())
+            })
+            .unwrap();
+        let model = builder.build().unwrap();
+
+        let used = model.used_namespaces();
+        for ns in [
+            ThreemfNamespace::Material,
+            ThreemfNamespace::Prod,
+            ThreemfNamespace::Slice,
+        ] {
+            assert!(used.contains(&ns), "{ns:?} missing from {used:?}");
+        }
+        assert!(!used.contains(&ThreemfNamespace::BeamLattice));
+
+        // Declared once on <model>, used with the 3MF prefixes below it.
+        let xml = instant_xml::to_string(&model).expect("write model");
+        for ns in [MATERIAL_NS, PROD_NS, SLICE_NS] {
+            assert_eq!(xml.matches(&format!("=\"{ns}\"")).count(), 1, "{xml}");
+        }
+        assert!(xml.contains("<m:future />"), "{xml}");
+        assert!(xml.contains("p:ref=\"x\""), "{xml}");
+        assert!(xml.contains("s:hint=\"1\""), "{xml}");
+
+        // The package reads back with all foreign content intact.
+        let mut buf = write(model.clone());
+        let package = ThreemfPackage::from_reader(&mut buf, false).expect("read package");
+        assert_eq!(package.root.resources, model.resources);
+        assert_eq!(package.root.build, model.build);
+    }
 }

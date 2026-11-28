@@ -1,5 +1,3 @@
-#[cfg(feature = "package-write")]
-use compact_str::CompactString;
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
 
@@ -13,13 +11,11 @@ use crate::{
         content_types::{ContentTypes, DefaultContentTypeEnum},
         relationship::{RelationshipType, Relationships},
         thumbnail_handle::ThumbnailHandle,
-        utils,
     },
-    threemf_namespaces::ThreemfNamespace,
 };
 
 #[cfg(feature = "package-read")]
-use crate::package::domain::zip_utils::XmlDeserializer;
+use crate::{package::domain::zip_utils::XmlDeserializer, threemf_namespaces::ThreemfNamespace};
 
 use std::collections::HashMap;
 use std::io::{self, Read, Seek, Write};
@@ -90,19 +86,13 @@ impl ThreemfPackage {
     pub fn write<W: Write + Seek>(&self, threemf_archive: W) -> Result<(), Error> {
         let mut zip = ZipWriter::new(threemf_archive);
 
-        Self::archive_write_xml_with_header(
-            &mut zip,
-            "[Content_Types].xml",
-            &self.content_types,
-            None,
-        )?;
+        Self::archive_write_xml_with_header(&mut zip, "[Content_Types].xml", &self.content_types)?;
 
         for (path, relationships) in &self.relationships {
             Self::archive_write_xml_with_header(
                 &mut zip,
                 path.as_str_without_leading_slash(),
                 &relationships,
-                None,
             )?;
 
             for relationship in &relationships.relationships {
@@ -119,12 +109,7 @@ impl ThreemfPackage {
                                 relationship.target
                             )));
                         };
-                        Self::archive_write_xml_with_header(
-                            &mut zip,
-                            filename,
-                            model,
-                            Some(model.used_namespaces()),
-                        )?;
+                        Self::archive_write_xml_with_header(&mut zip, filename, model)?;
                     }
                     RelationshipType::Thumbnail => {
                         if let Some(image) = self.thumbnails.get(&relationship.target) {
@@ -159,7 +144,6 @@ impl ThreemfPackage {
         archive: &mut ZipWriter<W>,
         filename: &str,
         content: &T,
-        optional_namespaces_to_keep: Option<Vec<ThreemfNamespace>>,
     ) -> Result<(), Error> {
         use instant_xml::to_string;
 
@@ -167,93 +151,11 @@ impl ThreemfPackage {
 
         let mut content_string = to_string(&content)?;
 
-        if let Some(namespaces) = optional_namespaces_to_keep {
-            Self::filter_unused_namespaces(&mut content_string, &namespaces);
-        }
-
         content_string.insert_str(0, XML_HEADER);
 
         archive.start_file(filename, SimpleFileOptions::default())?;
         archive.write_all(content_string.as_bytes())?;
         Ok(())
-    }
-
-    fn filter_unused_namespaces(xml: &mut String, keep_namespaces: &[ThreemfNamespace]) {
-        let keep_uris: std::collections::HashSet<_> =
-            keep_namespaces.iter().map(|ns| ns.uri()).collect();
-
-        // Find model tag
-        if let Some(model_pos) = xml.find("<model")
-            && let Some(end_pos) = xml[model_pos..].find('>')
-        {
-            let tag_end = model_pos + end_pos + 1;
-            let tag_content = &xml[model_pos..tag_end];
-
-            let xmlns_attrs = utils::parse_xmlns_attributes(tag_content);
-
-            // Parse all attributes (simple approach: split by spaces)
-            let mut all_attrs = Vec::new();
-            let mut current_attr = CompactString::new("");
-            let mut in_quotes = false;
-
-            for ch in tag_content[6..].chars() {
-                // Skip "<model"
-                if ch == '"' {
-                    in_quotes = !in_quotes;
-                    current_attr.push(ch);
-                } else if ch == ' ' && !in_quotes {
-                    if !current_attr.is_empty() {
-                        all_attrs.push(current_attr);
-                        current_attr = CompactString::new("");
-                    }
-                } else if ch == '>' {
-                    if !current_attr.is_empty() {
-                        all_attrs.push(current_attr);
-                    }
-                    break;
-                } else {
-                    current_attr.push(ch);
-                }
-            }
-
-            // Build new tag
-            let mut new_tag = String::from("<model");
-
-            // Add kept xmlns attributes
-            for ns in &xmlns_attrs {
-                // Only drop declarations of 3MF namespaces known to this library that the model does
-                // not use. Any other namespace (an unknown extension or foreign content) is kept.
-                let is_known_3mf_namespace = !matches!(
-                    ThreemfNamespace::try_from_uri(&ns.uri, None),
-                    None | Some(ThreemfNamespace::Unknown { .. })
-                );
-                if keep_uris.contains(ns.uri.as_str()) || !is_known_3mf_namespace {
-                    new_tag.push(' ');
-                    let attr_name = if let Some(prefix) = &ns.prefix {
-                        format!("xmlns:{}", prefix)
-                    } else {
-                        "xmlns".to_string()
-                    };
-                    new_tag.push_str(&attr_name);
-                    new_tag.push_str("=\"");
-                    new_tag.push_str(&ns.uri);
-                    new_tag.push('"');
-                }
-            }
-
-            // Add non-xmlns attributes
-            for attr in all_attrs {
-                if !attr.starts_with("xmlns") {
-                    new_tag.push(' ');
-                    new_tag.push_str(&attr);
-                }
-            }
-
-            new_tag.push('>');
-
-            // Replace in original XML
-            xml.replace_range(model_pos..tag_end, &new_tag);
-        }
     }
 }
 

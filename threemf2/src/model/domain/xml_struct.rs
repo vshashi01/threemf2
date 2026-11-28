@@ -30,6 +30,13 @@
 //! - `shape: field => Variant` (optional): an `Option<Enum>` element field whose foreign
 //!   alternative (`Variant(AnyElement)`) takes the first foreign element when no other value was
 //!   read, as for the shape of a 3MF object.
+//! - `prefixes`: the `(prefix, namespace)` pairs declared on the start tag unless already in
+//!   scope. Inside a document (see `document_namespaces`) only the namespaces the document uses
+//!   are declared; written on its own, a type declares all of them.
+//! - `document_namespaces: path` (optional): marks the type as the root of a document. Called
+//!   with `&self` before the start tag is written; returns the namespaces the whole document
+//!   uses (`Vec<ThreemfNamespace>`). Namespaces in `prefixes` of this type and of every element
+//!   below it that the document does not use are not declared.
 //! - `start_hook: path` (optional): called right after the start tag is opened with
 //!   `(&self, &mut Serializer)`; returns the `(prefix, namespace)` pairs it declared.
 //! - `self_closing: true` (optional): write `<tag ... />` when no child element is present
@@ -54,6 +61,7 @@ macro_rules! xml_struct {
             $(items: { $($ifield:ident: $ity:ty => $itable:ident),* $(,)? },)?
             any: $any:ident: $anyty:ty,
             $(shape: $shape:ident => $variant:path,)?
+            $(document_namespaces: $doc:path,)?
             $(start_hook: $hook:path,)?
             $(self_closing: $self_closing:literal,)?
         }
@@ -209,6 +217,18 @@ macro_rules! xml_struct {
                 context.default_ns = $ns;
                 context.force_prefix = $force;
                 context.prefixes = [$(::instant_xml::ser::Prefix { prefix: $pfx, ns: $pns }),*];
+                $(
+                    #[allow(unused_variables)]
+                    let _document_namespaces =
+                        $crate::model::domain::xml_struct::DocumentNamespaces::enter(&$doc(self));
+                )?
+                // Inside a document, only the namespaces it uses are declared. Blank entries are
+                // skipped by the serializer.
+                for prefix in context.prefixes.iter_mut() {
+                    if $crate::model::domain::xml_struct::DocumentNamespaces::is_unused(prefix.ns) {
+                        *prefix = ::instant_xml::ser::Prefix::default();
+                    }
+                }
                 let element = serializer.write_start($tag, $ns, Some(context))?;
 
                 #[allow(unused_variables)]
@@ -304,3 +324,46 @@ macro_rules! xml_struct {
 }
 
 pub(crate) use xml_struct;
+
+#[cfg(feature = "write")]
+thread_local! {
+    static DOCUMENT_NAMESPACES: std::cell::RefCell<Option<Vec<String>>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+/// The namespaces used by the document (model) being written.
+///
+/// Nested elements are written by separate `ToXml` calls that only share the serializer, so the
+/// set is kept here for the duration of the root element's write. Each element then leaves the
+/// namespaces of its `prefixes` that the document does not use undeclared.
+#[cfg(feature = "write")]
+pub(crate) struct DocumentNamespaces {
+    previous: Option<Vec<String>>,
+}
+
+#[cfg(feature = "write")]
+impl DocumentNamespaces {
+    /// Makes `used` the namespaces of the current document until the returned guard is dropped.
+    pub(crate) fn enter(used: &[crate::threemf_namespaces::ThreemfNamespace]) -> Self {
+        let uris = used.iter().map(|ns| ns.uri().to_owned()).collect();
+        let previous = DOCUMENT_NAMESPACES.with(|d| d.replace(Some(uris)));
+        Self { previous }
+    }
+
+    /// Returns `true` if a document is being written and it does not use `ns`.
+    pub(crate) fn is_unused(ns: &str) -> bool {
+        DOCUMENT_NAMESPACES.with(|d| {
+            d.borrow()
+                .as_ref()
+                .is_some_and(|used| !used.iter().any(|uri| uri == ns))
+        })
+    }
+}
+
+#[cfg(feature = "write")]
+impl Drop for DocumentNamespaces {
+    fn drop(&mut self) {
+        let previous = self.previous.take();
+        DOCUMENT_NAMESPACES.with(|d| *d.borrow_mut() = previous);
+    }
+}

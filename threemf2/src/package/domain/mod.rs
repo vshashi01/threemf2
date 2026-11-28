@@ -26,5 +26,3 @@ pub struct XmlNamespace {
 
 #[cfg(feature = "package-read")]
 pub(crate) mod zip_utils;
-
-pub(crate) mod utils;

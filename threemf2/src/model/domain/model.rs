@@ -82,6 +82,7 @@ xml_struct! {
             build: Build => (CORE_NS, "build"),
         },
         any: any_extensions: AnyExtensions,
+        document_namespaces: Model::used_namespaces,
         start_hook: declare_unknown_namespaces,
     }
 }
@@ -329,7 +330,27 @@ impl Model {
             used.push(ns);
         }
 
+        #[cfg(feature = "any")]
+        for ns in self.used_extension_namespaces() {
+            if !used.contains(&ns) {
+                used.push(ns);
+            }
+        }
+
         used
+    }
+
+    /// Returns the 3MF namespaces known to this library that are used by the foreign content
+    /// (`xs:any` / `xs:anyAttribute`) anywhere in the model, including nested foreign elements and
+    /// foreign object shapes.
+    ///
+    /// Foreign content in another namespace declares that namespace itself when written, so only
+    /// these namespaces have to be declared on `<model>`.
+    #[cfg(feature = "any")]
+    fn used_extension_namespaces(&self) -> Vec<ThreemfNamespace> {
+        let mut collector = foreign_namespaces::Collector::default();
+        collector.model(self);
+        collector.into_namespaces()
     }
 
     fn uses_prod_ns(&self) -> bool {
@@ -487,6 +508,255 @@ impl Model {
     }
 }
 
+/// Walk over all foreign content of a model, collecting the namespaces it uses.
+#[cfg(feature = "any")]
+mod foreign_namespaces {
+    use std::collections::HashSet;
+
+    use crate::{
+        model::domain::{
+            any::{AnyAttributes, AnyElement},
+            any_extensions::{AnySlot, ItemTable},
+            beamlattice::BeamLattice,
+            build::Build,
+            component::Components,
+            displacement::DisplacementMesh,
+            mesh::Mesh,
+            metadata::{Metadata, MetadataGroup},
+            object::{Object, ObjectKind},
+            resources::Resources,
+            slice::SliceStack,
+            triangle_set::TriangleSets,
+        },
+        threemf_namespaces::ThreemfNamespace,
+    };
+
+    use super::Model;
+
+    /// Namespace URIs seen in foreign content, borrowed from the model.
+    #[derive(Default)]
+    pub(super) struct Collector<'a> {
+        uris: HashSet<&'a str>,
+    }
+
+    impl<'a> Collector<'a> {
+        /// The collected namespaces that are 3MF namespaces known to this library.
+        pub(super) fn into_namespaces(self) -> Vec<ThreemfNamespace> {
+            let mut namespaces: Vec<_> = self
+                .uris
+                .into_iter()
+                .filter_map(|uri| ThreemfNamespace::try_from_uri(uri, None))
+                .collect();
+            // Deterministic order for callers that compare lists.
+            namespaces.sort_by(|a, b| a.uri().cmp(b.uri()));
+            namespaces
+        }
+
+        fn attributes(&mut self, attributes: &'a AnyAttributes) {
+            self.uris.extend(
+                attributes
+                    .iter()
+                    .map(|a| a.ns())
+                    .filter(|ns| !ns.is_empty()),
+            );
+        }
+
+        fn element(&mut self, element: &'a AnyElement) {
+            if !element.ns().is_empty() {
+                self.uris.insert(element.ns());
+            }
+            self.uris.extend(
+                element
+                    .attributes()
+                    .iter()
+                    .map(|a| a.ns())
+                    .filter(|ns| !ns.is_empty()),
+            );
+            for child in element.child_elements() {
+                self.element(child);
+            }
+        }
+
+        fn elements(&mut self, elements: &'a [AnyElement]) {
+            for element in elements {
+                self.element(element);
+            }
+        }
+
+        fn slot(&mut self, slot: &'a impl AnySlot) {
+            self.attributes(slot.slot_attributes());
+            self.elements(slot.slot_elements());
+        }
+
+        fn table(&mut self, table: &'a impl ItemTable) {
+            for (_, attributes, elements) in table.entry_parts() {
+                self.attributes(attributes);
+                self.elements(elements);
+            }
+        }
+
+        pub(super) fn model(&mut self, model: &'a Model) {
+            self.slot(&model.any_extensions);
+            self.metadata(&model.metadata);
+            self.resources(&model.resources);
+            self.build(&model.build);
+        }
+
+        fn metadata(&mut self, metadata: &'a [Metadata]) {
+            for entry in metadata {
+                self.slot(&entry.any_extensions);
+            }
+        }
+
+        fn metadata_group(&mut self, group: &'a Option<MetadataGroup>) {
+            if let Some(group) = group {
+                self.slot(&group.any_extensions);
+                self.metadata(&group.metadata);
+            }
+        }
+
+        fn resources(&mut self, resources: &'a Resources) {
+            self.slot(&resources.any_extensions);
+            for object in &resources.object {
+                self.object(object);
+            }
+            for group in &resources.basematerials {
+                self.slot(&group.any_extensions);
+                for base in &group.base {
+                    self.slot(&base.any_extensions);
+                }
+            }
+            for stack in &resources.slicestack {
+                self.slice_stack(stack);
+            }
+            for group in &resources.colorgroup {
+                self.slot(&group.any_extensions);
+            }
+            for group in &resources.texture2dgroup {
+                self.slot(&group.any_extensions);
+                self.table(&group.tex2coord_any_extensions);
+            }
+            for group in &resources.compositematerials {
+                self.slot(&group.any_extensions);
+            }
+            for group in &resources.multiproperties {
+                self.slot(&group.any_extensions);
+                self.table(&group.multi_any_extensions);
+            }
+            for texture in &resources.texture2d {
+                self.slot(&texture.any_extensions);
+            }
+            for texture in &resources.displacement2d {
+                self.slot(&texture.any_extensions);
+            }
+            for group in &resources.normvectorgroup {
+                self.slot(&group.any_extensions);
+                self.table(&group.normvector_any_extensions);
+            }
+            for group in &resources.disp2dgroup {
+                self.slot(&group.any_extensions);
+                self.table(&group.disp2dcoord_any_extensions);
+            }
+        }
+
+        fn object(&mut self, object: &'a Object) {
+            self.slot(&object.any_extensions);
+            self.metadata_group(&object.metadatagroup);
+            match &object.kind {
+                Some(ObjectKind::Mesh(mesh)) => self.mesh(mesh),
+                Some(ObjectKind::Components(components)) => self.components(components),
+                Some(ObjectKind::BooleanShape(shape)) => {
+                    self.slot(&shape.any_extensions);
+                    for boolean in &shape.booleans {
+                        self.slot(&boolean.any_extensions);
+                    }
+                }
+                Some(ObjectKind::DisplacementMesh(mesh)) => self.displacement_mesh(mesh),
+                Some(ObjectKind::Any(element)) => self.element(element),
+                None => {}
+            }
+        }
+
+        fn mesh(&mut self, mesh: &'a Mesh) {
+            self.slot(&mesh.any_extensions);
+            self.slot(&mesh.vertices.any_extensions);
+            self.table(&mesh.vertices.vertex_any_extensions);
+            self.slot(&mesh.triangles.any_extensions);
+            self.table(&mesh.triangles.triangle_any_extensions);
+            self.triangle_sets(&mesh.trianglesets);
+            self.beam_lattice(&mesh.beamlattice);
+        }
+
+        fn displacement_mesh(&mut self, mesh: &'a DisplacementMesh) {
+            self.slot(&mesh.any_extensions);
+            self.slot(&mesh.vertices.any_extensions);
+            self.slot(&mesh.triangles.any_extensions);
+            self.triangle_sets(&mesh.trianglesets);
+            self.beam_lattice(&mesh.beamlattice);
+        }
+
+        fn components(&mut self, components: &'a Components) {
+            self.slot(&components.any_extensions);
+            for component in &components.component {
+                self.slot(&component.any_extensions);
+            }
+        }
+
+        fn triangle_sets(&mut self, sets: &'a Option<TriangleSets>) {
+            let Some(sets) = sets else { return };
+            self.slot(&sets.any_extensions);
+            for set in &sets.trianglesets {
+                self.slot(&set.any_extensions);
+                self.table(&set.triangle_ref_any_extensions);
+                self.table(&set.triangle_refrange_any_extensions);
+            }
+        }
+
+        fn beam_lattice(&mut self, lattice: &'a Option<BeamLattice>) {
+            let Some(lattice) = lattice else { return };
+            self.slot(&lattice.any_extensions);
+            self.slot(&lattice.beams.any_extensions);
+            self.table(&lattice.beams.beam_any_extensions);
+            if let Some(balls) = &lattice.balls {
+                self.slot(&balls.any_extensions);
+                self.table(&balls.ball_any_extensions);
+            }
+            if let Some(beamsets) = &lattice.beamsets {
+                self.slot(&beamsets.any_extensions);
+                for set in &beamsets.beamset {
+                    self.slot(&set.any_extensions);
+                    self.table(&set.refs_any_extensions);
+                    self.table(&set.ballref_any_extensions);
+                }
+            }
+        }
+
+        fn slice_stack(&mut self, stack: &'a SliceStack) {
+            self.slot(&stack.any_extensions);
+            for slice_ref in &stack.sliceref {
+                self.slot(&slice_ref.any_extensions);
+            }
+            for slice in &stack.slice {
+                self.slot(&slice.any_extensions);
+                if let Some(vertices) = &slice.vertices {
+                    self.table(&vertices.vertex_any_extensions);
+                }
+                for polygon in &slice.polygon {
+                    self.table(&polygon.segment_any_extensions);
+                }
+            }
+        }
+
+        fn build(&mut self, build: &'a Build) {
+            self.slot(&build.any_extensions);
+            for item in &build.item {
+                self.slot(&item.any_extensions);
+                self.metadata_group(&item.metadatagroup);
+            }
+        }
+    }
+}
+
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod write_tests {
@@ -516,35 +786,17 @@ mod write_tests {
                 triangle_set,
             },
         },
-        threemf_namespaces::{
-            BEAM_LATTICE_NS, BEAM_LATTICE_PREFIX, BOOLEAN_NS, BOOLEAN_PREFIX, CORE_NS,
-            CORE_TRIANGLESET_NS, CORE_TRIANGLESET_PREFIX, DISPLACEMENT_NS, DISPLACEMENT_PREFIX,
-            MATERIAL_NS, MATERIAL_PREFIX, PROD_NS, PROD_PREFIX, SLICE_NS, SLICE_PREFIX,
-            ThreemfNamespace,
-        },
+        threemf_namespaces::{CORE_NS, MATERIAL_NS, MATERIAL_PREFIX, ThreemfNamespace},
     };
 
     use super::{Model, Unit};
 
     #[test]
     pub fn toxml_simple_model_test() {
+        // Only the namespaces the model uses are declared.
         let xml_string = format!(
-            r#"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
+            r#"<model xmlns="{}" unit="millimeter"><metadata name="Trial Metadata" /><resources><object id="346" type="model" name="test part"></object></resources><build><item objectid="346" /></build></model>"#,
             CORE_NS,
-            BEAM_LATTICE_PREFIX,
-            BEAM_LATTICE_NS,
-            BOOLEAN_PREFIX,
-            BOOLEAN_NS,
-            DISPLACEMENT_PREFIX,
-            DISPLACEMENT_NS,
-            MATERIAL_PREFIX,
-            MATERIAL_NS,
-            PROD_PREFIX,
-            PROD_NS,
-            SLICE_PREFIX,
-            SLICE_NS,
-            CORE_TRIANGLESET_PREFIX,
-            CORE_TRIANGLESET_NS
         );
         let model = Model {
             unit: Some(Unit::Millimeter),
@@ -1406,25 +1658,12 @@ mod write_tests {
 
     #[test]
     pub fn toxml_model_with_material_resources_test() {
-        // Note: The serializer always includes all namespace declarations
-        // The actual order is: core, b, bo, d, m, p, s, t (alphabetical by prefix)
+        // Only the namespaces the model uses are declared: core and material.
         let xml_string = format!(
-            r##"<model xmlns="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
+            r##"<model xmlns="{}" xmlns:{}="{}" unit="millimeter"><resources><{}:colorgroup id="1"><{}:color color="#FF0000FF" /></{}:colorgroup><{}:texture2d id="2" path="/3D/texture.png" contenttype="image/png" /></resources><build></build></model>"##,
             CORE_NS,
-            BEAM_LATTICE_PREFIX,
-            BEAM_LATTICE_NS,
-            BOOLEAN_PREFIX,
-            BOOLEAN_NS,
-            DISPLACEMENT_PREFIX,
-            DISPLACEMENT_NS,
             MATERIAL_PREFIX,
             MATERIAL_NS,
-            PROD_PREFIX,
-            PROD_NS,
-            SLICE_PREFIX,
-            SLICE_NS,
-            CORE_TRIANGLESET_PREFIX,
-            CORE_TRIANGLESET_NS,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX,
             MATERIAL_PREFIX,
