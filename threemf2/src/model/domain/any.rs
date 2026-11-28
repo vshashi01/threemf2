@@ -386,6 +386,39 @@ impl AnyElement {
             })
             .collect()
     }
+
+    /// Converts the element into a typed value, for example a struct deriving
+    /// `instant_xml::FromXml` that models an extension element.
+    ///
+    /// The element is written to XML and parsed as `T`, so `T` must match the element's namespace
+    /// and name. `T` must use the same `instant-xml` version as this crate.
+    ///
+    /// # Errors
+    ///
+    /// Returns the `instant_xml` error if `T` does not match the element or a value fails to parse.
+    #[cfg(all(feature = "read", feature = "write"))]
+    pub fn decode<T: instant_xml::FromXmlOwned>(&self) -> Result<T, instant_xml::Error> {
+        let mut xml = String::new();
+        write::write_root_element(&mut instant_xml::Serializer::new(&mut xml), self)?;
+        instant_xml::from_str(&xml)
+    }
+
+    /// Creates an element from a typed value, for example a struct deriving `instant_xml::ToXml`
+    /// that models an extension element.
+    ///
+    /// The value is written to XML and read back as an element with its full subtree. Place the
+    /// result in a slot with `push_element`, which checks that its namespace is foreign.
+    ///
+    /// # Errors
+    ///
+    /// Returns the `instant_xml` error if the value fails to serialize.
+    #[cfg(all(feature = "read", feature = "write"))]
+    pub fn encode<T: instant_xml::ToXml + ?Sized>(value: &T) -> Result<Self, instant_xml::Error> {
+        let xml = instant_xml::to_string(value)?;
+        let mut deserializer = instant_xml::Deserializer::new(&xml)?;
+        let id = deserializer.parent();
+        read::read_element(&mut deserializer, id)
+    }
 }
 
 impl PartialEq for AnyElement {
@@ -753,6 +786,16 @@ pub(crate) mod write {
         if !is_foreign_namespace(element.ns()) {
             return Err(not_foreign(element.ns()));
         }
+        let scope = ForeignScope::new(serializer);
+        write_element(serializer, scope, element)
+    }
+
+    /// Writes an element as the root of a document, without requiring a foreign namespace.
+    #[cfg(feature = "read")]
+    pub(crate) fn write_root_element<W: fmt::Write + ?Sized>(
+        serializer: &mut Serializer<'_, W>,
+        element: &AnyElement,
+    ) -> Result<(), Error> {
         let scope = ForeignScope::new(serializer);
         write_element(serializer, scope, element)
     }

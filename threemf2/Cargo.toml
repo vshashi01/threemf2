@@ -97,6 +97,11 @@ name = "slice_write"
 path = "examples/slice_write.rs"
 required-features = ["package-write"]
 
+[[example]]
+name = "extension_element"
+path = "examples/extension_element.rs"
+required-features = ["any", "package-write", "package-read"]
+
 
 [package.metadata.cargo-all-features]
 max_combination_size = 3

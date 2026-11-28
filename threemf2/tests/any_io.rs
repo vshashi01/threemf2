@@ -8,6 +8,7 @@
     feature = "package-lazy-read"
 ))]
 mod tests {
+    use instant_xml::{FromXml, ToXml};
     use pretty_assertions::assert_eq;
 
     use threemf2::{
@@ -564,5 +565,87 @@ mod tests {
         );
         let mesh = get_mesh_objects_from_model(model).next().unwrap();
         assert_eq!(mesh.mesh_any_extensions().elements()[0].name(), "meshnote");
+    }
+
+    /// A user defined extension element, modelled with the instant-xml derive.
+    #[derive(Debug, PartialEq, FromXml, ToXml)]
+    #[xml(ns("http://acme.example/3mf/2026"), rename = "label")]
+    struct AcmeLabel {
+        #[xml(attribute)]
+        code: u32,
+        part: Vec<AcmePart>,
+    }
+
+    #[derive(Debug, PartialEq, FromXml, ToXml)]
+    #[xml(ns("http://acme.example/3mf/2026"), rename = "part")]
+    struct AcmePart {
+        #[xml(direct)]
+        text: String,
+    }
+
+    fn acme_label() -> AcmeLabel {
+        AcmeLabel {
+            code: 42,
+            part: vec![
+                AcmePart {
+                    text: "left".to_owned(),
+                },
+                AcmePart {
+                    text: "right".to_owned(),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn typed_extension_element_encode_decode() {
+        let element = AnyElement::encode(&acme_label()).expect("encode");
+        let expected = AnyElement::new(ACME_NS, "label")
+            .unwrap()
+            .with_attribute("", "code", "42")
+            .unwrap()
+            .with_child(AnyElement::new(ACME_NS, "part").unwrap().with_text("left"))
+            .with_child(AnyElement::new(ACME_NS, "part").unwrap().with_text("right"));
+        assert_eq!(element, expected);
+
+        assert_eq!(
+            expected.decode::<AcmeLabel>().expect("decode"),
+            acme_label()
+        );
+
+        // A type for another element does not match.
+        assert!(expected.decode::<AcmePart>().is_err());
+        // An invalid value fails to parse.
+        let invalid = AnyElement::new(ACME_NS, "label")
+            .unwrap()
+            .with_attribute("", "code", "abc")
+            .unwrap();
+        assert!(invalid.decode::<AcmeLabel>().is_err());
+    }
+
+    #[test]
+    fn typed_extension_element_survives_package_roundtrip() {
+        use threemf2::model::query::get_mesh_objects_from_model;
+
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        let object = builder
+            .add_mesh_object(|obj| {
+                obj.add_vertices(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+                    .add_triangle(&[0, 1, 2]);
+                obj.mesh_any_extensions_mut()
+                    .push_element(AnyElement::encode(&acme_label()).expect("encode"))?;
+                Ok(())
+            })
+            .unwrap();
+        builder.add_build(None).unwrap();
+        builder.add_build_item(object).unwrap();
+
+        let mut buf = write(builder.build().unwrap());
+        let package = ThreemfPackage::from_reader(&mut buf, false).expect("read package");
+        let mesh = get_mesh_objects_from_model(&package.root).next().unwrap();
+        let label = mesh.mesh_any_extensions().elements()[0]
+            .decode::<AcmeLabel>()
+            .expect("decode");
+        assert_eq!(label, acme_label());
     }
 }
