@@ -217,6 +217,10 @@ macro_rules! xml_struct {
                 $(
                     #[allow(unused_variables)]
                     let declared = $hook(self, serializer)?;
+                    // Foreign content in the whole subtree reuses the hook's declarations.
+                    #[cfg(feature = "any")]
+                    let _document_prefixes =
+                        $crate::model::domain::any::write::DocumentPrefixes::enter(&declared);
                 )?
 
                 $(

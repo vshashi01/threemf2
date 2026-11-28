@@ -648,4 +648,50 @@ mod tests {
             .expect("decode");
         assert_eq!(label, acme_label());
     }
+
+    #[test]
+    fn foreign_content_reuses_model_extension_prefixes() {
+        use threemf2::threemf_namespaces::ThreemfNamespace;
+
+        const OTHER_NS: &str = "http://other.example/3mf";
+
+        let mut builder = ModelBuilder::new(Unit::Millimeter, true);
+        builder.add_recommended_extension(ThreemfNamespace::Unknown {
+            prefix: "acme".into(),
+            uri: ACME_NS.into(),
+        });
+        builder.add_build(None).unwrap();
+        let object = builder
+            .add_mesh_object(|obj| {
+                obj.add_vertices(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+                    .add_triangle(&[0, 1, 2]);
+                obj.any_attribute(ACME_NS, "batch", "7")?
+                    // The hint is ignored: `acme` is taken by the model's declaration.
+                    .any_element(
+                        AnyElement::new(OTHER_NS, "note")
+                            .unwrap()
+                            .with_prefix_hint("acme")
+                            .with_child(AnyElement::new(ACME_NS, "label").unwrap()),
+                    )?;
+                Ok(())
+            })
+            .unwrap();
+        builder.add_build_item(object).unwrap();
+        let model = builder.build().unwrap();
+
+        let xml = instant_xml::to_string(&model).expect("write model");
+        assert_eq!(xml.matches(&format!("=\"{ACME_NS}\"")).count(), 1, "{xml}");
+        assert!(
+            xml.contains(&format!(
+                r#"<object id="1" type="model" xmlns:ns0="{OTHER_NS}" acme:batch="7">"#
+            )),
+            "{xml}"
+        );
+        assert!(xml.contains("<ns0:note><acme:label /></ns0:note>"), "{xml}");
+
+        // The package keeps the declaration on <model> and reads the content back unchanged.
+        let mut buf = write(model.clone());
+        let package = ThreemfPackage::from_reader(&mut buf, false).expect("read package");
+        assert_eq!(package.root.resources, model.resources);
+    }
 }

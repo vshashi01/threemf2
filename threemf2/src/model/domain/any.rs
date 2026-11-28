@@ -575,6 +575,50 @@ pub(crate) mod write {
         DISPLACEMENT_PREFIX,
     ];
 
+    thread_local! {
+        static DOCUMENT_PREFIXES: std::cell::RefCell<Vec<(String, String)>> =
+            const { std::cell::RefCell::new(Vec::new()) };
+    }
+
+    /// `(prefix, namespace)` pairs declared on the root element of the document being written,
+    /// such as the unknown extensions declared on `<model>`.
+    ///
+    /// Nested elements are written by separate `ToXml` calls that only share the serializer, and
+    /// the serializer cannot hold prefixes that are not `'static`. These declarations are kept
+    /// here for the duration of the root element's write so that foreign content anywhere in the
+    /// document reuses them instead of declaring the namespace again.
+    pub(crate) struct DocumentPrefixes {
+        previous: Vec<(String, String)>,
+    }
+
+    impl DocumentPrefixes {
+        /// Makes `declared` visible to foreign content until the returned guard is dropped.
+        pub(crate) fn enter(declared: &[(String, String)]) -> Self {
+            let previous = DOCUMENT_PREFIXES.with(|p| p.replace(declared.to_vec()));
+            Self { previous }
+        }
+
+        fn prefix_for(ns: &str) -> Option<String> {
+            DOCUMENT_PREFIXES.with(|p| {
+                p.borrow()
+                    .iter()
+                    .find(|(_, uri)| uri == ns)
+                    .map(|(prefix, _)| prefix.clone())
+            })
+        }
+
+        fn is_declared(prefix: &str) -> bool {
+            DOCUMENT_PREFIXES.with(|p| p.borrow().iter().any(|(q, _)| q == prefix))
+        }
+    }
+
+    impl Drop for DocumentPrefixes {
+        fn drop(&mut self) {
+            let previous = std::mem::take(&mut self.previous);
+            DOCUMENT_PREFIXES.with(|p| *p.borrow_mut() = previous);
+        }
+    }
+
     /// Namespace declarations made for foreign content, valid for the current element subtree.
     #[derive(Clone, Debug)]
     pub(crate) struct ForeignScope {
@@ -609,8 +653,14 @@ pub(crate) mod write {
                 return (prefix.to_owned(), false);
             }
 
+            if let Some(prefix) = DocumentPrefixes::prefix_for(ns) {
+                return (prefix, false);
+            }
+
             let taken = |p: &str| {
-                RESERVED_PREFIXES.contains(&p) || self.prefixes.iter().any(|(q, _)| q == p)
+                RESERVED_PREFIXES.contains(&p)
+                    || self.prefixes.iter().any(|(q, _)| q == p)
+                    || DocumentPrefixes::is_declared(p)
             };
 
             let prefix = match hint {
